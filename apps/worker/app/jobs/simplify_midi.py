@@ -185,7 +185,9 @@ def handle_simplify_midi(payload: dict) -> None:
             midi_bytes = note_data_to_midi_bytes(simplified)
             storage.upload(simplified_midi_key, midi_bytes, "audio/midi")
         except Exception as exc:
-            _retry_or_fail(db, job, type(exc).__name__, "Failed to persist simplified output.", request_id)
+            _retry_or_fail(
+                db, job, type(exc).__name__, "Failed to persist simplified output.", request_id
+            )
             db.commit()
             logger.exception("simplify persist failure", extra={"job_id": str(job.id)})
             if job.status == "queued":

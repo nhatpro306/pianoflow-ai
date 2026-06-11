@@ -23,7 +23,6 @@ from pianoflow_music.simplify.rules import (
     VERY_EASY_MAX_NOTES_PER_BEAT,
 )
 
-
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 
@@ -83,7 +82,7 @@ def test_chord_clusters_single_note() -> None:
 def test_chord_clusters_groups_simultaneous() -> None:
     n1 = make_note(0, 60, 0.0)
     n2 = make_note(1, 64, 0.01)  # within window
-    n3 = make_note(2, 67, 1.0)   # new beat
+    n3 = make_note(2, 67, 1.0)  # new beat
     clusters = chord_clusters([n1, n2, n3])
     assert len(clusters) == 2
     assert {n.id for n in clusters[0]} == {0, 1}
@@ -166,12 +165,8 @@ def _max_notes_per_beat(notes: list[Note], bpm: float) -> float:
 
 def test_easy_density_cap() -> None:
     bpm = 120.0
-    beat_sec = 60.0 / bpm  # 0.5s
     # Create 12 notes in beat 0 — well above easy cap of 6
-    notes = [
-        make_note(i, 48 + i, i * 0.001, hand="R" if i < 6 else "L")
-        for i in range(12)
-    ]
+    notes = [make_note(i, 48 + i, i * 0.001, hand="R" if i < 6 else "L") for i in range(12)]
     reduced = reduce_notes(notes, "easy", bpm)
     actual_max = _max_notes_per_beat(reduced, bpm)
     assert actual_max <= EASY_MAX_NOTES_PER_BEAT, (
@@ -181,10 +176,7 @@ def test_easy_density_cap() -> None:
 
 def test_very_easy_density_cap() -> None:
     bpm = 120.0
-    notes = [
-        make_note(i, 48 + i, i * 0.001, hand="R" if i < 6 else "L")
-        for i in range(12)
-    ]
+    notes = [make_note(i, 48 + i, i * 0.001, hand="R" if i < 6 else "L") for i in range(12)]
     reduced = reduce_notes(notes, "very_easy", bpm)
     actual_max = _max_notes_per_beat(reduced, bpm)
     assert actual_max <= VERY_EASY_MAX_NOTES_PER_BEAT, (
@@ -247,7 +239,8 @@ def test_dense_song_both_difficulties() -> None:
 
     note_data = make_note_data(notes, bpm=bpm)
 
-    for diff, cap in [("easy", EASY_MAX_NOTES_PER_BEAT), ("very_easy", VERY_EASY_MAX_NOTES_PER_BEAT)]:
+    cases = [("easy", EASY_MAX_NOTES_PER_BEAT), ("very_easy", VERY_EASY_MAX_NOTES_PER_BEAT)]
+    for diff, cap in cases:
         result = simplify(note_data, diff)
 
         # No notes added
