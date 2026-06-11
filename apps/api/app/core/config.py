@@ -24,6 +24,14 @@ class Settings(BaseSettings):
     storage_backend: Literal["local", "supabase", "s3"] = "local"
     storage_local_root: str = "./data/storage"
 
+    # Supabase storage (STORAGE_BACKEND=supabase). Service role key is
+    # backend-only — never expose to the frontend.
+    supabase_url: str = ""
+    supabase_service_role_key: str = ""
+    supabase_bucket_sources: str = "pianoflow-sources"
+    supabase_bucket_analysis: str = "pianoflow-analysis"
+    supabase_bucket_outputs: str = "pianoflow-outputs"
+
     auth_mode: Literal["dev", "supabase"] = "dev"
 
     api_base_url: str = "http://localhost:8000"

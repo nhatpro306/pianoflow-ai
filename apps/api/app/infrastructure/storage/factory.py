@@ -1,7 +1,7 @@
 """Storage backend selection (composition root helper).
 
-STORAGE_BACKEND=local|supabase|s3 — supabase/s3 adapters arrive in
-Phases 10/11; the factory raises clearly until then.
+STORAGE_BACKEND=local|supabase|s3 — s3 adapter arrives with the AWS stage;
+the factory raises clearly until then.
 """
 
 from functools import lru_cache
@@ -20,7 +20,16 @@ def get_storage() -> StorageService:
             base_url=settings.api_base_url,
             secret=settings.storage_signing_secret,
         )
+    if settings.storage_backend == "supabase":
+        from app.infrastructure.storage.supabase import SupabaseStorageService
+
+        return SupabaseStorageService(
+            url=settings.supabase_url,
+            service_role_key=settings.supabase_service_role_key,
+            bucket_sources=settings.supabase_bucket_sources,
+            bucket_analysis=settings.supabase_bucket_analysis,
+            bucket_outputs=settings.supabase_bucket_outputs,
+        )
     raise NotImplementedError(
-        f"Storage backend {settings.storage_backend!r} not implemented yet "
-        "(supabase: Phase 10, s3: Phase 11)"
+        f"Storage backend {settings.storage_backend!r} not implemented yet (s3: AWS stage)"
     )

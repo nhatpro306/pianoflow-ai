@@ -7,7 +7,13 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.errors import AppError, ConflictError, ForbiddenError, NotFoundError
+from app.core.errors import (
+    AppError,
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+    RateLimitedError,
+)
 from app.core.security import CurrentUser
 from app.domains.settings.schemas import SettingsOut
 from app.domains.settings.service import get_or_create_settings
@@ -200,6 +206,16 @@ def create_transcribe_audio_job(
     duplicate = jobs.find_live_duplicate(project.id, user.id, TRANSCRIBE_AUDIO, settings_version)
     if duplicate is not None:
         return EnqueuedJob(job=duplicate, created=False)
+
+    # Beta quota (docs 09 §10): config-level daily cap until the usage_limits
+    # table lands with Phase 8 plans.
+    day_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+    used_today = jobs.count_created_since(user.id, TRANSCRIBE_AUDIO, day_start)
+    if used_today >= settings.transcriptions_per_day:
+        raise RateLimitedError(
+            "Daily transcription limit reached. Try again tomorrow.",
+            code="TRANSCRIPTION_LIMIT_EXCEEDED",
+        )
 
     audio_queue = settings.audio_queue_name
     job = jobs.create(

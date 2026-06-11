@@ -10,6 +10,7 @@ dependencies = [
     "sqlalchemy>=2.0",
     "psycopg[binary]>=3.2",
     "pianoflow-music",
+    "httpx>=0.28.1",
 ]
 
 [dependency-groups]

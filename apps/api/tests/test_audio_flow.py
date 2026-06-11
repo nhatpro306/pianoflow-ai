@@ -148,6 +148,28 @@ class TestTranscriptionEndpoint:
         assert response.status_code == 404
 
 
+class TestTranscriptionLimit:
+    def test_daily_limit_exceeded(self, client: TestClient, wav_bytes: bytes, monkeypatch) -> None:
+        from app.core.config import get_settings
+
+        monkeypatch.setattr(get_settings(), "transcriptions_per_day", 1)
+        first_project = _create_project(client, "First")
+        assert _upload_audio(client, first_project, wav_bytes).status_code == 202
+
+        second_project = _create_project(client, "Second")
+        init = _init_audio(client, second_project, wav_bytes)
+        assert init.status_code == 200
+        init_body = init.json()
+        put = client.put(init_body["upload_url"], content=wav_bytes, headers=init_body["headers"])
+        assert put.status_code == 200
+        confirm = client.post(
+            f"/api/v1/projects/{second_project}/upload-audio/confirm",
+            json={"upload_id": init_body["upload_id"]},
+        )
+        assert confirm.status_code == 429
+        assert confirm.json()["error"]["code"] == "TRANSCRIPTION_LIMIT_EXCEEDED"
+
+
 class TestFeatureFlag:
     def test_disabled_flag_blocks_upload(
         self, client: TestClient, wav_bytes: bytes, monkeypatch

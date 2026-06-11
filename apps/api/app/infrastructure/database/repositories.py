@@ -5,7 +5,7 @@ methods take user_id and filter on it — there is no unscoped variant
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.infrastructure.database.models import (
@@ -123,6 +123,17 @@ class JobRepository:
                 RenderJob.status.in_(["queued", "processing"]),
             )
             .order_by(RenderJob.created_at.desc())
+        )
+
+    def count_created_since(self, user_id: uuid.UUID, job_type: str, since: datetime) -> int:
+        return self.db.scalar(
+            select(func.count())
+            .select_from(RenderJob)
+            .where(
+                RenderJob.user_id == user_id,
+                RenderJob.job_type == job_type,
+                RenderJob.created_at >= since,
+            )
         )
 
     def live_for_project(self, project_id: uuid.UUID, user_id: uuid.UUID) -> list[RenderJob]:

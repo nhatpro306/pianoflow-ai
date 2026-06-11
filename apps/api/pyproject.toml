@@ -13,6 +13,7 @@ dependencies = [
     "alembic>=1.13",
     "redis>=5.0",
     "pianoflow-music",
+    "httpx>=0.28.1",
 ]
 
 [dependency-groups]
