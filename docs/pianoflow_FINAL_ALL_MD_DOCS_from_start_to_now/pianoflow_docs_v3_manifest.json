@@ -1,0 +1,40 @@
+{
+  "version": "v3_audio_midi_integrated",
+  "files": [
+    "00_INDEX.md",
+    "01_PRODUCT_SPEC.md",
+    "02_MVP_SCOPE.md",
+    "03_SYSTEM_DESIGN.md",
+    "04_DATABASE_SCHEMA.md",
+    "05_API_SPEC.md",
+    "06_UI_UX_SPEC.md",
+    "07_CODE_ARCHITECTURE.md",
+    "08_DEPLOYMENT_VERCEL_SUPABASE.md",
+    "09_AUDIO_TO_MIDI_PLAN.md",
+    "10_MULTI_SOURCE_IMPORT.md",
+    "11_SECURITY_COMPLIANCE.md",
+    "12_NO_TUTORIAL_DOWNLOAD_POLICY.md",
+    "13_BUSINESS_MODEL.md",
+    "14_ROADMAP.md",
+    "15_CLOUD_SCALE_PLAN.md",
+    "16_IMPLEMENTATION_RULES.md",
+    "17_CLAUDE_PHASE_PROMPTS.md",
+    "18_CLAUDE_NEXT_STEPS.md",
+    "19_LONG_TERM_PRODUCT_PLAN.md",
+    "20_README_PLAN.md",
+    "21_RISKS.md",
+    "22_METRICS_KPI.md",
+    "23_ENVIRONMENT_VARIABLES.md",
+    "24_TEST_PLAN.md",
+    "25_AUDIO_TO_MIDI_INTEGRATION_SUMMARY.md"
+  ],
+  "recommended_first_files": [
+    "docs/00_INDEX.md",
+    "docs/09_AUDIO_TO_MIDI_PLAN.md",
+    "docs/25_AUDIO_TO_MIDI_INTEGRATION_SUMMARY.md",
+    "docs/17_CLAUDE_PHASE_PROMPTS.md",
+    "docs/18_CLAUDE_NEXT_STEPS.md"
+  ],
+  "recommended_next_phase": "Phase 2 \u2014 Monorepo Skeleton, Docker Compose, CI",
+  "audio_to_midi_phase": "Phase 11 \u2014 Audio Upload + Draft MIDI"
+}

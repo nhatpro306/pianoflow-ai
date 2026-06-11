@@ -1,0 +1,27 @@
+[project]
+name = "pianoflow-worker"
+version = "0.1.0"
+description = "PianoFlow AI — background worker (all heavy work: parse, render, simplify)"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "redis>=5.0",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
+    "pianoflow-music",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+
+[tool.uv.sources]
+pianoflow-music = { workspace = true }
+
+# Virtual project (no build-system) — see apps/api/pyproject.toml note.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

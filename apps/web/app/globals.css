@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand hand colors (UI_UX.md §1) — also defined in shared-types constants.json */
+  --hand-right: #22d3ee;
+  --hand-left: #fb923c;
+}

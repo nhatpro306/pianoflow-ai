@@ -1,0 +1,26 @@
+{
+  "MAX_MIDI_BYTES": 5242880,
+  "MAX_SONG_SECONDS": 600,
+  "MAX_NOTES_PER_FILE": 50000,
+  "RESOLUTIONS": ["720p", "1080p"],
+  "SPEED_MULTIPLIERS": [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2],
+  "SPEED_MIN": 0.25,
+  "SPEED_MAX": 2.0,
+  "DIFFICULTIES": ["original", "easy", "very_easy"],
+  "PIANO_SOUNDS": [
+    { "id": "concert_grand", "label": "Concert Grand" },
+    { "id": "bright_grand", "label": "Bright Grand" },
+    { "id": "warm_grand", "label": "Warm Grand" },
+    { "id": "upright", "label": "Upright Piano" },
+    { "id": "felt", "label": "Soft Felt Piano" },
+    { "id": "electric", "label": "Electric Piano" }
+  ],
+  "REVERB_LEVELS": ["off", "light", "medium", "hall"],
+  "REVERB_MIX": { "off": 0, "light": 0.15, "medium": 0.3, "hall": 0.5 },
+  "FPS_OPTIONS": [30, 60],
+  "PIANO_LOWEST_PITCH": 21,
+  "PIANO_HIGHEST_PITCH": 108,
+  "PIANO_KEY_COUNT": 88,
+  "HAND_COLOR_RIGHT": "#22d3ee",
+  "HAND_COLOR_LEFT": "#fb923c"
+}

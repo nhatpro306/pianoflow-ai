@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pianoflow.ai/schemas/notes.schema.json",
+  "title": "NoteData",
+  "description": "Canonical parsed-notes format (schema_version 1). Contract between parser, frontend preview, video renderer, sheet generator, simplifier.",
+  "type": "object",
+  "required": ["schema_version", "bpm", "duration_sec", "time_signature", "notes"],
+  "properties": {
+    "schema_version": { "enum": [1, 2] },
+    "sustain": {
+      "description": "CC64 pedal events (schema v2+), time-sorted",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["time", "value"],
+        "properties": {
+          "time": { "type": "number", "minimum": 0 },
+          "value": { "type": "integer", "minimum": 0, "maximum": 127 }
+        }
+      }
+    },
+    "bpm": { "type": "number", "exclusiveMinimum": 0 },
+    "duration_sec": { "type": "number", "minimum": 0 },
+    "time_signature": { "type": "string", "pattern": "^\\d+/\\d+$" },
+    "tempo_map": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["time", "bpm"],
+        "properties": {
+          "time": { "type": "number", "minimum": 0 },
+          "bpm": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      }
+    },
+    "tracks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["index", "note_count"],
+        "properties": {
+          "index": { "type": "integer", "minimum": 0 },
+          "name": { "type": "string" },
+          "note_count": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "pitch", "name", "velocity", "start", "end", "duration", "track", "hand"],
+        "properties": {
+          "id": { "type": "integer", "minimum": 0 },
+          "pitch": { "type": "integer", "minimum": 21, "maximum": 108 },
+          "name": { "type": "string" },
+          "velocity": { "type": "integer", "minimum": 1, "maximum": 127 },
+          "start": { "type": "number", "minimum": 0 },
+          "end": { "type": "number", "minimum": 0 },
+          "duration": { "type": "number", "minimum": 0 },
+          "track": { "type": "integer", "minimum": 0 },
+          "hand": { "enum": ["L", "R"] }
+        }
+      }
+    }
+  }
+}

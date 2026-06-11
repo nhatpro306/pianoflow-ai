@@ -1,0 +1,30 @@
+{
+  "package": "PianoFlow AI FINAL ALL MD DOCS",
+  "version": "final_all_from_start_to_now",
+  "includes": [
+    "latest v3 docs with Audio to MIDI",
+    "original strategy docs pack",
+    "combined strategy markdown",
+    "Claude master prompt",
+    "no tutorial download policy",
+    "no tutorial download Claude prompt",
+    "final master index",
+    "final changelog"
+  ],
+  "recommended_start_files": [
+    "docs/99_FINAL_MASTER_INDEX.md",
+    "docs/00_INDEX.md",
+    "docs/17_CLAUDE_PHASE_PROMPTS.md",
+    "docs/18_CLAUDE_NEXT_STEPS.md",
+    "docs/25_AUDIO_TO_MIDI_INTEGRATION_SUMMARY.md"
+  ],
+  "next_phase": "Phase 2 \u2014 Monorepo Skeleton, Docker Compose, CI",
+  "do_not_start_yet": [
+    "Audio to MIDI implementation",
+    "video rendering",
+    "sheet generation",
+    "social media link import",
+    "billing"
+  ],
+  "files_count": 47
+}

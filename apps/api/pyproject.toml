@@ -1,0 +1,33 @@
+[project]
+name = "pianoflow-api"
+version = "0.1.0"
+description = "PianoFlow AI — FastAPI service (validate, persist, enqueue; never renders)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.13",
+    "redis>=5.0",
+    "pianoflow-music",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",
+    "ruff>=0.5",
+]
+
+[tool.uv.sources]
+pianoflow-music = { workspace = true }
+
+# Virtual project (no build-system): the `app` package is run from this
+# directory, never installed into the shared workspace venv. Both api and
+# worker use the conventional `app/` layout — installing both would collide.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

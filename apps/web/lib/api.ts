@@ -1,0 +1,186 @@
+/**
+ * Typed API client for the FastAPI backend.
+ * All requests go through apiFetch so error envelopes (API.md §0) become
+ * ApiError instances with a stable machine-readable code.
+ */
+import type { NoteData, RenderSettings } from "@pianoflow/shared-types";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public code: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...init?.headers },
+  });
+
+  if (!response.ok) {
+    let code = "INTERNAL_ERROR";
+    let message = `Request failed (${response.status})`;
+    try {
+      const body = await response.json();
+      code = body?.error?.code ?? code;
+      message = body?.error?.message ?? message;
+    } catch {
+      // non-JSON error body — keep defaults
+    }
+    throw new ApiError(response.status, code, message);
+  }
+
+  if (response.status === 204) return undefined as T;
+  return response.json() as Promise<T>;
+}
+
+// ── Types (mirror API.md responses) ─────────────────────────
+
+export interface AnalysisSummary {
+  bpm: number;
+  duration_sec: number;
+  time_signature: string;
+  track_count: number;
+  note_count: number;
+  pitch_min: number | null;
+  pitch_max: number | null;
+  hand_split: string | null;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  status: "created" | "uploading" | "parsing" | "ready" | "failed" | "archived";
+  analysis_summary: AnalysisSummary | null;
+  active_jobs: JobBrief[];
+  created_at: string;
+}
+
+export interface JobBrief {
+  id: string;
+  job_type: string;
+  status: "queued" | "processing" | "completed" | "failed" | "cancelled";
+  progress: number;
+  progress_message: string | null;
+}
+
+export interface Job extends JobBrief {
+  project_id: string;
+  attempt: number;
+  error_type: string | null;
+  error_message: string | null;
+  settings_version: number | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+export interface UploadInit {
+  upload_id: string;
+  upload_url: string;
+  method: string;
+  headers: Record<string, string>;
+  expires_at: string;
+  max_bytes: number;
+}
+
+// ── Calls ───────────────────────────────────────────────────
+
+export const api = {
+  createProject: (name: string) =>
+    apiFetch<Project>("/api/v1/projects", {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }),
+
+  listProjects: () => apiFetch<{ items: Project[] }>("/api/v1/projects"),
+
+  getProject: (id: string) => apiFetch<Project>(`/api/v1/projects/${id}`),
+
+  getJob: (id: string) => apiFetch<Job>(`/api/v1/jobs/${id}`),
+
+  deleteProject: (id: string) =>
+    apiFetch<void>(`/api/v1/projects/${id}`, { method: "DELETE" }),
+
+  getNotes: (id: string) => apiFetch<NoteData>(`/api/v1/projects/${id}/notes`),
+
+  getSettings: (id: string) =>
+    apiFetch<RenderSettings>(`/api/v1/projects/${id}/settings`),
+
+  patchSettings: (id: string, patch: Partial<RenderSettings>) =>
+    apiFetch<RenderSettings>(`/api/v1/projects/${id}/settings`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+
+  initUpload: (projectId: string, filename: string, sizeBytes: number) =>
+    apiFetch<UploadInit>(`/api/v1/projects/${projectId}/upload-midi`, {
+      method: "POST",
+      body: JSON.stringify({ filename, size_bytes: sizeBytes }),
+    }),
+
+  confirmUpload: (projectId: string, uploadId: string) =>
+    apiFetch<{ upload_id: string; status: string; project_status: string; parse_job: JobBrief }>(
+      `/api/v1/projects/${projectId}/upload-midi/confirm`,
+      { method: "POST", body: JSON.stringify({ upload_id: uploadId }) },
+    ),
+
+  // ── Audio → MIDI Beta ─────────────────────────────────────
+  // Output is an editable draft MIDI — never promised as perfect.
+
+  initAudioUpload: (
+    projectId: string,
+    filename: string,
+    sizeBytes: number,
+    rightsAttestation: boolean,
+  ) =>
+    apiFetch<UploadInit & { max_duration_seconds: number }>(
+      `/api/v1/projects/${projectId}/upload-audio`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          filename,
+          size_bytes: sizeBytes,
+          rights_attestation: rightsAttestation,
+        }),
+      },
+    ),
+
+  confirmAudioUpload: (projectId: string, uploadId: string) =>
+    apiFetch<{
+      upload_id: string;
+      status: string;
+      project_status: string;
+      transcribe_job: JobBrief;
+    }>(`/api/v1/projects/${projectId}/upload-audio/confirm`, {
+      method: "POST",
+      body: JSON.stringify({ upload_id: uploadId }),
+    }),
+
+  getTranscription: (projectId: string) =>
+    apiFetch<{
+      status: "none" | "queued" | "processing" | "completed" | "failed";
+      engine: string | null;
+      draft_midi_output_id: string | null;
+      confidence_summary: Record<string, number> | null;
+      message: string;
+    }>(`/api/v1/projects/${projectId}/transcription`),
+
+  /** Raw PUT to the signed URL — not under BASE_URL, not JSON. */
+  putToSignedUrl: async (init: UploadInit, file: Blob) => {
+    const response = await fetch(init.upload_url, {
+      method: init.method,
+      headers: init.headers,
+      body: file,
+    });
+    if (!response.ok) {
+      throw new ApiError(response.status, "UPLOAD_FAILED", "Upload to storage failed.");
+    }
+  },
+};

@@ -1,0 +1,86 @@
+name: pianoflow
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: pianoflow
+      POSTGRES_PASSWORD: pianoflow
+      POSTGRES_DB: pianoflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pianoflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://pianoflow:pianoflow@postgres:5432/pianoflow
+      REDIS_URL: redis://redis:6379/0
+      QUEUE_BACKEND: redis
+      STORAGE_BACKEND: local
+      STORAGE_LOCAL_ROOT: /data/storage
+      AUTH_MODE: dev
+      ENV: dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data/storage:/data/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: infra/docker/worker.Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://pianoflow:pianoflow@postgres:5432/pianoflow
+      REDIS_URL: redis://redis:6379/0
+      QUEUE_BACKEND: redis
+      STORAGE_BACKEND: local
+      STORAGE_LOCAL_ROOT: /data/storage
+      # Local dev: one worker drains both queues. Production audio-worker
+      # runs a separate instance with QUEUE_NAMES=q_audio.
+      QUEUE_NAMES: q_default,q_audio
+    volumes:
+      - ./data/storage:/data/storage
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # Web usually runs natively (`pnpm dev:web`) for fast HMR.
+  # `docker compose --profile full up` includes it.
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+    profiles: ["full"]
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
