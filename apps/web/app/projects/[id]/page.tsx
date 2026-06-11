@@ -6,7 +6,7 @@ import { use, useEffect, useRef, useState } from "react";
 
 import { FallingNotePreview } from "@/components/FallingNotePreview";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import { ApiError } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { useJob, useNotes, usePatchSettings, useProject, useSettings } from "@/lib/hooks";
 
 export default function ProjectEditorPage({
@@ -27,6 +27,14 @@ export default function ProjectEditorPage({
   const [local, setLocal] = useState<RenderSettings | null>(null);
   const pendingRef = useRef<Partial<RenderSettings>>({});
   const timerRef = useRef<number | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [viewSimplified, setViewSimplified] = useState(false);
+  const simplifiedNotes = useNotes(
+    id,
+    ready && viewSimplified && local?.difficulty !== "original",
+    local?.difficulty,
+  );
 
   useEffect(() => {
     if (serverSettings.data && local === null) setLocal(serverSettings.data);
@@ -118,15 +126,105 @@ export default function ProjectEditorPage({
       )}
 
       {ready && notes.data && local && (
-        <div className="flex flex-col gap-6 lg:flex-row">
-          <div className="min-w-0 flex-1">
-            <FallingNotePreview data={notes.data} settings={local} />
+        <div className="flex flex-col gap-6">
+          {/* Generate / Export actions */}
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+            {local.difficulty !== "original" && (
+              <>
+                <button
+                  disabled={generating}
+                  onClick={async () => {
+                    setGenerating(true);
+                    setGenerateError(null);
+                    try {
+                      await api.simplifyMidi(id);
+                      project.refetch();
+                    } catch (e) {
+                      setGenerateError(e instanceof Error ? e.message : "Failed to simplify.");
+                    } finally {
+                      setGenerating(false);
+                    }
+                  }}
+                  className="rounded-md bg-amber-500 px-4 py-2 text-sm font-semibold text-black hover:bg-amber-400 disabled:opacity-50"
+                >
+                  {generating ? "Simplifying…" : `Simplify (${local.difficulty.replace("_", " ")})`}
+                </button>
+                {p.analysis_summary?.simplified_notes?.[local.difficulty] && (
+                  <button
+                    onClick={() => setViewSimplified((v) => !v)}
+                    className={`rounded-md border px-3 py-2 text-sm ${
+                      viewSimplified
+                        ? "border-amber-400 text-amber-300"
+                        : "border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                    }`}
+                  >
+                    {viewSimplified ? "Viewing simplified" : "View simplified"}
+                  </button>
+                )}
+              </>
+            )}
+            <button
+              disabled={generating}
+              onClick={async () => {
+                setGenerating(true);
+                setGenerateError(null);
+                try {
+                  await api.renderVideo(id);
+                  project.refetch();
+                } catch (e) {
+                  setGenerateError(e instanceof Error ? e.message : "Failed to start video render.");
+                } finally {
+                  setGenerating(false);
+                }
+              }}
+              className="rounded-md border border-cyan-700 px-4 py-2 text-sm text-cyan-300 hover:bg-cyan-950 disabled:opacity-50"
+            >
+              Render Video
+            </button>
+            <button
+              disabled={generating}
+              onClick={async () => {
+                setGenerating(true);
+                setGenerateError(null);
+                try {
+                  await api.renderSheet(id);
+                  project.refetch();
+                } catch (e) {
+                  setGenerateError(e instanceof Error ? e.message : "Failed to start sheet render.");
+                } finally {
+                  setGenerating(false);
+                }
+              }}
+              className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
+            >
+              Render Sheet PDF
+            </button>
+            {generateError && (
+              <p className="text-sm text-red-400">{generateError}</p>
+            )}
           </div>
-          <SettingsPanel
-            settings={local}
-            durationSec={notes.data.duration_sec}
-            onChange={onChange}
-          />
+
+          <div className="flex flex-col gap-6 lg:flex-row">
+            <div className="min-w-0 flex-1">
+              {viewSimplified && simplifiedNotes.data ? (
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs text-amber-400">
+                    Simplified ({local.difficulty.replace("_", " ")}) ·{" "}
+                    {simplifiedNotes.data.notes.length} notes
+                    {" "}(original: {notes.data.notes.length})
+                  </p>
+                  <FallingNotePreview data={simplifiedNotes.data} settings={local} />
+                </div>
+              ) : (
+                <FallingNotePreview data={notes.data} settings={local} />
+              )}
+            </div>
+            <SettingsPanel
+              settings={local}
+              durationSec={notes.data.duration_sec}
+              onChange={onChange}
+            />
+          </div>
         </div>
       )}
     </main>

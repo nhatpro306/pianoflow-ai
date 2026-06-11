@@ -13,6 +13,7 @@ from app.domains.jobs.service import (
     create_parse_midi_job,
     create_render_sheet_job,
     create_render_video_job,
+    create_simplify_midi_job,
     create_transcribe_audio_job,
     require_job,
 )
@@ -111,6 +112,29 @@ def enqueue_transcribe_audio(
     """Audio → MIDI Beta: enqueue transcription on q_audio (worker-side only)."""
     project = _get_project(db, project_id, user)
     result = create_transcribe_audio_job(
+        db,
+        queue,
+        project,
+        user,
+        request_id=getattr(request.state, "request_id", None),
+    )
+    if not result.created:
+        response.status_code = 200
+    return _job_out(db, result.job, user.id)
+
+
+@router.post("/projects/{project_id}/jobs/simplify-midi", status_code=201, response_model=JobOut)
+def enqueue_simplify_midi(
+    project_id: uuid.UUID,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(get_current_user),
+    queue: QueueService = Depends(get_queue),
+) -> JobOut:
+    """Produce simplified notes JSON + MIDI for the current difficulty setting."""
+    project = _get_project(db, project_id, user)
+    result = create_simplify_midi_job(
         db,
         queue,
         project,

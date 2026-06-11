@@ -3,6 +3,7 @@
 import {
   LIMITS,
   THEME_PRESETS,
+  type Difficulty,
   type NoteColors,
   type RenderSettings,
 } from "@pianoflow/shared-types";
@@ -210,6 +211,28 @@ export function SettingsPanel({ settings, durationSec, onChange }: Props) {
         <p className="text-xs text-zinc-500">
           Estimated video length: {estMin}:{String(estSec).padStart(2, "0")}
         </p>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h3 className="text-sm font-semibold">Difficulty</h3>
+        <select
+          value={settings.difficulty}
+          onChange={(e) => onChange({ difficulty: e.target.value as Difficulty })}
+          className="rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm"
+          aria-label="Difficulty"
+        >
+          {LIMITS.DIFFICULTIES.map((d) => (
+            <option key={d} value={d}>
+              {d === "original" ? "Original" : d === "easy" ? "Easy" : "Very Easy"}
+            </option>
+          ))}
+        </select>
+        {settings.difficulty !== "original" && (
+          <p className="text-xs text-amber-400">
+            Simplified version — fewer notes, melody preserved.{" "}
+            <span className="text-zinc-500">Run &ldquo;Simplify&rdquo; to generate.</span>
+          </p>
+        )}
       </section>
 
       <section className="flex flex-col gap-2">

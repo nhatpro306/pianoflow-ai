@@ -51,6 +51,7 @@ export interface AnalysisSummary {
   pitch_min: number | null;
   pitch_max: number | null;
   hand_split: string | null;
+  simplified_notes?: Record<string, string>;
 }
 
 export interface Project {
@@ -108,7 +109,10 @@ export const api = {
   deleteProject: (id: string) =>
     apiFetch<void>(`/api/v1/projects/${id}`, { method: "DELETE" }),
 
-  getNotes: (id: string) => apiFetch<NoteData>(`/api/v1/projects/${id}/notes`),
+  getNotes: (id: string, difficulty?: string) =>
+    apiFetch<NoteData>(
+      `/api/v1/projects/${id}/notes${difficulty && difficulty !== "original" ? `?difficulty=${difficulty}` : ""}`,
+    ),
 
   getSettings: (id: string) =>
     apiFetch<RenderSettings>(`/api/v1/projects/${id}/settings`),
@@ -162,6 +166,15 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ upload_id: uploadId }),
     }),
+
+  simplifyMidi: (projectId: string) =>
+    apiFetch<Job>(`/api/v1/projects/${projectId}/jobs/simplify-midi`, { method: "POST" }),
+
+  renderSheet: (projectId: string) =>
+    apiFetch<Job>(`/api/v1/projects/${projectId}/jobs/render-sheet`, { method: "POST" }),
+
+  renderVideo: (projectId: string) =>
+    apiFetch<Job>(`/api/v1/projects/${projectId}/jobs/render-video`, { method: "POST" }),
 
   getTranscription: (projectId: string) =>
     apiFetch<{

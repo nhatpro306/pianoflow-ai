@@ -136,11 +136,28 @@ def handle_render_video(payload: dict) -> None:
             db.commit()
             return
 
-        notes_key = (project.analysis_summary or {}).get("notes_key")
-        if not notes_key:
-            _fail_job(db, job, "NOTES_NOT_READY", "Parsed notes are not ready.", request_id)
-            db.commit()
-            return
+        summary = project.analysis_summary or {}
+        snapshot = job.settings_snapshot or {}
+        difficulty = snapshot.get("difficulty", "original")
+
+        if difficulty in ("easy", "very_easy"):
+            notes_key = (summary.get("simplified_notes") or {}).get(difficulty)
+            if not notes_key:
+                _fail_job(
+                    db,
+                    job,
+                    "SIMPLIFIED_NOTES_NOT_READY",
+                    f"Simplified notes ({difficulty}) not ready. Run simplify-midi first.",
+                    request_id,
+                )
+                db.commit()
+                return
+        else:
+            notes_key = summary.get("notes_key")
+            if not notes_key:
+                _fail_job(db, job, "NOTES_NOT_READY", "Parsed notes are not ready.", request_id)
+                db.commit()
+                return
 
         job.status = "processing"
         job.started_at = job.started_at or datetime.now(UTC)
@@ -150,7 +167,6 @@ def handle_render_video(payload: dict) -> None:
         _event(db, job, "job.started", {"job_type": job.job_type}, request_id=request_id)
         db.commit()
 
-        snapshot = job.settings_snapshot or {}
         speed = clamp_speed(float(snapshot.get("speed_multiplier", 1.0)))
         config = _render_settings(snapshot)
 

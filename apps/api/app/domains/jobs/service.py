@@ -29,6 +29,7 @@ PARSE_MIDI = "parse_midi"
 RENDER_SHEET = "render_sheet"
 RENDER_VIDEO = "render_video"
 TRANSCRIBE_AUDIO = "transcribe_audio"
+SIMPLIFY_MIDI = "simplify_midi"
 DEFAULT_QUEUE = "q_default"
 
 
@@ -330,6 +331,77 @@ def create_transcribe_audio_job(
         project.transcription_status = "failed"
         db.flush()
         raise EnqueueError("Could not enqueue transcription job.") from exc
+
+    job.broker_message_id = message_id
+    db.flush()
+    return EnqueuedJob(job=job, created=True)
+
+
+def create_simplify_midi_job(
+    db: Session,
+    queue: QueueService,
+    project: Project,
+    user: CurrentUser,
+    request_id: str | None = None,
+) -> EnqueuedJob:
+    """Produce simplified notes JSON + MIDI for the difficulty in the current settings."""
+    if project.status != "ready" or not (project.analysis_summary or {}).get("notes_key"):
+        raise ConflictError("Notes are not ready yet.", code="NOTES_NOT_READY")
+
+    settings_version, snapshot = _settings_snapshot(db, project.id)
+    difficulty = snapshot.get("difficulty", "original")
+    if difficulty not in ("easy", "very_easy"):
+        raise ConflictError(
+            "Difficulty must be 'easy' or 'very_easy' to simplify.",
+            code="INVALID_DIFFICULTY",
+        )
+
+    jobs = JobRepository(db)
+    duplicate = jobs.find_live_duplicate(project.id, user.id, SIMPLIFY_MIDI, settings_version)
+    if duplicate is not None:
+        return EnqueuedJob(job=duplicate, created=False)
+
+    job = jobs.create(
+        project_id=project.id,
+        user_id=user.id,
+        job_type=SIMPLIFY_MIDI,
+        status="queued",
+        progress=0,
+        progress_message="Waiting in queue",
+        settings_snapshot=snapshot,
+        settings_version=settings_version,
+        queue_name=DEFAULT_QUEUE,
+    )
+    ProjectEventRepository(db).append(
+        project_id=project.id,
+        user_id=user.id,
+        job_id=job.id,
+        event_type="job.enqueued",
+        payload={"job_type": SIMPLIFY_MIDI, "difficulty": difficulty},
+        request_id=request_id,
+    )
+    db.flush()
+
+    payload = {
+        "job_id": str(job.id),
+        "job_type": SIMPLIFY_MIDI,
+        "project_id": str(project.id),
+        "user_id": str(user.id),
+        "attempt": job.attempt + 1,
+        "settings_version": settings_version,
+        "queue_name": DEFAULT_QUEUE,
+        "created_at": datetime.now(UTC).isoformat(),
+        "trace_id": request_id,
+    }
+    try:
+        message_id = queue.enqueue(DEFAULT_QUEUE, payload)
+    except QueueError as exc:
+        job.status = "failed"
+        job.error_type = "QUEUE_ENQUEUE_FAILED"
+        job.error_message = "Could not enqueue simplify job."
+        job.finished_at = datetime.now(UTC)
+        db.flush()
+        raise EnqueueError("Could not enqueue simplify job.") from exc
 
     job.broker_message_id = message_id
     db.flush()
