@@ -388,7 +388,7 @@ Explain:
 
 - Free tier must be capped.
 - Full video render must be limited by minutes.
-- 4K should not be in MVP.
+- higher-than-1080p should not be in MVP.
 - Priority queue should be paid.
 - Old outputs can be deleted or archived based on plan.
 

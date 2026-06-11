@@ -23,7 +23,7 @@
 |---|---|---|---|
 | C1 | **Render abuse** — one user queues 500 videos | High | `usage_limits`: default free tier = 10 uploads/day, 15 render jobs/day, 30 min rendered video-seconds/day, 3 concurrent active jobs; enforced API-side with 429 |
 | C2 | **Storage growth unbounded** | High | Outputs expire after 30 days (`expires_at` cleanup job + lifecycle rule backstop); per-user storage quota (1 GB free tier) tracked in `usage_limits.storage_bytes`; tmp/ auto-purged per job and via 1-day lifecycle |
-| C3 | **Long/4K renders burn CPU dollars** | Med | No 4K in MVP (max 1080p); 30 fps fixed; duration cap; speed-50% doubles video length — counted against video-seconds quota |
+| C3 | **Long high-resolution renders burn CPU dollars** | Med | Max 1080p in MVP; 30 fps fixed; duration cap; speed-50% doubles video length — counted against video-seconds quota |
 | C4 | **Egress costs from video downloads** | Med | Signed URLs expire 1 h; no public hotlinking; at scale CloudFront in front of S3 reduces egress unit cost; download counts logged to spot anomalies |
 | C5 | **Idle infra cost creep** | Low | Stage-2 target < $20/mo verified; AWS Budgets alarms at stages 3–4; scale-to-zero scheduled scaling for workers off-peak |
 

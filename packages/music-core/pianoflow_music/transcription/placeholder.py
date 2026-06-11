@@ -13,15 +13,13 @@ import hashlib
 import io
 import wave
 
-import mido
-
+from pianoflow_music.midi.write import note_data_to_midi_bytes
 from pianoflow_music.notes.model import SCHEMA_VERSION, Note, NoteData
 from pianoflow_music.transcription.engine import TranscriptionError, TranscriptionResult
 
 ENGINE_NAME = "placeholder_deterministic_v1"
 
 _BPM = 90.0
-_TICKS_PER_BEAT = 480
 # C-major pentatonic across two octaves — placeholder draft stays musical.
 _PITCH_POOL = (48, 50, 52, 55, 57, 60, 62, 64, 67, 69, 72)
 _MIN_NOTES = 8
@@ -132,7 +130,7 @@ class PlaceholderDeterministicEngine:
             status="completed",
             engine=ENGINE_NAME,
             duration_seconds=round(duration, 2),
-            draft_midi_bytes=_to_midi_bytes(notes),
+            draft_midi_bytes=note_data_to_midi_bytes(note_data),
             notes=note_data,
             confidence=confidence,
             report=report,
@@ -144,30 +142,3 @@ _NOTE_NAMES = ("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
 
 def _pitch_name(pitch: int) -> str:
     return f"{_NOTE_NAMES[pitch % 12]}{pitch // 12 - 1}"
-
-
-def _to_midi_bytes(notes: list[Note]) -> bytes:
-    midi = mido.MidiFile(ticks_per_beat=_TICKS_PER_BEAT)
-    track = mido.MidiTrack()
-    track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(_BPM), time=0))
-
-    events: list[tuple[float, int, str, int, int]] = []  # (time, order, type, pitch, velocity)
-    for note in notes:
-        events.append((note.start, 1, "note_on", note.pitch, note.velocity))
-        events.append((note.end, 0, "note_off", note.pitch, 0))
-    events.sort()
-
-    seconds_per_tick = 60.0 / (_BPM * _TICKS_PER_BEAT)
-    last_tick = 0
-    for time_s, _, msg_type, pitch, velocity in events:
-        tick = round(time_s / seconds_per_tick)
-        track.append(
-            mido.Message(msg_type, note=pitch, velocity=velocity, time=max(tick - last_tick, 0))
-        )
-        last_tick = tick
-    track.append(mido.MetaMessage("end_of_track", time=0))
-    midi.tracks.append(track)
-
-    buffer = io.BytesIO()
-    midi.save(file=buffer)
-    return buffer.getvalue()

@@ -692,7 +692,7 @@ Rules:
 1. Free tier must be capped.
 2. Preview render should be short.
 3. Full render should require paid plan or credits.
-4. 4K should not be in MVP.
+4. higher-than-1080p should not be in MVP.
 5. Audio transcription should be paid or credit-based.
 6. Priority queue should be paid.
 7. Storage retention should depend on plan.
@@ -1377,7 +1377,7 @@ What not to do:
 
 ```text
 do not write PNG frames to disk
-do not support 4K in MVP
+do not support higher-than-1080p in MVP
 do not render inside HTTP request
 ```
 
@@ -2027,7 +2027,7 @@ MVP:
 max 1080p
 fixed 30 fps
 max 10 min
-no 4K
+no higher-than-1080p
 ```
 
 Free plan:
@@ -2260,7 +2260,7 @@ frontend flow
 - Do not promise perfect transcription.
 - Do not skip tests for adapters.
 - Do not manually change production DB without migrations.
-- Do not add 4K rendering in MVP.
+- Do not add higher-than-1080p rendering in MVP.
 - Do not create a public copyrighted song library.
 
 ## 4. Code Organization Rules

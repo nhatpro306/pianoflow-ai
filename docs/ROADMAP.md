@@ -66,7 +66,7 @@
 - **Tasks:** music-core video modules (layout, glow/bloom blur layer, fog, hit line, keyboard, FrameRenderer with visibility index); FluidSynth `AudioRenderer` adapter + FluidR3_GM in worker image; speed-scaled MIDI re-render (single-timeline model, `VIDEO_TUTORIAL_SPEC.md` §4); FFmpeg stdin-pipe + WAV mux (H.264 + AAC); `render_video` job with staged progress; 720p/1080p × 30/60 fps; golden-frame tests per theme + audio-onset sync assertion; `VideoPreview` + export page.
 - **Deliverables:** 2-min song → watchable 720p MP4 **with audio** in < 2 min on dev hardware; all color themes; no drift over a 10-min file (< 1 frame).
 - **Difficulty:** High (perf + visual quality + sync). **Complexity:** XL.
-- **Do NOT:** particle effects (Phase 7C); 4K; per-segment parallel rendering; vertical format (moved to 7C with Shorts work); custom soundfont upload.
+- **Do NOT:** particle effects (Phase 7C); resolution above 1080p; per-segment parallel rendering; vertical format (moved to 7C with Shorts work); custom soundfont upload.
 
 ## Phase 7C — Video Visual Polish (added; after Phase 8, optional before 9)
 

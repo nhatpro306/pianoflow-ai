@@ -88,6 +88,49 @@ class TestGoldenPath:
         assert body["job_type"] == "render_sheet"
         assert body["status"] == "queued"
 
+    def test_render_video_requires_ready_notes(self, client: TestClient) -> None:
+        project_id = _create_project(client)
+        response = client.post(f"/api/v1/projects/{project_id}/jobs/render-video")
+        assert response.status_code == 409
+        assert response.json()["error"]["code"] == "NOTES_NOT_READY"
+
+    def test_render_video_enqueue_for_ready_project(
+        self, client: TestClient, simple_midi_bytes: bytes
+    ) -> None:
+        import json
+        import uuid
+
+        from app.infrastructure.database.models import Project
+        from app.infrastructure.database.session import get_sessionmaker
+        from app.infrastructure.storage.factory import get_storage
+        from pianoflow_music.midi.parse import parse_midi_bytes
+
+        project_id = _create_project(client)
+        notes_key = f"projects/{project_id}/notes/v2.json"
+        note_data = parse_midi_bytes(simple_midi_bytes)
+        get_storage().upload(
+            notes_key,
+            json.dumps(note_data.to_dict(), separators=(",", ":")).encode(),
+            "application/json",
+        )
+        with get_sessionmaker()() as db:
+            project = db.get(Project, uuid.UUID(project_id))
+            assert project is not None
+            project.status = "ready"
+            project.analysis_summary = {**note_data.summary(), "notes_key": notes_key}
+            db.commit()
+
+        response = client.post(f"/api/v1/projects/{project_id}/jobs/render-video")
+        assert response.status_code == 201, response.text
+        body = response.json()
+        assert body["job_type"] == "render_video"
+        assert body["status"] == "queued"
+
+        # Dedup: identical live job returns 200 with the same id.
+        second = client.post(f"/api/v1/projects/{project_id}/jobs/render-video")
+        assert second.status_code == 200
+        assert second.json()["id"] == body["id"]
+
 
 class TestErrorPaths:
     def test_invalid_midi_rejected_on_confirm(self, client: TestClient) -> None:

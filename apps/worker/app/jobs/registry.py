@@ -36,4 +36,5 @@ def handle_noop(payload: dict) -> None:
 # Register real handlers.
 from app.jobs import parse_midi as _parse_midi  # noqa: E402,F401
 from app.jobs import render_sheet as _render_sheet  # noqa: E402,F401
+from app.jobs import render_video as _render_video  # noqa: E402,F401
 from app.jobs import transcribe_audio as _transcribe_audio  # noqa: E402,F401

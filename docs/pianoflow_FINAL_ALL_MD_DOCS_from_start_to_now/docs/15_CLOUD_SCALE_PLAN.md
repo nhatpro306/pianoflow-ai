@@ -65,7 +65,7 @@ queue.audio
 
 - max video length
 - max resolution
-- no 4K in MVP
+- no higher-than-1080p in MVP
 - preview-only free video
 - audio transcription paid
 - storage lifecycle

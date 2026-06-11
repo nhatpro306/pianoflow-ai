@@ -5,6 +5,8 @@ description = "PianoFlow AI — pure music-processing library (no I/O, no vendor
 requires-python = ">=3.12"
 dependencies = [
     "mido>=1.3",
+    "numpy>=2.4.6",
+    "pillow>=12.2.0",
     "pretty_midi>=0.2.10",
 ]
 # Phase 6 adds: music21. Phase 7: numpy, opencv-python-headless, pillow.

@@ -17,7 +17,7 @@ User uploads MIDI → app renders a Synthesia-style falling-note piano tutorial 
 - Preset color themes + custom HEX input
 - YouTube-style playback speed: 0.25x / 0.5x / 0.75x / 1x / 1.25x / 1.5x / 2x (+ custom, clamped)
 - Real-time canvas preview with live audio before export
-- Downloadable MP4 (H.264 + AAC) that preserves the exact preview settings
+- Private streaming-only MP4 (H.264 + AAC) that preserves the exact preview settings
 
 MIDI-only input (audio transcription stays Phase 12 — unchanged).
 
@@ -30,7 +30,7 @@ The request's 3 phases slot into the existing roadmap as follows. **Existing Pha
 | Spec phase | Roadmap slot | Name | Contents |
 |---|---|---|---|
 | Phase 1 | **Phase 4B** (new, before queue work or parallel to Phase 5) | Live preview & settings | Color pickers + presets + HEX, speed selector + estimated duration, falling-note canvas preview animation, real-time piano audio (Web Audio), live speed control |
-| Phase 2 | **Phase 7** (replaces old Phase 7 scope) | Server-side export | FluidSynth MIDI→WAV, frame renderer with selected colors/speed, FFmpeg mux → MP4, download |
+| Phase 2 | **Phase 7** (replaces old Phase 7 scope) | Server-side export | FluidSynth MIDI→WAV, frame renderer with selected colors/speed, FFmpeg mux → private streaming-only MP4 |
 | Phase 3 | **Phase 7C** (polish, after Phase 8 OK) | Visual polish | Bloom upgrade, hit particles, better key lighting, fog refinement, perf tuning |
 
 Rationale: preview (4B) is pure frontend + already-parsed notes JSON — no queue dependency, immediate demo value. Export (7) needs the worker/queue from Phases 5–6. Polish (7C) is deferred until sheet + beginner mode exist, per the original anti-scope-creep rule.
@@ -155,7 +155,7 @@ Upload/parse/layout/settings steps from the request happen before the job exists
 
 ## 10. Acceptance Criteria (checked at Phase 7 completion)
 
-Functional: valid MIDI → MP4 with synced audio; notes aligned to correct keys (A0–C8, black keys offset); long/short notes render and sound proportionally; velocity audible; sustain respected; colors (per hand), presets, HEX, glow intensity, background all preserved exactly in export; reset-to-default restores `classic`; all 7 speed presets + custom work in both preview and export; estimated duration shown; key lights exactly at note start; no drift over a 10-minute file (assert: last-note audio onset vs frame position < 1 frame); MP4 downloadable, H.264+AAC, plays in Chrome/QuickTime.
+Functional: valid MIDI → private streaming-only MP4 with synced audio; notes aligned to correct keys (A0–C8, black keys offset); long/short notes render and sound proportionally; velocity audible; sustain respected; colors (per hand), presets, HEX, glow intensity, background all preserved exactly in export; reset-to-default restores `classic`; all 7 speed presets + custom work in both preview and export; estimated duration shown; key lights exactly at note start; no drift over a 10-minute file (assert: last-note audio onset vs frame position < 1 frame); H.264+AAC plays in Chrome/QuickTime through the app stream endpoint.
 
 Tests: golden-frame compares per theme; WAV onset-vs-timeline assertion (librosa onset detect on 5-note fixture); ffprobe duration == expected ± 1 frame; HEX/speed validation unit tests; preview clock drift test (mock audio clock).
 
@@ -163,4 +163,4 @@ Tests: golden-frame compares per theme; WAV onset-vs-timeline assertion (librosa
 
 ## 11. Out of Scope (unchanged guards)
 
-Audio transcription (Phase 12), particles before 7C, 4K, custom soundfont upload, per-note color editing, watermarks. Speed below 0.25x/above 2x rejected (quota abuse + absurd render cost at 0.1x).
+Audio transcription (Phase 12), particles before 7C, resolution above 1080p, custom soundfont upload, per-note color editing, watermarks. Speed below 0.25x/above 2x rejected (quota abuse + absurd render cost at 0.1x).

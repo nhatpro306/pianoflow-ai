@@ -539,7 +539,7 @@ Explain:
 
 - Free tier must be capped.
 - Full video render must be limited by minutes.
-- 4K should not be in MVP.
+- higher-than-1080p should not be in MVP.
 - Priority queue should be paid.
 - Old outputs can be deleted or archived based on plan.
 
@@ -2011,7 +2011,7 @@ Add only after MIDI pipeline works:
 - payment
 - teacher classroom
 - public sharing
-- 4K render
+- higher-than-1080p render
 - mobile app
 - full sheet editor
 
@@ -4371,7 +4371,7 @@ worker compute
 - Free users get preview limits.
 - Audio transcription is paid or credit-based.
 - Full-length video costs credits or paid plan.
-- 4K is not MVP.
+- higher-than-1080p is not MVP.
 - Long storage retention is paid.
 - Priority queue is paid.
 - Old outputs are cleaned up.
@@ -4690,7 +4690,7 @@ queue.audio
 
 - max video length
 - max resolution
-- no 4K in MVP
+- no higher-than-1080p in MVP
 - preview-only free video
 - audio transcription paid
 - storage lifecycle
@@ -4997,7 +4997,7 @@ Do:
 Do not:
 - add video download button
 - expose raw MP4 URL
-- add 4K
+- add higher-than-1080p
 ```
 
 ## Phase 11 Prompt — Audio to MIDI Beta
@@ -5425,7 +5425,7 @@ Mitigation:
 
 - usage_limits table
 - max duration
-- no 4K MVP
+- no higher-than-1080p MVP
 - paid audio transcription
 - autoscaling workers
 - lifecycle cleanup
@@ -6506,7 +6506,7 @@ Rules:
 1. Free tier must be capped.
 2. Preview render should be short.
 3. Full render should require paid plan or credits.
-4. 4K should not be in MVP.
+4. higher-than-1080p should not be in MVP.
 5. Audio transcription should be paid or credit-based.
 6. Priority queue should be paid.
 7. Storage retention should depend on plan.
@@ -7191,7 +7191,7 @@ What not to do:
 
 ```text
 do not write PNG frames to disk
-do not support 4K in MVP
+do not support higher-than-1080p in MVP
 do not render inside HTTP request
 ```
 
@@ -7841,7 +7841,7 @@ MVP:
 max 1080p
 fixed 30 fps
 max 10 min
-no 4K
+no higher-than-1080p
 ```
 
 Free plan:
@@ -8074,7 +8074,7 @@ frontend flow
 - Do not promise perfect transcription.
 - Do not skip tests for adapters.
 - Do not manually change production DB without migrations.
-- Do not add 4K rendering in MVP.
+- Do not add higher-than-1080p rendering in MVP.
 - Do not create a public copyrighted song library.
 
 ## 4. Code Organization Rules
@@ -8677,7 +8677,7 @@ Rules:
 1. Free tier must be capped.
 2. Preview render should be short.
 3. Full render should require paid plan or credits.
-4. 4K should not be in MVP.
+4. higher-than-1080p should not be in MVP.
 5. Audio transcription should be paid or credit-based.
 6. Priority queue should be paid.
 7. Storage retention should depend on plan.
@@ -9146,7 +9146,7 @@ MVP:
 max 1080p
 fixed 30 fps
 max 10 min
-no 4K
+no higher-than-1080p
 ```
 
 Free plan:
@@ -9569,7 +9569,7 @@ Alternative:
 - Do not promise perfect transcription.
 - Do not skip tests for adapters.
 - Do not manually change production DB without migrations.
-- Do not add 4K rendering in MVP.
+- Do not add higher-than-1080p rendering in MVP.
 - Do not create a public copyrighted song library.
 
 ## 4. Code Organization Rules
@@ -10263,7 +10263,7 @@ What not to do:
 
 ```text
 do not write PNG frames to disk
-do not support 4K in MVP
+do not support higher-than-1080p in MVP
 do not render inside HTTP request
 ```
 
@@ -11654,7 +11654,7 @@ Rules:
 1. Free tier must be capped.
 2. Preview render should be short.
 3. Full render should require paid plan or credits.
-4. 4K should not be in MVP.
+4. higher-than-1080p should not be in MVP.
 5. Audio transcription should be paid or credit-based.
 6. Priority queue should be paid.
 7. Storage retention should depend on plan.
@@ -12339,7 +12339,7 @@ What not to do:
 
 ```text
 do not write PNG frames to disk
-do not support 4K in MVP
+do not support higher-than-1080p in MVP
 do not render inside HTTP request
 ```
 
@@ -12989,7 +12989,7 @@ MVP:
 max 1080p
 fixed 30 fps
 max 10 min
-no 4K
+no higher-than-1080p
 ```
 
 Free plan:
@@ -13222,7 +13222,7 @@ frontend flow
 - Do not promise perfect transcription.
 - Do not skip tests for adapters.
 - Do not manually change production DB without migrations.
-- Do not add 4K rendering in MVP.
+- Do not add higher-than-1080p rendering in MVP.
 - Do not create a public copyrighted song library.
 
 ## 4. Code Organization Rules
@@ -13903,7 +13903,7 @@ Add only after MIDI pipeline works:
 - payment
 - teacher classroom
 - public sharing
-- 4K render
+- higher-than-1080p render
 - mobile app
 - full sheet editor
 
@@ -16263,7 +16263,7 @@ worker compute
 - Free users get preview limits.
 - Audio transcription is paid or credit-based.
 - Full-length video costs credits or paid plan.
-- 4K is not MVP.
+- higher-than-1080p is not MVP.
 - Long storage retention is paid.
 - Priority queue is paid.
 - Old outputs are cleaned up.
@@ -16582,7 +16582,7 @@ queue.audio
 
 - max video length
 - max resolution
-- no 4K in MVP
+- no higher-than-1080p in MVP
 - preview-only free video
 - audio transcription paid
 - storage lifecycle
@@ -16889,7 +16889,7 @@ Do:
 Do not:
 - add video download button
 - expose raw MP4 URL
-- add 4K
+- add higher-than-1080p
 ```
 
 ## Phase 11 Prompt — Audio to MIDI Beta
@@ -17317,7 +17317,7 @@ Mitigation:
 
 - usage_limits table
 - max duration
-- no 4K MVP
+- no higher-than-1080p MVP
 - paid audio transcription
 - autoscaling workers
 - lifecycle cleanup
@@ -18220,7 +18220,7 @@ MIDI → piano roll preview → sheet PDF → falling-note tutorial video → be
 - payment
 - teacher classroom
 - public sharing
-- 4K render
+- higher-than-1080p render
 - mobile app
 - full sheet editor
 
@@ -20174,7 +20174,7 @@ worker compute
 - Free users get preview limits.
 - Audio transcription is paid or credit-based.
 - Full-length video costs credits or paid plan.
-- 4K is not MVP.
+- higher-than-1080p is not MVP.
 - Long storage retention is paid.
 - Priority queue is paid.
 - Old outputs are cleaned up.
@@ -20454,7 +20454,7 @@ queue.audio
 
 - max video length
 - max resolution
-- no 4K in MVP
+- no higher-than-1080p in MVP
 - preview-only free video
 - audio transcription paid
 - storage lifecycle
@@ -20720,7 +20720,7 @@ Do:
 Do not:
 - add video download button
 - expose raw MP4 URL
-- add 4K
+- add higher-than-1080p
 ```
 
 ## Phase 11 Prompt — Audio to MIDI Beta
@@ -21100,7 +21100,7 @@ Mitigation:
 
 - usage_limits table
 - max duration
-- no 4K MVP
+- no higher-than-1080p MVP
 - paid audio transcription
 - autoscaling workers
 - lifecycle cleanup
@@ -21716,7 +21716,7 @@ Add only after MIDI pipeline works:
 - payment
 - teacher classroom
 - public sharing
-- 4K render
+- higher-than-1080p render
 - mobile app
 - full sheet editor
 
@@ -24076,7 +24076,7 @@ worker compute
 - Free users get preview limits.
 - Audio transcription is paid or credit-based.
 - Full-length video costs credits or paid plan.
-- 4K is not MVP.
+- higher-than-1080p is not MVP.
 - Long storage retention is paid.
 - Priority queue is paid.
 - Old outputs are cleaned up.
@@ -24395,7 +24395,7 @@ queue.audio
 
 - max video length
 - max resolution
-- no 4K in MVP
+- no higher-than-1080p in MVP
 - preview-only free video
 - audio transcription paid
 - storage lifecycle
@@ -24702,7 +24702,7 @@ Do:
 Do not:
 - add video download button
 - expose raw MP4 URL
-- add 4K
+- add higher-than-1080p
 ```
 
 ## Phase 11 Prompt — Audio to MIDI Beta
@@ -25130,7 +25130,7 @@ Mitigation:
 
 - usage_limits table
 - max duration
-- no 4K MVP
+- no higher-than-1080p MVP
 - paid audio transcription
 - autoscaling workers
 - lifecycle cleanup

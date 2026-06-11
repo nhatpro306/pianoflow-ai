@@ -285,7 +285,7 @@ Rules:
 1. Free tier must be capped.
 2. Preview render should be short.
 3. Full render should require paid plan or credits.
-4. 4K should not be in MVP.
+4. higher-than-1080p should not be in MVP.
 5. Audio transcription should be paid or credit-based.
 6. Priority queue should be paid.
 7. Storage retention should depend on plan.

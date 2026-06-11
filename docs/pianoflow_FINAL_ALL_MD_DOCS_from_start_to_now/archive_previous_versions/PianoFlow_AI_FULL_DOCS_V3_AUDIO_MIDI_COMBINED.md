@@ -373,7 +373,7 @@ Add only after MIDI pipeline works:
 - payment
 - teacher classroom
 - public sharing
-- 4K render
+- higher-than-1080p render
 - mobile app
 - full sheet editor
 
@@ -2733,7 +2733,7 @@ worker compute
 - Free users get preview limits.
 - Audio transcription is paid or credit-based.
 - Full-length video costs credits or paid plan.
-- 4K is not MVP.
+- higher-than-1080p is not MVP.
 - Long storage retention is paid.
 - Priority queue is paid.
 - Old outputs are cleaned up.
@@ -3052,7 +3052,7 @@ queue.audio
 
 - max video length
 - max resolution
-- no 4K in MVP
+- no higher-than-1080p in MVP
 - preview-only free video
 - audio transcription paid
 - storage lifecycle
@@ -3359,7 +3359,7 @@ Do:
 Do not:
 - add video download button
 - expose raw MP4 URL
-- add 4K
+- add higher-than-1080p
 ```
 
 ## Phase 11 Prompt — Audio to MIDI Beta
@@ -3787,7 +3787,7 @@ Mitigation:
 
 - usage_limits table
 - max duration
-- no 4K MVP
+- no higher-than-1080p MVP
 - paid audio transcription
 - autoscaling workers
 - lifecycle cleanup

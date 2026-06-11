@@ -1,9 +1,9 @@
 # Heavyweight image: rendering toolchain lives here, not in the API image.
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-# FFmpeg now; MuseScore added in Phase 6 (sheet generation).
+# FFmpeg (mux) + FluidSynth + FluidR3_GM soundfont (video tutorial audio).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg \
+    && apt-get install -y --no-install-recommends ffmpeg fluidsynth fluid-soundfont-gm \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /repo

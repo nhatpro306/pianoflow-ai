@@ -74,7 +74,7 @@ Mitigation:
 
 - usage_limits table
 - max duration
-- no 4K MVP
+- no higher-than-1080p MVP
 - paid audio transcription
 - autoscaling workers
 - lifecycle cleanup

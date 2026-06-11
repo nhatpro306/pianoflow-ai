@@ -168,7 +168,7 @@ What not to do:
 
 ```text
 do not write PNG frames to disk
-do not support 4K in MVP
+do not support higher-than-1080p in MVP
 do not render inside HTTP request
 ```
 

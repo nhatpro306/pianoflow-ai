@@ -12,6 +12,7 @@ from app.domains.jobs.schemas import JobOut
 from app.domains.jobs.service import (
     create_parse_midi_job,
     create_render_sheet_job,
+    create_render_video_job,
     create_transcribe_audio_job,
     require_job,
 )
@@ -65,6 +66,28 @@ def enqueue_render_sheet(
 ) -> JobOut:
     project = _get_project(db, project_id, user)
     result = create_render_sheet_job(
+        db,
+        queue,
+        project,
+        user,
+        request_id=getattr(request.state, "request_id", None),
+    )
+    if not result.created:
+        response.status_code = 200
+    return _job_out(db, result.job, user.id)
+
+
+@router.post("/projects/{project_id}/jobs/render-video", status_code=201, response_model=JobOut)
+def enqueue_render_video(
+    project_id: uuid.UUID,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(get_current_user),
+    queue: QueueService = Depends(get_queue),
+) -> JobOut:
+    project = _get_project(db, project_id, user)
+    result = create_render_video_job(
         db,
         queue,
         project,

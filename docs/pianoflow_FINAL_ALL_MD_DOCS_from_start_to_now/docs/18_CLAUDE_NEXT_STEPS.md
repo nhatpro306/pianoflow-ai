@@ -14,6 +14,9 @@ Phase 3 — projects CRUD, dev auth, uploaded_files
 Phase 4 — 2-phase MIDI upload + parse_midi worker + notes JSON in storage
 Phase 5 — sheet generation (MusicXML + simple PDF fallback), output_files,
           render_sheet job + outputs listing
+Phase 6 — minimal tutorial video streaming: render_video job, falling-note
+          frame renderer, FluidSynth audio, FFmpeg H.264/AAC mux, private
+          video_mp4 output metadata, stream-url access, no MP4 download
 Phase 11 (Beta slice) — audio upload with rights attestation,
           transcribe_audio job on q_audio, TranscriptionEngine adapter with
           deterministic placeholder engine, draft MIDI + notes/confidence/
@@ -22,14 +25,13 @@ Output policy — GET outputs is metadata-only; POST download-url (PDF/MIDI/
           MusicXML only) and POST stream-url (video only) endpoints
 ```
 
-Not yet implemented: tutorial video rendering/streaming (Phase 6), beginner
-mode (Phase 7), usage limits table (Phase 8), Supabase auth (Phase 9),
-real transcription model, billing.
+Not yet implemented: beginner mode (Phase 7), usage limits table (Phase 8),
+Supabase auth (Phase 9), real transcription model, billing.
 
 ## Immediate Next Step
 
 ```text
-Phase 6 — Tutorial Video Streaming (streaming-only, no MP4 download)
+Phase 7 — Beginner Mode
 ```
 
 ## Phase 2 Acceptance Criteria

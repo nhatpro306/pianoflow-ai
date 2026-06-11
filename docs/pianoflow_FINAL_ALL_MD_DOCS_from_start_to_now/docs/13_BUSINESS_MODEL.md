@@ -84,7 +84,7 @@ worker compute
 - Free users get preview limits.
 - Audio transcription is paid or credit-based.
 - Full-length video costs credits or paid plan.
-- 4K is not MVP.
+- higher-than-1080p is not MVP.
 - Long storage retention is paid.
 - Priority queue is paid.
 - Old outputs are cleaned up.

@@ -160,7 +160,7 @@ MVP:
 max 1080p
 fixed 30 fps
 max 10 min
-no 4K
+no higher-than-1080p
 ```
 
 Free plan:

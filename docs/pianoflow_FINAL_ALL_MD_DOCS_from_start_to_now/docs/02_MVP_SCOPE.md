@@ -73,7 +73,7 @@ Add only after MIDI pipeline works:
 - payment
 - teacher classroom
 - public sharing
-- 4K render
+- higher-than-1080p render
 - mobile app
 - full sheet editor
 

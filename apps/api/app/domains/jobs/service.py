@@ -27,6 +27,7 @@ from app.infrastructure.queue.base import QueueError, QueueService
 
 PARSE_MIDI = "parse_midi"
 RENDER_SHEET = "render_sheet"
+RENDER_VIDEO = "render_video"
 TRANSCRIBE_AUDIO = "transcribe_audio"
 DEFAULT_QUEUE = "q_default"
 
@@ -170,6 +171,72 @@ def create_render_sheet_job(
         job.finished_at = datetime.now(UTC)
         db.flush()
         raise EnqueueError("Could not enqueue sheet job.") from exc
+
+    job.broker_message_id = message_id
+    db.flush()
+    return EnqueuedJob(job=job, created=True)
+
+
+def create_render_video_job(
+    db: Session,
+    queue: QueueService,
+    project: Project,
+    user: CurrentUser,
+    request_id: str | None = None,
+) -> EnqueuedJob:
+    """Tutorial video export. Output is streaming-only video_mp4 — the
+    output policy refuses download URLs for it. Settings constrain resolution
+    to 720p/1080p."""
+    if project.status != "ready" or not (project.analysis_summary or {}).get("notes_key"):
+        raise ConflictError("Notes are not ready yet.", code="NOTES_NOT_READY")
+
+    settings_version, snapshot = _settings_snapshot(db, project.id)
+    jobs = JobRepository(db)
+    duplicate = jobs.find_live_duplicate(project.id, user.id, RENDER_VIDEO, settings_version)
+    if duplicate is not None:
+        return EnqueuedJob(job=duplicate, created=False)
+
+    job = jobs.create(
+        project_id=project.id,
+        user_id=user.id,
+        job_type=RENDER_VIDEO,
+        status="queued",
+        progress=0,
+        progress_message="Waiting in queue",
+        settings_snapshot=snapshot,
+        settings_version=settings_version,
+        queue_name=DEFAULT_QUEUE,
+    )
+    ProjectEventRepository(db).append(
+        project_id=project.id,
+        user_id=user.id,
+        job_id=job.id,
+        event_type="job.enqueued",
+        payload={"job_type": RENDER_VIDEO},
+        request_id=request_id,
+    )
+    db.flush()
+
+    payload = {
+        "job_id": str(job.id),
+        "job_type": RENDER_VIDEO,
+        "project_id": str(project.id),
+        "user_id": str(user.id),
+        "attempt": job.attempt + 1,
+        "settings_version": settings_version,
+        "queue_name": DEFAULT_QUEUE,
+        "created_at": datetime.now(UTC).isoformat(),
+        "trace_id": request_id,
+    }
+    try:
+        message_id = queue.enqueue(DEFAULT_QUEUE, payload)
+    except QueueError as exc:
+        job.status = "failed"
+        job.error_type = "QUEUE_ENQUEUE_FAILED"
+        job.error_message = "Could not enqueue video job."
+        job.finished_at = datetime.now(UTC)
+        db.flush()
+        raise EnqueueError("Could not enqueue video job.") from exc
 
     job.broker_message_id = message_id
     db.flush()

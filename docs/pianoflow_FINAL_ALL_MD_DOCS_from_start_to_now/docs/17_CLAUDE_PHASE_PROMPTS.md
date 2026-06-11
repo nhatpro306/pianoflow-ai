@@ -139,7 +139,7 @@ Do:
 Do not:
 - add video download button
 - expose raw MP4 URL
-- add 4K
+- add higher-than-1080p
 ```
 
 ## Phase 11 Prompt — Audio to MIDI Beta

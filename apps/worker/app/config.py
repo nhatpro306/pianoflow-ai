@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     supabase_bucket_analysis: str = "pianoflow-analysis"
     supabase_bucket_outputs: str = "pianoflow-outputs"
     api_base_url: str = "http://localhost:8000"
+    # FluidR3_GM lands at this path in the worker image (video rendering).
+    soundfont_path: str = "/usr/share/sounds/sf2/FluidR3_GM.sf2"
     storage_signing_secret: str = "dev-only-not-a-secret"
     log_level: str = "INFO"
 
