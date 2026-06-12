@@ -82,6 +82,19 @@ export interface Job extends JobBrief {
   finished_at: string | null;
 }
 
+export interface Output {
+  id: string;
+  kind: string;
+  job_id: string;
+  content_type: string;
+  size_bytes: number;
+  metadata: Record<string, unknown> | null;
+  downloadable: boolean;
+  streamable: boolean;
+  file_expires_at: string | null;
+  created_at: string;
+}
+
 export interface UploadInit {
   upload_id: string;
   upload_url: string;
@@ -166,6 +179,21 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ upload_id: uploadId }),
     }),
+
+  listOutputs: (projectId: string) =>
+    apiFetch<{ items: Output[] }>(`/api/v1/projects/${projectId}/outputs`),
+
+  createDownloadUrl: (outputId: string) =>
+    apiFetch<{ download_url: string; expires_at: string }>(
+      `/api/v1/outputs/${outputId}/download-url`,
+      { method: "POST" },
+    ),
+
+  createStreamUrl: (outputId: string) =>
+    apiFetch<{ stream_url: string; expires_at: string; expires_in_seconds: number }>(
+      `/api/v1/outputs/${outputId}/stream-url`,
+      { method: "POST" },
+    ),
 
   simplifyMidi: (projectId: string) =>
     apiFetch<Job>(`/api/v1/projects/${projectId}/jobs/simplify-midi`, { method: "POST" }),

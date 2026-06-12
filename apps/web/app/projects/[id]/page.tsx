@@ -5,9 +5,17 @@ import Link from "next/link";
 import { use, useEffect, useRef, useState } from "react";
 
 import { FallingNotePreview } from "@/components/FallingNotePreview";
+import { OutputsPanel } from "@/components/OutputsPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { ApiError, api } from "@/lib/api";
-import { useJob, useNotes, usePatchSettings, useProject, useSettings } from "@/lib/hooks";
+import {
+  useJob,
+  useNotes,
+  useOutputs,
+  usePatchSettings,
+  useProject,
+  useSettings,
+} from "@/lib/hooks";
 
 export default function ProjectEditorPage({
   params,
@@ -35,6 +43,19 @@ export default function ProjectEditorPage({
     ready && viewSimplified && local?.difficulty !== "original",
     local?.difficulty,
   );
+  const hasActiveJobs = (project.data?.active_jobs?.length ?? 0) > 0;
+  const outputs = useOutputs(id, Boolean(ready), hasActiveJobs);
+
+  // When the polled job finishes, pick up new outputs and project summary
+  // (e.g. analysis_summary.simplified_notes) without a manual reload.
+  const jobStatus = activeJob.data?.status;
+  useEffect(() => {
+    if (jobStatus === "completed" || jobStatus === "failed") {
+      project.refetch();
+      outputs.refetch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobStatus]);
 
   useEffect(() => {
     if (serverSettings.data && local === null) setLocal(serverSettings.data);
@@ -203,6 +224,24 @@ export default function ProjectEditorPage({
               <p className="text-sm text-red-400">{generateError}</p>
             )}
           </div>
+
+          {activeJob.data &&
+            (activeJob.data.status === "queued" || activeJob.data.status === "processing") && (
+              <div className="flex flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+                <p className="text-sm text-zinc-400">
+                  {activeJob.data.job_type.replace("_", " ")}:{" "}
+                  {activeJob.data.progress_message ?? "Working..."}
+                </p>
+                <div className="h-2 overflow-hidden rounded bg-zinc-900">
+                  <div
+                    className="h-full bg-cyan-400 transition-all"
+                    style={{ width: `${activeJob.data.progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+          <OutputsPanel outputs={outputs.data?.items ?? []} />
 
           <div className="flex flex-col gap-6 lg:flex-row">
             <div className="min-w-0 flex-1">

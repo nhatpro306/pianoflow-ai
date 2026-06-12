@@ -43,6 +43,15 @@ export function useNotes(id: string, enabled: boolean, difficulty?: string) {
   });
 }
 
+export function useOutputs(id: string, enabled: boolean, polling: boolean) {
+  return useQuery({
+    queryKey: ["projects", id, "outputs"],
+    queryFn: () => api.listOutputs(id),
+    enabled,
+    refetchInterval: polling ? 3000 : false,
+  });
+}
+
 export function useSettings(id: string) {
   return useQuery({
     queryKey: ["projects", id, "settings"],
