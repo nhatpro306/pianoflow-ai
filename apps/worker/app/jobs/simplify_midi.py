@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import OutputFile, Project, ProjectEvent, RenderJob, make_sessionmaker
-from app.jobs.base import RequeueJob
+from app.jobs.base import RequeueJob, output_expiry
 from app.jobs.registry import register
 from app.storage import ObjectNotFoundError, get_storage
 from pianoflow_music.midi.write import note_data_to_midi_bytes
@@ -200,6 +200,7 @@ def handle_simplify_midi(payload: dict) -> None:
                 project_id=job.project_id,
                 job_id=job.id,
                 user_id=job.user_id,
+                expires_at=output_expiry(),
                 kind="simplified_midi",
                 storage_key=simplified_midi_key,
                 content_type="audio/midi",

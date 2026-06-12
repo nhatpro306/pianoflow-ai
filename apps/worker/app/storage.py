@@ -19,6 +19,8 @@ class StorageService(Protocol):
 
     def download(self, key: str) -> bytes: ...
 
+    def delete(self, key: str) -> None: ...
+
 
 class LocalStorageService:
     def __init__(self, root: str) -> None:
@@ -41,6 +43,12 @@ class LocalStorageService:
         if not path.is_file():
             raise ObjectNotFoundError(key)
         return path.read_bytes()
+
+    def delete(self, key: str) -> None:
+        path = self._path(key)
+        if not path.is_file():
+            raise ObjectNotFoundError(key)
+        path.unlink()
 
 
 class SupabaseStorageService:
@@ -98,6 +106,13 @@ class SupabaseStorageService:
         if response.status_code >= 400:
             raise StorageError(f"Supabase download failed ({response.status_code}) for {key!r}.")
         return response.content
+
+    def delete(self, key: str) -> None:
+        response = self._client.delete(self._object_url(key))
+        if response.status_code == 404:
+            raise ObjectNotFoundError(key)
+        if response.status_code >= 400:
+            raise StorageError(f"Supabase delete failed ({response.status_code}) for {key!r}.")
 
 
 def get_storage() -> StorageService:

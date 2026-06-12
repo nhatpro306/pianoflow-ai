@@ -14,6 +14,7 @@ from app.api.v1.routers import (
     health,
     internal_storage,
     jobs,
+    metrics,
     notes,
     outputs,
     projects,
@@ -60,6 +61,7 @@ def create_app() -> FastAPI:
     app.include_router(jobs.router)
     app.include_router(outputs.router)
     app.include_router(settings_router.router)
+    app.include_router(metrics.router)
     if settings.storage_backend == "local":
         app.include_router(internal_storage.router)
     return app

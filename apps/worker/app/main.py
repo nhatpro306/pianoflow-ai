@@ -78,8 +78,20 @@ def run() -> None:
     logger.info("worker started", extra={"event": "worker.started"})
 
     queue_names = settings.queue_name_list
+    last_cleanup = 0.0  # run a sweep on the first idle moment after boot
 
     while not _shutdown:
+        # Lifecycle sweep between polls (RISKS.md §C2) — cheap no-op when
+        # nothing has expired; never lets a sweep failure kill the loop.
+        if time.monotonic() - last_cleanup >= settings.cleanup_interval_seconds or not last_cleanup:
+            last_cleanup = time.monotonic()
+            try:
+                from app.cleanup import cleanup_expired_outputs
+
+                cleanup_expired_outputs()
+            except Exception:
+                logger.exception("cleanup sweep failed", extra={"event": "cleanup.failed"})
+
         try:
             # Single blocking pop across all queues (BLPOP key order = priority).
             message = queue.receive(queue_names, visibility_timeout=POLL_TIMEOUT_SECONDS)

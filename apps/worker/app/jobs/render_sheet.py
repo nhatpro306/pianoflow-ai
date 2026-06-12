@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import OutputFile, Project, ProjectEvent, RenderJob, make_sessionmaker
-from app.jobs.base import RequeueJob
+from app.jobs.base import RequeueJob, output_expiry
 from app.jobs.registry import register
 from app.storage import ObjectNotFoundError, get_storage
 from pianoflow_music.notes.model import NoteData
@@ -189,6 +189,7 @@ def handle_render_sheet(payload: dict) -> None:
                     project_id=job.project_id,
                     job_id=job.id,
                     user_id=job.user_id,
+                    expires_at=output_expiry(),
                     kind="sheet_musicxml",
                     storage_key=musicxml_key,
                     content_type="application/vnd.recordare.musicxml+xml",
@@ -201,6 +202,7 @@ def handle_render_sheet(payload: dict) -> None:
                     project_id=job.project_id,
                     job_id=job.id,
                     user_id=job.user_id,
+                    expires_at=output_expiry(),
                     kind="sheet_pdf",
                     storage_key=pdf_key,
                     content_type="application/pdf",

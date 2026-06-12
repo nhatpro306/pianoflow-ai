@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     storage_signing_secret: str = "dev-only-not-a-secret"
     log_level: str = "INFO"
 
+    # Output lifecycle (RISKS.md §C2): rows + objects removed after expiry by
+    # the worker sweep; bucket lifecycle rules are the backstop.
+    output_retention_days: int = 30
+    cleanup_interval_seconds: int = 900
+
 
 @lru_cache
 def get_settings() -> Settings:

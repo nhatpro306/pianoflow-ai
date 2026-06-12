@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     supabase_jwt_secret: str = ""
 
     api_base_url: str = "http://localhost:8000"
+    # /internal/metrics shared token. Empty in dev = open locally; outside
+    # dev the endpoint refuses unless the token is set and matches.
+    internal_metrics_token: str = ""
     # Signs local-backend signed URLs only — never used in supabase/s3 modes.
     storage_signing_secret: str = "dev-only-not-a-secret"
 

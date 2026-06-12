@@ -22,7 +22,7 @@ from app.db import (
     get_uploaded_audio,
     make_sessionmaker,
 )
-from app.jobs.base import RequeueJob
+from app.jobs.base import RequeueJob, output_expiry
 from app.jobs.registry import register
 from app.storage import ObjectNotFoundError, get_storage
 from pianoflow_music.transcription import TranscriptionError, get_engine
@@ -250,6 +250,7 @@ def handle_transcribe_audio(payload: dict) -> None:
                         project_id=job.project_id,
                         job_id=job.id,
                         user_id=job.user_id,
+                        expires_at=output_expiry(),
                         kind=kind,
                         storage_key=key,
                         content_type=content_type,

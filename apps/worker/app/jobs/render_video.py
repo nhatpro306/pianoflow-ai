@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.audio import AudioRenderError, get_audio_renderer
 from app.db import OutputFile, Project, ProjectEvent, RenderJob, make_sessionmaker
-from app.jobs.base import RequeueJob
+from app.jobs.base import RequeueJob, output_expiry
 from app.jobs.registry import register
 from app.storage import ObjectNotFoundError, get_storage
 from app.video_encode import VideoEncodeError, get_video_encoder
@@ -246,6 +246,7 @@ def handle_render_video(payload: dict) -> None:
                     project_id=job.project_id,
                     job_id=job.id,
                     user_id=job.user_id,
+                    expires_at=output_expiry(),
                     kind="video_mp4",
                     storage_key=video_key,
                     content_type="video/mp4",
