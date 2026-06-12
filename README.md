@@ -1,5 +1,7 @@
 # 🎹 PianoFlow AI
 
+[![CI](https://github.com/nhatpro306/pianoflow-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/nhatpro306/pianoflow-ai/actions/workflows/ci.yml)
+
 Turn any piano MIDI into a **tutorial video**, **sheet music**, and a **beginner-friendly version**.
 
 > **Status: MIDI → sheet pipeline live + minimal tutorial video streaming + Beginner Mode + Audio → MIDI Beta.**
