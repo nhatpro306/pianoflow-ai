@@ -11,6 +11,8 @@ Turn any piano MIDI into a **tutorial video**, **sheet music**, and a **beginner
 > Simplification is rule-based (melody preserved, density capped) — not an arrangement.
 > Audio → MIDI is **Beta / MVP+** — output is an editable draft, never "perfect MIDI".
 > Tutorial videos are streaming-only — no MP4 download, max 1080p.
+> Multi-user: Supabase Auth (email + Google), per-user project history,
+> ownership-scoped API (cross-user 404s test-proven), daily usage limits (429s).
 > Roadmap: [docs/ROADMAP.md](docs/ROADMAP.md)
 
 ## What it will do

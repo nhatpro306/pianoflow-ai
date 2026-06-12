@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import type { Project } from "@/lib/api";
+import { ApiError, type Project } from "@/lib/api";
 import { useDeleteProject, useProjects } from "@/lib/hooks";
 
 const STATUS_STYLE: Record<Project["status"], string> = {
@@ -74,7 +74,8 @@ function ProjectCard({ project }: { project: Project }) {
 }
 
 export default function ProjectsPage() {
-  const { data, isLoading, isError } = useProjects();
+  const { data, isLoading, isError, error } = useProjects();
+  const unauthorized = error instanceof ApiError && error.status === 401;
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
@@ -96,7 +97,17 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {isError && (
+      {isError && unauthorized && (
+        <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-zinc-800 py-20 text-center">
+          <span className="text-4xl">🔒</span>
+          <p className="text-zinc-400">Sign in to see your project history.</p>
+          <Link href="/login" className="text-cyan-400 hover:underline">
+            Sign in →
+          </Link>
+        </div>
+      )}
+
+      {isError && !unauthorized && (
         <p className="rounded-md border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-300">
           Could not load projects. Is the API running?
         </p>
