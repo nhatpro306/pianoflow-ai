@@ -65,6 +65,8 @@ class TestUploadLimit:
         )
         assert response.status_code == 429
         assert response.json()["error"]["code"] == "UPLOAD_LIMIT_EXCEEDED"
+        # API.md §0: 429 carries Retry-After (seconds until the UTC-midnight reset).
+        assert 0 < int(response.headers["Retry-After"]) <= 86_400
 
     def test_upload_counts_toward_cap(self, client: TestClient) -> None:
         from sqlalchemy import select

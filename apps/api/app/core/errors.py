@@ -1,5 +1,7 @@
 """Application error hierarchy → error envelope (API.md §0)."""
 
+from datetime import UTC, datetime, timedelta
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
@@ -55,11 +57,22 @@ class RateLimitedError(AppError):
     code = "RATE_LIMITED"
 
 
+def _seconds_to_utc_midnight() -> int:
+    now = datetime.now(UTC)
+    tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    return max(1, int((tomorrow - now).total_seconds()))
+
+
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
+        # Daily limits reset at UTC midnight (API.md §0: 429 carries Retry-After).
+        headers = (
+            {"Retry-After": str(_seconds_to_utc_midnight())} if exc.status_code == 429 else None
+        )
         return JSONResponse(
             status_code=exc.status_code,
+            headers=headers,
             content={
                 "error": {
                     "code": exc.code,
