@@ -14,29 +14,31 @@ interface Props {
 
 const CANVAS_H = 480;
 const BASE_FALL_PX_PER_SEC = 140;
+const PREVIEW_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
 
-/**
- * Synthesia-style preview: notes fall onto the keyboard; bottom edge crosses
- * the hit line exactly at scaled note.start, when the synth plays it and the
- * key lights up. Animation clock = AudioContext time (no rAF drift).
- */
 export function FallingNotePreview({ data, settings }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const synthRef = useRef<SampledPiano | null>(null);
   const rafRef = useRef<number>(0);
   const pausedAtRef = useRef(0);
+  const lastUiUpdateRef = useRef(0);
+
   const [width, setWidth] = useState(900);
   const [playing, setPlaying] = useState(false);
   const [loadingSound, setLoadingSound] = useState(false);
   const [approxSound, setApproxSound] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [previewSpeed, setPreviewSpeed] = useState(settings.speed_multiplier);
+  const [previewVolume, setPreviewVolume] = useState(settings.volume);
 
-  // Audio plays sustain-extended notes; visuals keep raw note ends.
   const audioNotes = useMemo(() => applySustain(data), [data]);
-
-  const speed = settings.speed_multiplier;
+  const speed = previewSpeed;
   const scaledDuration = data.duration_sec / speed;
   const fallSpeed = BASE_FALL_PX_PER_SEC * settings.note_fall_speed;
+
+  useEffect(() => setPreviewSpeed(settings.speed_multiplier), [settings.speed_multiplier]);
+  useEffect(() => setPreviewVolume(settings.volume), [settings.volume]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -54,14 +56,13 @@ export function FallingNotePreview({ data, settings }: Props) {
     };
   }, []);
 
-  // Live-apply sound settings (volume/reverb immediately; instrument on next play).
   useEffect(() => {
     synthRef.current?.configure({
       sound: settings.piano_sound,
-      volume: settings.volume,
+      volume: previewVolume,
       reverb: settings.reverb,
     });
-  }, [settings.piano_sound, settings.volume, settings.reverb]);
+  }, [settings.piano_sound, previewVolume, settings.reverb]);
 
   const draw = useCallback(
     (t: number) => {
@@ -80,12 +81,10 @@ export function FallingNotePreview({ data, settings }: Props) {
       const keyboardH = 110 * settings.keyboard_size;
       const hitY = CANVAS_H - keyboardH;
 
-      // Background.
       ctx.fillStyle = colors.background;
       ctx.fillRect(0, 0, width, CANVAS_H);
 
-      // Falling notes (start-sorted; visible window only).
-      const visibleSpan = hitY / fallSpeed; // seconds of fall visible above hit line
+      const visibleSpan = hitY / fallSpeed;
       ctx.save();
       ctx.shadowColor = colors.glow;
       ctx.shadowBlur = 24 * settings.glow_intensity;
@@ -96,7 +95,7 @@ export function FallingNotePreview({ data, settings }: Props) {
         if (start > t + visibleSpan) break;
 
         const bottom = hitY - (start - t) * fallSpeed;
-        const height = Math.max(6, ((end - start) * fallSpeed));
+        const height = Math.max(6, (end - start) * fallSpeed);
         const top = bottom - height;
         if (bottom < 0 || top > hitY) continue;
 
@@ -121,14 +120,12 @@ export function FallingNotePreview({ data, settings }: Props) {
       ctx.restore();
       ctx.globalAlpha = 1;
 
-      // Fog above the keyboard.
       const fog = ctx.createLinearGradient(0, hitY - 80, 0, hitY);
       fog.addColorStop(0, "rgba(255,255,255,0)");
       fog.addColorStop(1, `rgba(255,255,255,${0.1 + settings.glow_intensity * 0.12})`);
       ctx.fillStyle = fog;
       ctx.fillRect(0, hitY - 80, width, 80);
 
-      // Hit line.
       ctx.save();
       ctx.shadowColor = colors.glow;
       ctx.shadowBlur = 16;
@@ -138,7 +135,6 @@ export function FallingNotePreview({ data, settings }: Props) {
 
       if (!settings.show_keyboard) return;
 
-      // Active pitches at t.
       const active = new Map<number, string>();
       for (const note of data.notes) {
         const start = note.start / speed;
@@ -146,7 +142,6 @@ export function FallingNotePreview({ data, settings }: Props) {
         if (note.end / speed >= t) active.set(note.pitch, note.hand);
       }
 
-      // Keyboard.
       for (let pitch = LOWEST; pitch <= HIGHEST; pitch++) {
         if (isBlack(pitch)) continue;
         const { x, w } = keyRect(pitch, width);
@@ -165,7 +160,6 @@ export function FallingNotePreview({ data, settings }: Props) {
     [data, settings, width, speed, fallSpeed],
   );
 
-  // Animation loop while playing; static frame otherwise.
   useEffect(() => {
     if (!playing) {
       draw(pausedAtRef.current);
@@ -178,10 +172,15 @@ export function FallingNotePreview({ data, settings }: Props) {
       if (t >= scaledDuration + 1) {
         synth.stop();
         pausedAtRef.current = 0;
+        setCurrentTime(0);
         setPlaying(false);
         return;
       }
       pausedAtRef.current = t;
+      if (t - lastUiUpdateRef.current > 0.2) {
+        lastUiUpdateRef.current = t;
+        setCurrentTime(t);
+      }
       draw(t);
       rafRef.current = requestAnimationFrame(loop);
     };
@@ -201,14 +200,13 @@ export function FallingNotePreview({ data, settings }: Props) {
     }
   }
 
-  // Speed change: rescale the current position to the same musical moment
-  // (t_new = t_old * old_speed / new_speed), restart scheduler if playing.
   const prevSpeedRef = useRef(speed);
   useEffect(() => {
     const prev = prevSpeedRef.current;
     if (prev === speed) return;
     prevSpeedRef.current = speed;
     pausedAtRef.current = (pausedAtRef.current * prev) / speed;
+    setCurrentTime(pausedAtRef.current);
     if (playing) {
       void startPlayback(pausedAtRef.current);
     } else {
@@ -222,6 +220,7 @@ export function FallingNotePreview({ data, settings }: Props) {
     if (!synth) return;
     if (playing) {
       synth.stop();
+      setCurrentTime(pausedAtRef.current);
       setPlaying(false);
     } else {
       void startPlayback(pausedAtRef.current).then(() => setPlaying(true));
@@ -230,6 +229,7 @@ export function FallingNotePreview({ data, settings }: Props) {
 
   function restart() {
     pausedAtRef.current = 0;
+    setCurrentTime(0);
     if (playing) {
       void startPlayback(0);
     } else {
@@ -237,36 +237,127 @@ export function FallingNotePreview({ data, settings }: Props) {
     }
   }
 
+  function seek(value: number) {
+    const next = Math.min(Math.max(value, 0), scaledDuration);
+    pausedAtRef.current = next;
+    setCurrentTime(next);
+    if (playing) {
+      void startPlayback(next);
+    } else {
+      draw(next);
+    }
+  }
+
+  function changeSpeed(value: number) {
+    const musicalTime = pausedAtRef.current * speed;
+    const nextTime = musicalTime / value;
+    setPreviewSpeed(value);
+    pausedAtRef.current = nextTime;
+    setCurrentTime(nextTime);
+    if (playing) void startPlayback(nextTime);
+  }
+
+  function toggleMute() {
+    setPreviewVolume((volume) => (volume > 0 ? 0 : settings.volume || 0.8));
+  }
+
+  async function toggleFullscreen() {
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      await document.exitFullscreen().catch(() => undefined);
+    } else {
+      await el.requestFullscreen().catch(() => undefined);
+    }
+  }
+
+  function formatTime(seconds: number): string {
+    const safe = Math.max(0, Math.floor(seconds));
+    const minutes = Math.floor(safe / 60);
+    return `${minutes}:${String(safe % 60).padStart(2, "0")}`;
+  }
+
   return (
     <div ref={containerRef} className="flex flex-col gap-2">
-      <canvas
-        ref={canvasRef}
-        style={{ width, height: CANVAS_H }}
-        className="rounded-lg border border-zinc-800"
-        aria-label={`Falling-note preview: ${data.notes.length} notes, ${Math.round(
-          scaledDuration,
-        )} seconds at ${speed}x`}
-        onClick={togglePlay}
-      />
-      <div className="flex items-center gap-3 text-sm">
-        <button
+      <div className="group relative overflow-hidden rounded-lg border border-zinc-800 bg-black">
+        <canvas
+          ref={canvasRef}
+          style={{ width, height: CANVAS_H }}
+          className="block"
+          aria-label={`Falling-note preview: ${data.notes.length} notes, ${Math.round(
+            scaledDuration,
+          )} seconds at ${speed}x`}
           onClick={togglePlay}
-          disabled={loadingSound}
-          className="rounded-md bg-zinc-100 px-4 py-1.5 font-semibold text-zinc-950 hover:bg-white disabled:opacity-60"
-        >
-          {loadingSound ? "Loading piano…" : playing ? "Pause" : "Play"}
-        </button>
-        <button
-          onClick={restart}
-          className="rounded-md border border-zinc-700 px-3 py-1.5 hover:bg-zinc-800"
-        >
-          Restart
-        </button>
-        <span className="text-xs text-zinc-500">
-          {approxSound
-            ? "High-quality piano unavailable offline — using basic sound."
-            : "Sampled piano preview — export renders studio-quality audio."}
-        </span>
+        />
+        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 bg-gradient-to-t from-black/90 via-black/55 to-transparent p-3 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+          <input
+            type="range"
+            min={0}
+            max={Math.max(scaledDuration, 0.1)}
+            step={0.05}
+            value={Math.min(currentTime, scaledDuration)}
+            onChange={(event) => seek(Number(event.target.value))}
+            className="h-1 w-full cursor-pointer accent-red-500"
+            aria-label="Seek preview"
+          />
+          <div className="flex flex-wrap items-center gap-2 text-xs text-white">
+            <button
+              onClick={togglePlay}
+              disabled={loadingSound}
+              className="min-w-16 rounded bg-white px-3 py-1 font-semibold text-zinc-950 hover:bg-zinc-200 disabled:opacity-60"
+            >
+              {loadingSound ? "Load" : playing ? "Pause" : "Play"}
+            </button>
+            <button
+              onClick={restart}
+              className="rounded border border-white/30 px-2 py-1 hover:bg-white/10"
+            >
+              Restart
+            </button>
+            <span className="font-mono text-white/85">
+              {formatTime(currentTime)} / {formatTime(scaledDuration)}
+            </span>
+            <button
+              onClick={toggleMute}
+              className="rounded border border-white/30 px-2 py-1 hover:bg-white/10"
+            >
+              {previewVolume > 0 ? "Mute" : "Unmute"}
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={previewVolume}
+              onChange={(event) => setPreviewVolume(Number(event.target.value))}
+              className="w-24 accent-white"
+              aria-label="Preview volume"
+            />
+            <select
+              value={String(speed)}
+              onChange={(event) => changeSpeed(Number(event.target.value))}
+              className="rounded border border-white/30 bg-black/70 px-2 py-1"
+              aria-label="Preview speed"
+            >
+              {PREVIEW_SPEEDS.map((value) => (
+                <option key={value} value={String(value)}>
+                  {value}x
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={toggleFullscreen}
+              className="ml-auto rounded border border-white/30 px-2 py-1 hover:bg-white/10"
+            >
+              Fullscreen
+            </button>
+          </div>
+        </div>
+      </div>
+      <div className="text-xs text-zinc-500">
+        {approxSound
+          ? "High-quality piano unavailable offline - using basic sound."
+          : "Sampled piano preview - export renders studio-quality audio."}
       </div>
     </div>
   );

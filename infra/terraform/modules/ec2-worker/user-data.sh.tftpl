@@ -1,0 +1,42 @@
+#!/bin/bash
+set -euo pipefail
+
+yum update -y
+yum install -y docker awscli
+systemctl enable docker
+systemctl start docker
+
+if [ ! -f /swapfile ]; then
+  fallocate -l 1G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+
+aws ecr get-login-password --region ${aws_region} \
+  | docker login --username AWS --password-stdin ${ecr_registry}
+
+DATABASE_URL="$(aws ssm get-parameter \
+  --name '${database_url_param}' \
+  --with-decryption \
+  --region '${aws_region}' \
+  --query 'Parameter.Value' \
+  --output text)"
+
+docker rm -f pianoflow-worker || true
+docker pull ${worker_image}
+docker run -d \
+  --name pianoflow-worker \
+  --restart unless-stopped \
+  -e DATABASE_URL="$DATABASE_URL" \
+  -e QUEUE_BACKEND='sqs' \
+  -e STORAGE_BACKEND='s3' \
+  -e AWS_REGION='${aws_region}' \
+  -e QUEUE_NAMES='q_default,q_audio' \
+  -e SQS_QUEUE_DEFAULT_URL='${sqs_queue_default_url}' \
+  -e SQS_QUEUE_AUDIO_URL='${sqs_queue_audio_url}' \
+  -e S3_BUCKET_SOURCES='${s3_sources_bucket}' \
+  -e S3_BUCKET_ANALYSIS='${s3_analysis_bucket}' \
+  -e S3_BUCKET_OUTPUTS='${s3_outputs_bucket}' \
+  ${worker_image}

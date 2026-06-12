@@ -28,6 +28,7 @@ from app.infrastructure.queue.base import QueueError, QueueService
 PARSE_MIDI = "parse_midi"
 RENDER_SHEET = "render_sheet"
 RENDER_VIDEO = "render_video"
+SIMPLIFY_MIDI = "simplify_midi"
 TRANSCRIBE_AUDIO = "transcribe_audio"
 DEFAULT_QUEUE = "q_default"
 
@@ -46,6 +47,23 @@ class EnqueuedJob:
 def _settings_snapshot(db: Session, project_id: uuid.UUID) -> tuple[int, dict]:
     settings = get_or_create_settings(db, project_id)
     return settings.version, SettingsOut.model_validate(settings).model_dump(mode="json")
+
+
+def _required_notes_key(project: Project, difficulty: str) -> str:
+    summary = project.analysis_summary or {}
+    if project.status != "ready" or not summary.get("notes_key"):
+        raise ConflictError("Notes are not ready yet.", code="NOTES_NOT_READY")
+    if difficulty == "original":
+        return str(summary["notes_key"])
+
+    simplified = summary.get("simplified_notes_keys") or {}
+    notes_key = simplified.get(difficulty)
+    if not notes_key:
+        raise ConflictError(
+            "Beginner notes are not ready yet. Create simplify-midi first.",
+            code="SIMPLIFIED_NOTES_NOT_READY",
+        )
+    return str(notes_key)
 
 
 def create_parse_midi_job(
@@ -121,10 +139,8 @@ def create_render_sheet_job(
     user: CurrentUser,
     request_id: str | None = None,
 ) -> EnqueuedJob:
-    if project.status != "ready" or not (project.analysis_summary or {}).get("notes_key"):
-        raise ConflictError("Notes are not ready yet.", code="NOTES_NOT_READY")
-
     settings_version, snapshot = _settings_snapshot(db, project.id)
+    _required_notes_key(project, str(snapshot.get("difficulty", "original")))
     jobs = JobRepository(db)
     duplicate = jobs.find_live_duplicate(project.id, user.id, RENDER_SHEET, settings_version)
     if duplicate is not None:
@@ -187,10 +203,8 @@ def create_render_video_job(
     """Tutorial video export. Output is streaming-only video_mp4 — the
     output policy refuses download URLs for it. Settings constrain resolution
     to 720p/1080p."""
-    if project.status != "ready" or not (project.analysis_summary or {}).get("notes_key"):
-        raise ConflictError("Notes are not ready yet.", code="NOTES_NOT_READY")
-
     settings_version, snapshot = _settings_snapshot(db, project.id)
+    _required_notes_key(project, str(snapshot.get("difficulty", "original")))
     jobs = JobRepository(db)
     duplicate = jobs.find_live_duplicate(project.id, user.id, RENDER_VIDEO, settings_version)
     if duplicate is not None:
@@ -237,6 +251,86 @@ def create_render_video_job(
         job.finished_at = datetime.now(UTC)
         db.flush()
         raise EnqueueError("Could not enqueue video job.") from exc
+
+    job.broker_message_id = message_id
+    db.flush()
+    return EnqueuedJob(job=job, created=True)
+
+
+def create_simplify_midi_job(
+    db: Session,
+    queue: QueueService,
+    project: Project,
+    user: CurrentUser,
+    request_id: str | None = None,
+) -> EnqueuedJob:
+    if project.status != "ready" or not (project.analysis_summary or {}).get("notes_key"):
+        raise ConflictError("Notes are not ready yet.", code="NOTES_NOT_READY")
+
+    settings_version, snapshot = _settings_snapshot(db, project.id)
+    difficulty = str(snapshot.get("difficulty", "original"))
+    if difficulty == "original":
+        raise ConflictError(
+            "Set difficulty to easy or very_easy before simplifying.",
+            code="INVALID_DIFFICULTY",
+        )
+
+    summary = project.analysis_summary or {}
+    simplified = summary.get("simplified_notes_keys") or {}
+    if simplified.get(difficulty):
+        # Reuse an already completed artifact for this difficulty. No new job
+        # is needed; caller receives the newest completed simplify job if any.
+        jobs = JobRepository(db)
+        duplicate = jobs.find_live_duplicate(project.id, user.id, SIMPLIFY_MIDI, settings_version)
+        if duplicate is not None:
+            return EnqueuedJob(job=duplicate, created=False)
+
+    jobs = JobRepository(db)
+    duplicate = jobs.find_live_duplicate(project.id, user.id, SIMPLIFY_MIDI, settings_version)
+    if duplicate is not None:
+        return EnqueuedJob(job=duplicate, created=False)
+
+    job = jobs.create(
+        project_id=project.id,
+        user_id=user.id,
+        job_type=SIMPLIFY_MIDI,
+        status="queued",
+        progress=0,
+        progress_message="Waiting in queue",
+        settings_snapshot=snapshot,
+        settings_version=settings_version,
+        queue_name=DEFAULT_QUEUE,
+    )
+    ProjectEventRepository(db).append(
+        project_id=project.id,
+        user_id=user.id,
+        job_id=job.id,
+        event_type="job.enqueued",
+        payload={"job_type": SIMPLIFY_MIDI, "difficulty": difficulty},
+        request_id=request_id,
+    )
+    db.flush()
+
+    payload = {
+        "job_id": str(job.id),
+        "job_type": SIMPLIFY_MIDI,
+        "project_id": str(project.id),
+        "user_id": str(user.id),
+        "attempt": job.attempt + 1,
+        "settings_version": settings_version,
+        "queue_name": DEFAULT_QUEUE,
+        "created_at": datetime.now(UTC).isoformat(),
+        "trace_id": request_id,
+    }
+    try:
+        message_id = queue.enqueue(DEFAULT_QUEUE, payload)
+    except QueueError as exc:
+        job.status = "failed"
+        job.error_type = "QUEUE_ENQUEUE_FAILED"
+        job.error_message = "Could not enqueue simplify job."
+        job.finished_at = datetime.now(UTC)
+        db.flush()
+        raise EnqueueError("Could not enqueue simplify job.") from exc
 
     job.broker_message_id = message_id
     db.flush()

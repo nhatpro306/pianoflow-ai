@@ -35,13 +35,20 @@ def create_app() -> FastAPI:
         docs_url="/docs" if settings.env == "dev" else None,
     )
 
-    if settings.env == "dev":
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=["http://localhost:3000"],
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
+    cors_origins = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+    ]
+    if settings.cors_allowed_origins:
+        cors_origins.extend(settings.cors_allowed_origins.split(","))
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.middleware("http")
     async def request_id_middleware(request: Request, call_next):
@@ -66,3 +73,12 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+# AWS Lambda handler via Mangum — only used when deployed to Lambda.
+# Lambda invokes `app.main.handler` (or whatever MANGUM_HANDLER points to).
+try:
+    from mangum import Mangum
+
+    handler = Mangum(app, lifespan="off")
+except ImportError:
+    handler = None

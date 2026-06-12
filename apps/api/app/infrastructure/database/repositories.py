@@ -3,12 +3,13 @@ methods take user_id and filter on it — there is no unscoped variant
 (DESIGN.md §8)."""
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.infrastructure.database.models import (
+    DailyUsage,
     OutputFile,
     Project,
     ProjectEvent,
@@ -210,3 +211,25 @@ class ProjectEventRepository:
         self.db.add(event)
         self.db.flush()
         return event
+
+
+class DailyUsageRepository:
+    def __init__(self, db: Session) -> None:
+        self.db = db
+
+    def get_or_create_today(self, user_id: uuid.UUID) -> DailyUsage:
+        today = date.today()
+        row = self.db.scalar(
+            select(DailyUsage).where(DailyUsage.user_id == user_id, DailyUsage.date == today)
+        )
+        if row is None:
+            row = DailyUsage(user_id=user_id, date=today)
+            self.db.add(row)
+            self.db.flush()
+        return row
+
+    def increment(self, user_id: uuid.UUID, field: str, amount: int = 1) -> DailyUsage:
+        row = self.get_or_create_today(user_id)
+        setattr(row, field, getattr(row, field) + amount)
+        self.db.flush()
+        return row

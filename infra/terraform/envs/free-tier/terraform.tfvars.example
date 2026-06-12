@@ -1,0 +1,15 @@
+aws_region           = "us-east-1"
+prefix               = "pianoflow"
+api_image_tag        = "latest"
+worker_image_tag     = "latest"
+worker_instance_type = "t2.micro"
+ec2_key_name         = ""
+output_expiry_days   = 7
+
+# Secrets: copy this file to terraform.tfvars locally, then fill values.
+# Never commit terraform.tfvars.
+database_url              = "postgresql+psycopg://..."
+supabase_jwt_secret       = "..."
+supabase_url              = "https://PROJECT.supabase.co"
+supabase_service_role_key = "..."
+cors_allowed_origins      = "https://pianoflow.vercel.app"

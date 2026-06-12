@@ -1,0 +1,103 @@
+name: AWS Deploy (Stage 3)
+
+# Stage 3 free-tier deploy. OIDC role assumption — no long-lived AWS keys.
+# - PR touching infra/terraform → terraform plan (review in job log)
+# - Manual dispatch → build+push images to ECR, terraform apply
+#
+# Required repo configuration:
+#   secrets.AWS_OIDC_ROLE_ARN          IAM role trusting this repo via GitHub OIDC
+#   secrets.TF_VAR_DATABASE_URL        Supabase pooler URL
+#   secrets.TF_VAR_SUPABASE_JWT_SECRET
+#   secrets.TF_VAR_SUPABASE_SERVICE_ROLE_KEY
+#   vars.AWS_REGION                    e.g. us-east-1
+#   vars.TF_VAR_SUPABASE_URL           https://PROJECT.supabase.co
+#   vars.TF_VAR_CORS_ALLOWED_ORIGINS   Vercel URL(s)
+
+on:
+  pull_request:
+    paths:
+      - "infra/terraform/**"
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Run terraform apply (false = plan only)"
+        type: boolean
+        default: false
+
+permissions:
+  id-token: write # OIDC token for AWS role assumption
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  TF_VAR_database_url: ${{ secrets.TF_VAR_DATABASE_URL }}
+  TF_VAR_supabase_jwt_secret: ${{ secrets.TF_VAR_SUPABASE_JWT_SECRET }}
+  TF_VAR_supabase_service_role_key: ${{ secrets.TF_VAR_SUPABASE_SERVICE_ROLE_KEY }}
+  TF_VAR_supabase_url: ${{ vars.TF_VAR_SUPABASE_URL }}
+  TF_VAR_cors_allowed_origins: ${{ vars.TF_VAR_CORS_ALLOWED_ORIGINS }}
+
+jobs:
+  plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform plan
+        working-directory: infra/terraform
+        run: |
+          terraform init -input=false
+          terraform plan -input=false -no-color
+
+  deploy:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push API image
+        run: |
+          IMAGE="${{ steps.ecr.outputs.registry }}/pianoflow-api:${{ github.sha }}"
+          docker build -f infra/docker/api.Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "API_IMAGE_TAG=${{ github.sha }}" >> "$GITHUB_ENV"
+
+      - name: Build and push worker image
+        run: |
+          IMAGE="${{ steps.ecr.outputs.registry }}/pianoflow-worker:${{ github.sha }}"
+          docker build -f infra/docker/worker.Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform plan
+        working-directory: infra/terraform
+        env:
+          TF_VAR_api_image_tag: ${{ github.sha }}
+          TF_VAR_worker_image_tag: ${{ github.sha }}
+        run: |
+          terraform init -input=false
+          terraform plan -input=false -no-color -out=tfplan
+
+      - name: Terraform apply
+        if: inputs.apply
+        working-directory: infra/terraform
+        run: terraform apply -input=false tfplan

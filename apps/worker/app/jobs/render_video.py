@@ -136,9 +136,25 @@ def handle_render_video(payload: dict) -> None:
             db.commit()
             return
 
-        notes_key = (project.analysis_summary or {}).get("notes_key")
+        summary = project.analysis_summary or {}
+        difficulty = str((job.settings_snapshot or {}).get("difficulty", "original"))
+        notes_key = summary.get("notes_key")
+        if difficulty != "original":
+            notes_key = (summary.get("simplified_notes_keys") or {}).get(difficulty)
         if not notes_key:
-            _fail_job(db, job, "NOTES_NOT_READY", "Parsed notes are not ready.", request_id)
+            code = "SIMPLIFIED_NOTES_NOT_READY" if difficulty != "original" else "NOTES_NOT_READY"
+            message = (
+                "Beginner notes are not ready."
+                if difficulty != "original"
+                else "Parsed notes are not ready."
+            )
+            _fail_job(
+                db,
+                job,
+                code,
+                message,
+                request_id,
+            )
             db.commit()
             return
 
@@ -238,6 +254,7 @@ def handle_render_video(payload: dict) -> None:
                         "resolution": config.resolution,
                         "fps": config.fps,
                         "speed_multiplier": speed,
+                        "difficulty": difficulty,
                         "duration_sec": scaled.duration_sec,
                         "download_allowed": False,
                         "streaming_only": True,

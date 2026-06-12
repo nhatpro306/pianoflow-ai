@@ -10,8 +10,11 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     database_url: str = "postgresql+psycopg://pianoflow:pianoflow@localhost:5432/pianoflow"
-    queue_backend: Literal["redis"] = "redis"
+    queue_backend: Literal["redis", "sqs"] = "redis"
     redis_url: str = "redis://localhost:6379/0"
+    aws_region: str = "us-east-1"
+    sqs_queue_default_url: str = ""
+    sqs_queue_audio_url: str = ""
     # Comma-separated poll list. Local dev: one worker drains both queues.
     # Production audio-worker runs with QUEUE_NAMES=q_audio only.
     queue_names: str = "q_default,q_audio"
@@ -27,6 +30,9 @@ class Settings(BaseSettings):
     supabase_bucket_sources: str = "pianoflow-sources"
     supabase_bucket_analysis: str = "pianoflow-analysis"
     supabase_bucket_outputs: str = "pianoflow-outputs"
+    s3_bucket_sources: str = "pianoflow-sources"
+    s3_bucket_analysis: str = "pianoflow-analysis"
+    s3_bucket_outputs: str = "pianoflow-outputs"
     api_base_url: str = "http://localhost:8000"
     # FluidR3_GM lands at this path in the worker image (video rendering).
     soundfont_path: str = "/usr/share/sounds/sf2/FluidR3_GM.sf2"

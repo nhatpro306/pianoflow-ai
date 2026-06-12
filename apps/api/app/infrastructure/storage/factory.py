@@ -30,6 +30,13 @@ def get_storage() -> StorageService:
             bucket_analysis=settings.supabase_bucket_analysis,
             bucket_outputs=settings.supabase_bucket_outputs,
         )
-    raise NotImplementedError(
-        f"Storage backend {settings.storage_backend!r} not implemented yet (s3: AWS stage)"
-    )
+    if settings.storage_backend == "s3":
+        from app.infrastructure.storage.s3 import S3StorageService
+
+        return S3StorageService(
+            region=settings.aws_region,
+            bucket_sources=settings.s3_bucket_sources,
+            bucket_analysis=settings.s3_bucket_analysis,
+            bucket_outputs=settings.s3_bucket_outputs,
+        )
+    raise NotImplementedError(f"Unknown STORAGE_BACKEND={settings.storage_backend!r}")

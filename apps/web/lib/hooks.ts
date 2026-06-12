@@ -34,10 +34,10 @@ export function useJob(id: string | null) {
   });
 }
 
-export function useNotes(id: string, enabled: boolean) {
+export function useNotes(id: string, enabled: boolean, difficulty = "original") {
   return useQuery({
-    queryKey: ["projects", id, "notes"],
-    queryFn: () => api.getNotes(id),
+    queryKey: ["projects", id, "notes", difficulty],
+    queryFn: () => api.getNotes(id, difficulty),
     enabled,
     staleTime: Infinity, // notes are immutable per parse version
   });

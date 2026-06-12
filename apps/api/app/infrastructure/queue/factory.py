@@ -15,4 +15,14 @@ def get_queue() -> QueueService:
         return MemoryQueueService()
     if settings.queue_backend == "redis":
         return RedisQueueService(settings.redis_url)
-    raise NotImplementedError("QUEUE_BACKEND=sqs arrives in Phase 11")
+    if settings.queue_backend == "sqs":
+        from app.infrastructure.queue.sqs_queue import SqsQueueService
+
+        return SqsQueueService(
+            region=settings.aws_region,
+            queue_urls={
+                "q_default": settings.sqs_queue_default_url,
+                settings.audio_queue_name: settings.sqs_queue_audio_url,
+            },
+        )
+    raise NotImplementedError(f"Unknown QUEUE_BACKEND={settings.queue_backend!r}")

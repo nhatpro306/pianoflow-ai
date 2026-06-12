@@ -11,6 +11,7 @@ from typing import ClassVar
 
 from sqlalchemy import (
     BigInteger,
+    Date,
     DateTime,
     ForeignKey,
     Index,
@@ -18,6 +19,7 @@ from sqlalchemy import (
     SmallInteger,
     String,
     Text,
+    UniqueConstraint,
     Uuid,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -199,3 +201,22 @@ class ProjectEvent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     __table_args__ = (Index("idx_events_project", "project_id", "id"),)
+
+
+class DailyUsage(Base):
+    __tablename__ = "daily_usage"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False)
+    date: Mapped[datetime] = mapped_column(
+        Date, nullable=False, default=lambda: datetime.now(UTC).date()
+    )
+    uploads: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    render_jobs: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    video_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    transcriptions: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "date", name="uq_daily_usage_user_date"),
+        Index("idx_daily_usage_user_date", "user_id", "date"),
+    )

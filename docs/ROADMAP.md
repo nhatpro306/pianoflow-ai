@@ -91,21 +91,24 @@
 - **Difficulty:** Medium. **Complexity:** M.
 - **Do NOT:** OAuth providers beyond email+Google; roles/teams; payment plans.
 
-## Phase 10 — Deployment MVP (Stage 2 live)
+## Phase 10 — Deployment MVP (Stage 2 live, $0/month)
 
-- **Goal:** public URL anyone can use.
-- **Tasks:** per `DEPLOYMENT.md` Stage 2 — Vercel + Render(API/worker) + Supabase(Postgres/Storage/Auth) + Upstash Redis; CI/CD pipeline (build, migrate, deploy); lifecycle cleanup job for expired outputs; `/internal/metrics`; uptime check; landing page final copy + demo video asset; README badges/screenshots.
-- **Deliverables:** production URL in README; a stranger completes upload→download unaided; cost < $20/mo verified after 2 weeks.
+- **Goal:** public URL anyone can use — entirely on free tiers.
+- **Stack:** Vercel (web) + Render Free (API + worker) + Supabase Free (Postgres + Auth + Storage) + Upstash Free (Redis queue). All services are "forever free" — no 12-month expiry.
+- **Tasks:** per `DEPLOYMENT.md` Stage 2 — Supabase project setup; Render blueprint deploy; Vercel import; Upstash Redis; CI/CD pipeline (lint/test on PR, migrate+deploy on merge); `cleanup_expired` job for 7-day output expiry; `/internal/metrics`; UptimeRobot pinger; landing page; README badges + deploy table.
+- **Deliverables:** production URL in README; a stranger completes upload→download unaided; cost = $0/month verified.
+- **Limitations:** Render sleeps (mitigated by UptimeRobot); 512MB worker RAM → video limited to 720p, <5min songs; 1GB storage → 7-day output expiry.
 - **Difficulty:** Medium. **Complexity:** M.
-- **Do NOT:** AWS anything yet; premature autoscaling; custom domain perfectionism.
+- **Do NOT:** AWS anything yet; premature autoscaling; custom domain perfectionism; pay for any service.
 
-## Phase 11 — AWS Scalable Architecture (Stages 3→4)
+## Phase 11 — AWS Free-Tier Showcase (Stage 3, $0 for 12 months)
 
-- **Goal:** the cloud-engineering showcase: ECS/SQS/S3/RDS/CloudWatch via Terraform.
-- **Tasks:** SQS + S3 adapters with contract tests; ECR + ECS Fargate services (api, worker-fast, worker-render) + ALB; queue split + depth-based autoscaling; data migration (S3 sync; later pg_dump→RDS); Terraform modules + staging/prod envs + remote state; CloudWatch logs/metrics/dashboard/alarms + DLQs; GitHub Actions OIDC deploy with plan-on-PR; architecture diagram + migration write-up in docs (the portfolio artifact).
-- **Deliverables:** prod on AWS; `terraform apply` from clean account documented; dashboard screenshot + load-test report (e.g., 20 concurrent renders autoscale 1→4 workers) in README.
+- **Goal:** the cloud-engineering portfolio showcase — Lambda + SQS + EC2 + S3 + Terraform, running at $0/month within AWS free tier limits.
+- **Stack:** Lambda + API Gateway (API, always free) + SQS (queue, always free) + EC2 t2.micro (worker, 12mo free) + S3 (storage, 12mo free) + Supabase (DB + Auth, kept free). After 12 months EC2 costs ~$8/month; everything else stays free.
+- **Tasks:** Mangum wrapper for Lambda; SQS + S3 adapters with contract tests; Terraform modules (`lambda-api`, `sqs`, `ec2-worker`, `s3`, `ecr`, `cloudwatch`); free-tier tfvars; EC2 user-data script (Docker + swap); data migration (Supabase Storage → S3 sync); GitHub Actions OIDC deploy with plan-on-PR; architecture diagram + cost report + CloudWatch dashboard screenshot.
+- **Deliverables:** prod on AWS free tier; `terraform apply` from clean account documented; dashboard screenshot showing $0 cost; load test (10 concurrent uploads) in README.
 - **Difficulty:** High. **Complexity:** XL.
-- **Do NOT:** Kubernetes (Fargate is the right size); multi-region; service mesh; rewrite anything that works.
+- **Do NOT:** Kubernetes; multi-region; ECS Fargate (not free tier); RDS (keep Supabase for $0); pay for anything.
 
 ## Phase 12 — Audio-to-MIDI Beta (future)
 

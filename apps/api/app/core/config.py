@@ -20,6 +20,9 @@ class Settings(BaseSettings):
 
     queue_backend: Literal["memory", "redis", "sqs"] = "redis"
     redis_url: str = "redis://localhost:6379/0"
+    aws_region: str = "us-east-1"
+    sqs_queue_default_url: str = ""
+    sqs_queue_audio_url: str = ""
 
     storage_backend: Literal["local", "supabase", "s3"] = "local"
     storage_local_root: str = "./data/storage"
@@ -32,7 +35,13 @@ class Settings(BaseSettings):
     supabase_bucket_analysis: str = "pianoflow-analysis"
     supabase_bucket_outputs: str = "pianoflow-outputs"
 
+    s3_bucket_sources: str = "pianoflow-sources"
+    s3_bucket_analysis: str = "pianoflow-analysis"
+    s3_bucket_outputs: str = "pianoflow-outputs"
+
     auth_mode: Literal["dev", "supabase"] = "dev"
+    supabase_jwt_secret: str = ""
+    cors_allowed_origins: str = ""
 
     api_base_url: str = "http://localhost:8000"
     # Signs local-backend signed URLs only — never used in supabase/s3 modes.

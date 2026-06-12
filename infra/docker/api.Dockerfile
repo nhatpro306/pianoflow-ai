@@ -16,4 +16,4 @@ RUN uv sync --frozen --package pianoflow-api --no-dev
 
 WORKDIR /repo/apps/api
 EXPOSE 8000
-CMD ["uv", "run", "--no-sync", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "if [ -n \"$AWS_LAMBDA_RUNTIME_API\" ]; then exec uv run --no-sync python -m awslambdaric app.main.handler; else exec uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port 8000; fi"]

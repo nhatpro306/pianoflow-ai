@@ -2,7 +2,7 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, NotFoundError
@@ -20,6 +20,7 @@ INLINE_MAX_BYTES = 1_000_000  # larger payloads return a signed URL instead
 @router.get("/notes")
 def get_notes(
     project_id: uuid.UUID,
+    difficulty: str = Query(default="original", pattern="^(original|easy|very_easy)$"),
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
     storage: StorageService = Depends(get_storage),
@@ -36,6 +37,13 @@ def get_notes(
         raise ConflictError(
             "Notes are not ready yet (parse pending or failed).", code="NOTES_NOT_READY"
         )
+    if difficulty != "original":
+        notes_key = (summary.get("simplified_notes_keys") or {}).get(difficulty)
+        if not notes_key:
+            raise ConflictError(
+                "Beginner notes are not ready yet. Create simplify-midi first.",
+                code="SIMPLIFIED_NOTES_NOT_READY",
+            )
 
     try:
         if storage.size(notes_key) > INLINE_MAX_BYTES:

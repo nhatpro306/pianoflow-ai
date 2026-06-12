@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, NotFoundError
+from app.core.rate_limit import record_usage, require_upload_quota
 from app.core.security import CurrentUser, get_current_user
 from app.domains.files.service import confirm_upload, init_upload
 from app.domains.jobs.schemas import JobBriefOut
@@ -83,12 +84,13 @@ def upload_midi_confirm(
     body: UploadConfirmIn,
     request: Request,
     db: Session = Depends(get_db),
-    user: CurrentUser = Depends(get_current_user),
+    user: CurrentUser = Depends(require_upload_quota),
     storage: StorageService = Depends(get_storage),
     queue: QueueService = Depends(get_queue),
 ) -> UploadConfirmOut:
     project = _get_project(db, project_id, user)
     record = confirm_upload(db, storage, user, body.upload_id)
+    record_usage(db, user.id, "uploads")
     if record.project_id != project.id:
         raise ConflictError("Upload belongs to a different project.")
 

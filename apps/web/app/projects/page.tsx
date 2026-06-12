@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import type { Project } from "@/lib/api";
 import { useDeleteProject, useProjects } from "@/lib/hooks";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 const STATUS_STYLE: Record<Project["status"], string> = {
   created: "bg-zinc-700 text-zinc-200",
@@ -74,7 +75,10 @@ function ProjectCard({ project }: { project: Project }) {
 }
 
 export default function ProjectsPage() {
+  const { authenticated } = useRequireAuth();
   const { data, isLoading, isError } = useProjects();
+
+  if (!authenticated) return null;
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">

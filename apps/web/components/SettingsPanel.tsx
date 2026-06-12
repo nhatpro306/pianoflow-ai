@@ -194,6 +194,25 @@ export function SettingsPanel({ settings, durationSec, onChange }: Props) {
       </section>
 
       <section className="flex flex-col gap-2">
+        <h3 className="text-sm font-semibold">Beginner version</h3>
+        <select
+          value={settings.difficulty}
+          onChange={(e) => onChange({ difficulty: e.target.value as RenderSettings["difficulty"] })}
+          className="rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm"
+          aria-label="Difficulty"
+        >
+          <option value="original">original</option>
+          <option value="easy">easy</option>
+          <option value="very_easy">very easy</option>
+        </select>
+        {settings.difficulty !== "original" && (
+          <p className="text-xs text-zinc-500">
+            Rule-based simplification. Keeps melody, reduces dense chords.
+          </p>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-2">
         <h3 className="text-sm font-semibold">Playback speed</h3>
         <select
           value={String(settings.speed_multiplier)}

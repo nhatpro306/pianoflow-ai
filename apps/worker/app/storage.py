@@ -100,6 +100,50 @@ class SupabaseStorageService:
         return response.content
 
 
+class S3StorageService:
+    """Worker-side S3 adapter (upload/download only)."""
+
+    def __init__(
+        self,
+        region: str = "us-east-1",
+        bucket_sources: str = "pianoflow-sources",
+        bucket_analysis: str = "pianoflow-analysis",
+        bucket_outputs: str = "pianoflow-outputs",
+    ) -> None:
+        import boto3
+
+        self._s3 = boto3.client("s3", region_name=region)
+        self._buckets = (bucket_sources, bucket_analysis, bucket_outputs)
+
+    def _bucket_for(self, key: str) -> str:
+        sources, analysis, outputs = self._buckets
+        if "/uploads/" in key:
+            return sources
+        if "/outputs/" in key:
+            return outputs
+        return analysis
+
+    def upload(self, key: str, data: bytes, content_type: str) -> None:
+        try:
+            self._s3.put_object(
+                Bucket=self._bucket_for(key),
+                Key=key,
+                Body=data,
+                ContentType=content_type,
+            )
+        except Exception as exc:
+            raise StorageError(f"S3 upload failed for {key!r}.") from exc
+
+    def download(self, key: str) -> bytes:
+        try:
+            resp = self._s3.get_object(Bucket=self._bucket_for(key), Key=key)
+            return resp["Body"].read()
+        except self._s3.exceptions.NoSuchKey as exc:
+            raise ObjectNotFoundError(key) from exc
+        except Exception as exc:
+            raise StorageError(f"S3 download failed for {key!r}.") from exc
+
+
 def get_storage() -> StorageService:
     settings = get_settings()
     if settings.storage_backend == "local":
@@ -112,4 +156,11 @@ def get_storage() -> StorageService:
             bucket_analysis=settings.supabase_bucket_analysis,
             bucket_outputs=settings.supabase_bucket_outputs,
         )
-    raise NotImplementedError("s3 storage adapter arrives with the AWS stage")
+    if settings.storage_backend == "s3":
+        return S3StorageService(
+            region=settings.aws_region,
+            bucket_sources=settings.s3_bucket_sources,
+            bucket_analysis=settings.s3_bucket_analysis,
+            bucket_outputs=settings.s3_bucket_outputs,
+        )
+    raise NotImplementedError(f"Unknown STORAGE_BACKEND={settings.storage_backend!r}")

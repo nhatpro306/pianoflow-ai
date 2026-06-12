@@ -64,3 +64,43 @@ jobs:
 
       - name: Build worker image
         run: docker build -f infra/docker/worker.Dockerfile -t pianoflow-worker .
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [python, web, docker]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sync workspace
+        run: uv sync --all-packages
+
+      - name: Run Alembic migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: uv run --directory apps/api alembic upgrade head
+
+      - name: Deploy API to Render
+        env:
+          RENDER_DEPLOY_HOOK_API: ${{ secrets.RENDER_DEPLOY_HOOK_API }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK_API" ]; then
+            curl -s "$RENDER_DEPLOY_HOOK_API"
+            echo "API deploy triggered"
+          else
+            echo "RENDER_DEPLOY_HOOK_API not set — skipping"
+          fi
+
+      - name: Deploy Worker to Render
+        env:
+          RENDER_DEPLOY_HOOK_WORKER: ${{ secrets.RENDER_DEPLOY_HOOK_WORKER }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK_WORKER" ]; then
+            curl -s "$RENDER_DEPLOY_HOOK_WORKER"
+            echo "Worker deploy triggered"
+          else
+            echo "RENDER_DEPLOY_HOOK_WORKER not set — skipping"
+          fi

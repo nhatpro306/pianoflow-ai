@@ -5,7 +5,14 @@
  */
 import type { NoteData, RenderSettings } from "@pianoflow/shared-types";
 
+import { createClient } from "./supabase";
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
+const isAuthEnabled =
+  typeof window !== "undefined" &&
+  !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export class ApiError extends Error {
   constructor(
@@ -17,10 +24,24 @@ export class ApiError extends Error {
   }
 }
 
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  if (!isAuthEnabled) return {};
+  try {
+    const supabase = createClient();
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (token) return { Authorization: `Bearer ${token}` };
+  } catch {
+    // no session — proceed without auth
+  }
+  return {};
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetch(`${BASE_URL}${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: { "Content-Type": "application/json", ...authHeaders, ...init?.headers },
   });
 
   if (!response.ok) {
@@ -108,7 +129,8 @@ export const api = {
   deleteProject: (id: string) =>
     apiFetch<void>(`/api/v1/projects/${id}`, { method: "DELETE" }),
 
-  getNotes: (id: string) => apiFetch<NoteData>(`/api/v1/projects/${id}/notes`),
+  getNotes: (id: string, difficulty = "original") =>
+    apiFetch<NoteData>(`/api/v1/projects/${id}/notes?difficulty=${difficulty}`),
 
   getSettings: (id: string) =>
     apiFetch<RenderSettings>(`/api/v1/projects/${id}/settings`),
@@ -130,6 +152,15 @@ export const api = {
       `/api/v1/projects/${projectId}/upload-midi/confirm`,
       { method: "POST", body: JSON.stringify({ upload_id: uploadId }) },
     ),
+
+  enqueueSimplifyMidi: (projectId: string) =>
+    apiFetch<Job>(`/api/v1/projects/${projectId}/jobs/simplify-midi`, { method: "POST" }),
+
+  enqueueRenderSheet: (projectId: string) =>
+    apiFetch<Job>(`/api/v1/projects/${projectId}/jobs/render-sheet`, { method: "POST" }),
+
+  enqueueRenderVideo: (projectId: string) =>
+    apiFetch<Job>(`/api/v1/projects/${projectId}/jobs/render-video`, { method: "POST" }),
 
   // ── Audio → MIDI Beta ─────────────────────────────────────
   // Output is an editable draft MIDI — never promised as perfect.
