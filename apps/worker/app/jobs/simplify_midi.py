@@ -195,18 +195,23 @@ def handle_simplify_midi(payload: dict) -> None:
             return
 
         # Register simplified MIDI as a downloadable output file.
-        output = OutputFile(
-            id=uuid.uuid4(),
-            project_id=job.project_id,
-            job_id=job.id,
-            user_id=job.user_id,
-            kind="simplified_midi",
-            storage_key=simplified_midi_key,
-            filename=f"simplified_{difficulty}.mid",
-            size_bytes=len(midi_bytes),
-            content_type="audio/midi",
+        db.add(
+            OutputFile(
+                project_id=job.project_id,
+                job_id=job.id,
+                user_id=job.user_id,
+                kind="simplified_midi",
+                storage_key=simplified_midi_key,
+                content_type="audio/midi",
+                size_bytes=len(midi_bytes),
+                output_metadata={
+                    "difficulty": difficulty,
+                    "note_count": len(simplified.notes),
+                    "original_note_count": len(note_data.notes),
+                    "notes_key": simplified_notes_key,
+                },
+            )
         )
-        db.add(output)
 
         # Record the simplified notes key in analysis_summary so render jobs can find it.
         summary = dict(project.analysis_summary or {})

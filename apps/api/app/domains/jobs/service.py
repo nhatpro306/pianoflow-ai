@@ -49,6 +49,30 @@ def _settings_snapshot(db: Session, project_id: uuid.UUID) -> tuple[int, dict]:
     return settings.version, SettingsOut.model_validate(settings).model_dump(mode="json")
 
 
+def _chain_simplify_if_needed(
+    db: Session,
+    queue: QueueService,
+    project: Project,
+    user: CurrentUser,
+    snapshot: dict,
+    request_id: str | None,
+) -> None:
+    """Phase 8 job chaining: renders at easy/very_easy need simplified notes.
+
+    The queue is FIFO and simplify is enqueued before the render job, so on the
+    single default queue the simplified notes exist by the time the render runs.
+    The worker still fails the render with SIMPLIFIED_NOTES_NOT_READY as a
+    backstop if ordering ever breaks (e.g. parallel workers).
+    """
+    difficulty = snapshot.get("difficulty", "original")
+    if difficulty not in ("easy", "very_easy"):
+        return
+    existing = ((project.analysis_summary or {}).get("simplified_notes") or {}).get(difficulty)
+    if existing:
+        return
+    create_simplify_midi_job(db, queue, project, user, request_id=request_id)
+
+
 def create_parse_midi_job(
     db: Session,
     queue: QueueService,
@@ -131,6 +155,8 @@ def create_render_sheet_job(
     if duplicate is not None:
         return EnqueuedJob(job=duplicate, created=False)
 
+    _chain_simplify_if_needed(db, queue, project, user, snapshot, request_id)
+
     job = jobs.create(
         project_id=project.id,
         user_id=user.id,
@@ -196,6 +222,8 @@ def create_render_video_job(
     duplicate = jobs.find_live_duplicate(project.id, user.id, RENDER_VIDEO, settings_version)
     if duplicate is not None:
         return EnqueuedJob(job=duplicate, created=False)
+
+    _chain_simplify_if_needed(db, queue, project, user, snapshot, request_id)
 
     job = jobs.create(
         project_id=project.id,

@@ -230,7 +230,9 @@ export function SettingsPanel({ settings, durationSec, onChange }: Props) {
         {settings.difficulty !== "original" && (
           <p className="text-xs text-amber-400">
             Simplified version — fewer notes, melody preserved.{" "}
-            <span className="text-zinc-500">Run &ldquo;Simplify&rdquo; to generate.</span>
+            <span className="text-zinc-500">
+              Renders generate it automatically; use &ldquo;Simplify&rdquo; to preview first.
+            </span>
           </p>
         )}
       </section>
