@@ -1,0 +1,17 @@
+{
+    # Let's Encrypt notifications go here.
+    email {$CADDY_EMAIL:admin@example.com}
+}
+
+# Set DOMAIN to your real hostname (e.g. api.pianoflow.app).
+# Caddy auto-provisions a free TLS cert via Let's Encrypt.
+# Leave DOMAIN unset or set to ":80" for plain HTTP on a local/test deploy.
+{$DOMAIN:localhost} {
+    reverse_proxy app:8000
+
+    # Compress text responses.
+    encode gzip
+
+    # Pass real IP to the API.
+    header_up X-Real-IP {remote_host}
+}

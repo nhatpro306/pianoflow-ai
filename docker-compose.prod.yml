@@ -1,0 +1,82 @@
+name: pianoflow-prod
+# VPS production stack — one host, ~$4-5/mo on Hetzner CAX11 or Oracle Always Free.
+# Caddy handles HTTPS automatically (Let's Encrypt).  No Render/Railway needed.
+#
+# Quick start:
+#   cp .env.example .env.prod        # fill in real secrets
+#   echo "DOMAIN=api.example.com" >> .env.prod
+#   echo "CADDY_EMAIL=you@example.com" >> .env.prod
+#   docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    env_file: .env.prod
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+  app:
+    build:
+      context: .
+      dockerfile: infra/docker/combined.Dockerfile
+    restart: unless-stopped
+    env_file: .env.prod
+    environment:
+      ENV: prod
+      QUEUE_BACKEND: redis
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_LOCAL_ROOT: /data/storage
+    volumes:
+      - app_storage:/data/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    env_file: .env.prod
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pianoflow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Cap memory so Redis never OOMs a small VPS — evict oldest keys if full.
+    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:
+  redis_data:
+  app_storage:
+  caddy_data:
+  caddy_config:

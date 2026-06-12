@@ -44,6 +44,19 @@ pnpm install && pnpm dev:web      # Next.js with HMR at http://localhost:3000
 
 API: http://localhost:8000/healthz · http://localhost:8000/readyz · http://localhost:8000/docs
 
+## Deploy (cheapest path)
+
+```bash
+# ~$4-5/mo on a Hetzner VPS — API + worker merged, Caddy auto-TLS, Supabase free tier
+cp .env.example .env.prod   # fill in SUPABASE_* keys, DOMAIN, CADDY_EMAIL
+docker compose -f docker-compose.prod.yml up -d --build
+# one-time DB migration:
+docker compose -f docker-compose.prod.yml exec app \
+    bash -c "cd /repo/apps/api && uv run --no-sync alembic upgrade head"
+```
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for all options ($0 Oracle Free, $7 Render, AWS).
+
 ## Monorepo map
 
 ```

@@ -1,6 +1,16 @@
-# PianoFlow AI — Deployment Plan
+# PianoFlow AI — Deployment
 
 > Four stages, each a working system. Adapters (`DESIGN.md` §2) make every stage transition a config change plus infrastructure work — never an application rewrite.
+
+## Cost summary
+
+| Path | $/mo | When to use |
+|---|---|---|
+| **Stage 1 — Local dev** | $0 | development |
+| **Stage 2a — VPS (recommended)** | ~$4-5 | cheapest live product |
+| **Stage 2b — Render single service** | ~$7 | no VPS management |
+| Stage 3 — AWS Hybrid | ~$20-40 | traffic > 1k users |
+| Stage 4 — Full AWS | ~$50-100 | scale + HA |
 
 ---
 
@@ -8,141 +18,231 @@
 
 **Goal:** the whole system on one laptop with `docker compose up`.
 
-```
-docker-compose.yml services:
-  web        Next.js dev server (or run natively for HMR; compose profile)
-  api        FastAPI (uvicorn --reload), mounts ./apps/api
-  worker     worker loop, image includes FFmpeg + MuseScore (headless)
-  postgres   postgres:15, volume-backed
-  redis      redis:7
-  # storage: LocalStorage adapter writes to a bind-mounted ./data/storage dir;
-  # optional minio service (S3-compatible) to exercise the s3 adapter locally
+```bash
+cp .env.example .env
+docker compose up --build -d
+pnpm install && pnpm dev:web      # Next.js with HMR at http://localhost:3000
 ```
 
-Config (env per service):
+Services started by `docker-compose.yml`:
+
+```
+web        Next.js dev server  (or run natively; profile=full to include)
+api        FastAPI (uvicorn), mounts ./apps/api
+worker     worker loop with FFmpeg + FluidSynth
+postgres   postgres:15
+redis      redis:7
+# Storage: LocalStorage writes to ./data/storage (bind-mounted)
+```
+
+Config:
 
 ```
 DATABASE_URL=postgresql://pianoflow:pianoflow@postgres:5432/pianoflow
-QUEUE_BACKEND=redis        REDIS_URL=redis://redis:6379/0
-STORAGE_BACKEND=local      STORAGE_LOCAL_ROOT=/data/storage
-AUTH_MODE=dev              # static dev user, no Supabase needed locally
+QUEUE_BACKEND=redis     REDIS_URL=redis://redis:6379/0
+STORAGE_BACKEND=local   STORAGE_LOCAL_ROOT=/data/storage
+AUTH_MODE=dev           # static dev user, no Supabase needed
 ```
 
 Notes:
-- `make dev` / `make test` / `make seed` targets; seed loads fixture MIDIs into a demo project.
-- Worker Dockerfile is the heavyweight image (FFmpeg + MuseScore ≈ adds ~400 MB); API image stays slim — separate Dockerfiles from day one so stage 3 images are already right.
-- Alembic migrations run automatically on `api` start in dev only.
+- Alembic migrations run automatically on API start in dev.
+- Worker Dockerfile is heavyweight (FFmpeg + FluidSynth ≈ +300 MB); API stays slim — separate Dockerfiles so Stage 3 images are already right.
 
 ---
 
-## Stage 2 — Public MVP (free/cheap tiers)
+## Stage 2a — VPS (cheapest live product, ~$4-5/mo)
 
-**Goal:** publicly usable product at < $20/month.
+**Goal:** publicly reachable product on one VPS — API + worker merged into a single container, Caddy for free automatic HTTPS.
 
-| Component | Host | Notes |
+### What runs where
+
+| Component | Service | Cost |
 |---|---|---|
-| Frontend | **Vercel** | Next.js native; preview deployments per PR |
-| API | **Render / Railway / Fly.io** (pick one; design assumes Render) | Docker deploy of `api.Dockerfile`; health check `/readyz` |
-| Worker | Same provider, **background worker service** (no HTTP) | `worker.Dockerfile`; 1 instance; manual scale knob |
-| Database | **Supabase Postgres** | Use connection pooler (transaction mode); Alembic via CI step |
-| Storage | **Supabase Storage** (private buckets: `uploads`, `outputs`) | Signed URLs; or S3 directly if preferred — adapter supports both |
-| Queue | **Redis** (Upstash free tier, or provider Redis add-on) | `QUEUE_BACKEND=redis` |
-| Auth | **Supabase Auth** | JWT verified by API |
+| API + Worker | Combined container (VPS) | included in VPS |
+| Frontend | **Vercel** free tier | $0 |
+| Database | **Supabase** free tier (500 MB) | $0 |
+| Storage | **Supabase Storage** free tier (1 GB) | $0 |
+| Auth | **Supabase Auth** | $0 |
+| Queue | **Redis** in-container (VPS) | included |
+| Reverse proxy / TLS | **Caddy** (auto Let's Encrypt) | included |
+| VPS | Hetzner CAX11 (2 ARM vCPU, 4 GB RAM) | ~€4/mo |
 
-Env switch from stage 1: `STORAGE_BACKEND=supabase`, real `DATABASE_URL`, `AUTH_MODE=supabase`. Nothing else changes.
+**Total: ~$4-5/mo** (just the VPS; everything else free tier).
 
-CI/CD (GitHub Actions):
-1. PR: lint + tests (Stage-1 services via docker in CI).
-2. Merge to `main`: build/push API + worker images → deploy to Render → run Alembic migration job → Vercel auto-deploys web.
+### Quick start
 
-Operational notes:
-- Render free/starter instances sleep — keep API on a paid starter ($7) to avoid cold starts; worker can be starter too.
-- Worker CPU on these tiers is weak: this is fine for the MVP caps (≤10 min songs, ≤1080p) but is the first scaling pain point → triggers Stage 3.
-- Logs: provider log streams; structured JSON makes them grep-able. Uptime: free healthcheck pinger on `/healthz`.
+```bash
+# 1. Clone on the VPS
+git clone https://github.com/nhatpro306/pianoflow-ai.git && cd pianoflow-ai
+
+# 2. Fill in secrets
+cp .env.example .env.prod
+# Edit .env.prod — set DATABASE_URL (Supabase), SUPABASE_* keys,
+# DOMAIN=api.example.com, CADDY_EMAIL, POSTGRES_PASSWORD, AUTH_MODE=supabase
+
+# 3. Deploy (builds combined image, starts caddy + app + postgres + redis)
+docker compose -f docker-compose.prod.yml up -d --build
+
+# 4. Run Alembic migrations once
+docker compose -f docker-compose.prod.yml exec app \
+    bash -c "cd /repo/apps/api && uv run --no-sync alembic upgrade head"
+```
+
+Health checks:
+
+```
+https://api.example.com/healthz  → {"status":"ok"}
+https://api.example.com/readyz   → {"status":"ok"}
+```
+
+### Combined image (`infra/docker/combined.Dockerfile`)
+
+One image includes FFmpeg/FluidSynth (for the worker) plus all API deps. `infra/entrypoint.sh` starts the worker in the background then `exec`s uvicorn as PID 1, so `docker stop` cleanly shuts both processes.
+
+```
+SIGTERM → uvicorn exits → trap → worker killed → container exits
+```
+
+### Env vars for `.env.prod`
+
+```
+# Supabase (get from project dashboard)
+DATABASE_URL=postgresql+psycopg://postgres.<ref>:<pass>@<host>:6543/postgres
+SUPABASE_URL=https://<ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+SUPABASE_JWT_SECRET=<jwt-secret>
+SUPABASE_ANON_KEY=<anon-key>
+
+# App
+AUTH_MODE=supabase
+STORAGE_BACKEND=supabase
+QUEUE_BACKEND=redis
+REDIS_URL=redis://redis:6379/0
+ENV=prod
+LOG_LEVEL=INFO
+
+# Postgres (in-container, only needed if using local pg instead of Supabase)
+POSTGRES_USER=pianoflow
+POSTGRES_PASSWORD=<strong-random>
+POSTGRES_DB=pianoflow
+
+# Caddy
+DOMAIN=api.example.com
+CADDY_EMAIL=you@example.com
+
+# Internal metrics token (optional but recommended in prod)
+INTERNAL_METRICS_TOKEN=<long-random>
+```
+
+> **If you're using Supabase Postgres** (recommended — free tier, managed backups): set `DATABASE_URL` to the Supabase connection string and remove the `postgres` service from `docker-compose.prod.yml` to save ~150 MB RAM.
+
+### Updates
+
+```bash
+git pull
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml exec app \
+    bash -c "cd /repo/apps/api && uv run --no-sync alembic upgrade head"
+```
 
 ---
 
-## Stage 3 — AWS Hybrid
+## Stage 2b — Render Single Service (~$7/mo)
 
-**Goal:** move compute to AWS (the part that needs to scale) while keeping Vercel DX for the frontend. This stage exists to de-risk the migration by moving one tier at a time.
+**Goal:** same as 2a but on Render — no VPS to maintain, but costs slightly more.
+
+Uses `render.yaml` (Render blueprint) + `infra/docker/combined.Dockerfile`:
+
+- 1 Render Starter service ($7/mo) running API + worker merged
+- Supabase for DB + storage + auth (free tier)
+- Upstash Redis free tier (10k commands/day, enough for MVP)
+- Vercel for web (free)
+
+**Total: ~$7/mo** (just the Render service).
+
+Setup:
+1. Connect repo to Render; it picks up `render.yaml` automatically.
+2. Set secrets in the Render dashboard (mark as secret):
+   `DATABASE_URL`, `REDIS_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `INTERNAL_METRICS_TOKEN`.
+3. Render runs `/healthz` as the health check path.
+
+CI/CD: GitHub Actions builds and tests on every PR; Render auto-deploys on merge to `main`.
+
+---
+
+## Stage 3 — AWS Hybrid (~$20-40/mo)
+
+**Goal:** move compute to AWS while keeping Vercel DX for the frontend.
 
 | Component | Host | Migration action |
 |---|---|---|
 | Frontend | Vercel (unchanged) | — |
-| API | **ECS Fargate service** behind ALB | Push image to ECR; service: 2 tasks, 0.5 vCPU/1 GB |
-| Worker | **ECS Fargate service** (no ALB) | render queue workers: 1–4 tasks, 1–2 vCPU/4 GB; autoscale on SQS depth |
-| Queue | **SQS** (+ DLQ per queue) | `QUEUE_BACKEND=sqs` — adapter swap, the headline migration |
-| Storage | **S3** (private buckets, lifecycle rules on `tmp/`, `outputs/`) | `STORAGE_BACKEND=s3`; one-time `aws s3 sync` of existing objects; DB `storage_key`s unchanged (keys are backend-relative) |
-| Database | Supabase Postgres (kept) **or** RDS now | Defer RDS to stage 4 unless latency API↔DB hurts |
+| API | **ECS Fargate** behind ALB | Push image to ECR; 2 tasks, 0.5 vCPU/1 GB |
+| Worker | **ECS Fargate** (no ALB) | 1-4 tasks, 1-2 vCPU/4 GB; autoscale on SQS depth |
+| Queue | **SQS** (+ DLQ per queue) | `QUEUE_BACKEND=sqs` — adapter swap only |
+| Storage | **S3** (private buckets, lifecycle rules) | `STORAGE_BACKEND=s3`; `aws s3 sync` existing objects |
+| Database | Supabase Postgres (kept) or RDS | Defer RDS to Stage 4 unless latency hurts |
 | Auth | Supabase Auth (kept) | — |
 
-Queue separation activates here: `q_fast` and `q_render` SQS queues, two worker services (see `DESIGN.md` §3.7). Worker autoscaling policy: target tracking on `ApproximateNumberOfMessagesVisible / running tasks`.
+Adapter swaps are the only app changes: set `QUEUE_BACKEND=sqs`, `STORAGE_BACKEND=s3`, add AWS creds via ECS task role. No code rewrites.
 
-IAM: task roles with least privilege — API role: SQS SendMessage + S3 presign-scoped access; worker role: SQS Receive/Delete + S3 Read/Write on its prefixes.
+IAM: task roles with least privilege — API: SQS SendMessage + S3 presign; worker: SQS Receive/Delete + S3 Read/Write on its prefixes.
 
 ---
 
-## Stage 4 — Full AWS (Terraform-managed)
+## Stage 4 — Full AWS (~$50-100/mo)
 
-**Goal:** everything on AWS, fully IaC, production observability. This is the "portfolio money shot" stage.
+**Goal:** everything on AWS, fully IaC, production observability.
 
 ```
-Route53 ─ CloudFront ─┬─ S3 (static export / or keep Vercel — decision point)
+Route53 ─ CloudFront ─┬─ S3 (static export or keep Vercel)
                        └─ ALB ─ ECS Fargate (api, 2+ tasks, multi-AZ)
-                                   │
-                                  SQS (q_fast, q_render, + DLQs)
-                                   │
-                                ECS Fargate (worker-fast, worker-render; autoscaled)
-                                   │
-                       S3 (uploads/outputs/notes; lifecycle rules)
-                       RDS PostgreSQL (Multi-AZ optional; RDS Proxy)
-                       CloudWatch (logs, metrics, dashboards, alarms)
-                       Secrets Manager (DB creds, JWT keys)
-                       ECR (api, worker images)
+                                    │
+                                   SQS (q_fast, q_render, + DLQs)
+                                    │
+                                 ECS Fargate (worker; autoscaled)
+                                    │
+                        S3 (uploads/outputs/notes; lifecycle rules)
+                        RDS PostgreSQL (Multi-AZ optional; RDS Proxy)
+                        CloudWatch (logs, metrics, dashboards, alarms)
+                        Secrets Manager / Parameter Store
+                        ECR (api, worker, combined images)
 ```
 
-| Concern | Implementation |
-|---|---|
-| IaC | **Terraform** in `infra/terraform`: modules `network` (VPC, subnets, endpoints for S3/ECR — keep NAT cost down), `ecs-api`, `ecs-worker`, `sqs`, `s3`, `rds`, `cloudfront`, `observability`; envs `staging`/`prod` via tfvars; remote state S3 + DynamoDB lock |
-| DB migration | Supabase → RDS: pg_dump/restore during maintenance window; RLS policies dropped (API-layer ownership checks were always authoritative — `DATABASE.md` §7) |
-| Auth | Keep Supabase Auth (cheap, works) or Cognito; `AuthProvider` adapter decides — recommend keeping Supabase Auth, migrating auth is high-risk/low-reward |
-| Frontend | Either stay on Vercel (recommended; CloudFront fronts only API/assets) or full static-export to S3+CloudFront if app can drop server components |
-| Logs | CloudWatch Logs, JSON structured → Logs Insights queries saved in repo |
-| Metrics | CloudWatch custom metrics (job durations, failure counts, queue delay) emitted via EMF from API/worker |
-| Alarms | failure-rate > 10%/15 min, DLQ depth > 0, queue delay p95 > 2 min, RDS CPU/storage, ALB 5xx |
-| Dashboards | one CloudWatch dashboard: uploads/day, jobs by status, render p50/p95, queue depth, storage bytes |
-| CD | GitHub Actions OIDC → AWS (no long-lived keys): build → ECR → `terraform plan` (PR comment) → manual approve → `apply` + ECS deploy |
+IaC: **Terraform** in `infra/terraform`: modules `network`, `ecs-api`, `ecs-worker`, `sqs`, `s3`, `rds`, `cloudfront`, `observability`; envs `staging`/`prod` via tfvars; remote state S3 + DynamoDB lock.
+
+CD: GitHub Actions OIDC → AWS (no long-lived keys): build → ECR → `terraform plan` (PR comment) → manual approve → `apply` + ECS rolling deploy.
 
 ---
 
-## Stage Transition Checklist (what actually changes)
+## Stage Transition Checklist
 
-| Change | 1→2 | 2→3 | 3→4 |
+| Change | 1→2a/2b | 2→3 | 3→4 |
 |---|---|---|---|
 | App code | none | none | none |
-| Env vars | storage/auth/db URLs | `QUEUE_BACKEND=sqs`, `STORAGE_BACKEND=s3`, AWS creds via task role | DB URL → RDS |
-| New adapter code | (written in phase 2: supabase storage) | (written in phase 11: sqs + s3 — both small) | none |
-| Infra work | provider dashboards | ECR/ECS/SQS/S3 setup (scripted in `infra/aws`) | full Terraform |
-| Data migration | none | S3 sync of objects | pg_dump → RDS |
+| Env vars | storage/auth/db URLs | `QUEUE_BACKEND=sqs`, `STORAGE_BACKEND=s3`, AWS creds | DB URL → RDS |
+| New adapter code | (Supabase: already written) | (SQS + S3: Phase 11, both small) | none |
+| Infra work | VPS or Render dashboard | ECR/ECS/SQS/S3 setup | full Terraform |
+| Data migration | none | `aws s3 sync` objects | pg_dump → RDS |
 
 ---
 
-## Secrets & Config Management per Stage
+## Secrets & Config Management
 
 | Stage | Mechanism |
 |---|---|
-| 1 | `.env` files (gitignored), `.env.example` committed |
-| 2 | Provider dashboards (Render env groups, Vercel env, Supabase) |
-| 3 | SSM Parameter Store / Secrets Manager for ECS tasks; Vercel env for web |
-| 4 | Secrets Manager + Terraform-injected task definitions; rotation documented |
+| 1 | `.env` file (gitignored); `.env.example` committed |
+| 2a | `.env.prod` file on VPS (gitignored, backed up separately) |
+| 2b | Render dashboard env groups |
+| 3/4 | SSM Parameter Store / Secrets Manager; Vercel env for web |
 
-Hard rule at every stage: no secret in the repo, ever; CI uses OIDC or scoped deploy tokens.
+Hard rule: no secret in the repo, ever.
 
 ---
 
-## Cost & Lifecycle Controls (deployment-level)
+## Cost & Lifecycle Controls
 
-- S3/Supabase lifecycle rules: `tmp/` expire 1 day; `outputs/` expire 30 days (DB cleanup job is primary, lifecycle is backstop — `DATABASE.md` §6).
-- ECS worker scale-to-zero overnight option (scheduled scaling) at stage 3/4 if traffic allows; SQS retains messages.
-- Budget alarms: AWS Budgets at $20 (stage 3) / $50 (stage 4) with email alert.
-- MVP caps (duration ≤ 10 min, ≤ 1080p, daily job limits) are the primary cost control at every stage — see `RISKS.md`.
+- Supabase/S3 lifecycle rules: `tmp/` expire 1 day; `outputs/` expire 30 days (`OUTPUT_RETENTION_DAYS`).
+- Worker cleanup sweep runs every `CLEANUP_INTERVAL_SECONDS` (default 900 s) — deletes expired `OutputFile` rows and their storage objects.
+- Budget alarms: AWS Budgets at $30 (Stage 3) / $60 (Stage 4) with email alert.
+- MVP caps (≤10 min songs, ≤1080p, daily job limits) are the primary cost control — see `RISKS.md`.

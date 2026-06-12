@@ -1,0 +1,25 @@
+# Render deployment blueprint — single merged service ($7/mo Starter).
+# Runs API + worker in one container via infra/entrypoint.sh.
+# Set all env vars in the Render dashboard or an env group.
+services:
+  - type: web
+    name: pianoflow
+    runtime: docker
+    dockerfilePath: infra/docker/combined.Dockerfile
+    healthCheckPath: /healthz
+    numInstances: 1
+    plan: starter
+    envVars:
+      - key: ENV
+        value: prod
+      - key: QUEUE_BACKEND
+        value: redis
+      - key: STORAGE_BACKEND
+        value: supabase
+      - key: AUTH_MODE
+        value: supabase
+      - key: UVICORN_WORKERS
+        value: "1"
+      # Set these in the Render dashboard (mark as secret):
+      # DATABASE_URL, REDIS_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+      # SUPABASE_JWT_SECRET, INTERNAL_METRICS_TOKEN
