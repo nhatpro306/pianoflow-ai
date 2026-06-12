@@ -6,11 +6,12 @@ uploaded_files. Jobs/outputs/settings tables arrive with their phases.
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import ClassVar
 
 from sqlalchemy import (
     BigInteger,
+    Date,
     DateTime,
     ForeignKey,
     Index,
@@ -18,6 +19,7 @@ from sqlalchemy import (
     SmallInteger,
     String,
     Text,
+    UniqueConstraint,
     Uuid,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -26,6 +28,10 @@ from sqlalchemy.types import JSON
 
 def utcnow() -> datetime:
     return datetime.now(UTC)
+
+
+def utctoday() -> date:
+    return datetime.now(UTC).date()
 
 
 class Base(DeclarativeBase):
@@ -182,6 +188,25 @@ class OutputFile(Base):
         Index("idx_outputs_project", "project_id", "created_at"),
         Index("idx_outputs_expiry", "expires_at"),
     )
+
+
+class UsageLimit(Base):
+    """Per-user daily counters (DATABASE.md §3): row per (user, day) —
+    counters reset by date, no cron needed."""
+
+    __tablename__ = "usage_limits"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    day: Mapped[date] = mapped_column(Date, nullable=False, default=utctoday)
+    uploads_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    render_jobs_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    video_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    storage_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+
+    __table_args__ = (UniqueConstraint("user_id", "day", name="uq_usage_user_day"),)
 
 
 class ProjectEvent(Base):

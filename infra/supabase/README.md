@@ -16,11 +16,14 @@ This directory holds Supabase-specific provisioning only (buckets, storage RLS).
 
 3. Apply `migrations/0001_storage_buckets.sql` in the Supabase SQL editor
    (or `supabase db push` if using the CLI). All three buckets are private.
-4. Enable Auth providers (email at minimum). `AUTH_MODE=supabase` in the API
-   arrives with Phase 9 — until then production should not be public.
-5. Enable RLS on user-owned tables before exposing anything publicly
-   (table RLS policies ship with Phase 9 auth, since dev-mode rows are not
-   keyed by `auth.uid()` yet).
+4. Enable Auth providers (email at minimum). Set the API environment:
+   `AUTH_MODE=supabase` and `SUPABASE_JWT_SECRET=<JWT secret from
+   Project Settings -> API>`. The API verifies the HS256 access token on
+   every request and mirrors the identity into the `users` table on first
+   call.
+5. Apply `migrations/0002_table_rls.sql` — enables RLS on all user-owned
+   tables (select-own policies keyed on `auth.uid()`; writes stay
+   service-role-only through the API).
 
 ## Key handling rules
 

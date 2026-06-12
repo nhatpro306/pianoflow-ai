@@ -20,6 +20,7 @@ from app.core.errors import (
     ValidationAppError,
 )
 from app.core.security import CurrentUser
+from app.domains.limits.service import check_and_count_upload
 from app.infrastructure.database.models import Project, UploadedFile
 from app.infrastructure.database.repositories import UploadedFileRepository
 from app.infrastructure.storage.base import SignedUrl, StorageService
@@ -69,6 +70,8 @@ def init_upload(
     files = UploadedFileRepository(db)
     if files.get_validated_for_project(project.id, user.id) is not None:
         raise ConflictError("Project already has an uploaded MIDI (one source file per project).")
+
+    check_and_count_upload(db, user.id)
 
     # Server-generated key — original filename is display metadata only.
     storage_key = f"projects/{project.id}/uploads/{uuid.uuid4().hex}.mid"
@@ -130,6 +133,8 @@ def init_audio_upload(
     files = UploadedFileRepository(db)
     if files.get_validated_for_project(project.id, user.id) is not None:
         raise ConflictError("Project already has an uploaded source file.")
+
+    check_and_count_upload(db, user.id)
 
     content_type = AUDIO_TYPES[extension]
     storage_key = f"projects/{project.id}/uploads/{uuid.uuid4().hex}{extension}"

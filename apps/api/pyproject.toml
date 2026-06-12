@@ -14,6 +14,7 @@ dependencies = [
     "redis>=5.0",
     "pianoflow-music",
     "httpx>=0.28.1",
+    "pyjwt>=2.8",
 ]
 
 [dependency-groups]

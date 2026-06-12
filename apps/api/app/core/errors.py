@@ -20,6 +20,11 @@ class ValidationAppError(AppError):
     code = "VALIDATION_ERROR"
 
 
+class UnauthorizedError(AppError):
+    status_code = 401
+    code = "UNAUTHORIZED"
+
+
 class ForbiddenError(AppError):
     status_code = 403
     code = "FORBIDDEN"

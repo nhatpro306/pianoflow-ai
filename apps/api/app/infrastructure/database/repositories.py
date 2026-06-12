@@ -14,7 +14,9 @@ from app.infrastructure.database.models import (
     ProjectEvent,
     RenderJob,
     UploadedFile,
+    UsageLimit,
     User,
+    utctoday,
 )
 
 
@@ -27,6 +29,23 @@ class UserRepository:
         if user is None:
             user = User(email=email, display_name=display_name)
             self.db.add(user)
+            self.db.flush()
+        return user
+
+    def sync_supabase_user(self, user_id: uuid.UUID, email: str) -> User:
+        """Mirror a Supabase Auth identity into the app users table.
+
+        auth.users is the identity source (DATABASE.md §3) — the Supabase user
+        UUID becomes this table's primary key so ownership scoping matches RLS.
+        Keeps email current if the user changed it in Supabase.
+        """
+        user = self.db.get(User, user_id)
+        if user is None:
+            user = User(id=user_id, email=email)
+            self.db.add(user)
+            self.db.flush()
+        elif user.email != email:
+            user.email = email
             self.db.flush()
         return user
 
@@ -210,3 +229,19 @@ class ProjectEventRepository:
         self.db.add(event)
         self.db.flush()
         return event
+
+
+class UsageLimitRepository:
+    def __init__(self, db: Session) -> None:
+        self.db = db
+
+    def get_or_create_today(self, user_id: uuid.UUID) -> UsageLimit:
+        today = utctoday()
+        row = self.db.scalar(
+            select(UsageLimit).where(UsageLimit.user_id == user_id, UsageLimit.day == today)
+        )
+        if row is None:
+            row = UsageLimit(user_id=user_id, day=today)
+            self.db.add(row)
+            self.db.flush()
+        return row

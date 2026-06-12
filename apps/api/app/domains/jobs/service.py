@@ -15,6 +15,7 @@ from app.core.errors import (
     RateLimitedError,
 )
 from app.core.security import CurrentUser
+from app.domains.limits.service import check_and_count_render_job
 from app.domains.settings.schemas import SettingsOut
 from app.domains.settings.service import get_or_create_settings
 from app.infrastructure.database.models import Project, RenderJob
@@ -156,6 +157,7 @@ def create_render_sheet_job(
         return EnqueuedJob(job=duplicate, created=False)
 
     _chain_simplify_if_needed(db, queue, project, user, snapshot, request_id)
+    check_and_count_render_job(db, user.id)
 
     job = jobs.create(
         project_id=project.id,
@@ -224,6 +226,13 @@ def create_render_video_job(
         return EnqueuedJob(job=duplicate, created=False)
 
     _chain_simplify_if_needed(db, queue, project, user, snapshot, request_id)
+    # Video charges its output duration (source duration / playback speed)
+    # against the daily video-seconds budget.
+    duration_sec = float((project.analysis_summary or {}).get("duration_sec") or 0.0)
+    speed = float(snapshot.get("speed_multiplier") or 1.0)
+    check_and_count_render_job(
+        db, user.id, video_seconds=duration_sec / speed if speed > 0 else duration_sec
+    )
 
     job = jobs.create(
         project_id=project.id,
@@ -388,6 +397,8 @@ def create_simplify_midi_job(
     duplicate = jobs.find_live_duplicate(project.id, user.id, SIMPLIFY_MIDI, settings_version)
     if duplicate is not None:
         return EnqueuedJob(job=duplicate, created=False)
+
+    check_and_count_render_job(db, user.id)
 
     job = jobs.create(
         project_id=project.id,

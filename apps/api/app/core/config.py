@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     supabase_bucket_outputs: str = "pianoflow-outputs"
 
     auth_mode: Literal["dev", "supabase"] = "dev"
+    # Supabase Auth JWT verification (AUTH_MODE=supabase). HS256 shared secret
+    # from the Supabase dashboard — backend-only, never shipped to the client.
+    supabase_jwt_secret: str = ""
 
     api_base_url: str = "http://localhost:8000"
     # Signs local-backend signed URLs only — never used in supabase/s3 modes.
