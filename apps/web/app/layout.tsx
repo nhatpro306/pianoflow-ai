@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
+import { AccountMenu } from "@/components/AccountMenu";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
@@ -29,6 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/projects" className="hover:text-zinc-100">
                   Projects
                 </Link>
+              </div>
+              <div className="ml-auto">
+                <AccountMenu />
               </div>
             </nav>
           </header>
