@@ -110,7 +110,7 @@ uv run --directory apps/api python ../../scripts/load_test.py \
 
 ## Roadmap
 
-Phases 1–10 complete. Phase 11 (AWS free-tier showcase) in progress. Stages 1–3 run at $0/month.
+Phases 1–11 code complete (auth, $0 deploy stack, AWS free-tier IaC). Live deploys pending. Stages 1–3 run at $0/month.
 Full roadmap: [docs/ROADMAP.md](docs/ROADMAP.md)
 
 ---
