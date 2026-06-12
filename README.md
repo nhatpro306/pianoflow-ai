@@ -2,10 +2,13 @@
 
 Turn any piano MIDI into a **tutorial video**, **sheet music**, and a **beginner-friendly version**.
 
-> **Status: MIDI → sheet pipeline live + minimal tutorial video streaming + Audio → MIDI Beta.**
+> **Status: MIDI → sheet pipeline live + minimal tutorial video streaming + Beginner Mode + Audio → MIDI Beta.**
 > Working: 2-phase MIDI upload → parse → MusicXML/PDF sheet outputs;
+> rule-based **Beginner Mode** (easy / very easy) — simplified MIDI download,
+> A/B piano-roll comparison, render jobs auto-chain simplification;
 > audio upload (rights attestation required) → editable **draft MIDI** via
 > placeholder transcription engine on `q_audio`.
+> Simplification is rule-based (melody preserved, density capped) — not an arrangement.
 > Audio → MIDI is **Beta / MVP+** — output is an editable draft, never "perfect MIDI".
 > Tutorial videos are streaming-only — no MP4 download, max 1080p.
 > Roadmap: [docs/ROADMAP.md](docs/ROADMAP.md)

@@ -318,7 +318,7 @@ Large note sets (> ~1 MB): `200` with a redirect-style body instead:
 { "notes_url": "https://storage.../notes/v1.json?token=...", "expires_at": "..." }
 ```
 
-Errors: `PROJECT_NOT_FOUND`, `CONFLICT` (`code: NOTES_NOT_READY` — parse not finished; body includes the parse job id so the client can poll it), `404 NOT_FOUND` for `difficulty` variant that was never generated.
+Errors: `PROJECT_NOT_FOUND`, `CONFLICT` (`code: NOTES_NOT_READY` — parse not finished; body includes the parse job id so the client can poll it), `CONFLICT` (`code: SIMPLIFIED_NOTES_NOT_READY`) for a `difficulty` variant that was never generated.
 
 ---
 
@@ -392,7 +392,9 @@ Response `201`:
 }
 ```
 
-Errors: `CONFLICT` (`NOTES_NOT_READY`, or difficulty=easy without completed simplify job — body tells client to create `simplify-midi` first; the frontend "Generate" button chains this automatically), `RATE_LIMITED`.
+Job chaining: when settings difficulty is `easy`/`very_easy` and the simplified notes variant does not exist yet, the API auto-enqueues a `simplify_midi` job ahead of the render on the same FIFO queue — the client makes one call.
+
+Errors: `CONFLICT` (`NOTES_NOT_READY`), `RATE_LIMITED`.
 
 ---
 
@@ -415,18 +417,17 @@ Response `201`:
 }
 ```
 
-Errors: `CONFLICT` (notes not ready / simplify prerequisite), `RATE_LIMITED` (daily job cap or daily video-seconds cap), `VALIDATION_ERROR` (song exceeds max duration for rendering).
+Job chaining: same as render-sheet — a missing simplified-notes variant auto-enqueues `simplify_midi` first.
+
+Errors: `CONFLICT` (`NOTES_NOT_READY`), `RATE_LIMITED` (daily job cap or daily video-seconds cap), `VALIDATION_ERROR` (song exceeds max duration for rendering).
 
 ---
 
 ### POST `/api/v1/projects/{project_id}/jobs/simplify-midi`
 
-**Purpose:** generate simplified MIDI + simplified notes JSON at the difficulty in current settings (rejects `difficulty=original`).
+**Purpose:** generate simplified MIDI + simplified notes JSON at the difficulty in current settings (rejects `difficulty=original`). Output: downloadable `simplified_midi` file + `analysis_summary.simplified_notes.{difficulty}` storage key consumed by render jobs and `GET /notes?difficulty=...`.
 
-Request — optional override:
-```json
-{ "difficulty": "easy" }
-```
+Request: `{}` — difficulty comes from the project's `render_settings`.
 
 Response `201`:
 ```json
@@ -439,7 +440,7 @@ Response `201`:
 }
 ```
 
-Errors: `VALIDATION_ERROR` (difficulty `original`), `CONFLICT` (`NOTES_NOT_READY`), `RATE_LIMITED`.
+Errors: `CONFLICT` (`INVALID_DIFFICULTY` — settings difficulty is `original`), `CONFLICT` (`NOTES_NOT_READY`), `RATE_LIMITED`.
 
 ---
 
