@@ -100,6 +100,14 @@ pnpm -r typecheck                 # TypeScript
 make test                         # All tests
 ```
 
+Load test (10 concurrent upload→parse flows against any deployment):
+
+```bash
+uv run --directory apps/api python ../../scripts/load_test.py \
+  --base-url http://localhost:8000 --concurrency 10 \
+  --midi packages/music-core/pianoflow_music/tests/fixtures/simple.mid
+```
+
 ## Roadmap
 
 Phases 1–10 complete. Phase 11 (AWS free-tier showcase) in progress. Stages 1–3 run at $0/month.
