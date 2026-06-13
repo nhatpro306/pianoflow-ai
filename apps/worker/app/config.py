@@ -27,6 +27,19 @@ def _encode_pg_password(url: str) -> str:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
+    @field_validator("*", mode="before")
+    @classmethod
+    def _strip_bom_and_whitespace(cls, value: object) -> object:
+        """Strip a leading BOM (U+FEFF) and surrounding whitespace from string env values.
+
+        Hosting dashboards (Vercel, Render) sometimes inject a BOM when values
+        are pasted in. A BOM-prefixed URL is not a valid absolute URL and will
+        break JWKS lookups, storage signing, and DB connections.
+        """
+        if isinstance(value, str):
+            return value.lstrip("﻿").strip()
+        return value
+
     database_url: str = "postgresql+psycopg://pianoflow:pianoflow@localhost:5432/pianoflow"
     db_password: str = ""
 
