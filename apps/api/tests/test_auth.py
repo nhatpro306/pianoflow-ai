@@ -99,6 +99,83 @@ class TestJWTAuth:
         assert r.status_code == 200
 
 
+class TestAsymmetricJWT:
+    """New Supabase projects sign with ES256; verified via JWKS."""
+
+    @pytest.fixture()
+    def ec_keypair(self):
+        from cryptography.hazmat.primitives.asymmetric import ec
+
+        private_key = ec.generate_private_key(ec.SECP256R1())
+        return private_key, private_key.public_key()
+
+    def _es256_token(self, private_key, email: str = "es@example.com") -> str:
+        now = datetime.now(UTC)
+        return jwt.encode(
+            {
+                "sub": str(uuid.uuid4()),
+                "email": email,
+                "aud": "authenticated",
+                "iat": now,
+                "exp": now + timedelta(hours=1),
+            },
+            private_key,
+            algorithm="ES256",
+            headers={"kid": "test-key"},
+        )
+
+    def test_es256_token_verified_via_jwks(
+        self, supabase_client: TestClient, ec_keypair, monkeypatch
+    ):
+        private_key, public_key = ec_keypair
+
+        class FakeSigningKey:
+            key = public_key
+
+        class FakeJWKSClient:
+            def get_signing_key_from_jwt(self, token):
+                return FakeSigningKey()
+
+        from app.core import security
+
+        monkeypatch.setattr(security, "_jwks_client", lambda url: FakeJWKSClient())
+        monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+        from app.core.config import get_settings
+
+        get_settings.cache_clear()
+
+        token = self._es256_token(private_key)
+        r = supabase_client.get("/api/v1/projects", headers=_auth(token))
+        assert r.status_code == 200
+
+    def test_es256_wrong_key_returns_401(
+        self, supabase_client: TestClient, ec_keypair, monkeypatch
+    ):
+        from cryptography.hazmat.primitives.asymmetric import ec
+
+        private_key, _ = ec_keypair
+        other_public = ec.generate_private_key(ec.SECP256R1()).public_key()
+
+        class FakeSigningKey:
+            key = other_public
+
+        class FakeJWKSClient:
+            def get_signing_key_from_jwt(self, token):
+                return FakeSigningKey()
+
+        from app.core import security
+
+        monkeypatch.setattr(security, "_jwks_client", lambda url: FakeJWKSClient())
+        monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+        from app.core.config import get_settings
+
+        get_settings.cache_clear()
+
+        token = self._es256_token(private_key)
+        r = supabase_client.get("/api/v1/projects", headers=_auth(token))
+        assert r.status_code == 401
+
+
 class TestOwnershipIsolation:
     """User B cannot see user A's projects/jobs/outputs."""
 
