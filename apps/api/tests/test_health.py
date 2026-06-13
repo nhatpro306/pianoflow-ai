@@ -103,6 +103,50 @@ class TestMetricsToken:
         guard(x_internal_token=None)  # no raise
 
 
+class TestBomStripping:
+    """Settings strips a leading BOM (U+FEFF) and whitespace from string env values."""
+
+    def test_supabase_url_bom_stripped(self, monkeypatch):
+        monkeypatch.setenv("SUPABASE_URL", "﻿https://x.supabase.co  ")
+        from app.core.config import Settings, get_settings
+
+        get_settings.cache_clear()
+        s = Settings()
+        assert s.supabase_url == "https://x.supabase.co"
+
+    def test_supabase_service_role_key_bom_stripped(self, monkeypatch):
+        monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "﻿my-secret-key  ")
+        from app.core.config import Settings, get_settings
+
+        get_settings.cache_clear()
+        s = Settings()
+        assert s.supabase_service_role_key == "my-secret-key"
+
+    def test_redis_url_bom_stripped(self, monkeypatch):
+        monkeypatch.setenv("REDIS_URL", "﻿  redis://redis.example.com:6379/0")
+        from app.core.config import Settings, get_settings
+
+        get_settings.cache_clear()
+        s = Settings()
+        assert s.redis_url == "redis://redis.example.com:6379/0"
+
+    def test_plain_value_unchanged(self, monkeypatch):
+        monkeypatch.setenv("SUPABASE_URL", "https://clean.supabase.co")
+        from app.core.config import Settings, get_settings
+
+        get_settings.cache_clear()
+        s = Settings()
+        assert s.supabase_url == "https://clean.supabase.co"
+
+    def test_non_string_fields_unaffected(self, monkeypatch):
+        monkeypatch.setenv("MAX_MIDI_BYTES", "1048576")
+        from app.core.config import Settings, get_settings
+
+        get_settings.cache_clear()
+        s = Settings()
+        assert s.max_midi_bytes == 1048576
+
+
 class TestSchemaExposure:
     """OpenAPI schema is hidden outside dev."""
 
