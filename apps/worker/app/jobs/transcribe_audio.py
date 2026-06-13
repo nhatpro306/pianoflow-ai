@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.db import (
     OutputFile,
     Project,
@@ -165,7 +166,7 @@ def handle_transcribe_audio(payload: dict) -> None:
             job.progress_message = "Transcribing audio to draft MIDI"
             db.commit()
 
-            engine = get_engine("default")
+            engine = get_engine(get_settings().transcription_engine)
             result = engine.transcribe(audio_bytes, filename=upload.original_name)
         except ObjectNotFoundError:
             _fail_job(

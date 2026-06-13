@@ -105,13 +105,18 @@ pnpm -r typecheck
 3. **End-to-end smoke**: sign up on the live site → upload a MIDI → confirm a
    `parse_midi` job completes and the piano roll renders. (`scripts/load_test.py`
    drives N concurrent upload→parse flows once you have a JWT.)
-4. **Phase 12** (future): real audio→MIDI ML model on a dedicated `q_ml` queue.
-   Currently a placeholder engine.
+4. **Phase 12** (engine implemented, opt-in): a real Basic Pitch (ONNX) engine
+   lives behind the `TranscriptionEngine` interface. The placeholder remains the
+   default. To enable: install `pianoflow-music[basic-pitch]` on a dedicated
+   audio worker (Python ≤3.11) and set `TRANSCRIPTION_ENGINE=basic_pitch` in
+   its environment. The worker code already reads this env var.
 5. **Stage 3** (portfolio showcase): `terraform apply` the AWS free-tier stack
    in `infra/terraform/` (Lambda+SQS+EC2+S3). Code adapters + IaC already exist;
    needs an AWS account + the GitHub OIDC role. See `infra/aws/README.md`.
 
 ## Roadmap
 
-Phases 1–11 code complete. Phase 12 (audio→MIDI beta) is the only feature phase
-left. Full roadmap: `docs/ROADMAP.md`. Deployment stages: `docs/DEPLOYMENT.md`.
+Phases 1–12 code complete (Phase 12 Basic Pitch engine is implemented but
+off-by-default — opt in via `TRANSCRIPTION_ENGINE=basic_pitch` + the
+`basic-pitch` extra on a dedicated audio worker). Full roadmap: `docs/ROADMAP.md`.
+Deployment stages: `docs/DEPLOYMENT.md`.

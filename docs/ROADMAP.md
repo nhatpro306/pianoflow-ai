@@ -118,6 +118,14 @@
 - **Difficulty:** Very High. **Complexity:** XL.
 - **Do NOT:** start before Phases 1–11 are solid; promise "perfect transcription"; YouTube import in the same phase (separate, after — adds ToS/copyright surface, see `RISKS.md`).
 
+**Status (Phase 12 implementation note):** A real Spotify Basic Pitch (Apache-2.0,
+ONNX runtime) engine now exists behind the `TranscriptionEngine` interface as
+`BasicPitchEngine` in `packages/music-core`. It is an optional, feature-flagged
+extra (`pianoflow-music[basic-pitch]`); the deterministic placeholder remains
+the free-tier default. The worker reads `TRANSCRIPTION_ENGINE` from env — set
+`TRANSCRIPTION_ENGINE=basic_pitch` on a dedicated audio worker that has the
+extra installed (Python ≤3.11 required for the current basic-pitch release).
+
 ---
 
 ## Dependency Graph
