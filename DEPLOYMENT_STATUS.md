@@ -89,8 +89,8 @@ RLS policies + storage buckets: `infra/supabase/migrations/*.sql`.
 
 Run per project (api/worker are uv virtual projects — can't install together):
 ```
-uv run --directory apps/api pytest -q       # 100 tests
-uv run --directory apps/worker pytest -q     # 27 tests
+uv run --directory apps/api pytest -q       # 98 tests
+uv run --directory apps/worker pytest -q     # 26 tests (1 skipped)
 uv run --directory packages/music-core pytest -q
 uv run ruff check . && uv run ruff format --check .
 pnpm -r typecheck
