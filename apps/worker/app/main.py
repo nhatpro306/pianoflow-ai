@@ -2,9 +2,12 @@
 
 import json
 import logging
+import os
 import signal
 import sys
+import threading
 import time
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Literal
 
 from app.config import get_settings
@@ -65,6 +68,30 @@ def process_message(raw: bytes) -> None:
     process_payload(payload)
 
 
+def _start_health_server() -> None:
+    """Serve /healthz when $PORT is set (Render free tier has no background
+    workers — the worker deploys as a web service and must answer health
+    checks). No-op for real background-worker deployments."""
+    port = os.environ.get("PORT")
+    if not port:
+        return
+
+    class _Health(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            status = 200 if self.path in ("/", "/healthz") else 404
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status":"ok","service":"worker"}')
+
+        def log_message(self, format: str, *args: object) -> None:
+            return  # keep health-check spam out of worker logs
+
+    server = HTTPServer(("0.0.0.0", int(port)), _Health)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    logger.info("health server listening", extra={"event": "worker.health_server", "port": port})
+
+
 def run() -> None:
     # Import here so tests can import process_message without logging setup side effects.
     from app.core_logging import setup_logging
@@ -74,6 +101,7 @@ def run() -> None:
     signal.signal(signal.SIGTERM, _handle_signal)
     signal.signal(signal.SIGINT, _handle_signal)
 
+    _start_health_server()
     queue = get_queue()
     logger.info("worker started", extra={"event": "worker.started"})
 
