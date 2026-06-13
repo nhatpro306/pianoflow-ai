@@ -20,3 +20,29 @@ def test_request_id_is_propagated_when_provided() -> None:
     client = TestClient(create_app())
     response = client.get("/healthz", headers={"x-request-id": "req_test123"})
     assert response.headers["x-request-id"] == "req_test123"
+
+
+class TestDatabaseUrlEncoding:
+    """DB URL password percent-encoding (generated passwords with /, @, +)."""
+
+    def test_special_chars_encoded(self):
+        from app.core.config import _encode_pg_password
+
+        out = _encode_pg_password(
+            "postgresql+psycopg://postgres.abc:pa/ss+w@rd@aws-1.pooler.supabase.com:5432/postgres"
+        )
+        assert out == (
+            "postgresql+psycopg://postgres.abc:pa%2Fss%2Bw%40rd"
+            "@aws-1.pooler.supabase.com:5432/postgres"
+        )
+
+    def test_plain_password_unchanged(self):
+        from app.core.config import _encode_pg_password
+
+        url = "postgresql+psycopg://pianoflow:pianoflow@localhost:5432/pianoflow"
+        assert _encode_pg_password(url) == url
+
+    def test_non_postgres_unchanged(self):
+        from app.core.config import _encode_pg_password
+
+        assert _encode_pg_password("sqlite:////tmp/x.db") == "sqlite:////tmp/x.db"

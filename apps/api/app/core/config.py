@@ -4,10 +4,36 @@ All settings come from environment variables (12-factor). The app refuses to
 boot with invalid config: pydantic-settings validates at import of get_settings().
 """
 
+import re
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import quote
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Matches a postgres URL and isolates the password. The trailing
+# @host:port/db is fixed-shape (no '@' or '/' in host), so a greedy
+# password group still anchors correctly even when the password itself
+# contains '@' or '/'.
+_PG_URL_RE = re.compile(
+    r"^(?P<head>postgresql(?:\+\w+)?://[^:@/]+:)(?P<pw>.*)(?P<tail>@[^@/]+:\d+/[^/?]+)$"
+)
+
+
+def _encode_pg_password(url: str) -> str:
+    """Percent-encode the password in a postgres URL.
+
+    Supabase (and most providers) generate DB passwords containing '/', '@',
+    '+', etc. Unencoded, those break SQLAlchemy/psycopg URL parsing — a stray
+    '/' truncates the netloc and the port parses as '' → ValueError. Encoding
+    the password component makes any generated password safe. Idempotent for
+    passwords that need no encoding.
+    """
+    match = _PG_URL_RE.match(url)
+    if not match or not match.group("pw"):
+        return url
+    return match.group("head") + quote(match.group("pw"), safe="") + match.group("tail")
 
 
 class Settings(BaseSettings):
@@ -17,6 +43,11 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     database_url: str = "postgresql+psycopg://pianoflow:pianoflow@localhost:5432/pianoflow"
+
+    @field_validator("database_url")
+    @classmethod
+    def _encode_db_password(cls, value: str) -> str:
+        return _encode_pg_password(value)
 
     queue_backend: Literal["memory", "redis", "sqs"] = "redis"
     redis_url: str = "redis://localhost:6379/0"
