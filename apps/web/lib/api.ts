@@ -79,7 +79,7 @@ export interface AnalysisSummary {
 export interface Project {
   id: string;
   name: string;
-  status: "created" | "uploading" | "parsing" | "ready" | "failed" | "archived";
+  status: "created" | "uploading" | "parsing" | "transcribing" | "ready" | "failed" | "archived";
   analysis_summary: AnalysisSummary | null;
   active_jobs: JobBrief[];
   created_at: string;

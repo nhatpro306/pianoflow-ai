@@ -10,6 +10,7 @@ const STATUS_STYLE: Record<Project["status"], string> = {
   created: "bg-zinc-700 text-zinc-200",
   uploading: "bg-amber-900 text-amber-200",
   parsing: "bg-amber-900 text-amber-200",
+  transcribing: "bg-amber-900 text-amber-200",
   ready: "bg-emerald-900 text-emerald-200",
   failed: "bg-red-900 text-red-200",
   archived: "bg-zinc-800 text-zinc-400",

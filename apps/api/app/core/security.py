@@ -125,11 +125,8 @@ def get_current_user(
             detail="Token missing sub claim.",
         )
 
-    user = UserRepository(db).get_or_create_by_email(
-        email, payload.get("user_metadata", {}).get("display_name")
+    user = UserRepository(db).get_or_create_by_sub(
+        UUID(sub), email, payload.get("user_metadata", {}).get("display_name")
     )
-    if str(user.id) != sub:
-        user.id = UUID(sub)
-        db.flush()
     db.commit()
     return CurrentUser(id=user.id, email=email)

@@ -143,10 +143,11 @@ export default function ProjectEditorPage({
         </p>
       )}
 
-      {(p.status === "parsing" || p.status === "created") && (
+      {(p.status === "parsing" || p.status === "created" || p.status === "transcribing") && (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-zinc-400">
-            {activeJob.data?.progress_message ?? "Analyzing your MIDI..."}
+            {activeJob.data?.progress_message ??
+              (p.status === "transcribing" ? "Transcribing audio to MIDI…" : "Analyzing your MIDI...")}
           </p>
           {activeJob.data && (
             <div className="h-2 overflow-hidden rounded bg-zinc-900">
@@ -204,7 +205,9 @@ export default function ProjectEditorPage({
                 {notes.error instanceof ApiError &&
                 notes.error.code === "SIMPLIFIED_NOTES_NOT_READY"
                   ? "Generate the beginner MIDI first."
-                  : "Could not load notes for this difficulty."}
+                  : notes.error instanceof ApiError && notes.error.code === "NOTES_NOT_READY"
+                    ? "Notes are still processing — they'll appear automatically."
+                    : "Could not load notes for this difficulty."}
               </p>
             )}
           </div>

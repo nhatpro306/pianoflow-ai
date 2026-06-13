@@ -113,7 +113,7 @@ def handle_simplify_midi(payload: dict) -> None:
 
         summary = project.analysis_summary or {}
         notes_key = summary.get("notes_key")
-        if not notes_key or project.status != "ready":
+        if not notes_key:
             _fail_job(db, job, "NOTES_NOT_READY", "Parsed notes are not ready.", request_id)
             db.commit()
             return
