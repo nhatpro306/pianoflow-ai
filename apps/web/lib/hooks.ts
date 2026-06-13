@@ -17,7 +17,7 @@ export function useProject(id: string) {
     queryFn: () => api.getProject(id),
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      return status === "created" || status === "parsing" ? 2000 : false;
+      return status === "created" || status === "parsing" || status === "transcribing" ? 2000 : false;
     },
   });
 }

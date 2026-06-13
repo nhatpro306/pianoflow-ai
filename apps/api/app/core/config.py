@@ -103,6 +103,7 @@ class Settings(BaseSettings):
     auth_mode: Literal["dev", "supabase"] = "dev"
     supabase_jwt_secret: str = ""
     cors_allowed_origins: str = ""
+    cors_allow_origin_regex: str = ""
 
     # Guards /internal/metrics. When set, callers must send a matching
     # X-Internal-Token header; otherwise the endpoint 404s (hides its

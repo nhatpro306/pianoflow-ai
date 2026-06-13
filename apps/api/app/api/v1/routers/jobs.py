@@ -54,7 +54,7 @@ def enqueue_parse_midi(
     )
     if not result.created:
         response.status_code = 200
-    return JobOut.model_validate(result.job)
+    return _job_out(db, result.job, user.id)
 
 
 @router.post("/projects/{project_id}/jobs/render-sheet", status_code=201, response_model=JobOut)

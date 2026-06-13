@@ -31,6 +31,18 @@ class UserRepository:
             self.db.flush()
         return user
 
+    def get_or_create_by_sub(
+        self, sub: uuid.UUID, email: str, display_name: str | None = None
+    ) -> User:
+        user = self.db.get(User, sub)
+        if user is None:
+            user = User(id=sub, email=email, display_name=display_name)
+            self.db.add(user)
+            self.db.flush()
+        elif user.email != email:
+            user.email = email
+        return user
+
 
 class ProjectRepository:
     def __init__(self, db: Session) -> None:
