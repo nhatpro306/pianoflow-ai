@@ -34,6 +34,10 @@ services:
         value: supabase
       - key: CORS_ALLOWED_ORIGINS
         value: https://pianoflow-jet.vercel.app
+      # Render generates a random value; read it from the dashboard to call
+      # /internal/metrics. Without the matching X-Internal-Token the endpoint 404s.
+      - key: INTERNAL_METRICS_TOKEN
+        generateValue: true
       - key: ENV
         value: prod
       - key: LOG_LEVEL

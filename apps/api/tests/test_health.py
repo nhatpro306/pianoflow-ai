@@ -60,3 +60,44 @@ class TestDatabaseUrlEncoding:
             "postgresql+psycopg://postgres.abc:pa%2Fss%2Bw%40rd"
             "@aws-1.pooler.supabase.com:5432/postgres"
         )
+
+
+class TestMetricsToken:
+    """/internal/metrics is gated by X-Internal-Token when a token is set."""
+
+    def _guard(self):
+        from app.core.config import get_settings
+
+        get_settings.cache_clear()
+        from app.api.v1.routers.health import _require_metrics_token
+
+        return _require_metrics_token
+
+    def test_blocks_without_token(self, monkeypatch):
+        import pytest
+        from fastapi import HTTPException
+
+        monkeypatch.setenv("INTERNAL_METRICS_TOKEN", "secret")
+        guard = self._guard()
+        with pytest.raises(HTTPException) as ei:
+            guard(x_internal_token=None)
+        assert ei.value.status_code == 404
+
+    def test_blocks_with_wrong_token(self, monkeypatch):
+        import pytest
+        from fastapi import HTTPException
+
+        monkeypatch.setenv("INTERNAL_METRICS_TOKEN", "secret")
+        guard = self._guard()
+        with pytest.raises(HTTPException):
+            guard(x_internal_token="nope")
+
+    def test_allows_with_correct_token(self, monkeypatch):
+        monkeypatch.setenv("INTERNAL_METRICS_TOKEN", "secret")
+        guard = self._guard()
+        guard(x_internal_token="secret")  # no raise
+
+    def test_open_when_unset(self, monkeypatch):
+        monkeypatch.delenv("INTERNAL_METRICS_TOKEN", raising=False)
+        guard = self._guard()
+        guard(x_internal_token=None)  # no raise

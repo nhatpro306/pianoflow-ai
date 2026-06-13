@@ -6,7 +6,7 @@
 """
 
 import redis
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
@@ -15,6 +15,15 @@ from app.infrastructure.database.models import OutputFile, Project, RenderJob, U
 from app.infrastructure.database.session import get_db
 
 router = APIRouter()
+
+
+def _require_metrics_token(x_internal_token: str | None = Header(default=None)) -> None:
+    """Gate /internal/metrics. With a token configured, a mismatching or
+    missing header returns 404 so the endpoint's existence isn't disclosed.
+    Open only when no token is set (local dev)."""
+    token = get_settings().internal_metrics_token
+    if token and x_internal_token != token:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
 
 
 @router.get("/healthz")
@@ -52,7 +61,7 @@ def readyz(response: Response) -> dict:
     return {"status": "ready" if ready else "not_ready", "checks": checks}
 
 
-@router.get("/internal/metrics")
+@router.get("/internal/metrics", dependencies=[Depends(_require_metrics_token)])
 def metrics(db: Session = Depends(get_db)) -> dict:
     users_total = db.scalar(select(func.count()).select_from(User)) or 0
     projects_total = (

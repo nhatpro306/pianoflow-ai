@@ -91,6 +91,11 @@ class Settings(BaseSettings):
     supabase_jwt_secret: str = ""
     cors_allowed_origins: str = ""
 
+    # Guards /internal/metrics. When set, callers must send a matching
+    # X-Internal-Token header; otherwise the endpoint 404s (hides its
+    # existence). Empty = open (local dev only — never leave empty in prod).
+    internal_metrics_token: str = ""
+
     api_base_url: str = "http://localhost:8000"
     # Signs local-backend signed URLs only — never used in supabase/s3 modes.
     storage_signing_secret: str = "dev-only-not-a-secret"
