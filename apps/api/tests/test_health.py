@@ -101,3 +101,25 @@ class TestMetricsToken:
         monkeypatch.delenv("INTERNAL_METRICS_TOKEN", raising=False)
         guard = self._guard()
         guard(x_internal_token=None)  # no raise
+
+
+class TestSchemaExposure:
+    """OpenAPI schema is hidden outside dev."""
+
+    def _app(self, env, monkeypatch):
+        monkeypatch.setenv("ENV", env)
+        from app.core.config import get_settings
+
+        get_settings.cache_clear()
+        from app.main import create_app
+
+        return TestClient(create_app())
+
+    def test_openapi_hidden_in_prod(self, monkeypatch):
+        c = self._app("prod", monkeypatch)
+        assert c.get("/openapi.json").status_code == 404
+        assert c.get("/docs").status_code == 404
+
+    def test_openapi_present_in_dev(self, monkeypatch):
+        c = self._app("dev", monkeypatch)
+        assert c.get("/openapi.json").status_code == 200

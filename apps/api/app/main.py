@@ -29,10 +29,16 @@ def create_app() -> FastAPI:
     settings = get_settings()
     setup_logging(service="api", level=settings.log_level)
 
+    # In non-dev, disable the interactive docs AND the OpenAPI schema —
+    # otherwise /openapi.json publicly exposes the full API surface even
+    # with /docs off.
+    _dev = settings.env == "dev"
     app = FastAPI(
         title="PianoFlow AI API",
         version="0.1.0",
-        docs_url="/docs" if settings.env == "dev" else None,
+        docs_url="/docs" if _dev else None,
+        redoc_url="/redoc" if _dev else None,
+        openapi_url="/openapi.json" if _dev else None,
     )
 
     cors_origins = [
