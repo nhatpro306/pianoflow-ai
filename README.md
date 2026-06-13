@@ -4,6 +4,8 @@
 
 Turn any piano MIDI into a **tutorial video**, **sheet music**, and a **beginner-friendly version**.
 
+**Live:** https://pianoflow-jet.vercel.app (frontend + auth; API/worker deploy in progress)
+
 ## Features
 
 - 🎬 **Tutorial Videos** — Synthesia-style falling-note MP4 with real piano audio. Customizable colors, speed, 720p/1080p.

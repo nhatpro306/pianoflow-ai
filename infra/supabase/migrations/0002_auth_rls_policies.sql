@@ -5,6 +5,8 @@
 
 -- ── Enable RLS on all user-facing tables ───────────────────
 
+alter table public.users enable row level security;
+alter table public.alembic_version enable row level security;
 alter table public.projects enable row level security;
 alter table public.uploaded_files enable row level security;
 alter table public.render_jobs enable row level security;
@@ -12,6 +14,14 @@ alter table public.output_files enable row level security;
 alter table public.render_settings enable row level security;
 alter table public.project_events enable row level security;
 alter table public.daily_usage enable row level security;
+
+-- ── Users (read own row; service role handles writes) ──────
+-- alembic_version: RLS on, zero policies — clients never touch it.
+
+drop policy if exists "users read own user row" on public.users;
+create policy "users read own user row"
+on public.users for select to authenticated
+using (id = auth.uid());
 
 -- ── Projects ───────────────────────────────────────────────
 
