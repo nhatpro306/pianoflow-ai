@@ -35,7 +35,10 @@ def readyz(response: Response) -> dict:
             conn.execute(text("SELECT 1"))
         checks["database"] = "ok"
     except Exception as exc:
-        checks["database"] = f"error: {type(exc).__name__}"
+        # Include the driver message (psycopg never echoes the password in its
+        # errors) so connection problems are diagnosable without log access.
+        detail = str(exc).splitlines()[0][:200] if str(exc) else ""
+        checks["database"] = f"error: {type(exc).__name__}: {detail}".rstrip(": ")
 
     try:
         r = redis.Redis.from_url(settings.redis_url, socket_connect_timeout=2)
