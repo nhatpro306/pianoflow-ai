@@ -11,6 +11,11 @@ dependencies = [
 ]
 # Phase 6 adds: music21. Phase 7: numpy, opencv-python-headless, pillow.
 
+# basic-pitch 0.4.0 requires tensorflow<2.15.1 which has no Python 3.12 wheels;
+# install this extra on a dedicated audio worker running Python ≤3.11.
+[project.optional-dependencies]
+basic-pitch = ["basic-pitch[onnx]>=0.4.0; python_version < '3.12'"]
+
 [dependency-groups]
 dev = [
     "pytest>=8.0",

@@ -5,6 +5,7 @@ Adapter boundary (09_AUDIO_TO_MIDI_PLAN §5-6): product code depends on
 is an honest deterministic placeholder, NOT real AI transcription.
 """
 
+from pianoflow_music.transcription.basic_pitch import BasicPitchEngine
 from pianoflow_music.transcription.engine import (
     TranscriptionEngine,
     TranscriptionError,
@@ -14,6 +15,7 @@ from pianoflow_music.transcription.engine import (
 from pianoflow_music.transcription.placeholder import PlaceholderDeterministicEngine
 
 __all__ = [
+    "BasicPitchEngine",
     "PlaceholderDeterministicEngine",
     "TranscriptionEngine",
     "TranscriptionError",

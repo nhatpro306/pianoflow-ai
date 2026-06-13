@@ -50,4 +50,8 @@ def get_engine(name: str = "placeholder") -> TranscriptionEngine:
         from pianoflow_music.transcription.placeholder import PlaceholderDeterministicEngine
 
         return PlaceholderDeterministicEngine()
+    if name == "basic_pitch":
+        from pianoflow_music.transcription.basic_pitch import BasicPitchEngine
+
+        return BasicPitchEngine()
     raise TranscriptionError(f"Unknown transcription engine: {name!r}", code="UNKNOWN_ENGINE")
