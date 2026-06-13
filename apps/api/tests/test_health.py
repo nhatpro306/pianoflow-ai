@@ -46,3 +46,17 @@ class TestDatabaseUrlEncoding:
         from app.core.config import _encode_pg_password
 
         assert _encode_pg_password("sqlite:////tmp/x.db") == "sqlite:////tmp/x.db"
+
+    def test_db_password_injected_and_encoded(self, monkeypatch):
+        monkeypatch.setenv(
+            "DATABASE_URL",
+            "postgresql+psycopg://postgres.abc@aws-1.pooler.supabase.com:5432/postgres",
+        )
+        monkeypatch.setenv("DB_PASSWORD", "pa/ss+w@rd")
+        from app.core.config import Settings
+
+        s = Settings()
+        assert s.database_url == (
+            "postgresql+psycopg://postgres.abc:pa%2Fss%2Bw%40rd"
+            "@aws-1.pooler.supabase.com:5432/postgres"
+        )

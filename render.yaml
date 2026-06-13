@@ -12,7 +12,12 @@ services:
     plan: free
     healthCheckPath: /healthz
     envVars:
+      # Non-secret: host + user + db only. Password is DB_PASSWORD below
+      # (injected + URL-encoded in app config) so a generated password
+      # with special chars can never corrupt the URL structure.
       - key: DATABASE_URL
+        value: postgresql+psycopg://postgres.kcznjjnhtajwumhvbasq@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres
+      - key: DB_PASSWORD
         sync: false
       - key: REDIS_URL
         fromService:
@@ -45,7 +50,12 @@ services:
     plan: free
     healthCheckPath: /healthz
     envVars:
+      # Non-secret: host + user + db only. Password is DB_PASSWORD below
+      # (injected + URL-encoded in app config) so a generated password
+      # with special chars can never corrupt the URL structure.
       - key: DATABASE_URL
+        value: postgresql+psycopg://postgres.kcznjjnhtajwumhvbasq@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres
+      - key: DB_PASSWORD
         sync: false
       - key: REDIS_URL
         fromService:

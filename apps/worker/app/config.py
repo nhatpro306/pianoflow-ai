@@ -5,15 +5,16 @@ from functools import lru_cache
 from typing import Literal
 from urllib.parse import quote
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# See apps/api/app/core/config.py for the rationale: percent-encode the
-# password component so generated DB passwords with '/', '@', '+' don't
-# break URL parsing (stray '/' → empty port → ValueError).
+# See apps/api/app/core/config.py for the rationale. Two safety nets for
+# generated DB passwords with '/', '@', '+': encode a password already in
+# DATABASE_URL, or inject DB_PASSWORD into a passwordless URL.
 _PG_URL_RE = re.compile(
     r"^(?P<head>postgresql(?:\+\w+)?://[^:@/]+:)(?P<pw>.*)(?P<tail>@[^@/]+:\d+/[^/?]+)$"
 )
+_PG_NOPW_RE = re.compile(r"^(?P<scheme>postgresql(?:\+\w+)?://)(?P<user>[^:@/]+)@(?P<rest>.+)$")
 
 
 def _encode_pg_password(url: str) -> str:
@@ -27,11 +28,21 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     database_url: str = "postgresql+psycopg://pianoflow:pianoflow@localhost:5432/pianoflow"
+    db_password: str = ""
 
     @field_validator("database_url")
     @classmethod
     def _encode_db_password(cls, value: str) -> str:
         return _encode_pg_password(value)
+
+    @model_validator(mode="after")
+    def _inject_db_password(self) -> "Settings":
+        if self.db_password:
+            match = _PG_NOPW_RE.match(self.database_url)
+            if match:
+                pw = quote(self.db_password, safe="")
+                self.database_url = f"{match['scheme']}{match['user']}:{pw}@{match['rest']}"
+        return self
 
     queue_backend: Literal["redis", "sqs"] = "redis"
     redis_url: str = "redis://localhost:6379/0"

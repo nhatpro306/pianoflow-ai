@@ -9,7 +9,7 @@ from functools import lru_cache
 from typing import Literal
 from urllib.parse import quote
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Matches a postgres URL and isolates the password. The trailing
@@ -19,16 +19,19 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 _PG_URL_RE = re.compile(
     r"^(?P<head>postgresql(?:\+\w+)?://[^:@/]+:)(?P<pw>.*)(?P<tail>@[^@/]+:\d+/[^/?]+)$"
 )
+# Matches a passwordless postgres URL (scheme://user@host...), so DB_PASSWORD
+# can be injected as a separate env var. Keeping the password out of
+# DATABASE_URL means a generated password can never corrupt the URL structure.
+_PG_NOPW_RE = re.compile(r"^(?P<scheme>postgresql(?:\+\w+)?://)(?P<user>[^:@/]+)@(?P<rest>.+)$")
 
 
 def _encode_pg_password(url: str) -> str:
-    """Percent-encode the password in a postgres URL.
+    """Percent-encode the password already embedded in a postgres URL.
 
-    Supabase (and most providers) generate DB passwords containing '/', '@',
-    '+', etc. Unencoded, those break SQLAlchemy/psycopg URL parsing — a stray
-    '/' truncates the netloc and the port parses as '' → ValueError. Encoding
-    the password component makes any generated password safe. Idempotent for
-    passwords that need no encoding.
+    Providers generate DB passwords containing '/', '@', '+', etc. Unencoded,
+    those break SQLAlchemy/psycopg URL parsing — a stray '/' truncates the
+    netloc and the port parses as '' → ValueError. Idempotent for passwords
+    that need no encoding.
     """
     match = _PG_URL_RE.match(url)
     if not match or not match.group("pw"):
@@ -43,11 +46,25 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     database_url: str = "postgresql+psycopg://pianoflow:pianoflow@localhost:5432/pianoflow"
+    # Optional: supply the DB password separately. Preferred for hosted
+    # deploys — DATABASE_URL holds only the (non-secret) host/user, this
+    # holds the secret, and it's injected + encoded here. No URL-structure
+    # fragility from special characters in a generated password.
+    db_password: str = ""
 
     @field_validator("database_url")
     @classmethod
     def _encode_db_password(cls, value: str) -> str:
         return _encode_pg_password(value)
+
+    @model_validator(mode="after")
+    def _inject_db_password(self) -> "Settings":
+        if self.db_password:
+            match = _PG_NOPW_RE.match(self.database_url)
+            if match:
+                pw = quote(self.db_password, safe="")
+                self.database_url = f"{match['scheme']}{match['user']}:{pw}@{match['rest']}"
+        return self
 
     queue_backend: Literal["memory", "redis", "sqs"] = "redis"
     redis_url: str = "redis://localhost:6379/0"
