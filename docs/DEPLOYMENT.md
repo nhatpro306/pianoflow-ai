@@ -171,6 +171,8 @@ infra/terraform/
 
 Full first-deploy walkthrough: `infra/aws/README.md`.
 
+Detailed runbook: [DEPLOYMENT_AWS.md](DEPLOYMENT_AWS.md).
+
 ### Portfolio Artifacts
 
 - Architecture diagram (README)

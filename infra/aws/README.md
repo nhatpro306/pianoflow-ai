@@ -1,3 +1,5 @@
+> **Full deployment runbook:** [docs/DEPLOYMENT_AWS.md](../../docs/DEPLOYMENT_AWS.md)
+
 # AWS deployment assets (Stage 3 — Phase 11)
 
 Companion assets for the Terraform free-tier stack (`infra/terraform/`).

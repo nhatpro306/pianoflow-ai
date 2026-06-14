@@ -146,10 +146,11 @@ resource "aws_lambda_function" "api" {
   environment {
     variables = {
       ENV                       = "prod"
+      HOME                      = "/tmp"
+      UV_CACHE_DIR              = "/tmp/uv-cache"
       AUTH_MODE                 = "supabase"
       QUEUE_BACKEND             = "sqs"
       STORAGE_BACKEND           = "s3"
-      AWS_REGION                = var.aws_region
       DATABASE_URL              = var.database_url
       SUPABASE_JWT_SECRET       = var.supabase_jwt_secret
       SUPABASE_URL              = var.supabase_url
