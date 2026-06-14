@@ -81,7 +81,13 @@ jobs:
       - name: Run Alembic migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: uv run --directory apps/api alembic upgrade head
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          if [ -n "$DATABASE_URL" ]; then
+            uv run --directory apps/api alembic upgrade head
+          else
+            echo "DATABASE_URL not set — skipping migrations"
+          fi
 
       - name: Deploy API to Render
         env:
