@@ -113,6 +113,14 @@ export interface UploadInit {
   max_bytes: number;
 }
 
+export interface RemoteSession {
+  token: string;
+  seq: number;
+  action: string | null;
+  value: number | null;
+  expires_in_seconds: number;
+}
+
 // ── Calls ───────────────────────────────────────────────────
 
 export const api = {
@@ -204,6 +212,24 @@ export const api = {
       confidence_summary: Record<string, number> | null;
       message: string;
     }>(`/api/v1/projects/${projectId}/transcription`),
+
+  // ── Remote control sessions ──────────────────────────────────
+
+  createRemoteSession: () =>
+    apiFetch<RemoteSession>("/api/v1/remote-sessions", { method: "POST", body: "{}" }),
+
+  getRemoteSession: (token: string) =>
+    apiFetch<RemoteSession>(`/api/v1/remote-sessions/${token}`),
+
+  sendRemoteCommand: (
+    token: string,
+    action: "play" | "pause" | "restart" | "seek_fwd" | "seek_back" | "speed",
+    value?: number,
+  ) =>
+    apiFetch<{ seq: number }>(`/api/v1/remote-sessions/${token}/command`, {
+      method: "POST",
+      body: JSON.stringify({ action, value: value ?? null }),
+    }),
 
   /** Raw PUT to the signed URL — not under BASE_URL, not JSON. */
   putToSignedUrl: async (init: UploadInit, file: Blob) => {

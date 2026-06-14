@@ -1,5 +1,6 @@
 "use client";
 
+import { api } from "@/lib/api";
 import type { NoteData, RenderSettings } from "@pianoflow/shared-types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -32,6 +33,15 @@ export function FallingNotePreview({ data, settings }: Props) {
   const [previewSpeed, setPreviewSpeed] = useState(settings.speed_multiplier);
   const [previewVolume, setPreviewVolume] = useState(settings.volume);
 
+  const [remoteToken, setRemoteToken] = useState<string | null>(null);
+  const [remoteUrl, setRemoteUrl] = useState<string | null>(null);
+  const [showRemoteDialog, setShowRemoteDialog] = useState(false);
+  const [remoteQr, setRemoteQr] = useState<string | null>(null);
+  const [remoteCopied, setRemoteCopied] = useState(false);
+  const remoteSeqRef = useRef(0);
+  const playingRef = useRef(playing);
+  const handlersRef = useRef({ togglePlay: () => {}, restart: () => {}, seek: (_: number) => {}, changeSpeed: (_: number) => {} });
+
   const audioNotes = useMemo(() => applySustain(data), [data]);
   const speed = previewSpeed;
   const scaledDuration = data.duration_sec / speed;
@@ -39,6 +49,10 @@ export function FallingNotePreview({ data, settings }: Props) {
 
   useEffect(() => setPreviewSpeed(settings.speed_multiplier), [settings.speed_multiplier]);
   useEffect(() => setPreviewVolume(settings.volume), [settings.volume]);
+
+  useEffect(() => { playingRef.current = playing; }, [playing]);
+  // Keep handlersRef current every render so the polling interval never has stale closures.
+  useEffect(() => { handlersRef.current = { togglePlay, restart, seek, changeSpeed }; });
 
   useEffect(() => {
     const el = containerRef.current;
@@ -63,6 +77,48 @@ export function FallingNotePreview({ data, settings }: Props) {
       reverb: settings.reverb,
     });
   }, [settings.piano_sound, previewVolume, settings.reverb]);
+
+  useEffect(() => {
+    if (!remoteUrl) return;
+    import("qrcode").then((QRCode) => {
+      QRCode.toDataURL(remoteUrl, { width: 192, margin: 1 }).then(setRemoteQr);
+    });
+  }, [remoteUrl]);
+
+  useEffect(() => {
+    if (!remoteToken) return;
+    const id = window.setInterval(async () => {
+      try {
+        const session = await api.getRemoteSession(remoteToken);
+        if (session.seq <= remoteSeqRef.current) return;
+        remoteSeqRef.current = session.seq;
+        const h = handlersRef.current;
+        switch (session.action) {
+          case "play":
+            if (!playingRef.current) h.togglePlay();
+            break;
+          case "pause":
+            if (playingRef.current) h.togglePlay();
+            break;
+          case "restart":
+            h.restart();
+            break;
+          case "seek_fwd":
+            h.seek(pausedAtRef.current + 10);
+            break;
+          case "seek_back":
+            h.seek(Math.max(0, pausedAtRef.current - 10));
+            break;
+          case "speed":
+            if (session.value != null) h.changeSpeed(session.value);
+            break;
+        }
+      } catch {
+        setRemoteToken(null);
+      }
+    }, 500);
+    return () => window.clearInterval(id);
+  }, [remoteToken]);
 
   const draw = useCallback(
     (t: number) => {
@@ -261,6 +317,34 @@ export function FallingNotePreview({ data, settings }: Props) {
     setPreviewVolume((volume) => (volume > 0 ? 0 : settings.volume || 0.8));
   }
 
+  async function startRemote() {
+    try {
+      const session = await api.createRemoteSession();
+      const url = `${window.location.origin}/remote/${session.token}`;
+      remoteSeqRef.current = 0;
+      setRemoteToken(session.token);
+      setRemoteUrl(url);
+      setRemoteQr(null);
+      setShowRemoteDialog(true);
+    } catch {
+      // Redis unavailable or network error
+    }
+  }
+
+  function stopRemote() {
+    setRemoteToken(null);
+    setRemoteUrl(null);
+    setRemoteQr(null);
+    setShowRemoteDialog(false);
+  }
+
+  async function copyRemoteUrl() {
+    if (!remoteUrl) return;
+    await navigator.clipboard.writeText(remoteUrl);
+    setRemoteCopied(true);
+    setTimeout(() => setRemoteCopied(false), 2000);
+  }
+
   async function toggleFullscreen() {
     const el = containerRef.current;
     if (!el) return;
@@ -346,6 +430,17 @@ export function FallingNotePreview({ data, settings }: Props) {
               ))}
             </select>
             <button
+              onClick={remoteToken ? () => setShowRemoteDialog(true) : startRemote}
+              className={`rounded border px-2 py-1 hover:bg-white/10 ${
+                remoteToken
+                  ? "border-green-400/60 text-green-400"
+                  : "border-white/30"
+              }`}
+              title={remoteToken ? "Remote active — click to show link" : "Open mobile remote"}
+            >
+              {remoteToken ? "● Remote" : "Remote"}
+            </button>
+            <button
               onClick={toggleFullscreen}
               className="ml-auto rounded border border-white/30 px-2 py-1 hover:bg-white/10"
             >
@@ -354,6 +449,57 @@ export function FallingNotePreview({ data, settings }: Props) {
           </div>
         </div>
       </div>
+      {showRemoteDialog && remoteUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-semibold text-white">Mobile Remote</h2>
+              <button
+                onClick={() => setShowRemoteDialog(false)}
+                className="text-zinc-400 hover:text-white"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="mb-4 text-sm text-zinc-400">
+              Scan this QR code or open the link on your phone to control playback.
+            </p>
+            {remoteQr ? (
+              <img
+                src={remoteQr}
+                alt="Remote control QR code"
+                className="mx-auto mb-4 rounded-lg"
+                width={192}
+                height={192}
+              />
+            ) : (
+              <div className="mx-auto mb-4 flex h-48 w-48 items-center justify-center rounded-lg bg-zinc-800 text-sm text-zinc-500">
+                Generating…
+              </div>
+            )}
+            <div className="mb-4 flex gap-2">
+              <input
+                readOnly
+                value={remoteUrl}
+                className="min-w-0 flex-1 rounded border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-xs text-zinc-300"
+              />
+              <button
+                onClick={copyRemoteUrl}
+                className="rounded bg-zinc-700 px-3 py-1.5 text-xs hover:bg-zinc-600"
+              >
+                {remoteCopied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+            <button
+              onClick={stopRemote}
+              className="w-full rounded border border-red-500/40 py-1.5 text-sm text-red-400 hover:bg-red-500/10"
+            >
+              Stop Remote
+            </button>
+          </div>
+        </div>
+      )}
       <div className="text-xs text-zinc-500">
         {approxSound
           ? "High-quality piano unavailable offline - using basic sound."
