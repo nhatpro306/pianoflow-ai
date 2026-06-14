@@ -127,7 +127,9 @@ class SupabaseStorageService:
             headers={"x-upsert": "true"},
         )
         if response.status_code >= 400:
-            raise StorageError(f"Supabase upload-sign failed ({response.status_code}).")
+            raise StorageError(
+                f"Supabase upload-sign failed ({response.status_code}): {response.text[:300]}"
+            )
         signed_path = response.json()["url"].lstrip("/")
         expires_at = (datetime.now(UTC) + timedelta(seconds=_UPLOAD_SIGN_EXPIRES)).isoformat()
         return SignedUrl(

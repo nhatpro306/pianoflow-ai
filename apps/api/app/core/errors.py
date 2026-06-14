@@ -1,7 +1,13 @@
 """Application error hierarchy → error envelope (API.md §0)."""
 
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+
+from app.infrastructure.storage.base import StorageError
+
+logger = logging.getLogger(__name__)
 
 
 class AppError(Exception):
@@ -60,6 +66,26 @@ def install_error_handlers(app: FastAPI) -> None:
                     "code": exc.code,
                     "message": exc.message,
                     "request_id": getattr(request.state, "request_id", None),
+                }
+            },
+        )
+
+    @app.exception_handler(StorageError)
+    async def storage_error_handler(request: Request, exc: StorageError) -> JSONResponse:
+        # An adapter-boundary failure (Supabase/S3/local). Previously these
+        # escaped as a bare 500 "Internal Server Error" with no machine code —
+        # opaque to the client and easy to miss in logs. Surface a stable code
+        # and the upstream detail so misconfig (e.g. a wrong service-role key
+        # → RLS denial) is diagnosable.
+        request_id = getattr(request.state, "request_id", None)
+        logger.error("storage_error request_id=%s detail=%s", request_id, exc)
+        return JSONResponse(
+            status_code=502,
+            content={
+                "error": {
+                    "code": "STORAGE_ERROR",
+                    "message": str(exc),
+                    "request_id": request_id,
                 }
             },
         )
