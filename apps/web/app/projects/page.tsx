@@ -31,7 +31,7 @@ function ProjectCard({ project }: { project: Project }) {
     <div className="flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
       <div className="flex items-start justify-between gap-2">
         <Link
-          href={`/projects/${project.id}`}
+          href={`/project?id=${encodeURIComponent(project.id)}`}
           className="font-semibold hover:text-cyan-400"
         >
           {project.name}

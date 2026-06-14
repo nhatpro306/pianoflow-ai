@@ -61,7 +61,7 @@ export function AudioUploader() {
       setStage("transcribing");
       await api.confirmAudioUpload(project.id, init.upload_id);
 
-      router.push(`/projects/${project.id}`);
+      router.push(`/project?id=${encodeURIComponent(project.id)}`);
     } catch (exc) {
       setStage("error");
       if (exc instanceof ApiError && exc.code === "RIGHTS_ATTESTATION_REQUIRED") {
