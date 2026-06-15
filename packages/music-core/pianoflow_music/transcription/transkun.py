@@ -61,29 +61,87 @@ class TranskunEngine:
           note_events  — list of ``(start_sec, end_sec, pitch, velocity_0to127)``
           pedal_events — list of ``(time_sec, value_0to127)``
           bpm          — float
-
-        TODO: when the real Transkun Python API surface is confirmed, map its
-        output to the normalised shape above and remove the ENGINE_UNAVAILABLE
-        guard below.  The normalised contract must be preserved so tests that
-        monkeypatch this seam continue to work unchanged.
         """
         try:
+            import numpy as np
+            import pkg_resources
+            import pydub
+            import soxr
+            import torch
             import transkun  # noqa: F401
+            import moduleconf
         except ImportError as exc:
             raise TranscriptionError(
                 "Transkun engine is not installed. Install the 'transkun' extra.",
                 code="ENGINE_UNAVAILABLE",
             ) from exc
 
-        # TODO: call the real transkun API here and map its output to the
-        # normalised (note_events, pedal_events, bpm) shape before returning.
-        # Until the mapping is implemented we raise ENGINE_UNAVAILABLE so the
-        # scaffold never silently produces wrong data.
-        raise TranscriptionError(
-            "Transkun engine is installed but the output mapping is not yet implemented. "
-            "See transkun.py TODO.",
-            code="ENGINE_UNAVAILABLE",
-        )
+        device = "cpu"
+
+        # Resolve bundled weights and config shipped with the transkun package.
+        conf_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.conf")
+        ckpt_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.pt")
+
+        # Build model from config then load checkpoint weights.
+        result = moduleconf.parseFromFile(conf_path)
+        # moduleconf.parseFromFile returns (TransKunClass, config) or similar;
+        # normalise to handle both a class and an already-instantiated model.
+        if isinstance(result, tuple):
+            ModelClass, model_conf = result
+            model = ModelClass(model_conf)
+        else:
+            model = result
+        model = model.to(device)
+        model.eval()
+
+        checkpoint = torch.load(ckpt_path, map_location=device)
+        state_dict = checkpoint.get("best_state_dict") or checkpoint.get("state_dict") or checkpoint
+        model.load_state_dict(state_dict, strict=False)
+
+        # Decode audio file → numpy float32 array (samples, channels).
+        audio_seg = pydub.AudioSegment.from_file(audio_path)
+        fs = audio_seg.frame_rate
+        n_channels = audio_seg.channels
+        raw_samples = np.array(audio_seg.get_array_of_samples(), dtype=np.float32)
+        # Interleaved → (samples, channels)
+        if n_channels > 1:
+            raw_samples = raw_samples.reshape(-1, n_channels)
+        else:
+            raw_samples = raw_samples.reshape(-1, 1)
+        y = raw_samples / (2 ** 15)  # normalise int16 PCM to [-1, 1]
+
+        # Resample to the model's expected sample rate if necessary.
+        target_fs = int(model.fs)
+        if fs != target_fs:
+            y = soxr.resample(y, fs, target_fs)
+
+        # Run inference.
+        x = torch.from_numpy(y).to(device)  # shape: (samples, channels)
+        with torch.no_grad():
+            raw_notes = model.transcribe(
+                x,
+                stepInSecond=None,
+                segmentSizeInSecond=None,
+                discardSecondHalf=False,
+            )
+
+        # Map Transkun Note objects to the normalised contract.
+        note_events: list[tuple] = []
+        pedal_events: list[tuple] = []
+        for n in raw_notes:
+            if n.pitch > 0:
+                # Regular MIDI note: velocity is already 0–127.
+                note_events.append((float(n.start), float(n.end), int(n.pitch), int(n.velocity)))
+            elif -n.pitch == 64:
+                # CC64 sustain-pedal event: on at start, off at end.
+                pedal_events.append((float(n.start), int(n.velocity)))
+                pedal_events.append((float(n.end), 0))
+
+        # BPM is not available from the Transkun model; return 0.0 so the
+        # caller falls back to _BPM_FALLBACK (120 bpm).
+        bpm = 0.0
+
+        return note_events, pedal_events, bpm
 
     def transcribe(
         self,

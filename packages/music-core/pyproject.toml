@@ -16,7 +16,8 @@ dependencies = [
 [project.optional-dependencies]
 basic-pitch = ["basic-pitch[onnx]>=0.4.0; python_version < '3.12'"]
 transcription-beat = ["librosa>=0.10"]
-transkun = ["transkun>=2.0"]
+transkun = ["transkun>=2.0", "soxr>=0.3", "pydub>=0.25"]
+separation = ["demucs>=4.0", "torch>=2.0"]
 
 [dependency-groups]
 dev = [
