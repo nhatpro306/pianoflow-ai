@@ -20,9 +20,11 @@ import os
 import tempfile
 from statistics import mean
 
+from pianoflow_music.midi.hands import estimate_hands
 from pianoflow_music.midi.write import note_data_to_midi_bytes
 from pianoflow_music.notes.model import SCHEMA_VERSION, Note, NoteData
 from pianoflow_music.transcription.engine import TranscriptionError, TranscriptionResult
+from pianoflow_music.transcription.postprocess import clean_notes
 
 ENGINE_NAME = "basic_pitch_v1"
 
@@ -47,6 +49,12 @@ class BasicPitchEngine:
             ) from exc
         return predict(audio_path)
 
+    def _estimate_beats(self, audio_path: str):
+        """Call librosa beat tracker. Single monkeypatch seam for tests."""
+        from pianoflow_music.transcription.beat import estimate_tempo_and_beats
+
+        return estimate_tempo_and_beats(audio_path)
+
     def transcribe(
         self,
         audio_bytes: bytes,
@@ -64,7 +72,12 @@ class BasicPitchEngine:
             if dot != -1:
                 suffix = filename[dot:]
 
+        opts = options or {}
+        quantize = bool(opts.get("quantize", False))
+        grid = opts.get("grid", "1/16")
+
         tmp_path = None
+        beats = None
         try:
             with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
                 tmp.write(audio_bytes)
@@ -72,6 +85,11 @@ class BasicPitchEngine:
                 tmp_path = tmp.name
 
             _model_output, midi_data, note_events = self._run_model(tmp_path)
+
+            try:
+                beats = self._estimate_beats(tmp_path)
+            except Exception:
+                beats = None
         finally:
             if tmp_path is not None:
                 with contextlib.suppress(OSError):
@@ -95,33 +113,52 @@ class BasicPitchEngine:
                     end=end,
                     duration=round(end - start, 6),
                     track=0,
-                    hand="L" if int(pitch) < 60 else "R",
+                    hand="R",
                 )
             )
 
         if not notes:
             raise TranscriptionError("No notes detected in audio.", code="NO_NOTES_DETECTED")
 
-        # Estimate tempo from the MIDI data object; fall back gracefully.
+        cleaned_notes, clean_stats = clean_notes(notes)
+        if not cleaned_notes:
+            raise TranscriptionError("No notes detected in audio.", code="NO_NOTES_DETECTED")
+
+        # Estimate tempo: prefer librosa beat tracker when available and in range.
         bpm = 120.0
-        try:
-            raw_tempo = midi_data.estimate_tempo()
-            clamped = max(40.0, min(240.0, float(raw_tempo)))
-            bpm = round(clamped, 2)
-        except Exception:
-            bpm = 120.0
+        tempo_source = "fallback"
+        if beats is not None and 40.0 <= beats[0] <= 240.0:
+            bpm = round(float(beats[0]), 2)
+            tempo_source = "librosa_beat"
+        else:
+            try:
+                raw_tempo = midi_data.estimate_tempo()
+                clamped = max(40.0, min(240.0, float(raw_tempo)))
+                bpm = round(clamped, 2)
+                tempo_source = "midi_estimate"
+            except Exception:
+                bpm = 120.0
+                tempo_source = "fallback"
+
+        # Optional quantization (opt-in via options["quantize"]).
+        if quantize:
+            from pianoflow_music.transcription.quantize import quantize_notes
+
+            cleaned_notes = quantize_notes(cleaned_notes, bpm, grid=grid)
+
+        notes, hand_method = estimate_hands(cleaned_notes)
 
         note_data = NoteData(
             schema_version=SCHEMA_VERSION,
             bpm=bpm,
-            duration_sec=round(notes[-1].end, 6),
+            duration_sec=round(max(n.end for n in notes), 6),
             time_signature="4/4",
             notes=notes,
             tracks=[{"index": 0, "name": "transcribed", "note_count": len(notes)}],
             meta={
                 "source": "audio_transcription",
                 "engine": ENGINE_NAME,
-                "hand_split": "pitch_heuristic",
+                "hand_split": hand_method,
             },
         )
 
@@ -132,11 +169,12 @@ class BasicPitchEngine:
         mean_amp = round(float(mean(amps)), 2)
         # Timing confidence: reward dense, evenly-spaced notes; bounded 0..1.
         timing_conf = round(min(1.0, len(notes) / max(len(notes), 10) * mean_amp + 0.3), 2)
+        tempo_confidence = 0.8 if beats is not None else 0.5
         confidence = {
             "overall_confidence": mean_amp,
             "pitch_confidence": mean_amp,
             "timing_confidence": min(1.0, max(0.0, timing_conf)),
-            "tempo_confidence": 0.5,
+            "tempo_confidence": tempo_confidence,
             "warnings": [
                 "AI transcription (beta) — the generated MIDI is an editable draft"
                 " and may need correction.",
@@ -148,15 +186,19 @@ class BasicPitchEngine:
             "engine_kind": "ml_basic_pitch_onnx",
             "is_real_transcription": True,
             "input_bytes": len(audio_bytes),
-            "estimated_audio_duration_seconds": round(float(notes[-1].end), 2),
+            "estimated_audio_duration_seconds": round(float(max(n.end for n in notes)), 2),
             "draft_note_count": len(notes),
             "bpm": bpm,
+            "tempo_source": tempo_source,
+            "quantized": quantize,
+            "quantize_grid": grid if quantize else None,
         }
+        report.update(clean_stats)
 
         return TranscriptionResult(
             status="completed",
             engine=ENGINE_NAME,
-            duration_seconds=round(float(notes[-1].end), 2),
+            duration_seconds=round(float(max(n.end for n in notes)), 2),
             draft_midi_bytes=draft_midi_bytes,
             notes=note_data,
             confidence=confidence,

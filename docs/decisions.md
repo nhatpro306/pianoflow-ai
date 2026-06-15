@@ -4,6 +4,60 @@ ADR-style entries, newest first. Each entry covers Context, Decision, and Conseq
 
 ---
 
+## ADR-007 — Audio→MIDI: Self-Hosted, CPU-Now/GPU-Later, Pluggable Engines
+
+**Date:** 2026-06-15
+**Status:** Accepted
+
+### Context
+
+Basic Pitch (Spotify, Apache-2.0, ONNX) is the current production transcription
+engine. It is instrument-agnostic — trained on general polyphonic audio — and
+produces characteristic artifacts on dense solo piano: out-of-range pitches,
+fragmented same-pitch events, ghost notes, imprecise onsets, and no pedal
+information. Competing products (e.g. Songscription) use proprietary
+Transformer models trained on licensed piano data and achieve noticeably higher
+quality, but Songscription is a direct competitor and using it as a backend
+vendor carries elevated business risk beyond the normal vendor dependency concern.
+Piano-specific open models such as Transkun exist but require GPU or significant
+CPU time and their Python APIs are not yet stable. A B2B transcription API
+(e.g. Klangio) is a neutral alternative but adds per-job cost and means audio
+leaves the system.
+
+### Decision
+
+1. Improve Basic Pitch output quality first using pure post-processing in
+   `packages/music-core` (no new infra, no new runtime deps in the default
+   path): range clipping, fragment merging, ghost-note removal, chord-aware
+   hand split, optional beat-aligned quantization, honest tempo confidence.
+2. Keep the `TranscriptionEngine` port in `engine.py` as the single swap
+   point. No router or worker code knows which concrete engine is active.
+3. Add Transkun as the next self-hosted candidate behind a `transkun` optional
+   extra. The adapter scaffold (`transcription/transkun.py`) is committed but
+   remains `ENGINE_UNAVAILABLE` until the real model output mapping is
+   implemented — the scaffold must never silently produce wrong data.
+4. Add an `onset_prf()` eval harness (`transcription/evaluate.py`) so any
+   future engine comparison is measurement-driven, not impressionistic.
+5. Defer any paid API spend and GPU instance provisioning until there is an
+   explicit budget decision and a measured quality baseline from the eval harness.
+
+### Consequences
+
+- No new infra cost and no new runtime dependencies in the default path (Basic
+  Pitch ONNX on CPU, placeholder engine for free-tier workers, unchanged).
+- Pedal (CC64), quantization, and onset-level evaluation now exist in
+  `music-core` and are available to any future engine that populates
+  `NoteData.sustain`.
+- Phase 4 compute path (GPU spot vs. Klangio vs. other) is left open; the
+  pluggable engine port ensures the choice is a single-file swap, not a
+  cross-cutting change.
+- Songscription is ruled out as a vendor due to competitor risk; Klangio
+  remains a candidate if a paid-API path is chosen.
+- The `transcription-beat` and `transkun` extras in `pyproject.toml` are the
+  only new package surface; they are entirely opt-in.
+
+---
+
 ## ADR-006 — ECC (Enhanced Claude Code) Adopted Selectively
 
 **Date:** 2026-06-15

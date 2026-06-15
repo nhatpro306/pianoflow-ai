@@ -13,6 +13,7 @@ from pianoflow_music.transcription.engine import (
     get_engine,
 )
 from pianoflow_music.transcription.placeholder import PlaceholderDeterministicEngine
+from pianoflow_music.transcription.transkun import TranskunEngine
 
 __all__ = [
     "BasicPitchEngine",
@@ -20,5 +21,6 @@ __all__ = [
     "TranscriptionEngine",
     "TranscriptionError",
     "TranscriptionResult",
+    "TranskunEngine",
     "get_engine",
 ]
