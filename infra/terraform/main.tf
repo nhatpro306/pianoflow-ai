@@ -28,10 +28,11 @@ module "ecr" {
 }
 
 module "s3" {
-  source             = "./modules/s3"
-  prefix             = var.prefix
-  output_expiry_days = var.output_expiry_days
-  tmp_expiry_days    = 1
+  source               = "./modules/s3"
+  prefix               = var.prefix
+  output_expiry_days   = var.output_expiry_days
+  tmp_expiry_days      = 1
+  cors_allowed_origins = var.cors_allowed_origins
 }
 
 module "sqs" {

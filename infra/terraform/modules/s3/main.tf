@@ -12,6 +12,11 @@ variable "tmp_expiry_days" {
   default = 1
 }
 
+variable "cors_allowed_origins" {
+  type    = string
+  default = ""
+}
+
 resource "aws_s3_bucket" "sources" {
   bucket        = "${var.prefix}-sources"
   force_destroy = true
@@ -72,6 +77,19 @@ resource "aws_s3_bucket_lifecycle_configuration" "outputs" {
     expiration {
       days = var.tmp_expiry_days
     }
+  }
+}
+
+resource "aws_s3_bucket_cors_configuration" "sources" {
+  count  = var.cors_allowed_origins == "" ? 0 : 1
+  bucket = aws_s3_bucket.sources.id
+
+  cors_rule {
+    allowed_methods = ["GET", "PUT", "HEAD"]
+    allowed_headers = ["*"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3000
+    allowed_origins = split(",", var.cors_allowed_origins)
   }
 }
 
