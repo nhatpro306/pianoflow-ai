@@ -141,7 +141,7 @@ resource "aws_lambda_function" "api" {
   image_uri     = "${var.ecr_repo_url}:${var.api_image_tag}"
   role          = aws_iam_role.lambda.arn
   timeout       = 30
-  memory_size   = 512
+  memory_size   = 1024
 
   environment {
     variables = {
