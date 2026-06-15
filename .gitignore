@@ -43,3 +43,9 @@ smoke.mid
 smoke.wav
 
 .vercel
+
+# ECC reference clone (not part of repo)
+.ecc-reference/
+
+# Claude session state (local only)
+.claude/session-state.md
