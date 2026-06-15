@@ -128,6 +128,102 @@ extra installed (Python ≤3.11 required for the current basic-pitch release).
 
 ---
 
+## Audio → MIDI Quality Roadmap
+
+Iterative improvement track for the Phase 12 transcription pipeline. All changes
+live in `packages/music-core`; no new infra cost; new behaviour is opt-in or
+config-gated. Default engine remains `basic_pitch`; the placeholder engine is
+unchanged for free-tier workers.
+
+### Phase 1 — Draft Cleanup (DONE)
+
+- **Goal:** reduce the most common Basic Pitch artifacts before any downstream
+  consumer sees the notes.
+- **Delivered:**
+  - `transcription/postprocess.py` — `clean_notes()` pipeline:
+    `clip_to_piano_range` (drop notes outside A0–C8), `merge_same_pitch` (fold
+    same-pitch events within 50 ms or overlapping into one), `drop_ghost_notes`
+    (remove sub-40 ms notes with velocity < 18). Returns `(cleaned_notes, stats)`
+    where stats counts removals per pass.
+  - `BasicPitchEngine.transcribe()` now calls `clean_notes()` before hand
+    estimation; cleanup stats are merged into the result `report`.
+  - `midi/hands.py` `estimate_hands()` (chord-aware hand split) replaces the
+    previous naive `pitch < 60` threshold. Hand assignment is now based on chord
+    membership, not a fixed boundary.
+- **Tests:** `test_postprocess.py`.
+- **Do NOT:** tighten thresholds without measuring on a held-out test set first.
+
+### Phase 2 — Timing & Confidence (DONE)
+
+- **Goal:** honest tempo estimation and opt-in quantization; no silent fallbacks.
+- **Delivered:**
+  - `transcription/quantize.py` — pure `quantize_notes(notes, bpm, grid)` with
+    `grid_step_sec()`. Supported grids: `1/4`, `1/8`, `1/16`, `1/32`, `1/8t`,
+    `1/16t`. Snaps onsets; preserves duration; skips notes whose nearest grid
+    position exceeds `max_shift_sec` (default 120 ms) to protect rubato phrasing.
+    Zero external dependencies.
+  - `transcription/beat.py` — `estimate_tempo_and_beats(audio_path)` via
+    `librosa.beat.beat_track`; deferred import; returns `None` gracefully if
+    librosa is absent or the file cannot be decoded. Registered as the
+    `transcription-beat` optional extra (`librosa>=0.10`).
+  - `BasicPitchEngine` tempo source priority: librosa beat tracker (when
+    available and 40–240 BPM) → `midi_data.estimate_tempo()` → 120 BPM fallback.
+    The `report["tempo_source"]` field records which path was taken
+    (`"librosa_beat"` / `"midi_estimate"` / `"fallback"`).
+  - `confidence["tempo_confidence"]` is `0.8` when librosa beats are available,
+    `0.5` otherwise — no longer a fixed value.
+  - Opt-in quantization: pass `options={"quantize": True, "grid": "1/16"}` to
+    `transcribe()`. Off by default.
+- **Tests:** `test_quantize.py`, `test_beat.py`.
+- **Do NOT:** enable quantization by default; it damages humanized performances.
+
+### Phase 3 — Engine Extensibility (DONE — scaffold)
+
+- **Goal:** make swapping the transcription model a single-file change; add the
+  next self-hosted engine behind an optional extra; add an eval harness.
+- **Delivered:**
+  - `transcription/transkun.py` — `TranskunEngine` adapter scaffold. Registered
+    in `engine.py` as `get_engine("transkun")`. Behind the `transkun` optional
+    extra (`transkun>=2.0`). Without the package installed, `transcribe()` raises
+    `TranscriptionError(code="ENGINE_UNAVAILABLE")`. With it installed, also
+    raises `ENGINE_UNAVAILABLE` until the real model output mapping is implemented
+    (the TODO in `_run_model`). Pedal events from Transkun map to
+    `NoteData.sustain` (list of `{time, value}`) which `write.py` emits as CC64
+    in the draft MIDI.
+  - `transcription/evaluate.py` — pure `onset_prf(reference, predicted)` harness.
+    Returns `{precision, recall, f1, true_positives, false_positives,
+    false_negatives, reference_count, predicted_count}`. Tolerance window is
+    configurable (default 50 ms); pitch matching is configurable. Zero external
+    dependencies.
+  - `pyproject.toml` new optional extras: `transcription-beat` (librosa),
+    `transkun` (transkun>=2.0).
+- **Tests:** `test_transkun.py`, `test_evaluate.py`. Full music-core suite: 152
+  passed.
+- **Do NOT:** activate Transkun in any worker config until the output mapping in
+  `_run_model` is completed and validated against the eval harness.
+
+### Phase 4 — Compute Scale-Out (PLANNED — no budget decision yet)
+
+- **Goal:** match or exceed proprietary transcription quality for dense solo piano.
+- **Options under consideration (not built):**
+  - **Self-hosted GPU/spot worker** — run Transkun or a ByteDance piano model on
+    a GPU or spot instance. No per-job cost once the model is running; audio stays
+    in-house (no data-rights exposure). Requires GPU instance budget or spot
+    management, and the Transkun output mapping (Phase 3 TODO) must be finished
+    first.
+  - **External transcription API** — delegate to a B2B service such as Klangio.
+    Top quality with zero ML infrastructure to maintain; per-transcription cost.
+    Audio leaves the system (rights concern for user-uploaded content). Note:
+    Songscription is a direct competitor, making it a higher vendor risk than a
+    neutral infrastructure vendor like Klangio.
+- **Decision gate:** choose self-host vs. external API once there is a budget
+  decision and a measured quality baseline from the eval harness.
+- **Default engine** remains `basic_pitch` until Phase 4 is resolved.
+- **Do NOT:** commit to either path, or spend on GPU/API, without the eval
+  baseline and a budget sign-off.
+
+---
+
 ## Dependency Graph
 
 ```

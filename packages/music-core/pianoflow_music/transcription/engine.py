@@ -54,4 +54,8 @@ def get_engine(name: str = "placeholder") -> TranscriptionEngine:
         from pianoflow_music.transcription.basic_pitch import BasicPitchEngine
 
         return BasicPitchEngine()
+    if name == "transkun":
+        from pianoflow_music.transcription.transkun import TranskunEngine
+
+        return TranskunEngine()
     raise TranscriptionError(f"Unknown transcription engine: {name!r}", code="UNKNOWN_ENGINE")

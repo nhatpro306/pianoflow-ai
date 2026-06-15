@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/scripts/hooks/session-start.js\""
+          }
+        ],
+        "description": "Load previous session state on new session"
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/scripts/hooks/pre-compact.js\""
+          }
+        ],
+        "description": "Save compaction event to session-state.md before context is summarized"
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/scripts/hooks/session-end.js\""
+          }
+        ],
+        "description": "Persist session end timestamp to session-state.md"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "tool == \"Edit\" || tool == \"Write\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/scripts/hooks/suggest-compact.js\""
+          }
+        ],
+        "description": "Suggest /compact at logical intervals (default: every 50 Edit/Write calls)"
+      },
+      {
+        "matcher": "tool == \"Bash\" && tool_input.command matches \"git push\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"process.stderr.write('[Hook] Review before push: git diff origin/main...HEAD --stat\\n[Hook] Continuing...\\n');process.exit(0)\""
+          }
+        ],
+        "description": "Reminder to review changes before git push (non-blocking)"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "(tool == \"Edit\" || tool == \"Write\") && tool_input.file_path matches \"\\\\.py$\"",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const{execSync}=require('child_process');const fs=require('fs');const path=require('path');let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const i=JSON.parse(d);const p=i.tool_input&&i.tool_input.file_path;if(p&&fs.existsSync(p)){const dir=process.env.CLAUDE_PROJECT_DIR||process.cwd();let ws=null;if(p.includes('apps/api'))ws='apps/api';else if(p.includes('apps/worker'))ws='apps/worker';else if(p.includes('packages/music-core'))ws='packages/music-core';if(ws){const wsDir=path.join(dir,ws);try{execSync('uv run ruff format \"'+p+'\"',{cwd:wsDir,stdio:'pipe'})}catch(e){}try{const r=execSync('uv run ruff check \"'+p+'\"',{cwd:wsDir,encoding:'utf8',stdio:['pipe','pipe','pipe']});if(r.trim())process.stderr.write('[ruff] '+r.trim()+'\\n')}catch(e){if(e.stdout&&e.stdout.trim())process.stderr.write('[ruff] '+e.stdout.trim()+'\\n');}}}}catch(err){process.stderr.write('[ruff-hook] '+err.message+'\\n');}console.log(d);})\""
+          }
+        ],
+        "description": "Run ruff format then ruff check on edited .py files; surface errors to stderr"
+      },
+      {
+        "matcher": "(tool == \"Edit\" || tool == \"Write\") && (tool_input.file_path matches \"\\\\.ts$\" || tool_input.file_path matches \"\\\\.tsx$\")",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const fs=require('fs');let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const i=JSON.parse(d);const p=i.tool_input&&i.tool_input.file_path;if(p&&fs.existsSync(p)){const c=fs.readFileSync(p,'utf8');const lines=c.split('\\n');const hits=[];lines.forEach((l,idx)=>{if(/console\\.log/.test(l)&&!/\\/\\/.*console\\.log/.test(l))hits.push((idx+1)+': '+l.trim());});if(hits.length){process.stderr.write('[Hook] WARNING: console.log found in '+p+'\\n');hits.slice(0,5).forEach(h=>process.stderr.write('  '+h+'\\n'));process.stderr.write('[Hook] Remove before committing.\\n');}}}catch(err){process.stderr.write('[ts-hook] '+err.message+'\\n');}console.log(d);})\""
+          }
+        ],
+        "description": "Warn on console.log in .ts/.tsx files after edits (non-blocking)"
+      }
+    ]
+  }
+}
