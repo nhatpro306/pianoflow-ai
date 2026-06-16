@@ -29,7 +29,7 @@ from pianoflow_music.transcription.separate import separate_target_stem
 
 _FAKE_WAV_BYTES = b"RIFF....WAVEfmt " + b"\x00" * 100  # minimal fake WAV
 
-_HTDEMUCS_SOURCES = ["drums", "bass", "other", "vocals"]
+_HTDEMUCS_SOURCES = ["drums", "bass", "other", "vocals", "guitar", "piano"]
 
 
 def _make_fake_torch(*, cuda_available: bool = False) -> types.ModuleType:
@@ -249,14 +249,13 @@ def test_separation_failed_on_demucs_runtime_error(clean_demucs_modules):
 
 
 def test_separation_failed_on_invalid_stem(clean_demucs_modules):
-    """Requesting a stem that htdemucs doesn't produce → SEPARATION_FAILED."""
+    """Requesting a stem that no model produces → SEPARATION_FAILED."""
     torch_mod = _make_fake_torch()
-    # model.sources only has standard htdemucs stems; "piano" is not one of them.
     demucs_mods = _make_fake_demucs_modules()
     _inject_modules(torch_mod, demucs_mods)
 
     with pytest.raises(TranscriptionError) as exc_info:
-        separate_target_stem(b"audio", stem="piano")  # "piano" not in htdemucs
+        separate_target_stem(b"audio", stem="keys")  # "keys" is not a valid stem
 
     assert exc_info.value.code == "SEPARATION_FAILED"
 
@@ -357,3 +356,91 @@ def test_oom_cpu_fallback_also_fails_raises_separation_failed(clean_demucs_modul
         separate_target_stem(b"audio", stem="other")
 
     assert exc_info.value.code == "SEPARATION_FAILED"
+
+
+# ---------------------------------------------------------------------------
+# Model auto-selection
+# ---------------------------------------------------------------------------
+
+
+def _make_demucs_mods_with_get_model_log(
+    call_log: list[str],
+) -> dict[str, types.ModuleType]:
+    """Build fake demucs modules whose get_model records the model name called."""
+    model = _make_fake_model()
+
+    def _get_model(name: str):
+        call_log.append(name)
+        return model
+
+    demucs_top = types.ModuleType("demucs")
+    demucs_pretrained = types.ModuleType("demucs.pretrained")
+    demucs_pretrained.get_model = _get_model
+
+    demucs_apply = types.ModuleType("demucs.apply")
+    demucs_apply.apply_model = MagicMock(return_value=MagicMock(name="apply_result"))
+
+    demucs_audio = types.ModuleType("demucs.audio")
+    audio_file_instance = MagicMock(name="AudioFile_instance")
+    audio_file_instance.read = MagicMock(return_value=MagicMock(name="wav_tensor"))
+    demucs_audio.AudioFile = MagicMock(return_value=audio_file_instance)
+
+    def _fake_save(tensor, path: str, *, samplerate: int = 44100) -> None:
+        with open(path, "wb") as fh:
+            fh.write(_FAKE_WAV_BYTES)
+
+    demucs_audio.save_audio = _fake_save
+
+    demucs_top.pretrained = demucs_pretrained
+    demucs_top.apply = demucs_apply
+    demucs_top.audio = demucs_audio
+
+    return {
+        "demucs": demucs_top,
+        "demucs.pretrained": demucs_pretrained,
+        "demucs.apply": demucs_apply,
+        "demucs.audio": demucs_audio,
+    }
+
+
+def test_piano_stem_autoselects_6s_model(clean_demucs_modules):
+    """stem='piano' with no explicit model must call get_model('htdemucs_6s')."""
+    call_log: list[str] = []
+    torch_mod = _make_fake_torch()
+    demucs_mods = _make_demucs_mods_with_get_model_log(call_log)
+    _inject_modules(torch_mod, demucs_mods)
+
+    separate_target_stem(b"fake_audio", stem="piano")
+
+    assert call_log == ["htdemucs_6s"], f"Expected htdemucs_6s, got: {call_log}"
+
+
+def test_other_stem_uses_default_model(clean_demucs_modules):
+    """stem='other' with no explicit model must call get_model('htdemucs')."""
+    call_log: list[str] = []
+    torch_mod = _make_fake_torch()
+    demucs_mods = _make_demucs_mods_with_get_model_log(call_log)
+    _inject_modules(torch_mod, demucs_mods)
+
+    separate_target_stem(b"fake_audio", stem="other")
+
+    assert call_log == ["htdemucs"], f"Expected htdemucs, got: {call_log}"
+
+
+def test_explicit_model_overrides_autoselect(clean_demucs_modules):
+    """Passing model='htdemucs' must be used even when stem='piano'."""
+    call_log: list[str] = []
+    torch_mod = _make_fake_torch()
+    # Use the 6-stem model object so 'piano' is in sources, but we expect
+    # get_model to be called with the explicit override 'htdemucs'.
+    demucs_mods = _make_demucs_mods_with_get_model_log(call_log)
+    # The fake model already has 'piano' in sources (from _HTDEMUCS_SOURCES), but
+    # we expect a SEPARATION_FAILED because real htdemucs doesn't have piano.
+    # Here we just care that get_model was called with the explicit name.
+    _inject_modules(torch_mod, demucs_mods)
+
+    # This will succeed (fake model has piano in sources) — we only assert the
+    # model name that was requested.
+    separate_target_stem(b"fake_audio", stem="piano", model="htdemucs")
+
+    assert call_log == ["htdemucs"], f"Expected htdemucs explicit override, got: {call_log}"

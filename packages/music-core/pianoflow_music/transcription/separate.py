@@ -1,7 +1,7 @@
 """Demucs stem-separation utility.
 
-Isolates a single stem (e.g. "other" for piano/keys/synths) from a mixed
-audio recording using Meta's ``htdemucs`` model.
+Isolates a single stem (e.g. "piano" or "other") from a mixed audio
+recording using Meta's ``htdemucs`` or ``htdemucs_6s`` model.
 
 Heavy imports (``demucs``, ``torch``) are deferred to the function body so
 importing this module is cheap and safe in all deployment contexts.  Install
@@ -13,16 +13,28 @@ the optional extra to enable:
 Without the extra, calling ``separate_target_stem`` raises
 ``TranscriptionError(code="ENGINE_UNAVAILABLE")``.
 
-Available htdemucs stems
+Available stems by model
 ------------------------
-htdemucs sources order: ['drums', 'bass', 'other', 'vocals']
+htdemucs (4-stem):
+  ['drums', 'bass', 'other', 'vocals']
 
-- "drums"   — percussion
-- "bass"    — bass guitar / sub frequencies
-- "other"   — everything else (piano, keys, synths, guitars, …)
-- "vocals"  — singing voice
+  - "drums"   — percussion
+  - "bass"    — bass guitar / sub frequencies
+  - "other"   — everything else (piano, keys, synths, guitars, …)
+  - "vocals"  — singing voice
 
-For piano transcription the recommended stem is "other".
+htdemucs_6s (6-stem):
+  ['drums', 'bass', 'other', 'vocals', 'guitar', 'piano']
+
+  Adds dedicated "guitar" and "piano" stems on top of the 4-stem set.
+
+  NOTE: the ``htdemucs_6s`` ``piano`` stem is experimental — Meta's own
+  benchmarks note some bleed and minor artifacts.  It is nevertheless far
+  superior to the 4-stem ``other`` stem for isolating piano from a full
+  mix, making it the preferred choice for piano transcription.
+
+For piano transcription the recommended stem is "piano" (auto-selects
+htdemucs_6s).  Use "other" only when you need a legacy fallback.
 """
 
 from __future__ import annotations
@@ -38,6 +50,7 @@ def separate_target_stem(
     audio_bytes: bytes,
     *,
     stem: str = "other",
+    model: str | None = None,
     segment: int = 7,
 ) -> bytes:
     """Return WAV bytes of the isolated *stem* separated from *audio_bytes*.
@@ -47,8 +60,20 @@ def separate_target_stem(
     audio_bytes:
         Raw audio file content (WAV, MP3, FLAC, …) to separate.
     stem:
-        Which htdemucs stem to keep.  One of "drums", "bass", "other",
-        "vocals".  Defaults to "other" (piano / keys / synths).
+        Which stem to keep.  Available stems depend on the model chosen (see
+        below).  Defaults to "other".
+    model:
+        Demucs model name to use.  When ``None`` (default) the model is
+        chosen automatically:
+
+        - ``"htdemucs_6s"`` is selected when *stem* is ``"piano"`` or
+          ``"guitar"`` — these stems only exist in the 6-source model.
+        - ``"htdemucs"`` is selected for all other stems.
+
+        Pass an explicit name to override auto-selection, e.g.
+        ``model="htdemucs"`` forces the 4-stem model even for a "piano"
+        stem request (which will then raise SEPARATION_FAILED because the
+        4-stem model has no "piano" source).
     segment:
         Demucs segment length in seconds (smaller → less GPU RAM, slower).
         Default 7 s is safe on 8 GB VRAM; reduce to 5 or 3 if OOM persists.
@@ -88,11 +113,18 @@ def separate_target_stem(
             f_in.flush()
             tmp_in = f_in.name
 
-        model = get_model("htdemucs")
+        # Auto-select model when the caller did not override.
+        _6s_only_stems = {"piano", "guitar"}
+        if model is None:
+            model_name = "htdemucs_6s" if stem in _6s_only_stems else "htdemucs"
+        else:
+            model_name = model
+        model = get_model(model_name)
         model.eval()
         if stem not in model.sources:
             raise TranscriptionError(
-                f"Stem {stem!r} not found in htdemucs output. Available: {sorted(model.sources)}",
+                f"Stem {stem!r} not found in {model_name!r} output. "
+                f"Available: {sorted(model.sources)}",
                 code="SEPARATION_FAILED",
             )
         stem_index = model.sources.index(stem)

@@ -28,8 +28,8 @@ def run_pipeline(
         options: Arbitrary options forwarded to both the separator and engine.
             ``options["stem"]`` controls which stem is extracted (default
             ``"other"``).
-        _separator: Optional callable ``(bytes, *, stem: str) -> bytes`` that
-            replaces ``separate_target_stem``.  Pass a fake here in tests.
+        _separator: Optional callable ``(bytes, *, stem: str, model: str | None) -> bytes``
+            that replaces ``separate_target_stem``.  Pass a fake here in tests.
         _engine_factory: Optional callable ``(engine_name: str) ->
             TranscriptionEngine`` that replaces ``get_engine``.  Pass a fake
             here in tests.
@@ -47,7 +47,8 @@ def run_pipeline(
             _separator = separate_target_stem
 
         stem = options.get("stem", "other") if options else "other"
-        audio_bytes = _separator(audio_bytes, stem=stem)
+        sep_model = options.get("sep_model") if options else None
+        audio_bytes = _separator(audio_bytes, stem=stem, model=sep_model)
 
     # ------------------------------------------------------------------
     # 2. Transcription

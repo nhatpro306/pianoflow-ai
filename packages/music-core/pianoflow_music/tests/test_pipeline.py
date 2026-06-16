@@ -42,8 +42,10 @@ class _FakeSeparator:
         self.calls: list[dict] = []
         self._output = output
 
-    def __call__(self, audio_bytes: bytes, *, stem: str = "other") -> bytes:
-        self.calls.append({"audio_bytes": audio_bytes, "stem": stem})
+    def __call__(
+        self, audio_bytes: bytes, *, stem: str = "other", model: str | None = None
+    ) -> bytes:
+        self.calls.append({"audio_bytes": audio_bytes, "stem": stem, "model": model})
         return self._output
 
 
@@ -174,7 +176,9 @@ def test_separator_called_before_engine():
     call_order: list[str] = []
 
     class _OrderedSep:
-        def __call__(self, audio_bytes: bytes, *, stem: str = "other") -> bytes:
+        def __call__(
+            self, audio_bytes: bytes, *, stem: str = "other", model: str | None = None
+        ) -> bytes:
             assert call_order == [], "Separator must be called before the engine"
             call_order.append("separator")
             return _SEPARATED_AUDIO

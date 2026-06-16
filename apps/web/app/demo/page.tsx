@@ -90,7 +90,10 @@ export default function DemoPage() {
     setResult(null);
     setNoteData(null);
     try {
-      const res = await submitAudio(file, { engine: "transkun", separate: fullMix }, (s) => setStatus(s));
+      const options = fullMix
+        ? { engine: "transkun", separate: true, stem: "piano" }
+        : { engine: "transkun", separate: false };
+      const res = await submitAudio(file, options, (s) => setStatus(s));
       setResult(res);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "An unexpected error occurred.");

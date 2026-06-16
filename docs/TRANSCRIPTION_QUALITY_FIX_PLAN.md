@@ -160,3 +160,32 @@ A solo-piano clip uploaded to the demo produces: correct note count (no separati
 - URL ingestion (Part B / Phase 3)
 - `RemoteTranscriptionEngine` adapter for the always-on worker (Phase 2 / S2) — the demo calls Modal directly today
 - MusicXML downbeat quantization (A8 advanced), hand-split HMM upgrade (A7)
+
+---
+
+## M. Full-mix music (full-band songs) — research + fix
+
+**Date:** 2026-06-17. **Symptom:** solo piano transcribes well; full-band songs ("music get mix") come out poor.
+
+### Root cause
+The pipeline ran 4-stem `htdemucs` and extracted the **`"other"`** stem. For a full band, `"other"` = piano + guitar + synth + strings mixed together. transkun is a **piano-only** model, so feeding it that mixed stem produces garbage (inflated/incorrect notes).
+
+### What the leading tools/repos actually do (verified June 2026)
+- **`htdemucs_6s`** (Meta Demucs) adds dedicated **`piano`** and **`guitar`** stems on top of drums/bass/other/vocals. Meta's own note: the `piano` stem is *experimental* — some bleeding/artifacts — but it isolates piano far better than the `"other"` soup. ([demucs](https://github.com/facebookresearch/demucs))
+- **Music Demixer** (live audio→MIDI/sheet platform): separates first, with **specialized transcription paths for piano + drums only**; every other instrument is an explicit "draft." Even the leading product does not perfectly transcribe arbitrary full-mix instruments. ([musicdemixer.com](https://musicdemixer.com/midi))
+- **SOTA pipeline** across repos: Demucs separation → ByteDance `piano_transcription` (pedal F1 91.86% on MAESTRO) or transkun. ByteDance is widely rated best-in-class for piano. ([bytedance/piano_transcription](https://github.com/bytedance/piano_transcription))
+
+### Honest scope
+- **Full-mix → piano:** solvable to good quality today = `htdemucs_6s` `piano` stem → transkun. **(Implemented.)**
+- **Full-mix → any instrument** (guitar/bass/vocal melody as playable parts): a multi-instrument transcription problem (YourMT3+), **not** cheaply solved by anyone — this is Phase 4, not now.
+
+### Implemented (this change)
+- `separate_target_stem` gained a `model` param and **auto-selects `htdemucs_6s` when stem is `piano` or `guitar`** (else `htdemucs`). `pipeline.run_pipeline` forwards `options["stem"]` + optional `options["sep_model"]`.
+- Demo "Full-mix song" path now requests `separate:true, stem:"piano"` → dedicated piano stem instead of `"other"`.
+- Verified live: 109s full-band clip → 107s, 622 notes (piano-only; the prior `"other"` run gave 1122 inflated notes from non-piano bleed).
+
+### Next options (full-mix quality, ordered)
+1. **A/B ByteDance vs transkun** on separated piano stem via the eval harness (Q1); pick the better engine per input. ByteDance has Apache-2.0 license + strong pedal.
+2. **Preprocessing before separation:** ffmpeg `loudnorm` + high-pass (A6 in `AUDIO_MIDI_IMPROVEMENT_PLAN.md`) — stabilizes onsets on compressed/loud social-media audio.
+3. **Stem picker in UI:** let the user choose piano/guitar/vocals/bass target (guitar via 6s `guitar` stem; melody instruments need Phase 4 models).
+4. **Phase 4 multi-instrument:** YourMT3+ path for non-piano playable parts (guitar/bass/strings) — the only route to "any song, any instrument."
