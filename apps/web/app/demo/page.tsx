@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { FallingNotePreview } from "@/components/FallingNotePreview";
 import { submitAudio, type TranscribeStatus, type TranscribeResult } from "@/lib/transcribeClient";
@@ -43,7 +43,16 @@ export default function DemoPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [result, setResult] = useState<TranscribeResult | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [exampleData, setExampleData] = useState<NoteData | null>(null);
+  const [noteData, setNoteData] = useState<NoteData | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/examples/c_scale.json")
+      .then((r) => r.json())
+      .then((data: NoteData) => setExampleData(data))
+      .catch(() => {}); // silently fail — example is optional
+  }, []);
 
   function validateAndSetFile(f: File) {
     setFileError(null);
@@ -87,7 +96,11 @@ export default function DemoPage() {
   }
 
   const isWorking = status === "uploading" || status === "processing";
-  const noteData: NoteData | null = result?.notes ?? null;
+
+  // Sync transcription result into noteData when it arrives
+  useEffect(() => {
+    if (result?.notes) setNoteData(result.notes);
+  }, [result]);
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-4xl flex-col items-center gap-8 px-6 py-12">
@@ -102,6 +115,19 @@ export default function DemoPage() {
           your browser.
         </p>
       </div>
+
+      {/* Pre-baked example */}
+      {exampleData && (
+        <div className="flex w-full flex-col items-center gap-2">
+          <p className="text-xs text-zinc-500">No audio? Try an instant example:</p>
+          <button
+            onClick={() => setNoteData(exampleData)}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm text-white hover:border-violet-500 hover:bg-zinc-800"
+          >
+            ▶ C Major Scale (pre-baked)
+          </button>
+        </div>
+      )}
 
       {/* Drop zone */}
       <div
