@@ -112,3 +112,7 @@ When in doubt, default to Sonnet. Escalate to Opus when the task requires deep r
 | `docs/DEPLOYMENT_AWS.md` | AWS free-tier runbook (step-by-step) |
 | `docs/progress.md` | Running log of completed work (append with /checkpoint) |
 | `docs/decisions.md` | ADR-style log of key architectural decisions |
+| `docs/MASTER_PLAN.md` | **Consolidated** system design + unified roadmap (umbrella for the three plans below) |
+| `docs/AUDIO_MIDI_IMPROVEMENT_PLAN.md` | Transcription quality, URL ingestion, models, cost, self-hosting (RTX 3070), free tier |
+| `docs/DEMO_AND_SCALE_PLAN.md` | Vercel+Modal demo as Sonnet-executable tasks + scale path |
+| `docs/PIANO_LEARNING_COMPETITIVE_PLAN.md` | Piano-learning market analysis + learning-product feature plan |
