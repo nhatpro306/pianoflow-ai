@@ -25,6 +25,7 @@ For piano transcription the recommended stem is "other".
 
 from __future__ import annotations
 
+import contextlib
 import os
 import tempfile
 
@@ -65,8 +66,8 @@ def separate_target_stem(
     """
     # Deferred import — keeps module import cheap even without the extra.
     try:
-        import demucs.api  # noqa: PLC0415
-        import torch  # noqa: PLC0415
+        import demucs.api
+        import torch
     except ImportError as exc:
         raise TranscriptionError(
             "Demucs is not installed.  Install the 'separation' extra: "
@@ -83,7 +84,7 @@ def separate_target_stem(
             f_in.flush()
             tmp_in = f_in.name
 
-        def _run(device: str) -> "torch.Tensor":
+        def _run(device: str) -> torch.Tensor:
             """Run Demucs inference on *tmp_in* and return the stem tensor."""
             separator = demucs.api.Separator(
                 model="htdemucs",
@@ -126,7 +127,5 @@ def separate_target_stem(
     finally:
         for path in (tmp_in, tmp_out):
             if path is not None:
-                try:
+                with contextlib.suppress(OSError):
                     os.unlink(path)
-                except OSError:
-                    pass

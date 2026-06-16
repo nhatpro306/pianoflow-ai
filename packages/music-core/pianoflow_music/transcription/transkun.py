@@ -63,13 +63,13 @@ class TranskunEngine:
           bpm          — float
         """
         try:
+            import moduleconf
             import numpy as np
             import pkg_resources
             import pydub
             import soxr
             import torch
             import transkun  # noqa: F401
-            import moduleconf
         except ImportError as exc:
             raise TranscriptionError(
                 "Transkun engine is not installed. Install the 'transkun' extra.",
@@ -130,7 +130,7 @@ class TranskunEngine:
         pedal_events: list[tuple] = []
         for n in raw_notes:
             if n.pitch > 0:
-                # Regular MIDI note: velocity is already 0–127.
+                # Regular MIDI note: velocity is already 0-127.
                 note_events.append((float(n.start), float(n.end), int(n.pitch), int(n.velocity)))
             elif -n.pitch == 64:
                 # CC64 sustain-pedal event: on at start, off at end.

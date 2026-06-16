@@ -5,12 +5,9 @@ All tests use injected fakes — no real models or I/O.
 
 from __future__ import annotations
 
-import pytest
-
+from pianoflow_music.notes.model import NoteData
 from pianoflow_music.transcription.engine import TranscriptionResult
 from pianoflow_music.transcription.pipeline import run_pipeline
-from pianoflow_music.notes.model import NoteData
-
 
 # ---------------------------------------------------------------------------
 # Helpers / fakes
