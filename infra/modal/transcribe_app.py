@@ -8,6 +8,7 @@ image = (
     .pip_install(
         "torch", "demucs", "transkun", "soxr", "pydub",
         "numpy", "mido", "librosa", "soundfile", "moduleconf",
+        "fastapi[standard]",
     )
     .add_local_dir("packages/music-core/pianoflow_music", remote_path="/root/pianoflow_music")
 )
