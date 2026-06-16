@@ -17,12 +17,10 @@ import io
 import json
 import math
 import os
-import struct
 import sys
 import time
 import urllib.request
 import wave
-
 
 # ---------------------------------------------------------------------------
 # WAV generation — stdlib only, no numpy/scipy
@@ -132,7 +130,7 @@ def main() -> None:
                 "options": {"engine": "transkun", "separate": False},
             },
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print(f"FAIL — submit request raised: {exc}")
         sys.exit(1)
 
@@ -147,13 +145,14 @@ def main() -> None:
     max_attempts = 60  # 3 minutes
     poll_url = f"{result_url}?call_id={call_id}"
     print(f"\nPolling {poll_url}")
-    print(f"  (max {max_attempts} attempts × {poll_interval_sec}s = {max_attempts * poll_interval_sec}s)")
+    total_sec = max_attempts * poll_interval_sec
+    print(f"  (max {max_attempts} attempts x {poll_interval_sec}s = {total_sec}s)")
 
     for attempt in range(1, max_attempts + 1):
         time.sleep(poll_interval_sec)
         try:
             result = _get_json(poll_url)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             print(f"  [{attempt}/{max_attempts}] poll error: {exc}")
             continue
 
@@ -191,7 +190,7 @@ def main() -> None:
 
     try:
         midi_bytes = base64.b64decode(midi_b64)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print(f"FAIL — could not base64-decode midi_b64: {exc}")
         sys.exit(1)
 

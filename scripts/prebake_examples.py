@@ -61,7 +61,7 @@ def main() -> None:
         try:
             audio_bytes = audio_path.read_bytes()
             result = run_pipeline(audio_bytes, engine=engine, separate=False)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             msg = f"transcription failed: {exc}"
             print(f"  FAIL  {audio_path.name} — {msg}")
             errors.append((audio_path, msg))
