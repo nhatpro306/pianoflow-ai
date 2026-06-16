@@ -16,6 +16,7 @@ image = (
         "numpy",
         "mido",
         "librosa",
+        "yt-dlp",
         "soundfile",
         "torchcodec",
         "moduleconf",
@@ -49,6 +50,87 @@ def transcribe(audio_b64: str, options: dict) -> dict:
     }
 
 
+# Hosts allowed for URL ingestion. No anti-bot evasion; on block we fail clean.
+_ALLOWED_HOSTS = {
+    "youtube.com",
+    "www.youtube.com",
+    "m.youtube.com",
+    "music.youtube.com",
+    "youtu.be",
+    "tiktok.com",
+    "www.tiktok.com",
+    "instagram.com",
+    "www.instagram.com",
+}
+_MAX_DURATION_SEC = 600  # 10 min cap
+
+
+def _host_allowed(url: str) -> bool:
+    from urllib.parse import urlparse
+
+    host = (urlparse(url).hostname or "").lower()
+    return host in _ALLOWED_HOSTS
+
+
+@app.function(gpu="A10G", image=image, timeout=900)
+def transcribe_url(url: str, options: dict) -> dict:
+    """Download audio from an allowlisted URL (ephemeral) then transcribe.
+
+    Source audio is written to a temp dir and deleted when the function
+    returns. Only the derived notes/MIDI are kept. Duration/filesize caps
+    and --no-playlist guard against abuse. No anti-bot evasion.
+    """
+    import base64 as _b64
+    import subprocess
+    import tempfile
+    from pathlib import Path
+
+    from pianoflow_music.transcription.pipeline import run_pipeline
+
+    if not _host_allowed(url):
+        raise ValueError("URL host is not in the allowlist")
+
+    with tempfile.TemporaryDirectory(prefix="pf-ingest-") as tmp:
+        out_tmpl = str(Path(tmp) / "src.%(ext)s")
+        cmd = [
+            "yt-dlp",
+            "-x",
+            "--audio-format",
+            "wav",
+            "--no-playlist",
+            "--match-filter",
+            f"duration < {_MAX_DURATION_SEC}",
+            "--max-filesize",
+            "60M",
+            "--socket-timeout",
+            "30",
+            "-o",
+            out_tmpl,
+            url,
+        ]
+        proc = subprocess.run(cmd, capture_output=True, timeout=300, text=True)
+        if proc.returncode != 0:
+            raise RuntimeError(f"download failed: {proc.stderr[-500:] or proc.stdout[-500:]}")
+
+        wavs = list(Path(tmp).glob("*.wav"))
+        if not wavs:
+            raise RuntimeError("no audio extracted (too long, too large, or unavailable)")
+        audio = wavs[0].read_bytes()
+
+        res = run_pipeline(
+            audio,
+            engine=options.get("engine", "transkun"),
+            separate=options.get("separate", False),
+            options=options,
+        )
+        return {
+            "notes": res.notes.to_dict(),
+            "midi_b64": _b64.b64encode(res.draft_midi_bytes).decode(),
+            "confidence": res.confidence,
+            "report": res.report,
+        }
+
+
 @app.function(image=image, secrets=[_demo_secret])
 @modal.asgi_app()
 def web():
@@ -79,6 +161,26 @@ def web():
         _check_token(x_demo_token)
         payload = await request.json()
         call = transcribe.spawn(payload["audio_b64"], payload.get("options", {}))
+        return {"call_id": call.object_id}
+
+    @api.post("/submit_url")
+    async def submit_url(request: Request, x_demo_token: str | None = Header(default=None)):
+        _check_token(x_demo_token)
+        if os.environ.get("ENABLE_URL_INGEST", "1") != "1":
+            raise HTTPException(status_code=403, detail="URL ingestion is disabled")
+        payload = await request.json()
+        url = payload.get("url", "")
+        if not payload.get("rights_attested"):
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "rights attestation required: you must confirm you have the right"
+                    " to transcribe this content"
+                ),
+            )
+        if not _host_allowed(url):
+            raise HTTPException(status_code=400, detail="URL host not allowed")
+        call = transcribe_url.spawn(url, payload.get("options", {}))
         return {"call_id": call.object_id}
 
     @api.get("/result")

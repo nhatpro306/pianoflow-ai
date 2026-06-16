@@ -38,6 +38,40 @@ function toBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
+async function pollResult(
+  callId: string,
+  onStatus?: (s: TranscribeStatus) => void,
+): Promise<TranscribeResult> {
+  onStatus?.("processing");
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+
+    const pollUrl = DIRECT
+      ? `${MODAL_RESULT_URL}/result?call_id=${encodeURIComponent(callId)}`
+      : `/api/transcribe?call_id=${encodeURIComponent(callId)}`;
+    const pollRes = await fetch(pollUrl, { headers: tokenHeaders() });
+    if (!pollRes.ok) continue;
+
+    const payload = (await pollRes.json()) as {
+      status: string;
+      result?: TranscribeResult;
+      error?: string;
+    };
+
+    if (payload.status === "done") {
+      onStatus?.("done");
+      if (!payload.result) throw new Error("Modal returned done but no result");
+      return payload.result;
+    }
+    if (payload.status === "error" || payload.status === "failed") {
+      onStatus?.("error");
+      throw new Error(payload.error ?? "Transcription failed on the server");
+    }
+  }
+  onStatus?.("error");
+  throw new Error("Transcription timed out after 4 minutes");
+}
+
 export async function submitAudio(
   audioFile: File,
   options: Record<string, unknown> = {},
@@ -66,41 +100,31 @@ export async function submitAudio(
 
   const { call_id } = (await submitRes.json()) as { call_id: string };
 
-  // 3. Poll for result
-  onStatus?.("processing");
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  return pollResult(call_id, onStatus);
+}
 
-    const pollUrl = DIRECT
-      ? `${MODAL_RESULT_URL}/result?call_id=${encodeURIComponent(call_id)}`
-      : `/api/transcribe?call_id=${encodeURIComponent(call_id)}`;
-    const pollRes = await fetch(pollUrl, { headers: tokenHeaders() });
-
-    if (!pollRes.ok) {
-      // transient network hiccup — keep polling
-      continue;
-    }
-
-    const payload = (await pollRes.json()) as {
-      status: string;
-      result?: TranscribeResult;
-      error?: string;
-    };
-
-    if (payload.status === "done") {
-      onStatus?.("done");
-      if (!payload.result) throw new Error("Modal returned done but no result");
-      return payload.result;
-    }
-
-    if (payload.status === "error" || payload.status === "failed") {
-      onStatus?.("error");
-      throw new Error(payload.error ?? "Transcription failed on the server");
-    }
-
-    // status is still "pending" / "running" — keep polling
+export async function submitUrl(
+  url: string,
+  rightsAttested: boolean,
+  options: Record<string, unknown> = {},
+  onStatus?: (s: TranscribeStatus) => void,
+): Promise<TranscribeResult> {
+  if (!DIRECT) {
+    throw new Error("Link ingestion requires the direct Modal endpoint (NEXT_PUBLIC_MODAL_SUBMIT_URL).");
   }
-
-  onStatus?.("error");
-  throw new Error("Transcription timed out after 4 minutes");
+  onStatus?.("uploading");
+  const submitRes = await fetch(`${MODAL_SUBMIT_URL}/submit_url`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...tokenHeaders() },
+    body: JSON.stringify({ url, rights_attested: rightsAttested, options }),
+  });
+  if (!submitRes.ok) {
+    const body = (await submitRes.json().catch(() => ({}))) as Record<string, unknown>;
+    onStatus?.("error");
+    const detail = typeof body["detail"] === "string" ? body["detail"] : undefined;
+    const err = typeof body["error"] === "string" ? body["error"] : undefined;
+    throw new Error(detail ?? err ?? `Submit failed (${submitRes.status})`);
+  }
+  const { call_id } = (await submitRes.json()) as { call_id: string };
+  return pollResult(call_id, onStatus);
 }

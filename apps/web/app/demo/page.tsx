@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { FallingNotePreview } from "@/components/FallingNotePreview";
-import { submitAudio, type TranscribeStatus, type TranscribeResult } from "@/lib/transcribeClient";
+import { submitAudio, submitUrl, type TranscribeStatus, type TranscribeResult } from "@/lib/transcribeClient";
 import type { NoteData, RenderSettings } from "@pianoflow/shared-types";
 import { THEME_PRESETS } from "@pianoflow/shared-types";
 
@@ -46,6 +46,8 @@ export default function DemoPage() {
   const [exampleData, setExampleData] = useState<NoteData | null>(null);
   const [noteData, setNoteData] = useState<NoteData | null>(null);
   const [fullMix, setFullMix] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [rightsAttested, setRightsAttested] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -82,6 +84,22 @@ export default function DemoPage() {
     setIsDragging(false);
     const f = e.dataTransfer.files?.[0];
     if (f) validateAndSetFile(f);
+  }
+
+  async function handleTranscribeLink() {
+    if (!linkUrl.trim()) return;
+    setErrorMsg(null);
+    setResult(null);
+    setNoteData(null);
+    try {
+      const options = fullMix
+        ? { engine: "transkun", separate: true, stem: "piano" }
+        : { engine: "transkun", separate: false };
+      const res = await submitUrl(linkUrl.trim(), rightsAttested, options, (s) => setStatus(s));
+      setResult(res);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "An unexpected error occurred.");
+    }
   }
 
   async function handleTranscribe() {
@@ -189,6 +207,34 @@ export default function DemoPage() {
 
       {/* File validation error */}
       {fileError && <p className="text-sm text-red-400">{fileError}</p>}
+
+      {/* Or paste a link */}
+      <div className="flex w-full flex-col gap-2">
+        <p className="text-xs text-zinc-500">…or paste a YouTube / TikTok / Instagram link:</p>
+        <input
+          type="url"
+          value={linkUrl}
+          onChange={(e) => setLinkUrl(e.target.value)}
+          placeholder="https://www.youtube.com/watch?v=…"
+          className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-cyan-500 focus:outline-none"
+        />
+        <label className="flex cursor-pointer items-start gap-2 text-xs text-zinc-400">
+          <input
+            type="checkbox"
+            checked={rightsAttested}
+            onChange={(e) => setRightsAttested(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-cyan-400"
+          />
+          I own this content or have permission to transcribe it.
+        </label>
+        <button
+          disabled={!linkUrl.trim() || !rightsAttested || isWorking}
+          onClick={() => void handleTranscribeLink()}
+          className="self-start rounded-lg border border-cyan-500/50 bg-cyan-500/10 px-5 py-2 text-sm font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Transcribe from link
+        </button>
+      </div>
 
       {/* Full-mix toggle */}
       <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400">
