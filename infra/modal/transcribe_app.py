@@ -9,7 +9,7 @@ image = (
         "torch", "demucs", "transkun", "soxr", "pydub",
         "numpy", "mido", "librosa", "soundfile", "moduleconf",
     )
-    .add_local_python_source("pianoflow_music")
+    .add_local_dir("packages/music-core/pianoflow_music", remote_path="/root/pianoflow_music")
 )
 
 
