@@ -24,7 +24,10 @@ export async function POST(req: NextRequest) {
   try {
     const modalRes = await fetch(submitUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(process.env.DEMO_TOKEN ? { "X-Demo-Token": process.env.DEMO_TOKEN } : {}),
+      },
       body: JSON.stringify(body),
     });
 
@@ -56,7 +59,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const modalRes = await fetch(`${resultUrl}?call_id=${encodeURIComponent(callId)}`);
+    const modalRes = await fetch(`${resultUrl}?call_id=${encodeURIComponent(callId)}`, {
+      headers: process.env.DEMO_TOKEN ? { "X-Demo-Token": process.env.DEMO_TOKEN } : {},
+    });
     const data = (await modalRes.json()) as unknown;
 
     // Pass through whatever Modal returns (status, result, error fields)

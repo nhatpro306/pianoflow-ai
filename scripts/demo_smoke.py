@@ -82,10 +82,14 @@ def _load_env() -> None:
 
 def _post_json(url: str, payload: dict) -> dict:
     data = json.dumps(payload).encode("utf-8")
+    headers = {"Content-Type": "application/json"}
+    token = os.environ.get("DEMO_TOKEN")
+    if token:
+        headers["X-Demo-Token"] = token
     req = urllib.request.Request(
         url,
         data=data,
-        headers={"Content-Type": "application/json"},
+        headers=headers,
         method="POST",
     )
     with urllib.request.urlopen(req, timeout=30) as resp:
@@ -93,7 +97,12 @@ def _post_json(url: str, payload: dict) -> dict:
 
 
 def _get_json(url: str) -> dict:
-    with urllib.request.urlopen(url, timeout=30) as resp:
+    headers = {}
+    token = os.environ.get("DEMO_TOKEN")
+    if token:
+        headers["X-Demo-Token"] = token
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 

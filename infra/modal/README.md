@@ -83,3 +83,34 @@ root**.
 
 Covered by Modal's Starter plan free credits ($30/month). A10G is billed per
 second of GPU time only while a function is actually running.
+
+---
+
+## Direct browser upload (large files)
+
+The demo browser uploads audio **directly to Modal**, not through the Vercel
+`/api/transcribe` proxy, because Vercel's serverless body limit (~4.5 MB) is
+smaller than a base64-encoded 3-4 minute song. The Modal app exposes a single
+CORS-enabled FastAPI app (`web`) with two routes:
+
+- `POST {web_url}/submit` — body `{ audio_b64, options }` → `{ call_id }`
+- `GET  {web_url}/result?call_id=...` → `{ status, result | error }`
+
+Both require an `X-Demo-Token` header matching `DEMO_TOKEN` in the Modal secret
+`pianoflow-demo`. Create the secret once:
+
+```bash
+modal secret create pianoflow-demo DEMO_TOKEN=<your-token>
+```
+
+Then set these in Vercel (and `.env` locally), all to the deployed `web` URL:
+
+- `NEXT_PUBLIC_MODAL_SUBMIT_URL` = `https://<org>--pianoflow-transcribe-web.modal.run`
+- `NEXT_PUBLIC_MODAL_RESULT_URL` = `https://<org>--pianoflow-transcribe-web.modal.run`
+- `NEXT_PUBLIC_DEMO_TOKEN` = the same token
+
+Deploy: `modal deploy infra/modal/transcribe_app.py`.
+
+The old server-side `MODAL_SUBMIT_URL`/`MODAL_RESULT_URL` (used by the
+`/api/transcribe` proxy fallback for small/local uploads) still work when the
+`NEXT_PUBLIC_*` vars are unset.

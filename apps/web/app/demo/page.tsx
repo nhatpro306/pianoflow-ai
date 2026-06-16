@@ -88,6 +88,7 @@ export default function DemoPage() {
     if (!file) return;
     setErrorMsg(null);
     setResult(null);
+    setNoteData(null);
     try {
       const res = await submitAudio(file, { engine: "transkun", separate: fullMix }, (s) => setStatus(s));
       setResult(res);

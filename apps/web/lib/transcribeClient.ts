@@ -5,6 +5,18 @@
  */
 import type { NoteData } from "@pianoflow/shared-types";
 
+const MODAL_SUBMIT_URL = process.env.NEXT_PUBLIC_MODAL_SUBMIT_URL;
+const MODAL_RESULT_URL = process.env.NEXT_PUBLIC_MODAL_RESULT_URL;
+const DEMO_TOKEN = process.env.NEXT_PUBLIC_DEMO_TOKEN;
+
+// When the public Modal URLs are configured we call Modal directly (no Vercel
+// body-size ceiling); otherwise we fall back to the /api/transcribe proxy.
+const DIRECT = Boolean(MODAL_SUBMIT_URL && MODAL_RESULT_URL);
+
+function tokenHeaders(): Record<string, string> {
+  return DEMO_TOKEN ? { "X-Demo-Token": DEMO_TOKEN } : {};
+}
+
 export type TranscribeStatus = "idle" | "uploading" | "processing" | "done" | "error";
 
 export interface TranscribeResult {
@@ -36,10 +48,11 @@ export async function submitAudio(
   const buffer = await audioFile.arrayBuffer();
   const audio_b64 = toBase64(buffer);
 
-  // 2. POST to our Next.js route handler to get a call_id from Modal
-  const submitRes = await fetch("/api/transcribe", {
+  // 2. Submit — directly to Modal when configured (avoids Vercel's ~4.5 MB
+  //    body limit on the proxy), otherwise via the Next.js route handler.
+  const submitRes = await fetch(DIRECT ? `${MODAL_SUBMIT_URL}/submit` : "/api/transcribe", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...tokenHeaders() },
     body: JSON.stringify({ audio_b64, options }),
   });
 
@@ -58,7 +71,10 @@ export async function submitAudio(
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 
-    const pollRes = await fetch(`/api/transcribe?call_id=${encodeURIComponent(call_id)}`);
+    const pollUrl = DIRECT
+      ? `${MODAL_RESULT_URL}/result?call_id=${encodeURIComponent(call_id)}`
+      : `/api/transcribe?call_id=${encodeURIComponent(call_id)}`;
+    const pollRes = await fetch(pollUrl, { headers: tokenHeaders() });
 
     if (!pollRes.ok) {
       // transient network hiccup — keep polling
@@ -77,7 +93,7 @@ export async function submitAudio(
       return payload.result;
     }
 
-    if (payload.status === "error") {
+    if (payload.status === "error" || payload.status === "failed") {
       onStatus?.("error");
       throw new Error(payload.error ?? "Transcription failed on the server");
     }
