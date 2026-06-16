@@ -202,15 +202,44 @@ unchanged for free-tier workers.
 - **Do NOT:** activate Transkun in any worker config until the output mapping in
   `_run_model` is completed and validated against the eval harness.
 
+### Phase 3.5 — Baseline & Cheap Accuracy Wins (PLANNED — free, no infra, no budget)
+
+> Prerequisite for the Phase 4 decision gate. Everything here is pure
+> `music-core`, CPU-only, no new runtime deps in the default path. Do this
+> before spending on any GPU instance or paid API.
+
+- **Goal:** establish a measured quality baseline and capture the cheap accuracy
+  wins that need no model change, so the Phase 4 model/compute choice is
+  evidence-driven (ADR-007 gate), not impressionistic.
+- **Step 1 — Baseline (must come first):** assemble a small held-out piano test
+  set (5–10 clips with ground-truth MIDI; MAESTRO v3 subset is the obvious
+  source). Run `transcription/evaluate.py` `onset_prf()` on `placeholder` vs
+  `basic_pitch`. Record the F1 numbers in `docs/progress.md`. Without this number
+  every downstream model swap is unmeasurable.
+- **Step 2 — Cheap wins on the basic_pitch path (measure each vs Step 1):**
+  - Dual-threshold onset hysteresis (onset `T_high` ≈ 0.7, frame `T_low` ≈ 0.3)
+    to kill note-flicker.
+  - Median-pool smoothing of frame activations to drop transient pops.
+  - Sustain/CC64 heuristic extending note durations while pedal is held.
+  - Keep only changes that raise F1 on the Step 1 set. Revert the rest.
+- **Do NOT:** tune thresholds without re-running the eval set; enable
+  quantization by default; chase changes that don't move the measured F1.
+
 ### Phase 4 — Compute Scale-Out (PLANNED — no budget decision yet)
 
 - **Goal:** match or exceed proprietary transcription quality for dense solo piano.
+- **Prerequisite:** Phase 3.5 baseline numbers exist.
 - **Options under consideration (not built):**
-  - **Self-hosted GPU/spot worker** — run Transkun or a ByteDance piano model on
-    a GPU or spot instance. No per-job cost once the model is running; audio stays
-    in-house (no data-rights exposure). Requires GPU instance budget or spot
-    management, and the Transkun output mapping (Phase 3 TODO) must be finished
-    first.
+  - **Self-hosted GPU/spot worker** — run a piano-specific model on a GPU or spot
+    instance. No per-job cost once the model is running; audio stays in-house (no
+    data-rights exposure). Two named candidates, choose by measured F1 on the
+    Phase 3.5 test set:
+    - **ByteDance `piano_transcription_inference`** (Apache-2.0, PyTorch,
+      MAESTRO-trained) — strongest *proven* open solo-piano model; native velocity
+      and pedal output; stable Python API. Preferred starting candidate.
+    - **Transkun** — the Phase 3 scaffold; its `_run_model` output mapping
+      (still `ENGINE_UNAVAILABLE`) must be finished before it can be evaluated.
+    Either way requires a GPU instance budget or spot management.
   - **External transcription API** — delegate to a B2B service such as Klangio.
     Top quality with zero ML infrastructure to maintain; per-transcription cost.
     Audio leaves the system (rights concern for user-uploaded content). Note:
