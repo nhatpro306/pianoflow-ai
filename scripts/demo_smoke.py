@@ -22,6 +22,10 @@ import time
 import urllib.request
 import wave
 
+# Force UTF-8 stdout so em-dashes etc. don't crash on Windows consoles (cp932/cp1252).
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 # ---------------------------------------------------------------------------
 # WAV generation — stdlib only, no numpy/scipy
 # ---------------------------------------------------------------------------
