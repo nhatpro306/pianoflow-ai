@@ -31,7 +31,7 @@ def transcribe(audio_b64: str, options: dict) -> dict:
     res = run_pipeline(
         audio,
         engine=options.get("engine", "transkun"),
-        separate=options.get("separate", True),
+        separate=options.get("separate", False),
         options=options,
     )
     return {

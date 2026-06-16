@@ -45,6 +45,7 @@ export default function DemoPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [exampleData, setExampleData] = useState<NoteData | null>(null);
   const [noteData, setNoteData] = useState<NoteData | null>(null);
+  const [fullMix, setFullMix] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -88,7 +89,7 @@ export default function DemoPage() {
     setErrorMsg(null);
     setResult(null);
     try {
-      const res = await submitAudio(file, {}, (s) => setStatus(s));
+      const res = await submitAudio(file, { engine: "transkun", separate: fullMix }, (s) => setStatus(s));
       setResult(res);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "An unexpected error occurred.");
@@ -184,6 +185,17 @@ export default function DemoPage() {
 
       {/* File validation error */}
       {fileError && <p className="text-sm text-red-400">{fileError}</p>}
+
+      {/* Full-mix toggle */}
+      <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400">
+        <input
+          type="checkbox"
+          checked={fullMix}
+          onChange={(e) => setFullMix(e.target.checked)}
+          className="h-4 w-4 accent-cyan-400"
+        />
+        Full-mix song (isolate piano stem with Demucs)
+      </label>
 
       {/* Transcribe button */}
       <button
