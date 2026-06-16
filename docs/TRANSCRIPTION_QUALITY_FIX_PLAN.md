@@ -189,3 +189,28 @@ The pipeline ran 4-stem `htdemucs` and extracted the **`"other"`** stem. For a f
 2. **Preprocessing before separation:** ffmpeg `loudnorm` + high-pass (A6 in `AUDIO_MIDI_IMPROVEMENT_PLAN.md`) — stabilizes onsets on compressed/loud social-media audio.
 3. **Stem picker in UI:** let the user choose piano/guitar/vocals/bass target (guitar via 6s `guitar` stem; melody instruments need Phase 4 models).
 4. **Phase 4 multi-instrument:** YourMT3+ path for non-piano playable parts (guitar/bass/strings) — the only route to "any song, any instrument."
+
+---
+
+## U. URL ingestion (paste link → transcribe) — built, gated, with a real limit
+
+**Date:** 2026-06-17. Lets a user paste a YouTube/TikTok/Instagram link instead of uploading a file.
+
+### Implemented
+- **Modal:** `POST /submit_url` + `transcribe_url` GPU function. `yt-dlp -x` into an ephemeral temp dir (auto-deleted), then the existing `run_pipeline`. Caps: duration ≤10 min, filesize ≤60 MB, `--no-playlist`, socket + subprocess timeouts. Host allowlist (youtube/youtu.be/tiktok/instagram). Gates: `X-Demo-Token`, `rights_attested` checkbox, `ENABLE_URL_INGEST` env. **No anti-bot evasion** — fails clean on block.
+- **Web:** `submitUrl` client + demo link input + rights-attestation checkbox.
+
+### Verified
+Gates live: 401 (no token), 403 (no attestation), 400 (bad host), 200 (valid → job spawned).
+
+### Known limit — YouTube blocks datacenter IPs
+A real fetch from Modal returns: *"Sign in to confirm you're not a bot."* YouTube (and increasingly others) block cloud/datacenter IP ranges. This is expected and matches the no-evasion policy — we do **not** add cookies, proxies, or CAPTCHA-defeat.
+
+**Paths to make link ingestion actually work (ordered by safety):**
+1. **Run yt-dlp from a residential IP** — the home / RTX 3070 pull-worker (the hybrid design in `AUDIO_MIDI_IMPROVEMENT_PLAN.md` Part H). Residential IPs aren't bot-blocked. Sustainable + already on the roadmap.
+2. **User-owned content via OAuth** (YouTube/TikTok APIs) — only content the user actually owns. Most defensible.
+3. **User cookies** (`--cookies`/`--cookies-from-browser`) — works but borderline (circumvents the bot check) and brittle; not auto-enabled.
+4. TikTok/Instagram may be less aggressive than YouTube from datacenter — untested; allowlisted already.
+
+### Before any public launch
+Full compliance set from `AUDIO_MIDI_IMPROVEMENT_PLAN.md` Part B4: persisted rights attestation (user id + URL + timestamp), ephemeral-source lifecycle, per-user rate limits, takedown/DMCA admin action, feature flags default-off, and legal review. Current state is demo-grade (gated, ephemeral, no evasion) — not public-launch-grade.
