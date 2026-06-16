@@ -69,7 +69,6 @@ class TranskunEngine:
             import pydub
             import soxr
             import torch
-            import transkun  # noqa: F401
         except ImportError as exc:
             raise TranscriptionError(
                 "Transkun engine is not installed. Install the 'transkun' extra.",
@@ -82,48 +81,42 @@ class TranskunEngine:
         conf_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.conf")
         ckpt_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.pt")
 
-        # Build model from config then load checkpoint weights.
-        result = moduleconf.parseFromFile(conf_path)
-        # moduleconf.parseFromFile returns (TransKunClass, config) or similar;
-        # normalise to handle both a class and an already-instantiated model.
-        if isinstance(result, tuple):
-            ModelClass, model_conf = result
-            model = ModelClass(model_conf)
-        else:
-            model = result
-        model = model.to(device)
+        # Build model using pattern from transkun.transcribe.main:
+        #   conf_manager["Model"].module  → the transkun.ModelTransformer module
+        #   conf_manager["Model"].config  → instantiated ModelConfig object
+        conf_manager = moduleconf.parseFromFile(conf_path)
+        TransKun = conf_manager["Model"].module.TransKun
+        conf = conf_manager["Model"].config
+
+        model = TransKun(conf=conf).to(device)
         model.eval()
 
-        checkpoint = torch.load(ckpt_path, map_location=device)
-        state_dict = checkpoint.get("best_state_dict") or checkpoint.get("state_dict") or checkpoint
-        model.load_state_dict(state_dict, strict=False)
+        checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
+        if "best_state_dict" in checkpoint:
+            model.load_state_dict(checkpoint["best_state_dict"], strict=False)
+        else:
+            model.load_state_dict(checkpoint["state_dict"], strict=False)
 
         # Decode audio file → numpy float32 array (samples, channels).
         audio_seg = pydub.AudioSegment.from_file(audio_path)
         fs = audio_seg.frame_rate
-        n_channels = audio_seg.channels
-        raw_samples = np.array(audio_seg.get_array_of_samples(), dtype=np.float32)
-        # Interleaved → (samples, channels)
-        if n_channels > 1:
-            raw_samples = raw_samples.reshape(-1, n_channels)
-        else:
-            raw_samples = raw_samples.reshape(-1, 1)
-        y = raw_samples / (2 ** 15)  # normalise int16 PCM to [-1, 1]
+        y = np.array(audio_seg.get_array_of_samples(), dtype=np.float32)
+        y = y.reshape(-1, audio_seg.channels) / (2 ** 15)
 
         # Resample to the model's expected sample rate if necessary.
-        target_fs = int(model.fs)
-        if fs != target_fs:
-            y = soxr.resample(y, fs, target_fs)
+        if fs != model.fs:
+            y = soxr.resample(y, fs, model.fs)
 
         # Run inference.
-        x = torch.from_numpy(y).to(device)  # shape: (samples, channels)
-        with torch.no_grad():
-            raw_notes = model.transcribe(
-                x,
-                stepInSecond=None,
-                segmentSizeInSecond=None,
-                discardSecondHalf=False,
-            )
+        x = torch.from_numpy(y).to(device)
+        torch.set_grad_enabled(False)
+        raw_notes = model.transcribe(
+            x,
+            stepInSecond=None,
+            segmentSizeInSecond=None,
+            discardSecondHalf=False,
+        )
+        torch.set_grad_enabled(True)
 
         # Map Transkun Note objects to the normalised contract.
         note_events: list[tuple] = []

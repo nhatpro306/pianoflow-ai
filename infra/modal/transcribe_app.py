@@ -48,3 +48,5 @@ def result(call_id: str):
         return {"status": "done", "result": fc.get(timeout=0)}
     except TimeoutError:
         return {"status": "processing"}
+    except Exception as exc:
+        return {"status": "failed", "error": str(exc)}
