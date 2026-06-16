@@ -4,6 +4,7 @@ import pytest
 
 from pianoflow_music.notes.model import PIANO_HIGHEST_PITCH, PIANO_LOWEST_PITCH, Note
 from pianoflow_music.transcription.postprocess import (
+    calibrate_velocity,
     clean_notes,
     clip_to_piano_range,
     drop_ghost_notes,
@@ -249,3 +250,80 @@ class TestCleanNotes:
         assert cleaned == []
         assert stats["raw_note_count"] == 0
         assert stats["clean_note_count"] == 0
+
+
+# ---------------------------------------------------------------------------
+# calibrate_velocity tests
+# ---------------------------------------------------------------------------
+
+
+def test_calibrate_velocity_spreads_range():
+    """After calibration, min/max velocities should be near out_min/out_max."""
+    notes = [
+        Note(
+            id=i,
+            pitch=60,
+            name="C4",
+            velocity=v,
+            start=float(i),
+            end=float(i) + 0.5,
+            duration=0.5,
+            track=0,
+            hand="R",
+        )
+        for i, v in enumerate([40, 50, 60, 70, 80, 90, 100])
+    ]
+    calibrated = calibrate_velocity(notes, out_min=20, out_max=120)
+    vels = [n.velocity for n in calibrated]
+    assert min(vels) <= 25, f"min velocity should be near 20, got {min(vels)}"
+    assert max(vels) >= 115, f"max velocity should be near 120, got {max(vels)}"
+
+
+def test_calibrate_velocity_does_not_mutate():
+    """Input notes must not be modified."""
+    notes = [
+        Note(
+            id=i,
+            pitch=60,
+            name="C4",
+            velocity=50 + i * 10,
+            start=float(i),
+            end=float(i) + 0.5,
+            duration=0.5,
+            track=0,
+            hand="R",
+        )
+        for i in range(5)
+    ]
+    original_vels = [n.velocity for n in notes]
+    calibrate_velocity(notes)
+    assert [n.velocity for n in notes] == original_vels
+
+
+def test_calibrate_velocity_single_note_unchanged():
+    """Single note must be returned unchanged."""
+    note = Note(
+        id=0, pitch=60, name="C4", velocity=64, start=0.0, end=0.5, duration=0.5, track=0, hand="R"
+    )
+    result = calibrate_velocity([note])
+    assert result[0].velocity == 64
+
+
+def test_calibrate_velocity_uniform_unchanged():
+    """All-same-velocity input must be returned unchanged (no divide-by-zero)."""
+    notes = [
+        Note(
+            id=i,
+            pitch=60,
+            name="C4",
+            velocity=64,
+            start=float(i),
+            end=float(i) + 0.5,
+            duration=0.5,
+            track=0,
+            hand="R",
+        )
+        for i in range(4)
+    ]
+    result = calibrate_velocity(notes)
+    assert all(n.velocity == 64 for n in result)

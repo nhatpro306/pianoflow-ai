@@ -10,6 +10,7 @@ The ``_run_model`` seam contract:
       bpm          — float
 """
 
+import io
 import sys
 
 import pytest
@@ -307,3 +308,66 @@ def test_confidence_warnings_present(monkeypatch):
     warnings = result.confidence.get("warnings", [])
     assert len(warnings) >= 1
     assert any("beta" in w.lower() or "draft" in w.lower() for w in warnings)
+
+
+# ---------------------------------------------------------------------------
+# Q3 — Robust pedal extraction
+# ---------------------------------------------------------------------------
+
+
+def test_pedal_events_produce_cc64_in_midi():
+    """Pedal events from _run_model must produce CC64 control_change in the MIDI."""
+    import mido
+
+    engine = TranskunEngine()
+
+    # Inject fake _run_model: 1 note + 1 pedal event
+    def fake_run_model(audio_path):
+        note_events = [(0.0, 1.0, 60, 80)]
+        pedal_events = [(0.1, 127), (0.9, 0)]
+        return note_events, pedal_events, 120.0
+
+    engine._run_model = fake_run_model
+    result = engine.transcribe(b"fake_audio_bytes")
+
+    midi = mido.MidiFile(file=io.BytesIO(result.draft_midi_bytes))
+    cc64_messages = [
+        msg
+        for track in midi.tracks
+        for msg in track
+        if msg.type == "control_change" and msg.control == 64
+    ]
+    assert len(cc64_messages) >= 2, f"Expected CC64 messages, got: {cc64_messages}"
+    assert result.notes.sustain != [], "sustain list must be non-empty"
+    assert result.report["has_pedal"] is True
+
+
+# ---------------------------------------------------------------------------
+# Q4 — Real tempo + opt-in quantization
+# ---------------------------------------------------------------------------
+
+
+def test_tempo_from_fake_run_model():
+    """When _run_model returns a valid BPM it should be used directly."""
+    engine = TranskunEngine()
+
+    def fake_run_model(audio_path):
+        return [(0.0, 0.5, 60, 80)], [], 140.0
+
+    engine._run_model = fake_run_model
+    result = engine.transcribe(b"fake_audio_bytes")
+    assert result.notes.bpm == 140.0
+    assert result.report["tempo_source"] == "transkun"
+
+
+def test_quantize_option_does_not_crash():
+    """quantize=True with a valid bpm must not raise."""
+    engine = TranskunEngine()
+
+    def fake_run_model(audio_path):
+        return [(0.0, 0.5, 60, 80), (0.6, 1.1, 64, 90)], [], 120.0
+
+    engine._run_model = fake_run_model
+    result = engine.transcribe(b"fake_audio_bytes", options={"quantize": True, "grid": "1/16"})
+    assert result.status == "completed"
+    assert len(result.notes.notes) >= 1

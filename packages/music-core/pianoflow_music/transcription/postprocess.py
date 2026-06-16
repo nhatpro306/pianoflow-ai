@@ -73,6 +73,47 @@ def drop_ghost_notes(
     return [n for n in notes if not (n.duration < max_duration_sec and n.velocity < max_velocity)]
 
 
+def calibrate_velocity(
+    notes: list[Note],
+    *,
+    low_pct: float = 5.0,
+    high_pct: float = 95.0,
+    out_min: int = 20,
+    out_max: int = 120,
+) -> list[Note]:
+    """Percentile-normalize velocities so dynamics spread across a musical range.
+
+    Finds the ``low_pct`` and ``high_pct`` percentile of the velocity
+    distribution and linearly maps that range to ``[out_min, out_max]``.
+    Notes outside the percentile range are clamped.  Input is never mutated.
+    Returns the input list unchanged if it has fewer than 2 notes.
+    """
+    if len(notes) < 2:
+        return list(notes)
+
+    velocities = sorted(n.velocity for n in notes)
+    n = len(velocities)
+
+    def percentile(pct: float) -> float:
+        idx = (pct / 100.0) * (n - 1)
+        lo, frac = int(idx), idx - int(idx)
+        hi = min(lo + 1, n - 1)
+        return velocities[lo] * (1 - frac) + velocities[hi] * frac
+
+    v_low = percentile(low_pct)
+    v_high = percentile(high_pct)
+
+    if v_high <= v_low:
+        return list(notes)  # all same velocity — nothing to do
+
+    scale = (out_max - out_min) / (v_high - v_low)
+
+    def remap(v: int) -> int:
+        return max(out_min, min(out_max, round(out_min + (v - v_low) * scale)))
+
+    return [replace(n, velocity=remap(n.velocity)) for n in notes]
+
+
 def clean_notes(
     notes: list[Note],
     *,

@@ -123,12 +123,16 @@ class TranskunEngine:
         pedal_events: list[tuple] = []
         for n in raw_notes:
             if n.pitch > 0:
-                # Regular MIDI note: velocity is already 0-127.
                 note_events.append((float(n.start), float(n.end), int(n.pitch), int(n.velocity)))
-            elif -n.pitch == 64:
-                # CC64 sustain-pedal event: on at start, off at end.
-                pedal_events.append((float(n.start), int(n.velocity)))
-                pedal_events.append((float(n.end), 0))
+            elif n.pitch < 0:
+                # Negative pitch encodes a CC event: control = -pitch.
+                # Emit on-event at n.start and off-event (value=0) at n.end.
+                # Only CC64 (sustain pedal) is used downstream but we capture all.
+                cc = -n.pitch
+                if cc == 64:
+                    pedal_events.append((float(n.start), int(n.velocity)))
+                    pedal_events.append((float(n.end), 0))
+            # pitch == 0 is not a valid MIDI note — skip silently.
 
         # BPM is not available from the Transkun model; return 0.0 so the
         # caller falls back to _BPM_FALLBACK (120 bpm).
@@ -161,6 +165,20 @@ class TranskunEngine:
                 tmp_path = tmp.name
 
             note_events, pedal_events, bpm = self._run_model(tmp_path)
+
+            # Try to get a real tempo estimate from librosa (deferred import in beat.py).
+            tempo_source = "fallback_120"
+            if _BPM_MIN <= float(bpm) <= _BPM_MAX:
+                tempo_source = "transkun"
+            else:
+                from pianoflow_music.transcription.beat import estimate_tempo_and_beats
+
+                beat_result = estimate_tempo_and_beats(tmp_path)
+                if beat_result is not None:
+                    librosa_bpm, _ = beat_result
+                    if _BPM_MIN <= librosa_bpm <= _BPM_MAX:
+                        bpm = librosa_bpm
+                        tempo_source = "librosa"
         finally:
             if tmp_path is not None:
                 with contextlib.suppress(OSError):
@@ -198,6 +216,13 @@ class TranskunEngine:
         # Clamp bpm to [40, 240]; fall back to 120 if out of range.
         bpm = round(float(bpm), 2) if _BPM_MIN <= float(bpm) <= _BPM_MAX else _BPM_FALLBACK
 
+        # Opt-in quantization (onset-snap only; duration preserved by quantize_notes).
+        if options and options.get("quantize"):
+            from pianoflow_music.transcription.quantize import quantize_notes
+
+            grid = options.get("grid", "1/16")
+            notes = quantize_notes(notes, bpm, grid=grid)
+
         # Build sustain list from normalised pedal_events.
         sustain = [
             {"time": round(float(t), 6), "value": int(max(0, min(127, v)))} for t, v in pedal_events
@@ -222,11 +247,17 @@ class TranskunEngine:
 
         draft_midi_bytes = note_data_to_midi_bytes(note_data)
 
+        if tempo_source == "librosa":
+            tempo_confidence = 0.8
+        elif tempo_source == "transkun":
+            tempo_confidence = 0.6
+        else:
+            tempo_confidence = 0.5
         confidence = {
             "overall_confidence": _BASE_CONFIDENCE,
             "pitch_confidence": _BASE_CONFIDENCE,
             "timing_confidence": _BASE_CONFIDENCE,
-            "tempo_confidence": _TEMPO_CONFIDENCE,
+            "tempo_confidence": tempo_confidence,
             "warnings": [
                 "AI transcription (beta) — the generated MIDI is an editable draft"
                 " and may need correction.",
@@ -241,6 +272,7 @@ class TranskunEngine:
             "draft_note_count": len(notes),
             "bpm": bpm,
             "has_pedal": bool(sustain),
+            "tempo_source": tempo_source,
         }
         report.update(clean_stats)
 
