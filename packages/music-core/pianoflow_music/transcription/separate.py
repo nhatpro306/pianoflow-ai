@@ -15,10 +15,12 @@ Without the extra, calling ``separate_target_stem`` raises
 
 Available htdemucs stems
 ------------------------
-- "vocals"  — singing voice
+htdemucs sources order: ['drums', 'bass', 'other', 'vocals']
+
 - "drums"   — percussion
 - "bass"    — bass guitar / sub frequencies
 - "other"   — everything else (piano, keys, synths, guitars, …)
+- "vocals"  — singing voice
 
 For piano transcription the recommended stem is "other".
 """
@@ -45,8 +47,8 @@ def separate_target_stem(
     audio_bytes:
         Raw audio file content (WAV, MP3, FLAC, …) to separate.
     stem:
-        Which htdemucs stem to keep.  One of "vocals", "drums", "bass",
-        "other".  Defaults to "other" (piano / keys / synths).
+        Which htdemucs stem to keep.  One of "drums", "bass", "other",
+        "vocals".  Defaults to "other" (piano / keys / synths).
     segment:
         Demucs segment length in seconds (smaller → less GPU RAM, slower).
         Default 7 s is safe on 8 GB VRAM; reduce to 5 or 3 if OOM persists.
@@ -64,10 +66,12 @@ def separate_target_stem(
     TranscriptionError(code="SEPARATION_FAILED")
         On any other runtime failure (corrupt audio, bad stem name, etc.).
     """
-    # Deferred import — keeps module import cheap even without the extra.
+    # Deferred imports — keep module import cheap even without the extra.
     try:
-        import demucs.api
         import torch
+        from demucs.apply import apply_model
+        from demucs.audio import AudioFile, save_audio
+        from demucs.pretrained import get_model
     except ImportError as exc:
         raise TranscriptionError(
             "Demucs is not installed.  Install the 'separation' extra: "
@@ -84,23 +88,37 @@ def separate_target_stem(
             f_in.flush()
             tmp_in = f_in.name
 
-        def _run(device: str) -> torch.Tensor:
-            """Run Demucs inference on *tmp_in* and return the stem tensor."""
-            separator = demucs.api.Separator(
-                model="htdemucs",
-                segment=segment,
-                device=device,
+        model = get_model("htdemucs")
+        model.eval()
+        if stem not in model.sources:
+            raise TranscriptionError(
+                f"Stem {stem!r} not found in htdemucs output. Available: {sorted(model.sources)}",
+                code="SEPARATION_FAILED",
             )
-            # separate_audio_file returns (origin_tensor, dict[stem_name -> tensor])
-            _origin, stems = separator.separate_audio_file(tmp_in)
-            if stem not in stems:
-                raise TranscriptionError(
-                    f"Stem {stem!r} not found in htdemucs output.  Available: {sorted(stems)}",
-                    code="SEPARATION_FAILED",
-                )
-            return stems[stem]
+        stem_index = model.sources.index(stem)
 
-        # Try GPU first; fall back to CPU on OOM.
+        # Load audio at the model's native rate/channels.
+        wav = AudioFile(tmp_in).read(
+            streams=0,
+            samplerate=model.samplerate,
+            channels=model.audio_channels,
+        )
+        ref = wav.mean(0)
+        wav = (wav - ref.mean()) / (ref.std() + 1e-8)
+
+        def _run(device: str):
+            model.to(device)
+            sources = apply_model(
+                model,
+                wav[None],
+                device=device,
+                segment=segment,
+                overlap=0.1,
+                progress=False,
+            )[0]
+            sources = sources * ref.std() + ref.mean()
+            return sources[stem_index]
+
         device = "cuda" if torch.cuda.is_available() else "cpu"
         try:
             stem_tensor = _run(device)
@@ -110,9 +128,7 @@ def separate_target_stem(
         # Export stem tensor to WAV bytes via a temp output file.
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f_out:
             tmp_out = f_out.name
-
-        demucs.api.save_audio(stem_tensor, tmp_out, samplerate=44100)
-
+        save_audio(stem_tensor, tmp_out, samplerate=model.samplerate)
         with open(tmp_out, "rb") as fh:
             return fh.read()
 

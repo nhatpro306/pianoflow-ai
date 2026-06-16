@@ -17,6 +17,7 @@ image = (
         "mido",
         "librosa",
         "soundfile",
+        "torchcodec",
         "moduleconf",
         "fastapi[standard]",
     )

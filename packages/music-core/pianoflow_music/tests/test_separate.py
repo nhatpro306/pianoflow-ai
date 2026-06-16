@@ -7,9 +7,9 @@ downloaded or executed in CI.
 Monkeypatch strategy
 --------------------
 ``separate_target_stem`` defers its imports inside the function body.
-Tests inject fake ``demucs`` and ``torch`` modules into ``sys.modules``
-before calling the function, which satisfies the ``try/except ImportError``
-guard without touching real packages.
+Tests inject fake ``demucs.pretrained``, ``demucs.apply``, ``demucs.audio``,
+and ``torch`` modules into ``sys.modules`` before calling the function, which
+satisfies the ``try/except ImportError`` guard without touching real packages.
 """
 
 from __future__ import annotations
@@ -29,8 +29,10 @@ from pianoflow_music.transcription.separate import separate_target_stem
 
 _FAKE_WAV_BYTES = b"RIFF....WAVEfmt " + b"\x00" * 100  # minimal fake WAV
 
+_HTDEMUCS_SOURCES = ["drums", "bass", "other", "vocals"]
 
-def _make_fake_torch(*, raise_oom: bool = False) -> types.ModuleType:
+
+def _make_fake_torch(*, cuda_available: bool = False) -> types.ModuleType:
     """Build a minimal fake ``torch`` module for sys.modules injection."""
     torch_mod = types.ModuleType("torch")
 
@@ -40,7 +42,7 @@ def _make_fake_torch(*, raise_oom: bool = False) -> types.ModuleType:
         """Fake torch.cuda.OutOfMemoryError."""
 
     cuda_mod.OutOfMemoryError = _FakeOOM
-    cuda_mod.is_available = MagicMock(return_value=False)  # default: no GPU
+    cuda_mod.is_available = MagicMock(return_value=cuda_available)
 
     torch_mod.cuda = cuda_mod
     torch_mod.Tensor = MagicMock  # simple placeholder
@@ -48,38 +50,82 @@ def _make_fake_torch(*, raise_oom: bool = False) -> types.ModuleType:
     return torch_mod
 
 
-def _make_fake_demucs(
+def _make_fake_model(*, sources: list[str] = _HTDEMUCS_SOURCES) -> MagicMock:
+    """Build a fake htdemucs model object."""
+    model = MagicMock(name="htdemucs_model")
+    model.sources = sources
+    model.samplerate = 44100
+    model.audio_channels = 2
+    model.eval = MagicMock(return_value=None)
+    model.to = MagicMock(return_value=model)
+    return model
+
+
+def _make_fake_demucs_modules(
     fake_wav_bytes: bytes = _FAKE_WAV_BYTES,
     *,
-    stem_key: str = "other",
-    raise_on_separate: Exception | None = None,
-) -> types.ModuleType:
-    """Build a minimal fake ``demucs.api`` module."""
+    apply_model_side_effect=None,
+    model: MagicMock | None = None,
+) -> dict[str, types.ModuleType]:
+    """Build fake demucs.pretrained, demucs.apply, demucs.audio modules.
+
+    Returns a dict mapping module name → module, ready for sys.modules injection.
+    """
+    if model is None:
+        model = _make_fake_model()
+
     demucs_top = types.ModuleType("demucs")
-    demucs_api = types.ModuleType("demucs.api")
 
-    stem_tensor = MagicMock(name="stem_tensor")
+    # demucs.pretrained
+    demucs_pretrained = types.ModuleType("demucs.pretrained")
+    demucs_pretrained.get_model = MagicMock(return_value=model)
 
-    class _FakeSeparator:
-        def __init__(self, **kwargs):
-            self._kwargs = kwargs
+    # demucs.apply — apply_model returns sources[0] indexable object
+    demucs_apply = types.ModuleType("demucs.apply")
+    if apply_model_side_effect is not None:
+        demucs_apply.apply_model = MagicMock(side_effect=apply_model_side_effect)
+    else:
+        # Default: return a MagicMock that supports [0] and further indexing.
+        # The real code does: apply_model(...)[0], then sources * ref.std() + ref.mean(),
+        # then sources[stem_index]. MagicMock handles all of these automatically.
+        demucs_apply.apply_model = MagicMock(return_value=MagicMock(name="apply_result"))
 
-        def separate_audio_file(self, path: str):
-            if raise_on_separate is not None:
-                raise raise_on_separate
-            return (MagicMock(name="origin"), {stem_key: stem_tensor})
+    # demucs.audio — AudioFile and save_audio
+    demucs_audio = types.ModuleType("demucs.audio")
 
-    demucs_api.Separator = _FakeSeparator
+    audio_file_instance = MagicMock(name="AudioFile_instance")
+    # read() returns a MagicMock that supports .mean(0), arithmetic, and [None] indexing
+    audio_file_instance.read = MagicMock(return_value=MagicMock(name="wav_tensor"))
+
+    AudioFileMock = MagicMock(name="AudioFile", return_value=audio_file_instance)
+    demucs_audio.AudioFile = AudioFileMock
 
     def _fake_save_audio(tensor, path: str, *, samplerate: int = 44100) -> None:
-        # Write fake WAV content to the output path.
         with open(path, "wb") as fh:
             fh.write(fake_wav_bytes)
 
-    demucs_api.save_audio = _fake_save_audio
+    demucs_audio.save_audio = _fake_save_audio
 
-    demucs_top.api = demucs_api
-    return demucs_top, demucs_api
+    demucs_top.pretrained = demucs_pretrained
+    demucs_top.apply = demucs_apply
+    demucs_top.audio = demucs_audio
+
+    return {
+        "demucs": demucs_top,
+        "demucs.pretrained": demucs_pretrained,
+        "demucs.apply": demucs_apply,
+        "demucs.audio": demucs_audio,
+    }
+
+
+_DEMUCS_MODULE_KEYS = (
+    "demucs",
+    "demucs.pretrained",
+    "demucs.apply",
+    "demucs.audio",
+    "torch",
+    "torch.cuda",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -91,12 +137,19 @@ def _make_fake_demucs(
 def clean_demucs_modules():
     """Ensure demucs / torch are not lingering in sys.modules between tests."""
     for key in list(sys.modules):
-        if key in ("demucs", "demucs.api", "torch", "torch.cuda"):
+        if key in _DEMUCS_MODULE_KEYS:
             del sys.modules[key]
     yield
     for key in list(sys.modules):
-        if key in ("demucs", "demucs.api", "torch", "torch.cuda"):
+        if key in _DEMUCS_MODULE_KEYS:
             del sys.modules[key]
+
+
+def _inject_modules(torch_mod: types.ModuleType, demucs_mods: dict[str, types.ModuleType]) -> None:
+    sys.modules["torch"] = torch_mod
+    sys.modules["torch.cuda"] = torch_mod.cuda
+    for name, mod in demucs_mods.items():
+        sys.modules[name] = mod
 
 
 # ---------------------------------------------------------------------------
@@ -107,12 +160,8 @@ def clean_demucs_modules():
 def test_success_returns_bytes(clean_demucs_modules):
     """Happy path: function returns the WAV bytes written by save_audio."""
     torch_mod = _make_fake_torch()
-    demucs_top, demucs_api = _make_fake_demucs(fake_wav_bytes=_FAKE_WAV_BYTES)
-
-    sys.modules["torch"] = torch_mod
-    sys.modules["torch.cuda"] = torch_mod.cuda
-    sys.modules["demucs"] = demucs_top
-    sys.modules["demucs.api"] = demucs_api
+    demucs_mods = _make_fake_demucs_modules(fake_wav_bytes=_FAKE_WAV_BYTES)
+    _inject_modules(torch_mod, demucs_mods)
 
     result = separate_target_stem(b"fake_audio_input", stem="other", segment=7)
 
@@ -124,12 +173,9 @@ def test_success_returns_bytes(clean_demucs_modules):
 def test_success_with_custom_stem(clean_demucs_modules):
     """Custom stem name is forwarded to the separator correctly."""
     torch_mod = _make_fake_torch()
-    demucs_top, demucs_api = _make_fake_demucs(stem_key="vocals")
-
-    sys.modules["torch"] = torch_mod
-    sys.modules["torch.cuda"] = torch_mod.cuda
-    sys.modules["demucs"] = demucs_top
-    sys.modules["demucs.api"] = demucs_api
+    # "vocals" must be in model.sources — it is (default list includes it)
+    demucs_mods = _make_fake_demucs_modules()
+    _inject_modules(torch_mod, demucs_mods)
 
     result = separate_target_stem(b"fake_audio", stem="vocals")
 
@@ -143,20 +189,14 @@ def test_success_with_custom_stem(clean_demucs_modules):
 
 def test_engine_unavailable_when_demucs_missing(clean_demucs_modules):
     """If demucs cannot be imported, ENGINE_UNAVAILABLE must be raised."""
-    # Ensure demucs is NOT in sys.modules so the import inside the function
-    # naturally fails via ImportError.
-    sys.modules.pop("demucs", None)
-    sys.modules.pop("demucs.api", None)
-    # Also make torch unavailable to ensure the ImportError path is hit first.
-    sys.modules.pop("torch", None)
-    sys.modules.pop("torch.cuda", None)
+    # Ensure demucs/torch are NOT in sys.modules so imports inside the function fail.
+    for key in _DEMUCS_MODULE_KEYS:
+        sys.modules.pop(key, None)
 
-    # Patch builtins.__import__ would be complex; instead we patch the module
-    # lookup so that "import demucs.api" raises ImportError.
     original_import = __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
 
     def _fake_import(name, *args, **kwargs):
-        if name in ("demucs", "demucs.api", "torch"):
+        if name in ("demucs", "demucs.pretrained", "demucs.apply", "demucs.audio", "torch"):
             raise ImportError(f"No module named '{name}'")
         return original_import(name, *args, **kwargs)
 
@@ -173,7 +213,7 @@ def test_engine_unavailable_import_error_message(clean_demucs_modules):
     """ENGINE_UNAVAILABLE message must mention the 'separation' extra."""
 
     def _fake_import(name, *args, **kwargs):
-        if name in ("demucs", "demucs.api", "torch"):
+        if name in ("demucs", "demucs.pretrained", "demucs.apply", "demucs.audio", "torch"):
             raise ImportError(f"No module named '{name}'")
         if hasattr(__builtins__, "__import__"):
             return __builtins__.__import__(name, *args, **kwargs)
@@ -195,16 +235,12 @@ def test_engine_unavailable_import_error_message(clean_demucs_modules):
 
 
 def test_separation_failed_on_demucs_runtime_error(clean_demucs_modules):
-    """A generic runtime error from demucs maps to SEPARATION_FAILED."""
+    """A generic runtime error from apply_model maps to SEPARATION_FAILED."""
     torch_mod = _make_fake_torch()
-    demucs_top, demucs_api = _make_fake_demucs(
-        raise_on_separate=RuntimeError("demucs model exploded")
+    demucs_mods = _make_fake_demucs_modules(
+        apply_model_side_effect=RuntimeError("demucs model exploded")
     )
-
-    sys.modules["torch"] = torch_mod
-    sys.modules["torch.cuda"] = torch_mod.cuda
-    sys.modules["demucs"] = demucs_top
-    sys.modules["demucs.api"] = demucs_api
+    _inject_modules(torch_mod, demucs_mods)
 
     with pytest.raises(TranscriptionError) as exc_info:
         separate_target_stem(b"bad_audio", stem="other")
@@ -215,13 +251,9 @@ def test_separation_failed_on_demucs_runtime_error(clean_demucs_modules):
 def test_separation_failed_on_invalid_stem(clean_demucs_modules):
     """Requesting a stem that htdemucs doesn't produce → SEPARATION_FAILED."""
     torch_mod = _make_fake_torch()
-    # Fake separator only returns "other"; requesting "piano" should fail.
-    demucs_top, demucs_api = _make_fake_demucs(stem_key="other")
-
-    sys.modules["torch"] = torch_mod
-    sys.modules["torch.cuda"] = torch_mod.cuda
-    sys.modules["demucs"] = demucs_top
-    sys.modules["demucs.api"] = demucs_api
+    # model.sources only has standard htdemucs stems; "piano" is not one of them.
+    demucs_mods = _make_fake_demucs_modules()
+    _inject_modules(torch_mod, demucs_mods)
 
     with pytest.raises(TranscriptionError) as exc_info:
         separate_target_stem(b"audio", stem="piano")  # "piano" not in htdemucs
@@ -236,41 +268,48 @@ def test_separation_failed_on_invalid_stem(clean_demucs_modules):
 
 def test_oom_falls_back_to_cpu(clean_demucs_modules):
     """torch.cuda.OutOfMemoryError on the first call must trigger a CPU retry."""
-    torch_mod = _make_fake_torch()
-
-    # Make CUDA appear available so the first attempt uses it.
-    torch_mod.cuda.is_available = MagicMock(return_value=True)
+    torch_mod = _make_fake_torch(cuda_available=True)
 
     call_log: list[str] = []
 
-    class _OOMThenSucceedSeparator:
-        def __init__(self, *, device: str, **kwargs):
-            self._device = device
+    def _apply_model_side_effect(model, wav, device, segment, overlap, progress):
+        call_log.append(device)
+        if device == "cuda":
+            raise torch_mod.cuda.OutOfMemoryError("fake OOM")
+        # CPU attempt succeeds — return a MagicMock supporting [0] and indexing.
+        return MagicMock(name="apply_result_cpu")
 
-        def separate_audio_file(self, path: str):
-            call_log.append(self._device)
-            if self._device == "cuda":
-                # Raise the fake OOM the first time (GPU attempt).
-                raise torch_mod.cuda.OutOfMemoryError("fake OOM")
-            # CPU attempt succeeds.
-            stem_tensor = MagicMock(name="stem_tensor")
-            return (MagicMock(name="origin"), {"other": stem_tensor})
+    fake_wav_bytes_local = _FAKE_WAV_BYTES
 
     demucs_top = types.ModuleType("demucs")
-    demucs_api = types.ModuleType("demucs.api")
-    demucs_api.Separator = _OOMThenSucceedSeparator
+    demucs_pretrained = types.ModuleType("demucs.pretrained")
+    fake_model = _make_fake_model()
+    demucs_pretrained.get_model = MagicMock(return_value=fake_model)
+
+    demucs_apply = types.ModuleType("demucs.apply")
+    demucs_apply.apply_model = _apply_model_side_effect
+
+    demucs_audio = types.ModuleType("demucs.audio")
+    audio_file_instance = MagicMock(name="AudioFile_instance")
+    audio_file_instance.read = MagicMock(return_value=MagicMock(name="wav_tensor"))
+    demucs_audio.AudioFile = MagicMock(return_value=audio_file_instance)
 
     def _fake_save_audio(tensor, path: str, *, samplerate: int = 44100) -> None:
         with open(path, "wb") as fh:
-            fh.write(_FAKE_WAV_BYTES)
+            fh.write(fake_wav_bytes_local)
 
-    demucs_api.save_audio = _fake_save_audio
-    demucs_top.api = demucs_api
+    demucs_audio.save_audio = _fake_save_audio
+
+    demucs_top.pretrained = demucs_pretrained
+    demucs_top.apply = demucs_apply
+    demucs_top.audio = demucs_audio
 
     sys.modules["torch"] = torch_mod
     sys.modules["torch.cuda"] = torch_mod.cuda
     sys.modules["demucs"] = demucs_top
-    sys.modules["demucs.api"] = demucs_api
+    sys.modules["demucs.pretrained"] = demucs_pretrained
+    sys.modules["demucs.apply"] = demucs_apply
+    sys.modules["demucs.audio"] = demucs_audio
 
     result = separate_target_stem(b"audio", stem="other")
 
@@ -282,29 +321,37 @@ def test_oom_falls_back_to_cpu(clean_demucs_modules):
 
 def test_oom_cpu_fallback_also_fails_raises_separation_failed(clean_demucs_modules):
     """If both GPU and CPU paths fail, SEPARATION_FAILED must be raised."""
-    torch_mod = _make_fake_torch()
-    torch_mod.cuda.is_available = MagicMock(return_value=True)
+    torch_mod = _make_fake_torch(cuda_available=True)
 
-    class _AlwaysOOMSeparator:
-        def __init__(self, *, device: str, **kwargs):
-            self._device = device
-
-        def separate_audio_file(self, path: str):
-            if self._device == "cuda":
-                raise torch_mod.cuda.OutOfMemoryError("GPU OOM")
-            # CPU attempt also fails.
-            raise RuntimeError("CPU also out of memory somehow")
+    def _apply_model_side_effect(model, wav, device, segment, overlap, progress):
+        if device == "cuda":
+            raise torch_mod.cuda.OutOfMemoryError("GPU OOM")
+        raise RuntimeError("CPU also out of memory somehow")
 
     demucs_top = types.ModuleType("demucs")
-    demucs_api = types.ModuleType("demucs.api")
-    demucs_api.Separator = _AlwaysOOMSeparator
-    demucs_api.save_audio = MagicMock()
-    demucs_top.api = demucs_api
+    demucs_pretrained = types.ModuleType("demucs.pretrained")
+    fake_model = _make_fake_model()
+    demucs_pretrained.get_model = MagicMock(return_value=fake_model)
+
+    demucs_apply = types.ModuleType("demucs.apply")
+    demucs_apply.apply_model = _apply_model_side_effect
+
+    demucs_audio = types.ModuleType("demucs.audio")
+    audio_file_instance = MagicMock(name="AudioFile_instance")
+    audio_file_instance.read = MagicMock(return_value=MagicMock(name="wav_tensor"))
+    demucs_audio.AudioFile = MagicMock(return_value=audio_file_instance)
+    demucs_audio.save_audio = MagicMock()
+
+    demucs_top.pretrained = demucs_pretrained
+    demucs_top.apply = demucs_apply
+    demucs_top.audio = demucs_audio
 
     sys.modules["torch"] = torch_mod
     sys.modules["torch.cuda"] = torch_mod.cuda
     sys.modules["demucs"] = demucs_top
-    sys.modules["demucs.api"] = demucs_api
+    sys.modules["demucs.pretrained"] = demucs_pretrained
+    sys.modules["demucs.apply"] = demucs_apply
+    sys.modules["demucs.audio"] = demucs_audio
 
     with pytest.raises(TranscriptionError) as exc_info:
         separate_target_stem(b"audio", stem="other")
