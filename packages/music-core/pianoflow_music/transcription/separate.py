@@ -95,8 +95,7 @@ def separate_target_stem(
             _origin, stems = separator.separate_audio_file(tmp_in)
             if stem not in stems:
                 raise TranscriptionError(
-                    f"Stem {stem!r} not found in htdemucs output.  "
-                    f"Available: {sorted(stems)}",
+                    f"Stem {stem!r} not found in htdemucs output.  Available: {sorted(stems)}",
                     code="SEPARATION_FAILED",
                 )
             return stems[stem]

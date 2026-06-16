@@ -150,8 +150,7 @@ def test_engine_receives_separated_audio():
 
     engine_input = factory.engine.transcribe_calls[0]["audio_bytes"]
     assert engine_input == _SEPARATED_AUDIO, (
-        f"Engine should receive separated audio {_SEPARATED_AUDIO!r}, "
-        f"got {engine_input!r}"
+        f"Engine should receive separated audio {_SEPARATED_AUDIO!r}, got {engine_input!r}"
     )
 
 
@@ -208,9 +207,7 @@ def test_result_returned_unchanged_with_separation():
     sep = _FakeSeparator()
     factory = _FakeEngineFactory(_FakeEngine(result=expected))
 
-    result = run_pipeline(
-        _ORIGINAL_AUDIO, separate=True, _separator=sep, _engine_factory=factory
-    )
+    result = run_pipeline(_ORIGINAL_AUDIO, separate=True, _separator=sep, _engine_factory=factory)
 
     assert result is expected
 

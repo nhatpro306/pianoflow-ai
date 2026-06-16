@@ -101,7 +101,7 @@ class TranskunEngine:
         audio_seg = pydub.AudioSegment.from_file(audio_path)
         fs = audio_seg.frame_rate
         y = np.array(audio_seg.get_array_of_samples(), dtype=np.float32)
-        y = y.reshape(-1, audio_seg.channels) / (2 ** 15)
+        y = y.reshape(-1, audio_seg.channels) / (2**15)
 
         # Resample to the model's expected sample rate if necessary.
         if fs != model.fs:

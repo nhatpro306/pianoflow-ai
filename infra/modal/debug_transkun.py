@@ -1,13 +1,13 @@
 """One-shot diagnostic — run via: modal run infra/modal/debug_transkun.py
 Inspects the transkun package structure so we know the correct Python API.
 """
+
 import modal
 
 app = modal.App("debug-transkun")
 
-image = (
-    modal.Image.debian_slim(python_version="3.12")
-    .pip_install("torch", "transkun", "moduleconf", "pydub", "soxr", "numpy")
+image = modal.Image.debian_slim(python_version="3.12").pip_install(
+    "torch", "transkun", "moduleconf", "pydub", "soxr", "numpy"
 )
 
 
@@ -69,5 +69,6 @@ def inspect() -> dict:
 @app.local_entrypoint()
 def main() -> None:
     import json
+
     result = inspect.remote()
     print(json.dumps(result, indent=2))

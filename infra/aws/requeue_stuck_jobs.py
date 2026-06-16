@@ -110,11 +110,7 @@ def main() -> None:
     for row in rows:
         row_dict = dict(row)
         payload = _build_payload(row_dict)
-        queue_url = (
-            sqs_audio_url
-            if row_dict["job_type"] == "transcribe_audio"
-            else sqs_default_url
-        )
+        queue_url = sqs_audio_url if row_dict["job_type"] == "transcribe_audio" else sqs_default_url
 
         if args.dry_run:
             print(
@@ -131,9 +127,7 @@ def main() -> None:
                 QueueUrl=queue_url,
                 MessageBody=json.dumps(payload),
             )
-            print(
-                f"  Enqueued job_id={payload['job_id']} job_type={payload['job_type']}"
-            )
+            print(f"  Enqueued job_id={payload['job_id']} job_type={payload['job_type']}")
             sent += 1
         except Exception as exc:
             print(

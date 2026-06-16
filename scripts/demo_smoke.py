@@ -26,6 +26,7 @@ import wave
 # WAV generation — stdlib only, no numpy/scipy
 # ---------------------------------------------------------------------------
 
+
 def _make_sine_wav(
     *,
     frequency: float = 440.0,
@@ -55,6 +56,7 @@ def _make_sine_wav(
 # Env loading
 # ---------------------------------------------------------------------------
 
+
 def _load_env() -> None:
     """Populate os.environ from .env in the repo root (if python-dotenv is installed)."""
     try:
@@ -72,6 +74,7 @@ def _load_env() -> None:
 # ---------------------------------------------------------------------------
 # HTTP helpers (stdlib urllib only)
 # ---------------------------------------------------------------------------
+
 
 def _post_json(url: str, payload: dict) -> dict:
     data = json.dumps(payload).encode("utf-8")
@@ -93,6 +96,7 @@ def _get_json(url: str) -> dict:
 # ---------------------------------------------------------------------------
 # Main smoke test
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     _load_env()

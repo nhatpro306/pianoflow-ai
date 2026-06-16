@@ -16,7 +16,7 @@ def run_pipeline(
     engine: str = "transkun",
     separate: bool = False,
     options: dict | None = None,
-    _separator=None,   # inject for tests
+    _separator=None,  # inject for tests
     _engine_factory=None,  # inject for tests
 ) -> TranscriptionResult:
     """Run the audio-to-MIDI transcription pipeline.
