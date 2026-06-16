@@ -13,15 +13,14 @@ image = (
 
 @app.function(image=image)
 def inspect() -> dict:
-    import pkg_resources
-    import moduleconf
-    import transkun
     import importlib
     import inspect as _inspect
 
-    conf_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.conf")
-    ckpt_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.pt")
+    import moduleconf
+    import pkg_resources
+    import transkun
 
+    conf_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.conf")
     out: dict = {}
 
     # conf file raw content
