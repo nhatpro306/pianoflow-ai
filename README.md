@@ -4,14 +4,14 @@
 
 Turn any piano MIDI into a **tutorial video**, **sheet music**, and a **beginner-friendly version**.
 
-**Live:** https://pianoflow-jet.vercel.app (frontend + auth; API/worker deploy in progress)
+**Live:** https://pianoflow-jet.vercel.app — frontend, auth, API, and worker deployed (AWS ap-southeast-1).
 
 ## Features
 
 - 🎬 **Tutorial Videos** — Synthesia-style falling-note MP4 with real piano audio. Customizable colors, speed, 720p/1080p.
 - 🎼 **Sheet Music** — Readable PDF + MusicXML export, auto-generated from MIDI.
 - 🎯 **Beginner Mode** — Rule-based simplified arrangements (easy / very-easy) that preserve the melody.
-- 🎙️ **Audio → MIDI** (Beta) — Upload MP3/WAV, get a draft MIDI transcription. Honestly labeled.
+- 🎙️ **Audio → MIDI** (Beta) — Upload MP3/WAV **or paste a YouTube / TikTok / Instagram link**; on-demand GPU transcription (Modal) produces a draft MIDI that's saved as an editable project. Honestly labeled — the output is a draft, not a perfect transcription.
 - 🔐 **Auth & Rate Limits** — Supabase Auth (email + Google), daily usage caps, per-user ownership isolation.
 - 📊 **Streaming-only Video** — No MP4 download. Output access via short-lived signed URLs.
 
@@ -24,6 +24,7 @@ User → Next.js (Vercel) → FastAPI → Queue (Redis→SQS) → Worker → Sto
 
 Core rule: **the API never renders** — it validates, persists, and enqueues; workers do all heavy work.
 Storage/queue/DB sit behind adapters so the MVP stack migrates to AWS with config changes, not rewrites.
+Audio → MIDI transcription runs on **Modal** (on-demand GPU): the browser submits the audio or link directly, and the resulting draft MIDI is persisted as a normal project.
 
 Full design: [docs/DESIGN.md](docs/DESIGN.md) · Deployment: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
@@ -112,7 +113,7 @@ uv run --directory apps/api python ../../scripts/load_test.py \
 
 ## Roadmap
 
-Phases 1–11 code complete (auth, $0 deploy stack, AWS free-tier IaC). Live deploys pending. Stages 1–3 run at $0/month.
+Phases 1–11 complete (auth, $0 deploy stack, AWS free-tier IaC) and deployed live on AWS. Stages 1–3 run at $0/month.
 Full roadmap: [docs/ROADMAP.md](docs/ROADMAP.md)
 
 ---
