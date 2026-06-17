@@ -219,6 +219,13 @@ export default function UploadAudioPage() {
         >
           Transcribe from link
         </button>
+        {!isWorking && (!linkUrl.trim() || !rightsAttested) && (
+          <p className="text-xs text-zinc-500">
+            {!linkUrl.trim()
+              ? "Paste a YouTube / TikTok / Instagram link above to enable this."
+              : "Tick the box above to confirm you have the rights, then this unlocks."}
+          </p>
+        )}
       </div>
 
       {/* Full-mix toggle */}
@@ -240,6 +247,11 @@ export default function UploadAudioPage() {
       >
         {isWorking ? statusText() : "Transcribe"}
       </button>
+      {!file && !isWorking && !fileError && (
+        <p className="text-xs text-zinc-500">
+          Choose or drop an audio file above to enable transcription — or use &ldquo;Transcribe from link&rdquo;.
+        </p>
+      )}
 
       {/* Progress indicator */}
       {isWorking && (
