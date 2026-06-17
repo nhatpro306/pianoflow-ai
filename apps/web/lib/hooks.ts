@@ -60,6 +60,15 @@ export function usePatchSettings(id: string) {
   });
 }
 
+export function useOutputs(id: string, enabled: boolean, hasActiveJob: boolean) {
+  return useQuery({
+    queryKey: ["projects", id, "outputs"],
+    queryFn: () => api.listOutputs(id),
+    enabled,
+    refetchInterval: hasActiveJob ? 2000 : false,
+  });
+}
+
 export function useDeleteProject() {
   const queryClient = useQueryClient();
   return useMutation({

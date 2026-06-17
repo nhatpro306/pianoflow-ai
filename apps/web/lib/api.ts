@@ -113,6 +113,19 @@ export interface UploadInit {
   max_bytes: number;
 }
 
+export interface OutputFile {
+  id: string;
+  kind: string;
+  job_id: string;
+  content_type: string;
+  size_bytes: number;
+  metadata: Record<string, unknown> | null;
+  downloadable: boolean;
+  streamable: boolean;
+  file_expires_at: string | null;
+  created_at: string;
+}
+
 // ── Calls ───────────────────────────────────────────────────
 
 export const api = {
@@ -163,6 +176,23 @@ export const api = {
 
   enqueueRenderVideo: (projectId: string) =>
     apiFetch<Job>(`/api/v1/projects/${projectId}/jobs/render-video`, { method: "POST" }),
+
+  listOutputs: (projectId: string, kind?: string) =>
+    apiFetch<{ items: OutputFile[]; next_cursor: string | null }>(
+      `/api/v1/projects/${projectId}/outputs${kind ? `?kind=${encodeURIComponent(kind)}` : ""}`,
+    ),
+
+  createDownloadUrl: (outputId: string) =>
+    apiFetch<{ download_url: string; expires_at: string }>(
+      `/api/v1/outputs/${outputId}/download-url`,
+      { method: "POST" },
+    ),
+
+  createStreamUrl: (outputId: string) =>
+    apiFetch<{ stream_url: string; expires_at: string; expires_in_seconds: number }>(
+      `/api/v1/outputs/${outputId}/stream-url`,
+      { method: "POST" },
+    ),
 
   // ── Audio → MIDI Beta ─────────────────────────────────────
   // Output is an editable draft MIDI — never promised as perfect.
