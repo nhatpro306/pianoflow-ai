@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 
 import { FallingNotePreview } from "@/components/FallingNotePreview";
+import { SettingsPanel } from "@/components/SettingsPanel";
 import { submitAudio, submitUrl, type TranscribeStatus, type TranscribeResult } from "@/lib/transcribeClient";
 import type { NoteData, RenderSettings } from "@pianoflow/shared-types";
 import { THEME_PRESETS } from "@pianoflow/shared-types";
 
-const DEMO_SETTINGS: RenderSettings = {
+const INITIAL_SETTINGS: RenderSettings = {
   resolution: "720p",
   fps: 60,
   speed_multiplier: 1,
@@ -45,6 +46,7 @@ export default function UploadAudioPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [exampleData, setExampleData] = useState<NoteData | null>(null);
   const [noteData, setNoteData] = useState<NoteData | null>(null);
+  const [settings, setSettings] = useState<RenderSettings>(INITIAL_SETTINGS);
   const [fullMix, setFullMix] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [rightsAttested, setRightsAttested] = useState(false);
@@ -119,6 +121,22 @@ export default function UploadAudioPage() {
   }
 
   const isWorking = status === "uploading" || status === "processing";
+
+  function handleSettingsChange(patch: Partial<RenderSettings>) {
+    setSettings((prev) => {
+      const next = { ...prev, ...patch };
+      // Selecting a named preset also swaps in its color palette locally
+      // (no backend in the demo to derive colors from the preset).
+      if (
+        patch.theme_preset &&
+        patch.theme_preset !== "custom" &&
+        THEME_PRESETS[patch.theme_preset]
+      ) {
+        next.colors = THEME_PRESETS[patch.theme_preset];
+      }
+      return next;
+    });
+  }
 
   // Sync transcription result into noteData when it arrives
   useEffect(() => {
@@ -275,7 +293,18 @@ export default function UploadAudioPage() {
       {noteData && (
         <div className="w-full">
           <h2 className="mb-3 text-sm font-medium text-zinc-400">Falling-note preview</h2>
-          <FallingNotePreview data={noteData} settings={DEMO_SETTINGS} />
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+            <div className="min-w-0 flex-1">
+              <FallingNotePreview data={noteData} settings={settings} />
+            </div>
+            <div className="w-full lg:w-72 lg:shrink-0">
+              <SettingsPanel
+                settings={settings}
+                durationSec={noteData.duration_sec}
+                onChange={handleSettingsChange}
+              />
+            </div>
+          </div>
         </div>
       )}
     </main>

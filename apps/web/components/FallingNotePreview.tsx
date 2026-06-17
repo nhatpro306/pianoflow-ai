@@ -25,6 +25,8 @@ export function FallingNotePreview({ data, settings }: Props) {
   const lastUiUpdateRef = useRef(0);
 
   const [width, setWidth] = useState(900);
+  const [canvasH, setCanvasH] = useState(CANVAS_H);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [loadingSound, setLoadingSound] = useState(false);
   const [approxSound, setApproxSound] = useState(false);
@@ -49,6 +51,20 @@ export function FallingNotePreview({ data, settings }: Props) {
   }, []);
 
   useEffect(() => {
+    function syncFullscreen() {
+      const fs = !!document.fullscreenElement;
+      setIsFullscreen(fs);
+      setCanvasH(fs ? window.innerHeight : CANVAS_H);
+    }
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    window.addEventListener("resize", syncFullscreen);
+    return () => {
+      document.removeEventListener("fullscreenchange", syncFullscreen);
+      window.removeEventListener("resize", syncFullscreen);
+    };
+  }, []);
+
+  useEffect(() => {
     synthRef.current = new SampledPiano();
     return () => {
       synthRef.current?.stop();
@@ -69,20 +85,22 @@ export function FallingNotePreview({ data, settings }: Props) {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const dpr = window.devicePixelRatio || 1;
-      if (canvas.width !== width * dpr) {
+      if (canvas.width !== width * dpr || canvas.height !== canvasH * dpr) {
         canvas.width = width * dpr;
-        canvas.height = CANVAS_H * dpr;
+        canvas.height = canvasH * dpr;
       }
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const { colors } = settings;
-      const keyboardH = 110 * settings.keyboard_size;
-      const hitY = CANVAS_H - keyboardH;
+      // Scale keyboard height proportionally so it stays well-proportioned when
+      // the canvas grows in fullscreen (base ratio = 110/480).
+      const keyboardH = 110 * settings.keyboard_size * (canvasH / CANVAS_H);
+      const hitY = canvasH - keyboardH;
 
       ctx.fillStyle = colors.background;
-      ctx.fillRect(0, 0, width, CANVAS_H);
+      ctx.fillRect(0, 0, width, canvasH);
 
       const visibleSpan = hitY / fallSpeed;
       ctx.save();
@@ -157,7 +175,7 @@ export function FallingNotePreview({ data, settings }: Props) {
         ctx.fillRect(x, hitY, w, keyboardH * 0.62);
       }
     },
-    [data, settings, width, speed, fallSpeed],
+    [data, settings, width, canvasH, speed, fallSpeed],
   );
 
   useEffect(() => {
@@ -279,10 +297,14 @@ export function FallingNotePreview({ data, settings }: Props) {
 
   return (
     <div ref={containerRef} className="flex flex-col gap-2">
-      <div className="group relative overflow-hidden rounded-lg border border-zinc-800 bg-black">
+      <div
+        className={`group relative overflow-hidden border border-zinc-800 bg-black ${
+          isFullscreen ? "flex h-full items-center justify-center rounded-none" : "rounded-lg"
+        }`}
+      >
         <canvas
           ref={canvasRef}
-          style={{ width, height: CANVAS_H }}
+          style={{ width, height: canvasH }}
           className="block"
           aria-label={`Falling-note preview: ${data.notes.length} notes, ${Math.round(
             scaledDuration,
