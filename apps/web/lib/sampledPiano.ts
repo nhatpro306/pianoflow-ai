@@ -62,6 +62,7 @@ export class SampledPiano {
   private ctx: AudioContext | null = null;
   private instruments = new Map<string, SmplrInstrument>();
   private reverb: Reverb | null = null;
+  private reverbAdded = new Set<string>();
   private fallback: PianoSynth | null = null;
   private usingFallback = false;
 
@@ -102,7 +103,16 @@ export class SampledPiano {
     if (this.ctx) {
       this.reverb ??= new Reverb(this.ctx);
       const mix = (LIMITS.REVERB_MIX as Record<ReverbLevel, number>)[this.config.reverb] ?? 0;
-      instrument.output.addEffect("reverb", this.reverb, mix);
+      const key = this.instrumentKey();
+      // Add the reverb send ONCE per instrument; subsequent calls only adjust the
+      // mix. smplr's addEffect pushes a new send each call (no dedup), so calling
+      // it on every seek/play would stack reverb buses -> cumulative wet + gain.
+      if (this.reverbAdded.has(key)) {
+        instrument.output.setEffectMix("reverb", mix);
+      } else {
+        instrument.output.addEffect("reverb", this.reverb, mix);
+        this.reverbAdded.add(key);
+      }
     }
   }
 

@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { FallingNotePreview } from "@/components/FallingNotePreview";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { api, ApiError } from "@/lib/api";
-import { useJob, useNotes, usePatchSettings, useProject, useSettings } from "@/lib/hooks";
+import { useJob, useNotes, useOutputs, usePatchSettings, useProject, useSettings } from "@/lib/hooks";
 
 export function ProjectEditor({ id }: { id: string }) {
   const project = useProject(id);
@@ -20,6 +20,9 @@ export function ProjectEditor({ id }: { id: string }) {
   const queryClient = useQueryClient();
 
   const [local, setLocal] = useState<RenderSettings | null>(null);
+  const [sheetJobId, setSheetJobId] = useState<string | null>(null);
+  const [videoJobId, setVideoJobId] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const pendingRef = useRef<Partial<RenderSettings>>({});
   const timerRef = useRef<number | null>(null);
 
@@ -62,6 +65,7 @@ export function ProjectEditor({ id }: { id: string }) {
     onSuccess: (job) => {
       queryClient.setQueryData(["jobs", job.id], job);
       queryClient.invalidateQueries({ queryKey: ["projects", id] });
+      setSheetJobId(job.id);
     },
   });
   const renderVideo = useMutation({
@@ -72,8 +76,22 @@ export function ProjectEditor({ id }: { id: string }) {
     onSuccess: (job) => {
       queryClient.setQueryData(["jobs", job.id], job);
       queryClient.invalidateQueries({ queryKey: ["projects", id] });
+      setVideoJobId(job.id);
     },
   });
+
+  const sheetJob = useJob(sheetJobId);
+  const videoJob = useJob(videoJobId);
+  const hasActiveRender = [sheetJob.data?.status, videoJob.data?.status].some(
+    (s) => s === "queued" || s === "processing",
+  );
+  const outputs = useOutputs(id, ready, hasActiveRender);
+
+  useEffect(() => {
+    if (sheetJob.data?.status === "completed" || videoJob.data?.status === "completed") {
+      void queryClient.invalidateQueries({ queryKey: ["projects", id, "outputs"] });
+    }
+  }, [sheetJob.data?.status, videoJob.data?.status, id, queryClient]);
 
   function onChange(patch: Partial<RenderSettings>) {
     setLocal((prev) => (prev ? ({ ...prev, ...patch } as RenderSettings) : prev));
@@ -204,6 +222,123 @@ export function ProjectEditor({ id }: { id: string }) {
                     ? "Notes are still processing. They will appear automatically."
                     : "Could not load notes for this difficulty."}
               </p>
+            )}
+
+            {/* Downloads */}
+            {((outputs.data?.items?.length ?? 0) > 0 || hasActiveRender) && (
+              <div className="mt-5 flex flex-col gap-3">
+                <h2 className="text-sm font-semibold text-zinc-300">Downloads</h2>
+
+                {/* Sheet job progress / failure */}
+                {sheetJob.data?.status === "queued" || sheetJob.data?.status === "processing" ? (
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs text-zinc-400">
+                      {sheetJob.data.progress_message ?? "Rendering sheet…"}
+                    </p>
+                    <div className="h-2 overflow-hidden rounded bg-zinc-900">
+                      <div
+                        className="h-full bg-cyan-400 transition-all"
+                        style={{ width: `${sheetJob.data.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : sheetJob.data?.status === "failed" ? (
+                  <p className="text-xs text-red-400">
+                    Sheet render failed:{" "}
+                    {sheetJob.data.error_type === "NOTES_NOT_READY"
+                      ? "Parsed notes aren't ready yet."
+                      : sheetJob.data.error_type === "SIMPLIFIED_NOTES_NOT_READY"
+                        ? "Generate the beginner MIDI first."
+                        : (sheetJob.data.error_message ?? "Unknown error.")}
+                  </p>
+                ) : null}
+
+                {/* Video job progress / failure */}
+                {videoJob.data?.status === "queued" || videoJob.data?.status === "processing" ? (
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs text-zinc-400">
+                      {videoJob.data.progress_message ?? "Rendering video…"}
+                    </p>
+                    <div className="h-2 overflow-hidden rounded bg-zinc-900">
+                      <div
+                        className="h-full bg-cyan-400 transition-all"
+                        style={{ width: `${videoJob.data.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : videoJob.data?.status === "failed" ? (
+                  <p className="text-xs text-red-400">
+                    Video render failed:{" "}
+                    {videoJob.data.error_type === "NOTES_NOT_READY"
+                      ? "Parsed notes aren't ready yet."
+                      : videoJob.data.error_type === "SIMPLIFIED_NOTES_NOT_READY"
+                        ? "Generate the beginner MIDI first."
+                        : (videoJob.data.error_message ?? "Unknown error.")}
+                  </p>
+                ) : null}
+
+                {/* Output file buttons */}
+                {(outputs.data?.items?.length ?? 0) > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {outputs.data!.items.map((output) => {
+                      if (output.kind === "sheet_pdf") {
+                        return (
+                          <button
+                            key={output.id}
+                            onClick={() => {
+                              void api
+                                .createDownloadUrl(output.id)
+                                .then(({ download_url }) =>
+                                  window.open(download_url, "_blank", "noopener"),
+                                );
+                            }}
+                            className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-900"
+                          >
+                            Download PDF
+                          </button>
+                        );
+                      }
+                      if (output.kind === "sheet_musicxml") {
+                        return (
+                          <button
+                            key={output.id}
+                            onClick={() => {
+                              void api
+                                .createDownloadUrl(output.id)
+                                .then(({ download_url }) =>
+                                  window.open(download_url, "_blank", "noopener"),
+                                );
+                            }}
+                            className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-900"
+                          >
+                            Download MusicXML
+                          </button>
+                        );
+                      }
+                      if (output.kind === "video_mp4" && output.streamable && !output.downloadable) {
+                        return (
+                          <button
+                            key={output.id}
+                            onClick={() => {
+                              void api
+                                .createStreamUrl(output.id)
+                                .then(({ stream_url }) => setVideoUrl(stream_url));
+                            }}
+                            className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-900"
+                          >
+                            Watch
+                          </button>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                )}
+
+                {videoUrl && (
+                  <video src={videoUrl} controls className="mt-3 w-full rounded-lg" />
+                )}
+              </div>
             )}
           </div>
           <SettingsPanel
