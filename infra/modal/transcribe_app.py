@@ -16,7 +16,8 @@ image = (
         "numpy",
         "mido",
         "librosa",
-        "yt-dlp",
+        "yt-dlp[default]",
+        "curl_cffi",
         "soundfile",
         "torchcodec",
         "moduleconf",
@@ -94,6 +95,11 @@ def transcribe_url(url: str, options: dict) -> dict:
         out_tmpl = str(Path(tmp) / "src.%(ext)s")
         cmd = [
             "yt-dlp",
+            # curl_cffi-backed TLS/HTTP impersonation. TikTok (and increasingly
+            # other hosts) block plain requests; without a target yt-dlp warns
+            # "no impersonate target is available" and the download fails.
+            "--impersonate",
+            "chrome",
             "-x",
             "--audio-format",
             "wav",
