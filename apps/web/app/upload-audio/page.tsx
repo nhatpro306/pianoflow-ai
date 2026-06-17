@@ -239,18 +239,16 @@ export default function UploadAudioPage() {
         Full-mix song (isolate piano stem with Demucs)
       </label>
 
-      {/* Transcribe button */}
-      <button
-        disabled={!file || isWorking || !!fileError}
-        onClick={() => void handleTranscribe()}
-        className="rounded-lg bg-cyan-500 px-8 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        {isWorking ? statusText() : "Transcribe"}
-      </button>
-      {!file && !isWorking && !fileError && (
-        <p className="text-xs text-zinc-500">
-          Choose or drop an audio file above to enable transcription — or use &ldquo;Transcribe from link&rdquo;.
-        </p>
+      {/* Transcribe button — only shown once a file is selected (the link flow
+          has its own button above) */}
+      {file && (
+        <button
+          disabled={isWorking || !!fileError}
+          onClick={() => void handleTranscribe()}
+          className="rounded-lg bg-cyan-500 px-8 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {isWorking ? statusText() : "Transcribe file"}
+        </button>
       )}
 
       {/* Progress indicator */}
