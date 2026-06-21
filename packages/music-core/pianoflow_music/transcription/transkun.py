@@ -134,9 +134,16 @@ class TranskunEngine:
                     pedal_events.append((float(n.end), 0))
             # pitch == 0 is not a valid MIDI note — skip silently.
 
-        # BPM is not available from the Transkun model; return 0.0 so the
-        # caller falls back to _BPM_FALLBACK (120 bpm).
+        # Estimate tempo from the already-decoded array — no second file decode needed.
         bpm = 0.0
+        try:
+            from pianoflow_music.transcription.beat import estimate_tempo_from_array
+
+            result = estimate_tempo_from_array(y, model.fs)
+            if result is not None:
+                bpm = result
+        except Exception:
+            pass  # Tempo failure must not crash inference; caller falls back to _BPM_FALLBACK.
 
         return note_events, pedal_events, bpm
 
@@ -166,19 +173,10 @@ class TranskunEngine:
 
             note_events, pedal_events, bpm = self._run_model(tmp_path)
 
-            # Try to get a real tempo estimate from librosa (deferred import in beat.py).
-            tempo_source = "fallback_120"
-            if _BPM_MIN <= float(bpm) <= _BPM_MAX:
-                tempo_source = "transkun"
-            else:
-                from pianoflow_music.transcription.beat import estimate_tempo_and_beats
-
-                beat_result = estimate_tempo_and_beats(tmp_path)
-                if beat_result is not None:
-                    librosa_bpm, _ = beat_result
-                    if _BPM_MIN <= librosa_bpm <= _BPM_MAX:
-                        bpm = librosa_bpm
-                        tempo_source = "librosa"
+            # Tempo is now derived from the already-decoded array inside _run_model.
+            # No second file decode needed.
+            in_range = _BPM_MIN <= float(bpm) <= _BPM_MAX
+            tempo_source = "transkun_librosa" if in_range else "fallback_120"
         finally:
             if tmp_path is not None:
                 with contextlib.suppress(OSError):
@@ -247,12 +245,7 @@ class TranskunEngine:
 
         draft_midi_bytes = note_data_to_midi_bytes(note_data)
 
-        if tempo_source == "librosa":
-            tempo_confidence = 0.8
-        elif tempo_source == "transkun":
-            tempo_confidence = 0.6
-        else:
-            tempo_confidence = 0.5
+        tempo_confidence = 0.8 if tempo_source == "transkun_librosa" else 0.5
         confidence = {
             "overall_confidence": _BASE_CONFIDENCE,
             "pitch_confidence": _BASE_CONFIDENCE,

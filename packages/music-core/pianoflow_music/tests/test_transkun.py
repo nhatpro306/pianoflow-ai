@@ -357,7 +357,7 @@ def test_tempo_from_fake_run_model():
     engine._run_model = fake_run_model
     result = engine.transcribe(b"fake_audio_bytes")
     assert result.notes.bpm == 140.0
-    assert result.report["tempo_source"] == "transkun"
+    assert result.report["tempo_source"] == "transkun_librosa"
 
 
 def test_quantize_option_does_not_crash():
@@ -371,3 +371,72 @@ def test_quantize_option_does_not_crash():
     result = engine.transcribe(b"fake_audio_bytes", options={"quantize": True, "grid": "1/16"})
     assert result.status == "completed"
     assert len(result.notes.notes) >= 1
+
+
+# ---------------------------------------------------------------------------
+# L1 — no second file decode; _run_model returns bpm from decoded array
+# ---------------------------------------------------------------------------
+
+
+def test_tempo_source_transkun_librosa_when_bpm_in_range(monkeypatch):
+    """_run_model returning 128.0 → tempo_source='transkun_librosa', bpm==128.0."""
+    engine = TranskunEngine()
+    events = _note_events(count=4)
+    monkeypatch.setattr(engine, "_run_model", lambda path: (events, [], 128.0))
+
+    result = engine.transcribe(b"fake_audio_bytes", filename="test.wav")
+
+    assert result.report["tempo_source"] == "transkun_librosa"
+    assert result.notes.bpm == pytest.approx(128.0)
+
+
+def test_tempo_source_fallback_120_when_bpm_zero(monkeypatch):
+    """_run_model returning 0.0 → fallback to 120.0, tempo_source='fallback_120'."""
+    engine = TranskunEngine()
+    events = _note_events(count=4)
+    monkeypatch.setattr(engine, "_run_model", lambda path: (events, [], 0.0))
+
+    result = engine.transcribe(b"fake_audio_bytes", filename="test.wav")
+
+    assert result.report["tempo_source"] == "fallback_120"
+    assert result.notes.bpm == 120.0
+
+
+def test_tempo_confidence_0_8_for_transkun_librosa(monkeypatch):
+    """tempo_confidence is 0.8 when tempo_source=='transkun_librosa'."""
+    engine = TranskunEngine()
+    events = _note_events(count=4)
+    monkeypatch.setattr(engine, "_run_model", lambda path: (events, [], 100.0))
+
+    result = engine.transcribe(b"fake_audio_bytes", filename="test.wav")
+
+    assert result.confidence["tempo_confidence"] == 0.8
+
+
+def test_tempo_confidence_0_5_for_fallback_120(monkeypatch):
+    """tempo_confidence is 0.5 when bpm is out of range (fallback_120)."""
+    engine = TranskunEngine()
+    events = _note_events(count=4)
+    monkeypatch.setattr(engine, "_run_model", lambda path: (events, [], 0.0))
+
+    result = engine.transcribe(b"fake_audio_bytes", filename="test.wav")
+
+    assert result.confidence["tempo_confidence"] == 0.5
+
+
+def test_no_estimate_tempo_and_beats_called_in_transcribe(monkeypatch):
+    """transcribe() must never call estimate_tempo_and_beats (second file decode removed)."""
+    import pianoflow_music.transcription.beat as beat_module
+
+    def _should_never_be_called(path):
+        raise AssertionError("estimate_tempo_and_beats must not be called (L1 removed it)")
+
+    monkeypatch.setattr(beat_module, "estimate_tempo_and_beats", _should_never_be_called)
+
+    engine = TranskunEngine()
+    events = _note_events(count=4)
+    monkeypatch.setattr(engine, "_run_model", lambda path: (events, [], 0.0))
+
+    # Must complete without triggering the patched function, even when bpm=0.0 (fallback path).
+    result = engine.transcribe(b"fake_audio_bytes", filename="test.wav")
+    assert result.status == "completed"

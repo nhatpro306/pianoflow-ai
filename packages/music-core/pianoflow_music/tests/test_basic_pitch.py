@@ -248,3 +248,95 @@ def test_tempo_fallback_on_exception(monkeypatch):
 
     result = engine.transcribe(b"audio", filename="clip.wav")
     assert result.report["bpm"] == 120.0
+
+
+# ---------------------------------------------------------------------------
+# L1 — primary tempo source is midi_estimate, no librosa second decode
+# ---------------------------------------------------------------------------
+
+
+def test_tempo_source_is_midi_estimate_when_in_range(monkeypatch):
+    """midi_data.estimate_tempo() in [40,240] → tempo_source='midi_estimate'."""
+    engine = BasicPitchEngine()
+    events = _note_events()
+    monkeypatch.setattr(
+        engine,
+        "_run_model",
+        lambda path: (None, _FakeMidiData(tempo=132.0), events),
+    )
+
+    result = engine.transcribe(b"audio", filename="clip.wav")
+
+    assert result.report["tempo_source"] == "midi_estimate"
+    assert result.report["bpm"] == 132.0
+    assert result.notes.bpm == 132.0
+
+
+def test_tempo_source_is_fallback_when_estimate_tempo_raises(monkeypatch):
+    """If estimate_tempo() raises → tempo_source='fallback', bpm=120.0."""
+
+    class _BrokenMidi:
+        def estimate_tempo(self):
+            raise RuntimeError("no data")
+
+    engine = BasicPitchEngine()
+    events = _note_events()
+    monkeypatch.setattr(engine, "_run_model", lambda path: (None, _BrokenMidi(), events))
+
+    result = engine.transcribe(b"audio", filename="clip.wav")
+
+    assert result.report["tempo_source"] == "fallback"
+    assert result.report["bpm"] == 120.0
+
+
+def test_tempo_confidence_is_0_6_for_midi_estimate(monkeypatch):
+    """tempo_confidence must be 0.6 when tempo_source=='midi_estimate'."""
+    engine = BasicPitchEngine()
+    events = _note_events()
+    monkeypatch.setattr(
+        engine,
+        "_run_model",
+        lambda path: (None, _FakeMidiData(tempo=100.0), events),
+    )
+
+    result = engine.transcribe(b"audio", filename="clip.wav")
+
+    assert result.confidence["tempo_confidence"] == 0.6
+
+
+def test_tempo_confidence_is_0_5_for_fallback(monkeypatch):
+    """tempo_confidence must be 0.5 when estimate_tempo() raises (fallback path)."""
+
+    class _BrokenMidi:
+        def estimate_tempo(self):
+            raise RuntimeError("no data")
+
+    engine = BasicPitchEngine()
+    events = _note_events()
+    monkeypatch.setattr(engine, "_run_model", lambda path: (None, _BrokenMidi(), events))
+
+    result = engine.transcribe(b"audio", filename="clip.wav")
+
+    assert result.confidence["tempo_confidence"] == 0.5
+
+
+def test_no_librosa_decode_path_invoked(monkeypatch):
+    """The engine must NOT call estimate_tempo_and_beats (the second-decode path)."""
+    import pianoflow_music.transcription.beat as beat_module
+
+    def _should_never_be_called(path):
+        raise AssertionError("estimate_tempo_and_beats must not be called (double decode removed)")
+
+    monkeypatch.setattr(beat_module, "estimate_tempo_and_beats", _should_never_be_called)
+
+    engine = BasicPitchEngine()
+    events = _note_events()
+    monkeypatch.setattr(
+        engine,
+        "_run_model",
+        lambda path: (None, _FakeMidiData(tempo=120.0), events),
+    )
+
+    # Must complete without triggering the patched function.
+    result = engine.transcribe(b"audio", filename="clip.wav")
+    assert result.status == "completed"

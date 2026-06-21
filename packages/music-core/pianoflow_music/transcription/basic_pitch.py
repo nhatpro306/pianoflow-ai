@@ -49,12 +49,6 @@ class BasicPitchEngine:
             ) from exc
         return predict(audio_path)
 
-    def _estimate_beats(self, audio_path: str):
-        """Call librosa beat tracker. Single monkeypatch seam for tests."""
-        from pianoflow_music.transcription.beat import estimate_tempo_and_beats
-
-        return estimate_tempo_and_beats(audio_path)
-
     def transcribe(
         self,
         audio_bytes: bytes,
@@ -77,7 +71,6 @@ class BasicPitchEngine:
         grid = opts.get("grid", "1/16")
 
         tmp_path = None
-        beats = None
         try:
             with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
                 tmp.write(audio_bytes)
@@ -85,11 +78,6 @@ class BasicPitchEngine:
                 tmp_path = tmp.name
 
             _model_output, midi_data, note_events = self._run_model(tmp_path)
-
-            try:
-                beats = self._estimate_beats(tmp_path)
-            except Exception:
-                beats = None
         finally:
             if tmp_path is not None:
                 with contextlib.suppress(OSError):
@@ -124,21 +112,18 @@ class BasicPitchEngine:
         if not cleaned_notes:
             raise TranscriptionError("No notes detected in audio.", code="NO_NOTES_DETECTED")
 
-        # Estimate tempo: prefer librosa beat tracker when available and in range.
+        # Estimate tempo: use midi_data.estimate_tempo() clamped to [40, 240].
+        # No second audio decode — the Basic Pitch MIDI object already has tempo info.
         bpm = 120.0
         tempo_source = "fallback"
-        if beats is not None and 40.0 <= beats[0] <= 240.0:
-            bpm = round(float(beats[0]), 2)
-            tempo_source = "librosa_beat"
-        else:
-            try:
-                raw_tempo = midi_data.estimate_tempo()
-                clamped = max(40.0, min(240.0, float(raw_tempo)))
-                bpm = round(clamped, 2)
-                tempo_source = "midi_estimate"
-            except Exception:
-                bpm = 120.0
-                tempo_source = "fallback"
+        try:
+            raw_tempo = midi_data.estimate_tempo()
+            clamped = max(40.0, min(240.0, float(raw_tempo)))
+            bpm = round(clamped, 2)
+            tempo_source = "midi_estimate"
+        except Exception:
+            bpm = 120.0
+            tempo_source = "fallback"
 
         # Optional quantization (opt-in via options["quantize"]).
         if quantize:
@@ -169,7 +154,7 @@ class BasicPitchEngine:
         mean_amp = round(float(mean(amps)), 2)
         # Timing confidence: reward dense, evenly-spaced notes; bounded 0..1.
         timing_conf = round(min(1.0, len(notes) / max(len(notes), 10) * mean_amp + 0.3), 2)
-        tempo_confidence = 0.8 if beats is not None else 0.5
+        tempo_confidence = 0.6 if tempo_source == "midi_estimate" else 0.5
         confidence = {
             "overall_confidence": mean_amp,
             "pitch_confidence": mean_amp,
