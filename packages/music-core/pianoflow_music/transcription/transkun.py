@@ -45,6 +45,66 @@ _BPM_FALLBACK = 120.0
 _BASE_CONFIDENCE = 0.7
 _TEMPO_CONFIDENCE = 0.6
 
+# ---------------------------------------------------------------------------
+# Model singleton cache — keyed by device string, built once per device.
+# ---------------------------------------------------------------------------
+
+import threading  # noqa: E402 — imported here to keep top-of-file imports minimal
+
+_model_cache: dict = {}
+_model_lock = threading.Lock()
+
+
+def _build_model(device: str):
+    """Construct the TransKun model for *device*. Deferred imports keep startup cheap.
+
+    Separated into its own function so tests can monkeypatch it without ever
+    importing the real ``transkun`` / ``torch`` packages.
+    """
+    import moduleconf  # type: ignore[import]
+    import pkg_resources  # type: ignore[import]
+    import torch  # type: ignore[import]
+
+    conf_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.conf")
+    ckpt_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.pt")
+
+    conf_manager = moduleconf.parseFromFile(conf_path)
+    TransKun = conf_manager["Model"].module.TransKun
+    conf = conf_manager["Model"].config
+
+    model = TransKun(conf=conf).to(device)
+    model.eval()
+
+    checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
+    if "best_state_dict" in checkpoint:
+        model.load_state_dict(checkpoint["best_state_dict"], strict=False)
+    else:
+        model.load_state_dict(checkpoint["state_dict"], strict=False)
+
+    return model
+
+
+def _get_model(device: str):
+    """Return the cached TransKun model for *device*, building it on the first call.
+
+    Thread-safe via double-checked locking. Each unique *device* value gets its
+    own cache entry so CPU and GPU models can coexist in the same process.
+
+    Raises:
+        TranscriptionError(code="ENGINE_UNAVAILABLE"): if transkun deps are not installed.
+    """
+    if device not in _model_cache:
+        with _model_lock:
+            if device not in _model_cache:
+                try:
+                    _model_cache[device] = _build_model(device)
+                except ImportError as exc:
+                    raise TranscriptionError(
+                        "Transkun engine is not installed. Install the 'transkun' extra.",
+                        code="ENGINE_UNAVAILABLE",
+                    ) from exc
+    return _model_cache[device]
+
 
 def _pitch_name(pitch: int) -> str:
     """Return scientific pitch name for a MIDI pitch number, e.g. 60 → 'C4'."""
@@ -61,14 +121,16 @@ class TranskunEngine:
           note_events  — list of ``(start_sec, end_sec, pitch, velocity_0to127)``
           pedal_events — list of ``(time_sec, value_0to127)``
           bpm          — float
+
+        The TransKun model is retrieved from the module-level cache (built once per
+        device per process) so the expensive ``torch.load`` + ``load_state_dict``
+        path is never repeated across jobs.
         """
         try:
-            import moduleconf
             import numpy as np
-            import pkg_resources
-            import pydub
-            import soxr
-            import torch
+            import pydub  # type: ignore[import]
+            import soxr  # type: ignore[import]
+            import torch  # type: ignore[import]
         except ImportError as exc:
             raise TranscriptionError(
                 "Transkun engine is not installed. Install the 'transkun' extra.",
@@ -77,25 +139,8 @@ class TranskunEngine:
 
         device = "cpu"
 
-        # Resolve bundled weights and config shipped with the transkun package.
-        conf_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.conf")
-        ckpt_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.pt")
-
-        # Build model using pattern from transkun.transcribe.main:
-        #   conf_manager["Model"].module  → the transkun.ModelTransformer module
-        #   conf_manager["Model"].config  → instantiated ModelConfig object
-        conf_manager = moduleconf.parseFromFile(conf_path)
-        TransKun = conf_manager["Model"].module.TransKun
-        conf = conf_manager["Model"].config
-
-        model = TransKun(conf=conf).to(device)
-        model.eval()
-
-        checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
-        if "best_state_dict" in checkpoint:
-            model.load_state_dict(checkpoint["best_state_dict"], strict=False)
-        else:
-            model.load_state_dict(checkpoint["state_dict"], strict=False)
+        # Retrieve (or build on first call) the cached model for this device.
+        model = _get_model(device)
 
         # Decode audio file → numpy float32 array (samples, channels).
         audio_seg = pydub.AudioSegment.from_file(audio_path)

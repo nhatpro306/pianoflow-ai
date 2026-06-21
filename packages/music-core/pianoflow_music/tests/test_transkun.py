@@ -17,6 +17,7 @@ import pytest
 
 from pianoflow_music.transcription import TranscriptionError, TranskunEngine, get_engine
 from pianoflow_music.transcription.transkun import ENGINE_NAME
+import pianoflow_music.transcription.transkun as tk_module
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -440,3 +441,82 @@ def test_no_estimate_tempo_and_beats_called_in_transcribe(monkeypatch):
     # Must complete without triggering the patched function, even when bpm=0.0 (fallback path).
     result = engine.transcribe(b"fake_audio_bytes", filename="test.wav")
     assert result.status == "completed"
+
+
+# ---------------------------------------------------------------------------
+# L2 — model singleton cache keyed by device
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=False)
+def reset_tk_model_cache():
+    """Reset the Transkun module-level model cache dict between tests."""
+    original = dict(tk_module._model_cache)
+    tk_module._model_cache.clear()
+    yield
+    tk_module._model_cache.clear()
+    tk_module._model_cache.update(original)
+
+
+def test_get_model_constructs_exactly_once_per_device(monkeypatch, reset_tk_model_cache):
+    """_get_model('cpu') called twice must build the model only once."""
+    build_count = 0
+
+    class _FakeModel:
+        fs = 44100
+
+    def _fake_build(device):
+        nonlocal build_count
+        build_count += 1
+        return _FakeModel()
+
+    monkeypatch.setattr(tk_module, "_build_model", _fake_build)
+
+    m1 = tk_module._get_model("cpu")
+    m2 = tk_module._get_model("cpu")
+
+    assert build_count == 1, f"Model built {build_count} times, expected 1 (cache miss on 2nd call)"
+    assert m1 is m2, "Both calls must return the same cached instance for the same device"
+
+
+def test_get_model_different_device_builds_again(monkeypatch, reset_tk_model_cache):
+    """A second device key ('cuda') must trigger a new build."""
+    build_count = 0
+
+    class _FakeModel:
+        fs = 44100
+
+    def _fake_build(device):
+        nonlocal build_count
+        build_count += 1
+        return _FakeModel()
+
+    monkeypatch.setattr(tk_module, "_build_model", _fake_build)
+
+    tk_module._get_model("cpu")
+    tk_module._get_model("cuda")
+
+    assert build_count == 2, (
+        f"Expected 2 builds (one per device), got {build_count}"
+    )
+
+
+def test_get_model_cache_empty_after_reset(reset_tk_model_cache):
+    """After the fixture resets the cache, _model_cache must be empty."""
+    assert tk_module._model_cache == {}
+
+
+def test_get_model_missing_dependency_raises_engine_unavailable(
+    monkeypatch, reset_tk_model_cache
+):
+    """If transkun deps cannot be imported, _get_model must raise ENGINE_UNAVAILABLE."""
+    from pianoflow_music.transcription.engine import TranscriptionError
+
+    def _raise_import_error(device):
+        raise ImportError("transkun not installed")
+
+    monkeypatch.setattr(tk_module, "_build_model", _raise_import_error)
+
+    with pytest.raises(TranscriptionError) as exc_info:
+        tk_module._get_model("cpu")
+    assert exc_info.value.code == "ENGINE_UNAVAILABLE"

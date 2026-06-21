@@ -18,6 +18,7 @@ Without the extra, instantiation is fine but `transcribe()` raises
 import contextlib
 import os
 import tempfile
+import threading
 from statistics import mean
 
 from pianoflow_music.midi.hands import estimate_hands
@@ -30,6 +31,59 @@ ENGINE_NAME = "basic_pitch_v1"
 
 _NOTE_NAMES = ("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
 
+# ---------------------------------------------------------------------------
+# Model singleton cache — built once, reused across all jobs.
+# ---------------------------------------------------------------------------
+
+_cached_model = None
+_model_lock = threading.Lock()
+
+
+def _build_model(_sentinel=None):
+    """Construct a Basic Pitch Model instance. Deferred import keeps startup cheap.
+
+    The ``_sentinel`` parameter is unused; it exists only so the signature is
+    easy to monkeypatch in tests (callers pass no arguments).
+
+    Separated into its own function so tests can monkeypatch it without ever
+    importing the real ``basic_pitch`` package.
+    """
+    from basic_pitch import ICASSP_2022_MODEL_PATH  # type: ignore[import]
+    from basic_pitch.inference import Model  # type: ignore[import]
+
+    return Model(ICASSP_2022_MODEL_PATH)
+
+
+def _predict(audio_path: str, model_or_model_path):
+    """Call Basic Pitch predict. Separated so tests can monkeypatch without real import."""
+    from basic_pitch.inference import predict  # type: ignore[import]
+
+    return predict(audio_path, model_or_model_path=model_or_model_path)
+
+
+def _get_model():
+    """Return the cached Basic Pitch Model, building it on the first call.
+
+    Thread-safe via double-checked locking. Heavy ``basic_pitch`` imports stay
+    inside ``_build_model``; this function is safe to call at module import time
+    (though it is only called from ``_run_model``).
+
+    Raises:
+        TranscriptionError(code="ENGINE_UNAVAILABLE"): if ``basic_pitch`` is not installed.
+    """
+    global _cached_model
+    if _cached_model is None:
+        with _model_lock:
+            if _cached_model is None:
+                try:
+                    _cached_model = _build_model()
+                except ImportError as exc:
+                    raise TranscriptionError(
+                        "Basic Pitch engine is not installed. Install the 'basic-pitch' extra.",
+                        code="ENGINE_UNAVAILABLE",
+                    ) from exc
+    return _cached_model
+
 
 def _pitch_name(pitch: int) -> str:
     return f"{_NOTE_NAMES[pitch % 12]}{pitch // 12 - 1}"
@@ -39,15 +93,13 @@ class BasicPitchEngine:
     name = ENGINE_NAME
 
     def _run_model(self, audio_path: str):
-        """Call Basic Pitch inference. Single monkeypatch seam for tests."""
-        try:
-            from basic_pitch.inference import predict
-        except ImportError as exc:
-            raise TranscriptionError(
-                "Basic Pitch engine is not installed. Install the 'basic-pitch' extra.",
-                code="ENGINE_UNAVAILABLE",
-            ) from exc
-        return predict(audio_path)
+        """Call Basic Pitch inference. Single monkeypatch seam for tests.
+
+        Resolves the module-level cached model (built once per process) and
+        passes it to ``predict`` so the ONNX session is not re-created per job.
+        """
+        model = _get_model()
+        return _predict(audio_path, model_or_model_path=model)
 
     def transcribe(
         self,

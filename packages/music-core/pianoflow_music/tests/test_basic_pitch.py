@@ -9,6 +9,7 @@ import pytest
 from pianoflow_music.midi.parse import parse_midi_bytes
 from pianoflow_music.transcription import BasicPitchEngine, TranscriptionError, get_engine
 from pianoflow_music.transcription.basic_pitch import ENGINE_NAME
+import pianoflow_music.transcription.basic_pitch as bp_module
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -340,3 +341,92 @@ def test_no_librosa_decode_path_invoked(monkeypatch):
     # Must complete without triggering the patched function.
     result = engine.transcribe(b"audio", filename="clip.wav")
     assert result.status == "completed"
+
+
+# ---------------------------------------------------------------------------
+# L2 — model singleton cache
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=False)
+def reset_bp_model_cache():
+    """Reset the Basic Pitch module-level model cache between tests."""
+    original = bp_module._cached_model
+    bp_module._cached_model = None
+    yield
+    bp_module._cached_model = original
+
+
+def test_get_model_constructs_exactly_once(monkeypatch, reset_bp_model_cache):
+    """_get_model() called twice must build the Model only once."""
+    build_count = 0
+
+    class _FakeModel:
+        pass
+
+    def _fake_model_constructor(_sentinel=None):
+        nonlocal build_count
+        build_count += 1
+        return _FakeModel()
+
+    # Patch the Model class inside basic_pitch.inference via the helper
+    monkeypatch.setattr(bp_module, "_build_model", _fake_model_constructor)
+
+    m1 = bp_module._get_model()
+    m2 = bp_module._get_model()
+
+    assert build_count == 1, f"Model built {build_count} times, expected 1 (cache miss on 2nd call)"
+    assert m1 is m2, "Both calls must return the same cached instance"
+
+
+def test_get_model_cache_is_none_after_reset(reset_bp_model_cache):
+    """After the fixture resets the cache, _cached_model must be None."""
+    assert bp_module._cached_model is None
+
+
+def test_get_model_missing_dependency_raises_engine_unavailable(
+    monkeypatch, reset_bp_model_cache
+):
+    """If basic_pitch cannot be imported, _get_model must raise ENGINE_UNAVAILABLE."""
+    from pianoflow_music.transcription.engine import TranscriptionError
+
+    def _raise_import_error(_sentinel=None):
+        raise ImportError("basic_pitch not installed")
+
+    monkeypatch.setattr(bp_module, "_build_model", _raise_import_error)
+
+    with pytest.raises(TranscriptionError) as exc_info:
+        bp_module._get_model()
+    assert exc_info.value.code == "ENGINE_UNAVAILABLE"
+
+
+def test_run_model_uses_cached_model(monkeypatch, reset_bp_model_cache):
+    """_run_model must pass the cached model to predict, not rebuild it."""
+    build_count = 0
+
+    class _FakeModel:
+        pass
+
+    def _fake_build(_sentinel=None):
+        nonlocal build_count
+        build_count += 1
+        return _FakeModel()
+
+    received_models = []
+
+    def _fake_predict(audio_path, model_or_model_path):
+        received_models.append(model_or_model_path)
+        fake_midi = _FakeMidiData(120.0)
+        events = _note_events(count=2)
+        return (None, fake_midi, events)
+
+    monkeypatch.setattr(bp_module, "_build_model", _fake_build)
+    monkeypatch.setattr(bp_module, "_predict", _fake_predict)
+
+    engine = BasicPitchEngine()
+    engine._run_model("/tmp/a.wav")
+    engine._run_model("/tmp/b.wav")
+
+    assert build_count == 1, "Model must only be built once across multiple _run_model calls"
+    assert len(received_models) == 2
+    assert received_models[0] is received_models[1], "Both calls must pass the same model instance"
