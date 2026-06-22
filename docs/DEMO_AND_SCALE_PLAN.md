@@ -121,7 +121,7 @@ def result(call_id: str):
 ### D7 — Pre-baked examples (the demo safety net)
 **Goal:** the demo never fails live, even if the GPU is cold or quota'd.
 **Files:** `scripts/prebake_examples.py`; outputs to `apps/web/public/examples/*.json` + `*.mid`; example list in the demo page.
-**Steps:** run `run_pipeline` on 2–3 royalty-free/owned clips locally (on the 3070), commit the resulting notes JSON + MIDI; demo page renders these instantly with **no** network/GPU call.
+**Steps:** run `run_pipeline` on 2–3 royalty-free/owned clips (via the Modal endpoint or locally with Basic Pitch), commit the resulting notes JSON + MIDI; demo page renders these instantly with **no** network/GPU call.
 **Acceptance:** with Modal disabled / network throttled, the example songs still render and play.
 **Commit:** `feat(web): pre-baked demo examples for offline-safe showcase`.
 
@@ -143,7 +143,7 @@ def result(call_id: str):
 
 ## Phase S — Further scale (demo → production)
 
-The demo calls Modal directly and returns results inline. Scaling means reintroducing your existing async architecture and the cheaper home GPU, **without changing `music-core`**. Each S-task references the rationale in `AUDIO_MIDI_IMPROVEMENT_PLAN.md` (AMIP).
+The demo calls Modal directly and returns results inline. Scaling means reintroducing your existing async architecture with Modal as the GPU backend, **without changing `music-core`**. Each S-task references the rationale in `AUDIO_MIDI_IMPROVEMENT_PLAN.md` (AMIP).
 
 ### S1 — Put transcription behind the API + SQS (async jobs)
 Route the demo through your real flow: `apps/api` enqueues a job (SQS), the worker runs `run_pipeline`. Reuse the existing `transcribe_audio` job and `RenderJob`/status rows so the browser polls *your* API, not Modal. **Files:** `apps/api/app/api/v1/routers/audio.py`, `apps/worker/app/jobs/transcribe_audio.py`. **Done:** job rows drive progress; demo page switches to API polling. (AMIP Part E, Phase 3.)
@@ -155,10 +155,10 @@ Add the `"remote"` engine (AMIP Part A1): worker calls the Modal `submit`/`resul
 Switch outputs off the inline path onto **Cloudflare R2** (zero egress; AMIP Part D/G) via the existing `STORAGE_BACKEND=s3` adapter pointed at the R2 endpoint. **Done:** MIDI/notes/video stored in R2, served by signed/public URL.
 
 ### S4 — Server-side MP4 export (shareable falling-notes video)
-Reuse `apps/worker/app/jobs/render_video.py` + `music-core/video/*` + FluidSynth; on GPU use `h264_nvenc` (AMIP Part H). Put videos behind Cloudflare CDN. **Done:** a project yields a downloadable MP4 URL.
+Reuse `apps/worker/app/jobs/render_video.py` + `music-core/video/*` + FluidSynth; on GPU use `h264_nvenc` (AMIP Part C). Put videos behind Cloudflare CDN. **Done:** a project yields a downloadable MP4 URL.
 
-### S5 — Hybrid 3070 worker + Modal overflow
-Run the worker on the RTX 3070 box as an outbound-only SQS consumer (primary, cheap); keep Modal on the same queue as overflow/failover (AMIP Part H). **Done:** box down or queue-deep → Modal drains; `systemd Restart=always` + SQS DLQ.
+### S5 — Modal autoscaling + SQS DLQ
+Scale GPU transcription with Modal's autoscaling container pool on the same SQS queue; configure a DLQ for failed jobs and `min_containers` for warm-path availability. **Done:** queue depth drives container count; failed jobs land on the DLQ for inspection; `systemd Restart=always` on the CPU orchestration worker.
 
 ### S6 — Quality + tiering
 Eval harness (AMIP A9), onset hysteresis + velocity calibration (A4–A5), free=Basic Pitch / pro=Transkun tiering. **Done:** `make eval` reports onset F1 before/after; engine chosen by plan.
@@ -168,18 +168,47 @@ YourMT3+ path for guitar/vocals/bass (AMIP Phase 4); before any *public* link-do
 
 ---
 
+## Phase L — Latency (transcription speed)
+
+Speed-focused tasks, grounded in current code. **L1+L2 are the free CPU wins and are the only Phase-L work being done now; L3/L4 are deferred to keep cost at $0; the order-of-magnitude speedup comes from the Modal GPU path (Phase D/S), free on Modal Starter credits.** L5–L6 tune the GPU path. Rationale: `AUDIO_MIDI_IMPROVEMENT_PLAN.md` Part I.
+
+### L1 — Remove the redundant audio decode
+The engines decode the audio twice: once for inference, once via `librosa.load` in `beat.estimate_tempo_and_beats` just for tempo. **Files:** `packages/music-core/pianoflow_music/transcription/basic_pitch.py`, `transkun.py`, `beat.py`. **Steps:** prefer the free MIDI/engine tempo estimate; only call librosa when it is out of range; when librosa is needed, beat-track the already-decoded array rather than re-`load`ing the file. **Test:** assert the librosa seam is not called when a valid tempo is already available (monkeypatch + call-count). **Commit:** `perf(music-core): drop redundant librosa decode in transcription`.
+
+### L2 — Cache the model/session across jobs
+`basic_pitch.predict` reloads the ONNX model every call; `transkun._run_model` rebuilds the module and `torch.load`s the checkpoint every job. **Files:** `basic_pitch.py`, `transkun.py`. **Steps:** build the model/session once and cache it (module-level or on the engine instance) so the long-lived worker reuses it; guard with a lock if needed. **Test:** two `transcribe` calls trigger model construction once. **Commit:** `perf(music-core): cache transcription model across jobs`.
+
+### L3 — Tune onnxruntime threads
+**DEFERRED — blocked on L4.** t2.micro is 1 vCPU, so intra-op thread parallelism gives nothing; L3 only pays off once the worker is multi-core. Do L3 only after L4 unlocks additional CPUs.
+
+Basic Pitch ONNX runs single-threaded by default. **Files:** `basic_pitch.py` (+ a settings knob in the worker). **Steps:** set intra-op thread count from an env/config value sized to the worker's vCPUs. **Test:** the configured value is passed to the ONNX session options. **Commit:** `perf(music-core): configurable onnxruntime thread count`.
+
+### L4 — Free-tier multi-core worker (deferred, optional) 👤
+**Cost must stay $0. Paid AWS instances (t3/c-family) are out of scope.** The only free multi-core path identified is **Oracle Cloud Always Free A1 (2 OCPU / 12 GB RAM, ARM, forever free)**. Migrating to it would unlock L3 (thread parallelism across 2 cores) but requires a cross-cloud migration (AWS → Oracle Cloud) plus an ARM build of the worker image — this is a later, optional move, not current work. Until then the CPU free-tier path stays on t2.micro (1 vCPU) and real speed gains come from the Modal GPU path (Phase D/S), which is free on Modal Starter credits. **No terraform changes until this is explicitly scheduled.**
+
+### L5 — Fix Transkun GPU device + warm model
+`transkun._run_model` hardcodes `device="cpu"` — the GPU engine never uses the GPU. **Files:** `transkun.py`. **Steps:** select `cuda` when available, move model + inputs to it, keep the model cached on-device (with L2), use `torch.inference_mode()` + FP16 on GPU. **Test:** device selection honors `torch.cuda.is_available()` (monkeypatch). **Commit:** `perf(music-core): Transkun uses GPU when available + warm model`. **Depends on:** S2.
+
+### L6 — Modal keep-warm + skip Demucs for solo piano
+Cold starts and an unconditional Demucs pass add seconds. **Files:** `infra/modal/transcribe_app.py`, `pipeline.py`. **Steps:** set a small `min_containers`/keep-warm on the GPU function for demo/peak windows; make `separate` default off for solo-piano input (heuristic or toggle) so clean piano skips the +10–20 s separation. **Done:** warm-path latency floor measured; solo-piano path skips Demucs. **Depends on:** D4.
+
+### L7 — Per-stage latency logging
+Latency is currently unmeasured. **Files:** `pipeline.py` (+ worker log). **Steps:** log elapsed time per stage (decode / separate / infer / postprocess / encode) on every job, alongside the `mir_eval` accuracy harness (A9/S6). **Done:** each job emits stage timings; baseline vs after-numbers are reportable. **Commit:** `feat(music-core): per-stage transcription timing log`.
+
+---
+
 ## Demo-day runbook
 
 1. **Day before:** `python scripts/demo_smoke.py` against the deployed endpoint → expect PASS. Open the Vercel URL; run one live upload; confirm a pre-baked example loads instantly.
 2. **Warm the GPU:** hit `submit` once ~5 min before (Modal cold start ≈ seconds, but warm is nicer).
 3. **During:** lead with a **pre-baked example** (instant), then do **one live** upload/link as the wow. If live is slow/fails, fall back to pre-baked — never wait on a spinner.
-4. **Talk track:** "browser renders the falling notes from the MIDI the model produced; the GPU step is a serverless Modal function that scales to zero — here's the same pipeline I run on my own RTX 3070 for production." Point the interviewer to `AUDIO_MIDI_IMPROVEMENT_PLAN.md` for the scale/cost story.
+4. **Talk track:** "browser renders the falling notes from the MIDI the model produced; the GPU step is a serverless Modal function that scales to zero." Point the interviewer to `AUDIO_MIDI_IMPROVEMENT_PLAN.md` for the scale/cost story.
 5. **After:** if you used a temporary tunnel, tear it down.
 
 ## Risks & gotchas
 
 - **Cold start / quota:** pre-baked examples (D7) are the mitigation; keep clips short (≤60 s) for snappy live runs.
-- **8 GB locally:** sequential staging + `segment=7` (AMIP Part H) — don't load Demucs and Transkun together.
+- **Modal memory limits:** run Demucs and Transkun sequentially (not co-resident) and use `segment=7` for Demucs to avoid OOM on the A10G (22 GB VRAM is ample, but the pattern also keeps local dev reproducible).
 - **Request timeouts:** use async spawn+poll (D4/D6), never a single long synchronous request.
 - **Vercel Hobby:** fine for a demo (non-commercial); switch to Pro before charging users.
 - **Model downloads in CI:** mock demucs/transkun in tests (D1–D3) so CI never pulls weights.

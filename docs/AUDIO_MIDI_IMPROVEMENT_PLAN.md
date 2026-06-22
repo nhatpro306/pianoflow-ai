@@ -29,8 +29,8 @@ A meta-point that outranks all four: **wire up measurement first** (`transcripti
 | Area | Current state | File(s) |
 |---|---|---|
 | Engine abstraction | `TranscriptionEngine` Protocol + `get_engine()` factory; engines: `placeholder`, `basic_pitch`, `transkun` | `transcription/engine.py` |
-| Production engine | **Basic Pitch (ONNX, CPU)**. Amplitude→velocity (crude). librosa beat for tempo. Optional quantize. No pedal. | `transcription/basic_pitch.py` |
-| Transformer engine | **Transkun** registered but not the default; needs PyTorch + GPU to be practical | `transcription/transkun.py` |
+| Production engine | **Basic Pitch (ONNX, CPU)**. Amplitude→velocity (crude). librosa beat for tempo. Optional quantize. No pedal. **Speed traps: decodes audio twice (ONNX + a second `librosa.load` for tempo); ONNX model reloaded every job; threads untuned.** | `transcription/basic_pitch.py`, `beat.py` |
+| Transformer engine | **Transkun** registered but not the default; needs PyTorch + GPU to be practical. **Speed traps: `device="cpu"` hardcoded (never uses GPU); model + checkpoint rebuilt/`torch.load`ed every job (no cache); always runs the redundant `librosa.load` tempo pass.** | `transcription/transkun.py` |
 | Post-processing | Range clip, same-pitch merge, ghost-note drop. **No** hysteresis, **no** pedal, **no** velocity calibration. | `transcription/postprocess.py` |
 | Note model | Schema **v2** with `sustain` (CC64) field — **ready for pedal**, currently unpopulated | `notes/model.py` |
 | Hand split | Chord-aware middle-C split (decent); track-based when 2 tracks | `midi/hands.py` |
@@ -322,43 +322,9 @@ Tied to your existing phase-scoped PR convention (`docs/ROADMAP.md`).
 
 ---
 
-## 9. Part F — Self-hosting (home lab) vs cloud
+## 9. Part F — Self-hosting (de-scoped)
 
-**Compute is the easy part.** Piano transcription + Demucs is light vs LLMs: Demucs separates a 3-min track in ~3–5 s on an RTX 3090; Transkun/ByteDance need only a few GB VRAM. Any GPU with **12 GB+ VRAM** runs the full pipeline with headroom.
-
-### Hardware tiers (2026 prices)
-
-| Tier | GPU | CPU / RAM / Disk | ~Cost | Use |
-|---|---|---|---|---|
-| Min / dev | RTX 3060 12GB or 4060 Ti 16GB | 6-core, 32GB, 1TB NVMe | ~$700–1,000 | Dev, personal, low volume |
-| **Recommended** | **Used RTX 3090 24GB** (~$600–800) | 8-core, 64GB, 2TB NVMe | ~$1,300–1,700 | Batching + future multi-instrument |
-| Headroom | RTX 4090 (~$2,300) / 5090 32GB (~$3,800) | 12-core, 128GB | ~$3,000–4,500 | Heavy concurrency / training |
-
-### Cost comparison
-
-Per job: home electricity ≈ **$0.0004** (~30 s GPU @ ~300 W) vs cloud serverless **$0.011–0.018** — ~20–40× cheaper per transcription. But a home box draws power 24/7 (~80–150 W idle ≈ $10–25/mo).
-
-| Volume | Cloud serverless GPU | Home (electricity) | Winner |
-|---|---|---|---|
-| ~400 jobs/mo (100 users) | ~$5/mo | ~$10–25/mo | **Cloud** (24/7 box costs more than barely-used serverless) |
-| ~4,000 jobs/mo (1k users) | ~$50/mo | ~$15–25/mo | Home on compute (~40-mo payback on a ~$1,400 box) |
-| Heavy dev / eval / training | metered | flat | **Home, decisively** (unmetered) |
-
-**Counterintuitive:** at low launch volume, cloud is cheaper than running hardware 24/7. Home wins for unmetered R&D and sustained high volume.
-
-### The real constraint: serving from home
-
-Not GPU — **bandwidth, uptime, security**:
-- **Egress** dominates: ~30–60 MB MP4s saturate residential upload (20–40 Mbps) and fight household internet. Self-hosting *moves* egress onto a worse link, it doesn't remove it.
-- **Uptime:** no redundancy; power/ISP outage = downtime. No SLA.
-- **CGNAT / dynamic IP / residential ToS** often block inbound public servers.
-- **Security:** exposing home services widens attack surface.
-
-### Recommended: hybrid (fits the hexagonal design)
-
-Public surface in cloud (Vercel web, API, S3 + CloudFront, Postgres/Supabase); **GPU transcription worker on the home lab as a pull-based SQS consumer** — polls the queue, pulls audio from S3, transcribes, pushes results back. Near-free GPU compute + reliable delivery, with **no inbound ports**.
-
-Security posture (matches project preferences): worker is **outbound-only** (no port-forwarding, sidesteps CGNAT, minimal attack surface), least-privilege IAM (SQS receive + S3 on the project prefix only), Postgres never exposed. The `RemoteTranscriptionEngine` adapter doesn't care whether the GPU is in a cloud region or a basement. If anything is ever exposed inbound: reverse proxy + TLS (or Cloudflare/Tailscale tunnel), GPU box on an isolated VLAN, secrets in env not image, DB port unreachable from the internet.
+Home-lab and RTX 3070 self-hosting was evaluated and de-scoped — the GPU backend is Modal serverless (see Part C/D); revisit a reserved/spot cloud GPU only at sustained high volume.
 
 ---
 
@@ -385,37 +351,47 @@ Two free tiers neutralize the scariest costs: **Modal Starter ($30/mo credits �
 
 ---
 
-## 11. Part H — Running it on an RTX 3070 (8 GB): local + production
+## 11. Part H — Home GPU (de-scoped)
 
-**An RTX 3070 (8 GB) is enough for the piano pipeline** if stages run **sequentially** (Demucs and Transkun never co-resident). The card becomes the GPU transcription worker for *both* local dev and production — same code, different env, because the worker is a pull-based queue consumer.
+Home-lab and RTX 3070 self-hosting was evaluated and de-scoped — the GPU backend is Modal serverless (see Part C/D); revisit a reserved/spot cloud GPU only at sustained high volume.
 
-- **Local dev:** `docker-compose up` the full stack on the 3070 box; worker with `--gpus all`, `TRANSCRIPTION_ENGINE=transkun`. Unmetered eval-harness + engine A/B.
-- **Production (hybrid):** cloud public surface (Vercel + API + R2 + Supabase + SQS); the 3070 box runs **only the worker**, pointed at cloud SQS + R2, **outbound-only (no inbound ports)**. Worker calls `get_engine("transkun")` in-process; `RemoteTranscriptionEngine`→Modal is the failover path.
+---
 
-### Fitting 8 GB
+## 12. Part I — Transcription speed / latency (why "other apps" feel instant)
 
-| Knob | Setting | Why |
-|---|---|---|
-| Staging | Demucs → `torch.cuda.empty_cache()` → Transkun | Peak VRAM = max(stage) ≈ 4–5 GB, not sum |
-| Demucs | `htdemucs`, `--segment 7`, `--overlap 0.1`, keep piano/"other" stem | default segment OOMs on 8 GB |
-| OOM safety | catch CUDA OOM → retry stage on CPU | job never hard-fails |
-| Precision | FP16, `batch=1`, `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` | less memory + fragmentation |
-| Video | `h264_nvenc` | 3070 NVENC offloads render from CPU |
-| Concurrency | 1 GPU job at a time; SQS visibility timeout 5–10 min | 8 GB = one job; avoid mid-job redelivery |
+Speed has not been treated as a first-class axis in this repo — the plan optimizes accuracy and cost, but a user comparing PianoFlow to Songscription is reacting to **wall-clock latency**. The single dominant fact: PianoFlow runs **Basic Pitch ONNX on a burstable EC2 t2.micro (CPU)**. Competitors run **GPU model serving with a warm pool**. A 3–4 min song is **tens of seconds to minutes** on the current CPU box vs **seconds** on a GPU engine. The order-of-magnitude fix is GPU; everything else is a multiplier on top.
 
-Modern CUDA PyTorch (cu121/cu124) supports the 3070 (Ampere, compute 8.6) natively.
+### I.1 Speed levers, ranked by impact-to-effort
 
-### Throughput
+| Lever | Speedup | Effort | Infra | File |
+|---|---|---|---|---|
+| **GPU engine** (Transkun/ByteDance on Modal serverless GPU) | **10–40×** | med | new | `transkun.py`, `remote.py` |
+| Right-size worker off **t2.micro burstable** (CPU-credit throttling starves sustained inference) | 1.5–3× | tiny | config | `infra/terraform` |
+| **Cache the model/session across jobs** (long-lived worker reloads it every job) | model-load per job | tiny | none | `basic_pitch.py`, `transkun.py` |
+| **Kill the redundant `librosa.load` decode** (audio decoded twice per job) | 1.15–1.25× | tiny | none | `basic_pitch.py`, `beat.py` |
+| **Tune onnxruntime intra-op threads** to the box's vCPUs | 1.2–1.5× | tiny | none | `basic_pitch.py` |
+| **Modal keep-warm** / min-containers (kill cold start on the GPU path) | latency floor | tiny | config | `infra/modal` |
+| **Skip Demucs for solo-piano** input (avoid +10–20 s separation) | avoid penalty | tiny | none | `pipeline.py` |
 
-Per 4-min song, sequential: Demucs ~10–20 s + Transkun ~15–30 s + NVENC video ~10–30 s + overhead ≈ **~1–1.5 min/job** → ~40–60 jobs/hr, ~1,000+/day saturated. Covers MVP into early growth.
+The free CPU wins (rows 2–5) compound to roughly **~2×** but do **not** change the order of magnitude — only GPU does that.
 
-### Resilience
+### I.2 The two free CPU bugs (no infra change)
 
-Home box is a single point of failure → keep **Modal free ($30/mo)** as a secondary worker on the **same SQS queue**: 3070 primary (cheap), Modal drains backlog when the box is down or queue depth crosses a threshold. Add `systemd Restart=always`, SQS **DLQ**, healthcheck.
+1. **Audio is decoded twice per job.** `BasicPitchEngine.transcribe` calls `predict()` (decode + ONNX inference), then immediately calls `_estimate_beats` → `beat.estimate_tempo_and_beats`, which runs `librosa.load()` on the **same file again** plus beat-tracking DSP — solely to produce a BPM number that `midi_data.estimate_tempo()` already provides for free. Fix: prefer the free MIDI tempo estimate; only fall back to librosa when it is out of range, and run beat tracking on the already-decoded array instead of re-loading the file. `transkun.py` has the same trap and hits it **every** job because `_run_model` returns `bpm=0.0`, so the out-of-range fallback always fires.
 
-### Security (least privilege)
+2. **The model is reloaded on every job.** `get_engine()` returns a fresh engine each call, and `basic_pitch.predict` reloads the ONNX model per call; `transkun._run_model` rebuilds the `TransKun` module and `torch.load`s the checkpoint on every job. The worker is a long-lived consume loop, so the model/session should be built once and cached at module scope (or on the engine instance, reused across jobs). This removes the per-job model-load tax.
 
-Scope the box's creds: R2 token limited to the one bucket (read/write); SQS-only IAM user (receive/delete on that queue). Compromise blast radius = one bucket + one queue; DB/admin stay unreachable. Secrets in env, not the image.
+### I.3 The Transkun GPU bug (blocks the order-of-magnitude win)
+
+`transkun._run_model` hardcodes `device = "cpu"`. Even on a Modal A10G, Transkun runs on CPU — defeating the entire reason to add a GPU engine. Fix: select `device = "cuda" if torch.cuda.is_available() else "cpu"`, move the model and input tensor to that device, and keep the model cached on-device across jobs (combined with I.2 #2). Pair with `torch.inference_mode()` and FP16 on GPU.
+
+### I.4 Why GPU is the real answer
+
+Basic Pitch is a tiny CNN tuned for CPU real-time, but its accuracy ceiling (no pedal, crude velocity) is the reason the plan moves to Transkun/ByteDance anyway — and those are **GPU-bound**. So the accuracy upgrade and the speed upgrade are the **same move**: put Transkun/ByteDance on a Modal serverless GPU (per Parts C/D), keep the model warm, and skip Demucs for solo-piano input. That is what makes "paste → notes in seconds" feel like the competition. Measure it: add a per-stage timing log (decode / separate / infer / postprocess) so latency is tracked alongside the `mir_eval` accuracy harness (A9), not guessed.
+
+### I.5 Sequencing
+
+The free CPU wins (I.2) ship **now** on the current stack with no infra change and should land before or alongside the eval harness. The GPU fixes (I.3) are prerequisites for the Phase 2 GPU engine — fix `device` and model caching in the same PR that promotes Transkun behind the Modal serverless GPU worker. Keep-warm and Demucs-skip are tuning passes once the GPU path is live.
 
 ---
 

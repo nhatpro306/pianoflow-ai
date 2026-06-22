@@ -5,7 +5,7 @@
 
 | Deep-dive | Covers |
 |---|---|
-| [`AUDIO_MIDI_IMPROVEMENT_PLAN.md`](./AUDIO_MIDI_IMPROVEMENT_PLAN.md) | Transcription quality, source ingestion (YouTube/IG/TikTok), models, cost, self-hosting (RTX 3070), free tier |
+| [`AUDIO_MIDI_IMPROVEMENT_PLAN.md`](./AUDIO_MIDI_IMPROVEMENT_PLAN.md) | Transcription quality, source ingestion (YouTube/IG/TikTok), models, cost, Modal serverless GPU, free tier |
 | [`DEMO_AND_SCALE_PLAN.md`](./DEMO_AND_SCALE_PLAN.md) | Vercel + Modal interview demo (Sonnet-executable tasks) + scale path |
 | [`PIANO_LEARNING_COMPETITIVE_PLAN.md`](./PIANO_LEARNING_COMPETITIVE_PLAN.md) | Market analysis + learning-product features |
 | This doc | System design + unified roadmap across all of the above |
@@ -42,7 +42,7 @@ flowchart TB
     Q["Queue — SQS (q_default / q_gpu / DLQ)"]
     subgraph Workers["Workers"]
         ORCH["CPU worker — orchestration, render_video, render_sheet"]
-        GPU["GPU worker — Demucs + Transkun/ByteDance<br/>(Modal serverless and/or RTX 3070 pull-worker)"]
+        GPU["GPU worker — Demucs + Transkun/ByteDance<br/>(Modal serverless)"]
     end
     CORE["music-core (pure): transcription · simplify · midi · sheet · video · notes"]
     subgraph Data["Storage & state"]
@@ -65,7 +65,7 @@ flowchart TB
     DB --> APIR --> LESSON
 ```
 
-**Principles (unchanged from `CLAUDE.md`):** hexagonal ports/adapters; `music-core` is pure (zero I/O); backends swapped by env (`STORAGE_BACKEND`, `QUEUE_BACKEND`, `TRANSCRIPTION_ENGINE`); adapters translate vendor errors at the boundary; 12-factor config. The GPU worker is a **drop-in adapter** — the same `TranscriptionEngine` contract whether it runs on Modal or your RTX 3070.
+**Principles (unchanged from `CLAUDE.md`):** hexagonal ports/adapters; `music-core` is pure (zero I/O); backends swapped by env (`STORAGE_BACKEND`, `QUEUE_BACKEND`, `TRANSCRIPTION_ENGINE`); adapters translate vendor errors at the boundary; 12-factor config. The GPU worker is a **drop-in adapter** — the same `TranscriptionEngine` contract, running on Modal serverless.
 
 ---
 
@@ -76,7 +76,7 @@ flowchart TB
 | `apps/web` | Upload/link UI, lesson view, **practice view (new)**, progress UI | Add practice + Web MIDI + difficulty selector |
 | `apps/api` | Validate, persist, enqueue; **sources + practice + progress + billing routers (new)** | Add routers + migrations |
 | `apps/worker` (CPU) | Orchestrate jobs, video/sheet render, **`ingest_url` (new)** | Add ingestion + dispatch to GPU |
-| **GPU worker (new)** | Demucs separation + Transkun/ByteDance transcription | Modal serverless and/or RTX 3070 pull-worker |
+| **GPU worker (new)** | Demucs separation + Transkun/ByteDance transcription | Modal serverless                              |
 | `packages/music-core` | Pure logic: transcription, **separation (new)**, **pipeline (new)**, simplify, midi, sheet, video | Add `separate.py`, `pipeline.py`, `remote.py`; Transkun pedal |
 | `packages/shared-types` | JSON Schemas + TS + Pydantic; **practice/session schemas (new)** | Extend |
 | Storage | Object store → **Cloudflare R2** (zero egress) + CDN | Migrate outputs/video off S3 |
@@ -87,7 +87,7 @@ flowchart TB
 ## 4. Subsystems
 
 ### 4.1 Transcription (Generate)
-Tiered engines behind the `get_engine()` factory: **Basic Pitch** (ONNX, CPU, free tier) and **Transkun/ByteDance** (GPU, pro tier, with sustain pedal + velocity). A **Demucs** pre-pass isolates the target stem for full-mix audio. Heavy models run on the GPU worker (Modal/3070), never the always-on box. Quality is measured by an `mir_eval` harness on a MAESTRO slice. → **`AUDIO_MIDI_IMPROVEMENT_PLAN.md` Parts A, C.**
+Tiered engines behind the `get_engine()` factory: **Basic Pitch** (ONNX, CPU, free tier) and **Transkun/ByteDance** (GPU, pro tier, with sustain pedal + velocity). A **Demucs** pre-pass isolates the target stem for full-mix audio. Heavy models run on the GPU worker (Modal serverless), never the always-on box. Quality is measured by an `mir_eval` harness on a MAESTRO slice. → **`AUDIO_MIDI_IMPROVEMENT_PLAN.md` Parts A, C.** Latency is a first-class axis: the same GPU move that raises accuracy also makes transcription feel instant, and several free CPU wins (no double-decode, cached model, tuned threads) ship before any infra change. → **`AUDIO_MIDI_IMPROVEMENT_PLAN.md` Part I.**
 
 ### 4.2 Source ingestion (Generate inputs)
 Inputs: MIDI/audio upload, and (feature-flagged) YouTube/Instagram/TikTok links via a gated `ingest_url` worker job (yt-dlp → ffmpeg → ephemeral object → existing `transcribe_audio`). Compliance is first-class: rights attestation, ephemeral source deletion, rate limits, takedown, no anti-bot evasion. → **`AUDIO_MIDI_IMPROVEMENT_PLAN.md` Part B.**
@@ -96,7 +96,7 @@ Inputs: MIDI/audio upload, and (feature-flagged) YouTube/Instagram/TikTok links 
 **Adapt:** expose `simplify/rules.py` as graded variants (Beginner/Intermediate/Original) of any song. **Practice:** real-time **Web MIDI** input scored against the lesson `NoteData` (accuracy + timing), wait-mode, slow-down, hands-separate, looping; **gamification** (streaks/XP/progress). Mic-based feedback (reusing the transcription engine) covers iOS/acoustic later. → **`PIANO_LEARNING_COMPETITIVE_PLAN.md` Part 5.**
 
 ### 4.4 Infrastructure (Run)
-**Demo:** Vercel (web) + Modal (GPU, free $30/mo) + R2 + Supabase — async spawn/poll, pre-baked examples. **Production:** hybrid — RTX 3070 as an outbound-only SQS pull-worker (primary, cheap) with Modal overflow; R2 + CDN for zero-egress delivery. → **`DEMO_AND_SCALE_PLAN.md` + `AUDIO_MIDI_IMPROVEMENT_PLAN.md` Parts D–H.**
+**Demo:** Vercel (web) + Modal (GPU, free $30/mo) + R2 + Supabase — async spawn/poll, pre-baked examples. **Production:** Modal serverless GPU (autoscaling, scale-to-zero); R2 + CDN for zero-egress delivery. → **`DEMO_AND_SCALE_PLAN.md` + `AUDIO_MIDI_IMPROVEMENT_PLAN.md` Parts C/D.**
 
 ---
 
@@ -200,11 +200,11 @@ One sequence across all three plans. **Every item is additive** — new modules 
 
 | Phase | Theme | Key work | Detail ref |
 |---|---|---|---|
-| **0 — now** | Demo + measure | Vercel+Modal demo; eval harness; audio preprocessing | DEMO `D0–D9`; AMIP `A6`, `A9` |
-| **1** | Engine quality | GPU Transkun+Demucs, sustain pedal, velocity; free/pro tiering | AMIP `A1–A4`; DEMO `S2` |
+| **0 — now** | Demo + measure | Vercel+Modal demo; eval harness; audio preprocessing; per-stage latency log | DEMO `D0–D9`; AMIP `A6`, `A9`; AMIP Part I; DEMO `L7` |
+| **1** | Engine quality | GPU Transkun+Demucs, sustain pedal, velocity; free/pro tiering; CPU speed fixes (drop double-decode, cache model, threads); GPU device fix | AMIP `A1–A4`; DEMO `S2`; DEMO `L1–L5`; AMIP Part I |
 | **2** | Learning core | Practice view (slow-down, hands-separate, loop); auto-difficulty via `simplify` | LEARN `P1`, `P3` |
 | **3** | Feedback + ingestion | Web MIDI scoring + wait-mode; gated URL ingestion | LEARN `P2`; AMIP `B` |
-| **4** | Engage + monetize | Streaks/XP/progress; freemium ($10–13/mo); R2+CDN; 3070 hybrid worker | LEARN `P4`,`P6`; AMIP `D`,`G`,`H` |
+| **4** | Engage + monetize | Streaks/XP/progress; freemium ($10–13/mo); R2+CDN                    | LEARN `P4`,`P6`; AMIP `D`,`G`     |
 | **5** | Scale | Multi-instrument (YourMT3+); PWA/mobile; mic feedback; observability | AMIP Phase 4; LEARN `P7` |
 
 ---
@@ -235,9 +235,9 @@ How all of the above lands in the repo **without destabilizing what runs today**
 ## 11. Cost summary (verified June 2026)
 
 - **Demo / 1-user:** ~$0 — Modal Starter ($30/mo credits), Vercel Hobby, R2 (10 GB, zero egress), Supabase free.
-- **Production GPU:** RTX 3070 pull-worker (electricity ~$10–25/mo) primary + Modal overflow; serverless ~$0.011–0.018/transcription.
+- **Production GPU:** Modal serverless GPU (~$0.011–0.018/transcription on A10G; Modal Starter $30/mo credits covers MVP, autoscaling to zero when idle).
 - **Egress:** R2 zero-egress + CDN removes the video-bandwidth trap.
-- **Scale (~10k users):** ~$1–2.5k/mo, dominated by GPU + storage/egress (mitigated by R2 + 3070). Detail: AMIP Parts D, F, G.
+- **Scale (~10k users):** ~$1–2.5k/mo, dominated by GPU + storage/egress (mitigated by R2 + CDN). Detail: AMIP Parts D, G.
 
 ---
 
