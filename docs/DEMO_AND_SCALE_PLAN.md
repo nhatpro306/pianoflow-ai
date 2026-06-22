@@ -111,12 +111,14 @@ def result(call_id: str):
 **Acceptance:** flag on + a public-domain/CC test URL → notes; flag off → 403; oversize → clean error. **No anti-bot evasion.**
 **Commit:** `feat(modal): gated URL ingestion (yt-dlp, ephemeral, attested)`.
 
-### D6 — Web demo page (async client, in-browser visualization)
-**Goal:** the user-facing demo, reusing existing components.
-**Files:** `apps/web/app/demo/page.tsx`; `apps/web/lib/transcribeClient.ts`; reuse `components/AudioUploader.tsx`, `FallingNotePreview.tsx`, `PianoRollPreview.tsx`, `lib/pianoSynth.ts`.
-**Steps:** `transcribeClient` POSTs to a **Next.js route handler** `app/api/transcribe/route.ts` (keeps the Modal URL/token server-side), which calls Modal `submit`, then polls `result`; show a progress state; on done, parse notes → `FallingNotePreview` + play via `pianoSynth`.
-**Acceptance:** upload (or paste link) → progress → falling notes play in-browser. `pnpm --filter @pianoflow/web build` passes.
-**Commit:** `feat(web): demo page — audio/link → in-browser falling notes`.
+### D6 — Web demo page (async client) — ALREADY BUILT
+**Status:** Done and ahead of this spec. Wired in the repo today:
+- `apps/web/app/upload-audio/page.tsx` — file + paste-link UI with a **`fullMix` toggle** setting `separate: true/false` (full-mix → Demucs on `stem:"piano"`; solo/clean → skip Demucs). Client side of the L6 solo-skip optimization, matching the Modal app's `separate=False` default.
+- `apps/web/lib/transcribeClient.ts` — `submitAudio` / `submitUrl` + spawn→poll (`call_id`), 4-min timeout, status callbacks.
+- `apps/web/app/api/transcribe/route.ts` — route handler proxying Modal, keeping `MODAL_SUBMIT_URL` / `MODAL_RESULT_URL` / token server-side.
+- `apps/web/app/demo/page.tsx` — redirects to `/upload-audio`.
+On success the result MIDI is saved to a project (the editor renders falling notes) rather than rendering inline on the demo page — same user outcome.
+**Remaining:** none in code. Only the human `modal deploy` + Vercel envs (D8) make it live. See the env-wiring note in `infra/modal/README.md`.
 
 ### D7 — Pre-baked examples (the demo safety net)
 **Goal:** the demo never fails live, even if the GPU is cold or quota'd.
