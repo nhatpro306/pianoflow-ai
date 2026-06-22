@@ -15,9 +15,9 @@ import sys
 
 import pytest
 
+import pianoflow_music.transcription.transkun as tk_module
 from pianoflow_music.transcription import TranscriptionError, TranskunEngine, get_engine
 from pianoflow_music.transcription.transkun import ENGINE_NAME
-import pianoflow_music.transcription.transkun as tk_module
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -496,9 +496,7 @@ def test_get_model_different_device_builds_again(monkeypatch, reset_tk_model_cac
     tk_module._get_model("cpu")
     tk_module._get_model("cuda")
 
-    assert build_count == 2, (
-        f"Expected 2 builds (one per device), got {build_count}"
-    )
+    assert build_count == 2, f"Expected 2 builds (one per device), got {build_count}"
 
 
 def test_get_model_cache_empty_after_reset(reset_tk_model_cache):
@@ -506,9 +504,7 @@ def test_get_model_cache_empty_after_reset(reset_tk_model_cache):
     assert tk_module._model_cache == {}
 
 
-def test_get_model_missing_dependency_raises_engine_unavailable(
-    monkeypatch, reset_tk_model_cache
-):
+def test_get_model_missing_dependency_raises_engine_unavailable(monkeypatch, reset_tk_model_cache):
     """If transkun deps cannot be imported, _get_model must raise ENGINE_UNAVAILABLE."""
     from pianoflow_music.transcription.engine import TranscriptionError
 
@@ -520,3 +516,244 @@ def test_get_model_missing_dependency_raises_engine_unavailable(
     with pytest.raises(TranscriptionError) as exc_info:
         tk_module._get_model("cpu")
     assert exc_info.value.code == "ENGINE_UNAVAILABLE"
+
+
+# ---------------------------------------------------------------------------
+# L5 — GPU device selection + inference_mode
+# ---------------------------------------------------------------------------
+
+
+def _make_fake_torch(*, cuda_available: bool):
+    """Build a minimal fake torch module for monkeypatching inside _run_model.
+
+    Provides:
+      - torch.cuda.is_available()          → cuda_available
+      - torch.from_numpy(arr).to(device)   → the same array (passthrough)
+      - torch.inference_mode()             → context manager that sets a flag
+    """
+    import contextlib
+    import types
+
+    fake_torch = types.ModuleType("torch")
+
+    # cuda sub-module
+    fake_cuda = types.ModuleType("torch.cuda")
+    fake_cuda.is_available = lambda: cuda_available
+    fake_torch.cuda = fake_cuda
+
+    # Tensor stub: from_numpy returns an object with .to() that records device
+    class _FakeTensor:
+        def __init__(self, arr):
+            self._arr = arr
+            self.device_arg = None
+
+        def to(self, device):
+            self.device_arg = device
+            return self
+
+    fake_torch.from_numpy = lambda arr: _FakeTensor(arr)
+
+    # inference_mode context manager stub
+    @contextlib.contextmanager
+    def _inference_mode():
+        fake_torch._inference_mode_entered = True
+        yield
+        fake_torch._inference_mode_exited = True
+
+    fake_torch.inference_mode = _inference_mode
+    fake_torch._inference_mode_entered = False
+    fake_torch._inference_mode_exited = False
+
+    return fake_torch
+
+
+class _FakeModel:
+    """Minimal TransKun model stub."""
+
+    fs = 44100
+    _transcribe_device = None
+
+    def transcribe(self, x, stepInSecond, segmentSizeInSecond, discardSecondHalf):
+        _FakeModel._transcribe_device = getattr(x, "device_arg", None)
+
+        # Return one raw note (positive pitch → note event) and no CC events.
+        class _N:
+            pass
+
+        n = _N()
+        n.pitch = 60
+        n.start = 0.0
+        n.end = 0.5
+        n.velocity = 80
+        return [n]
+
+
+def _make_fake_audio_stack():
+    """Return fake pydub, soxr, numpy that avoid real file I/O."""
+    import types
+
+    import numpy as np
+
+    # pydub stub
+    fake_pydub = types.ModuleType("pydub")
+
+    class _FakeSeg:
+        frame_rate = 44100
+        channels = 1
+
+        def get_array_of_samples(self):
+            return np.zeros(100, dtype=np.int16).tolist()
+
+    class _FakeAudioSegment:
+        @staticmethod
+        def from_file(path):
+            return _FakeSeg()
+
+    fake_pydub.AudioSegment = _FakeAudioSegment
+
+    # soxr stub (no resample needed since fs matches)
+    fake_soxr = types.ModuleType("soxr")
+    fake_soxr.resample = lambda y, in_rate, out_rate: y
+
+    return fake_pydub, fake_soxr, np
+
+
+def test_run_model_selects_cuda_when_available(monkeypatch, reset_tk_model_cache):
+    """When torch.cuda.is_available() is True, _run_model must call _get_model('cuda')."""
+    import sys
+
+    fake_torch = _make_fake_torch(cuda_available=True)
+    fake_pydub, fake_soxr, np = _make_fake_audio_stack()
+
+    # Record which device _get_model is called with.
+    devices_requested = []
+    model = _FakeModel()
+
+    def _fake_get_model(device):
+        devices_requested.append(device)
+        return model
+
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+    monkeypatch.setitem(sys.modules, "numpy", np)
+    monkeypatch.setitem(sys.modules, "pydub", fake_pydub)
+    monkeypatch.setitem(sys.modules, "soxr", fake_soxr)
+    monkeypatch.setattr(tk_module, "_get_model", _fake_get_model)
+
+    # Also stub estimate_tempo_from_array to avoid real librosa import.
+    import pianoflow_music.transcription.beat as beat_module
+
+    monkeypatch.setattr(beat_module, "estimate_tempo_from_array", lambda y, fs: 120.0)
+
+    engine = TranskunEngine()
+    # Call _run_model directly; we need a real-enough path (string only — no file read).
+    engine._run_model("fake_path.wav")
+
+    assert devices_requested == ["cuda"], (
+        f"Expected _get_model called with 'cuda', got {devices_requested}"
+    )
+
+
+def test_run_model_selects_cpu_when_cuda_unavailable(monkeypatch, reset_tk_model_cache):
+    """When torch.cuda.is_available() is False, _run_model must call _get_model('cpu')."""
+    import sys
+
+    fake_torch = _make_fake_torch(cuda_available=False)
+    fake_pydub, fake_soxr, np = _make_fake_audio_stack()
+
+    devices_requested = []
+    model = _FakeModel()
+
+    def _fake_get_model(device):
+        devices_requested.append(device)
+        return model
+
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+    monkeypatch.setitem(sys.modules, "numpy", np)
+    monkeypatch.setitem(sys.modules, "pydub", fake_pydub)
+    monkeypatch.setitem(sys.modules, "soxr", fake_soxr)
+    monkeypatch.setattr(tk_module, "_get_model", _fake_get_model)
+
+    import pianoflow_music.transcription.beat as beat_module
+
+    monkeypatch.setattr(beat_module, "estimate_tempo_from_array", lambda y, fs: 120.0)
+
+    engine = TranskunEngine()
+    engine._run_model("fake_path.wav")
+
+    assert devices_requested == ["cpu"], (
+        f"Expected _get_model called with 'cpu', got {devices_requested}"
+    )
+
+
+def test_run_model_uses_inference_mode_context(monkeypatch, reset_tk_model_cache):
+    """model.transcribe(...) must be called inside torch.inference_mode() context."""
+    import sys
+
+    fake_torch = _make_fake_torch(cuda_available=False)
+    fake_pydub, fake_soxr, np = _make_fake_audio_stack()
+
+    # Track whether inference_mode was active when transcribe() ran.
+    transcribe_saw_inference_mode = []
+
+    class _TrackingModel(_FakeModel):
+        def transcribe(self, x, stepInSecond, segmentSizeInSecond, discardSecondHalf):
+            transcribe_saw_inference_mode.append(fake_torch._inference_mode_entered)
+            return super().transcribe(x, stepInSecond, segmentSizeInSecond, discardSecondHalf)
+
+    def _fake_get_model(device):
+        return _TrackingModel()
+
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+    monkeypatch.setitem(sys.modules, "numpy", np)
+    monkeypatch.setitem(sys.modules, "pydub", fake_pydub)
+    monkeypatch.setitem(sys.modules, "soxr", fake_soxr)
+    monkeypatch.setattr(tk_module, "_get_model", _fake_get_model)
+
+    import pianoflow_music.transcription.beat as beat_module
+
+    monkeypatch.setattr(beat_module, "estimate_tempo_from_array", lambda y, fs: 120.0)
+
+    engine = TranskunEngine()
+    engine._run_model("fake_path.wav")
+
+    assert transcribe_saw_inference_mode == [True], (
+        "model.transcribe() must run inside torch.inference_mode() — flag was not set"
+    )
+    assert fake_torch._inference_mode_exited is True, (
+        "torch.inference_mode() context must have been exited after inference"
+    )
+
+
+def test_run_model_tensor_moved_to_selected_device(monkeypatch, reset_tk_model_cache):
+    """The input tensor must be moved to the same device as the model (cuda when available)."""
+    import sys
+
+    fake_torch = _make_fake_torch(cuda_available=True)
+    fake_pydub, fake_soxr, np = _make_fake_audio_stack()
+
+    class _RecordingModel(_FakeModel):
+        last_tensor_device = None
+
+        def transcribe(self, x, stepInSecond, segmentSizeInSecond, discardSecondHalf):
+            _RecordingModel.last_tensor_device = getattr(x, "device_arg", None)
+            return super().transcribe(x, stepInSecond, segmentSizeInSecond, discardSecondHalf)
+
+    def _fake_get_model(device):
+        return _RecordingModel()
+
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+    monkeypatch.setitem(sys.modules, "numpy", np)
+    monkeypatch.setitem(sys.modules, "pydub", fake_pydub)
+    monkeypatch.setitem(sys.modules, "soxr", fake_soxr)
+    monkeypatch.setattr(tk_module, "_get_model", _fake_get_model)
+
+    import pianoflow_music.transcription.beat as beat_module
+
+    monkeypatch.setattr(beat_module, "estimate_tempo_from_array", lambda y, fs: 120.0)
+
+    engine = TranskunEngine()
+    engine._run_model("fake_path.wav")
+
+    assert _RecordingModel.last_tensor_device == "cuda", (
+        f"Expected tensor on 'cuda', got {_RecordingModel.last_tensor_device}"
+    )

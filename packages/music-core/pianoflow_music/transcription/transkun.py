@@ -137,9 +137,10 @@ class TranskunEngine:
                 code="ENGINE_UNAVAILABLE",
             ) from exc
 
-        device = "cpu"
+        device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # Retrieve (or build on first call) the cached model for this device.
+        # The L2 cache keys by device, so the GPU model stays warm across jobs.
         model = _get_model(device)
 
         # Decode audio file → numpy float32 array (samples, channels).
@@ -153,15 +154,16 @@ class TranskunEngine:
             y = soxr.resample(y, fs, model.fs)
 
         # Run inference.
+        # TODO: FP16 on CUDA is a later tuning toggle (verify op support first)
+        # Keep FP32 for now — Transkun's transcribe path is not verified FP16-safe.
         x = torch.from_numpy(y).to(device)
-        torch.set_grad_enabled(False)
-        raw_notes = model.transcribe(
-            x,
-            stepInSecond=None,
-            segmentSizeInSecond=None,
-            discardSecondHalf=False,
-        )
-        torch.set_grad_enabled(True)
+        with torch.inference_mode():
+            raw_notes = model.transcribe(
+                x,
+                stepInSecond=None,
+                segmentSizeInSecond=None,
+                discardSecondHalf=False,
+            )
 
         # Map Transkun Note objects to the normalised contract.
         note_events: list[tuple] = []
