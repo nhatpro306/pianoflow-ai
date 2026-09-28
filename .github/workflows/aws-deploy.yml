@@ -36,6 +36,7 @@ env:
   TF_VAR_supabase_url: ${{ vars.TF_VAR_SUPABASE_URL }}
   TF_VAR_cors_allowed_origins: ${{ vars.TF_VAR_CORS_ALLOWED_ORIGINS }}
   TF_VAR_aws_region: ${{ vars.AWS_REGION || 'us-east-1' }}
+  TF_VAR_prefix: pianoflow-v3
 
 jobs:
   plan:
@@ -74,16 +75,26 @@ jobs:
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - uses: hashicorp/setup-terraform@v3
+      - name: Initialize ECR repositories
+        working-directory: infra/terraform
+        env:
+          TF_VAR_api_image_tag: ${{ github.sha }}
+          TF_VAR_worker_image_tag: ${{ github.sha }}
+        run: |
+          terraform init -input=false
+          terraform apply -target=module.ecr -auto-approve
+
       - name: Build and push API image
         run: |
-          IMAGE="${{ steps.ecr.outputs.registry }}/pianoflow-api:${{ github.sha }}"
+          IMAGE="${{ steps.ecr.outputs.registry }}/pianoflow-v3-api:${{ github.sha }}"
           docker build -f infra/docker/api.Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
           echo "API_IMAGE_TAG=${{ github.sha }}" >> "$GITHUB_ENV"
 
       - name: Build and push worker image
         run: |
-          IMAGE="${{ steps.ecr.outputs.registry }}/pianoflow-worker:${{ github.sha }}"
+          IMAGE="${{ steps.ecr.outputs.registry }}/pianoflow-v3-worker:${{ github.sha }}"
           docker build -f infra/docker/worker.Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
 
