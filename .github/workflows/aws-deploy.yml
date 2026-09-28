@@ -35,6 +35,7 @@ env:
   TF_VAR_supabase_service_role_key: ${{ secrets.TF_VAR_SUPABASE_SERVICE_ROLE_KEY }}
   TF_VAR_supabase_url: ${{ vars.TF_VAR_SUPABASE_URL }}
   TF_VAR_cors_allowed_origins: ${{ vars.TF_VAR_CORS_ALLOWED_ORIGINS }}
+  TF_VAR_aws_region: ${{ env.AWS_REGION }}
 
 jobs:
   plan:

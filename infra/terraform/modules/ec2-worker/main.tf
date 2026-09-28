@@ -134,11 +134,7 @@ data "aws_iam_policy_document" "worker_app" {
     ]
   }
 
-  statement {
-    effect    = "Allow"
-    actions   = ["ssm:GetParameter"]
-    resources = [aws_ssm_parameter.database_url.arn]
-  }
+
 }
 
 resource "aws_iam_role_policy" "worker_app" {
@@ -168,11 +164,6 @@ locals {
   worker_image = "${var.ecr_repo_url}:${var.worker_image_tag}"
 }
 
-resource "aws_ssm_parameter" "database_url" {
-  name  = "/${var.prefix}/worker/database-url"
-  type  = "SecureString"
-  value = var.database_url
-}
 
 resource "aws_instance" "worker" {
   ami                         = data.aws_ami.amazon_linux.id
@@ -186,7 +177,7 @@ resource "aws_instance" "worker" {
     aws_region            = var.aws_region
     ecr_registry          = var.ecr_registry
     worker_image          = local.worker_image
-    database_url_param    = aws_ssm_parameter.database_url.name
+    database_url          = var.database_url
     sqs_queue_default_url = var.sqs_queue_default_url
     sqs_queue_audio_url   = var.sqs_queue_audio_url
     s3_sources_bucket     = var.s3_sources_bucket

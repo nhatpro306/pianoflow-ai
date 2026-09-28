@@ -17,12 +17,7 @@ fi
 aws ecr get-login-password --region ${aws_region} \
   | docker login --username AWS --password-stdin ${ecr_registry}
 
-DATABASE_URL="$(aws ssm get-parameter \
-  --name '${database_url_param}' \
-  --with-decryption \
-  --region '${aws_region}' \
-  --query 'Parameter.Value' \
-  --output text)"
+DATABASE_URL="${database_url}"
 
 docker rm -f pianoflow-worker || true
 docker pull ${worker_image}
