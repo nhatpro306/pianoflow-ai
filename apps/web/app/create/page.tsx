@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { submitAudio, submitUrl, type TranscribeStatus } from "@/lib/transcribeClient";
 import { useRequireAuth } from "@/lib/useRequireAuth";
+import { Progress } from "@/components/ui/Progress";
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
 const ACCEPTED_TYPES = [".wav", ".mp3", ".m4a", ".mid", ".midi"];
@@ -28,6 +29,7 @@ export default function CreatePage() {
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [fullMix, setFullMix] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [rightsAttested, setRightsAttested] = useState(false);
@@ -69,7 +71,7 @@ export default function CreatePage() {
     const safe = (name || "Transcription").slice(0, 100);
     const project = await api.createProject(safe);
     const init = await api.initUpload(project.id, `${safe}.mid`, blob.size);
-    await api.putToSignedUrl(init, blob);
+    await api.putToSignedUrl(init, blob, setUploadProgress);
     await api.confirmUpload(project.id, init.upload_id);
     router.push(`/projects/${encodeURIComponent(project.id)}`);
   }
@@ -81,7 +83,7 @@ export default function CreatePage() {
       const safe = (file.name.replace(/\.[^.]+$/, "") || "Uploaded MIDI").slice(0, 100);
       const project = await api.createProject(safe);
       const init = await api.initUpload(project.id, file.name, file.size);
-      await api.putToSignedUrl(init, file);
+      await api.putToSignedUrl(init, file, setUploadProgress);
       await api.confirmUpload(project.id, init.upload_id);
       router.push(`/projects/${encodeURIComponent(project.id)}`);
     } catch (err) {
@@ -271,9 +273,20 @@ export default function CreatePage() {
 
       {/* Progress indicator */}
       {isWorking && (
-        <div className="flex items-center gap-3 text-sm text-zinc-400">
-          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-zinc-600 border-t-cyan-400" />
-          {statusText()}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3 text-sm text-zinc-400">
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-zinc-600 border-t-cyan-400" />
+            {statusText()}
+          </div>
+          {uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="w-full">
+              <div className="flex justify-between text-xs text-zinc-500 mb-1">
+                <span>Uploading...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <Progress value={uploadProgress} />
+            </div>
+          )}
         </div>
       )}
 

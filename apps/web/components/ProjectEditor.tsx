@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { FallingNotePreview } from "@/components/FallingNotePreview";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import { Progress } from "@/components/ui/Progress";
 import { api, ApiError } from "@/lib/api";
 import { useJob, useNotes, useOutputs, usePatchSettings, useProject, useSettings } from "@/lib/hooks";
 
@@ -186,6 +187,18 @@ export function ProjectEditor({ id }: { id: string }) {
             ) : (
               <div className="flex h-96 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-950 text-sm text-zinc-400">
                 {notes.isError ? "Beginner notes not generated yet." : "Loading notes..."}
+              </div>
+            )}
+            {activeJob.data && ["processing", "queued", "parsing", "transcribing"].includes(activeJob.data.status) && (
+              <div className="mt-4 p-4 rounded-xl border border-zinc-800 bg-zinc-900/50">
+                <div className="flex justify-between text-sm mb-2 text-zinc-300">
+                  <span className="capitalize">{activeJob.data.job_type.replace('_', ' ')}...</span>
+                  <span>{activeJob.data.progress}%</span>
+                </div>
+                <Progress value={activeJob.data.progress} />
+                {activeJob.data.progress_message && (
+                  <p className="text-xs text-zinc-500 mt-2">{activeJob.data.progress_message}</p>
+                )}
               </div>
             )}
             <div className="mt-4 flex flex-wrap gap-2 text-sm">

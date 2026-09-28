@@ -236,14 +236,26 @@ export const api = {
     }>(`/api/v1/projects/${projectId}/transcription`),
 
   /** Raw PUT to the signed URL — not under BASE_URL, not JSON. */
-  putToSignedUrl: async (init: UploadInit, file: Blob) => {
-    const response = await fetch(init.upload_url, {
-      method: init.method,
-      headers: init.headers,
-      body: file,
+  putToSignedUrl: async (init: UploadInit, file: Blob, onProgress?: (percent: number) => void) => {
+    return new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open(init.method, init.upload_url, true);
+      if (init.headers) {
+        for (const [key, value] of Object.entries(init.headers)) {
+          xhr.setRequestHeader(key, value as string);
+        }
+      }
+      if (onProgress && xhr.upload) {
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+        };
+      }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new ApiError(xhr.status, "UPLOAD_FAILED", "Upload to storage failed."));
+      };
+      xhr.onerror = () => reject(new ApiError(0, "UPLOAD_FAILED", "Network error during upload."));
+      xhr.send(file);
     });
-    if (!response.ok) {
-      throw new ApiError(response.status, "UPLOAD_FAILED", "Upload to storage failed.");
-    }
   },
 };
