@@ -1,6 +1,5 @@
 import Link from "next/link";
-
-import { ProjectEditor } from "@/components/ProjectEditor";
+import { redirect } from "next/navigation";
 
 export default async function ProjectPage({
   searchParams,
@@ -20,5 +19,5 @@ export default async function ProjectPage({
     );
   }
 
-  return <ProjectEditor id={id} />;
+  redirect(`/projects/${id}`);
 }

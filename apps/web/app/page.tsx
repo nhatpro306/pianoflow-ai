@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 
 const FEATURES = [
   {
@@ -33,24 +35,21 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
         <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">
-          🎹 PianoFlow <span className="text-cyan-400">AI</span>
+          <span role="img" aria-hidden="true">🎹</span> PianoFlow <span className="text-cyan-400">AI</span>
         </h1>
         <p className="max-w-xl text-lg text-zinc-400">
-          Turn any piano MIDI into a tutorial video, sheet music, and a
-          beginner-friendly version — in minutes, not hours.
+          Turn any song into a lesson you can play — falling notes, sheet music, and beginner simplifications.
         </p>
         <div className="flex gap-3">
-          <Link
-            href="/upload"
-            className="rounded-lg bg-cyan-500 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-cyan-400"
-          >
-            Upload a MIDI
+          <Link href="/create" tabIndex={-1}>
+            <Button size="lg">
+              Upload audio or MIDI
+            </Button>
           </Link>
-          <Link
-            href="/projects"
-            className="rounded-lg border border-zinc-700 px-6 py-3 font-semibold transition hover:bg-zinc-800"
-          >
-            My Projects
+          <Link href="/projects" tabIndex={-1}>
+            <Button variant="outline" size="lg">
+              My Projects
+            </Button>
           </Link>
         </div>
       </section>
@@ -58,14 +57,14 @@ export default function LandingPage() {
       {/* Features */}
       <section className="grid gap-6 pb-20 sm:grid-cols-2">
         {FEATURES.map((f) => (
-          <div
+          <Card
             key={f.title}
-            className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6"
+            className="p-6"
           >
-            <div className="mb-3 text-3xl">{f.icon}</div>
+            <div className="mb-3 text-3xl" aria-hidden="true">{f.icon}</div>
             <h3 className="mb-2 text-lg font-semibold">{f.title}</h3>
             <p className="text-sm text-zinc-400">{f.description}</p>
-          </div>
+          </Card>
         ))}
       </section>
 

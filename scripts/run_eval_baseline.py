@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "packages" / "music-core")
 from pianoflow_music.transcription.basic_pitch import BasicPitchEngine
 from pianoflow_music.transcription.evaluate import onset_prf, onset_offset_velocity_prf
 from pianoflow_music.notes.model import Note
-from pianoflow_music.midi.read import read_midi_file
+from pianoflow_music.midi.parse import parse_midi_bytes
 
 # URLs for a tiny MAESTRO slice (used if no local dataset provided)
 SAMPLE_AUDIO_URL = "https://raw.githubusercontent.com/nhatpro306/pianoflow-ai/main/scripts/fixtures/maestro_sample.wav"
@@ -42,11 +42,14 @@ def evaluate_file(audio_path: Path, midi_path: Path):
     
     # Run Engine & Time it
     start_time = time.time()
-    predicted_notes = engine.transcribe(audio_path)
+    audio_bytes = audio_path.read_bytes()
+    predicted_notes = engine.transcribe(audio_bytes)
     wall_time = time.time() - start_time
     
     # Load ground truth
-    reference_notes = read_midi_file(midi_path)
+    midi_bytes = midi_path.read_bytes()
+    note_data = parse_midi_bytes(midi_bytes)
+    reference_notes = note_data.notes
     
     # Get duration for RTF
     try:

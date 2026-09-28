@@ -19,14 +19,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
               <div className="flex items-center gap-6">
                 <Link href="/" className="font-bold tracking-tight">
-                  🎹 PianoFlow <span className="text-cyan-400">AI</span>
+                  <span aria-hidden="true">🎹</span> PianoFlow <span className="text-cyan-400">AI</span>
                 </Link>
                 <div className="flex gap-4 text-sm text-zinc-400">
-                  <Link href="/upload" className="hover:text-zinc-100">
-                    Upload
-                  </Link>
-                  <Link href="/upload-audio" className="hover:text-zinc-100">
-                    Audio <span className="text-cyan-400">Beta</span>
+                  <Link href="/create" className="hover:text-zinc-100">
+                    Create
                   </Link>
                   <Link href="/projects" className="hover:text-zinc-100">
                     Projects

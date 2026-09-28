@@ -8,7 +8,7 @@ import { submitAudio, submitUrl, type TranscribeStatus } from "@/lib/transcribeC
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
-const ACCEPTED_TYPES = [".wav", ".mp3", ".m4a"];
+const ACCEPTED_TYPES = [".wav", ".mp3", ".m4a", ".mid", ".midi"];
 
 const STATUS_MESSAGES: Record<TranscribeStatus, string> = {
   idle: "",
@@ -18,7 +18,7 @@ const STATUS_MESSAGES: Record<TranscribeStatus, string> = {
   error: "",
 };
 
-export default function UploadAudioPage() {
+export default function CreatePage() {
   const router = useRouter();
   const { authenticated } = useRequireAuth();
 
@@ -38,8 +38,8 @@ export default function UploadAudioPage() {
   function validateAndSetFile(f: File) {
     setFileError(null);
     const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
-    if (!["wav", "mp3", "m4a"].includes(ext)) {
-      setFileError("Unsupported file type. Please upload a .wav, .mp3, or .m4a file.");
+    if (!["wav", "mp3", "m4a", "mid", "midi"].includes(ext)) {
+      setFileError("Unsupported file type. Please upload a .wav, .mp3, .m4a, or .mid file.");
       return;
     }
     if (f.size > MAX_FILE_BYTES) {
@@ -71,7 +71,23 @@ export default function UploadAudioPage() {
     const init = await api.initUpload(project.id, `${safe}.mid`, blob.size);
     await api.putToSignedUrl(init, blob);
     await api.confirmUpload(project.id, init.upload_id);
-    router.push(`/project?id=${encodeURIComponent(project.id)}`);
+    router.push(`/projects/${encodeURIComponent(project.id)}`);
+  }
+
+  async function handleMidiUpload() {
+    if (!file) return;
+    setSaving(true);
+    try {
+      const safe = (file.name.replace(/\.[^.]+$/, "") || "Uploaded MIDI").slice(0, 100);
+      const project = await api.createProject(safe);
+      const init = await api.initUpload(project.id, file.name, file.size);
+      await api.putToSignedUrl(init, file);
+      await api.confirmUpload(project.id, init.upload_id);
+      router.push(`/projects/${encodeURIComponent(project.id)}`);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Upload failed.");
+      setSaving(false);
+    }
   }
 
   async function handleTranscribeLink() {
@@ -97,6 +113,11 @@ export default function UploadAudioPage() {
 
   async function handleTranscribe() {
     if (!file) return;
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    if (["mid", "midi"].includes(ext)) {
+      return handleMidiUpload();
+    }
+    
     setErrorMsg(null);
     try {
       const options = fullMix
@@ -128,12 +149,10 @@ export default function UploadAudioPage() {
       {/* Header */}
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-3xl font-bold text-white">
-          Upload Audio{" "}
-          <span className="rounded bg-cyan-500/20 px-2 py-0.5 text-sm text-cyan-300">Beta</span>
+          Create Project
         </h1>
         <p className="max-w-lg text-sm text-zinc-400">
-          Drop an audio file or paste a link — we transcribe it to MIDI and open it as an editable
-          project.
+          Drop a MIDI file, audio file, or paste a link — we'll prepare an editable lesson.
         </p>
       </div>
 
@@ -182,9 +201,8 @@ export default function UploadAudioPage() {
           <span className="text-sm font-medium text-white">{file.name}</span>
         ) : (
           <span className="text-sm text-zinc-400">
-            Drop a <strong className="text-zinc-200">.wav</strong>,{" "}
-            <strong className="text-zinc-200">.mp3</strong>, or{" "}
-            <strong className="text-zinc-200">.m4a</strong> file here, or click to browse
+            Drop an <strong className="text-zinc-200">audio</strong> or{" "}
+            <strong className="text-zinc-200">MIDI</strong> file here, or click to browse
           </span>
         )}
         <span className="text-xs text-zinc-600">Max 50 MB</span>
@@ -247,7 +265,7 @@ export default function UploadAudioPage() {
           onClick={() => void handleTranscribe()}
           className="rounded-lg bg-cyan-500 px-8 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isWorking ? statusText() : "Transcribe file"}
+          {isWorking ? statusText() : (file.name.toLowerCase().endsWith(".mid") || file.name.toLowerCase().endsWith(".midi") ? "Upload MIDI project" : "Transcribe audio")}
         </button>
       )}
 
