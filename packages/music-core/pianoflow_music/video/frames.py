@@ -15,7 +15,12 @@ from PIL import Image, ImageDraw, ImageFilter
 from pianoflow_music.notes.model import NoteData
 from pianoflow_music.video.layout import KeyboardLayout, is_black
 
-RESOLUTIONS = {"720p": (1280, 720), "1080p": (1920, 1080)}
+RESOLUTIONS = {
+    "720p": (1280, 720),
+    "1080p": (1920, 1080),
+    "720p_vertical": (720, 1280),
+    "1080p_vertical": (1080, 1920),
+}
 
 _KEYBOARD_HEIGHT_RATIO = 0.18
 _HIT_LINE_HEIGHT = 4
