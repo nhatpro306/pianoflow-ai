@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pianoflow-virtual-pianist": {
+      "command": "npx",
+      "args": ["tsx", "c:\\Users\\super\\pianoflow\\plugins\\virtual-pianist\\server.ts"]
+    }
+  }
+}

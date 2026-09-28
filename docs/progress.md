@@ -2,6 +2,17 @@
 
 Newest entries first. Append with `/checkpoint` after completing a milestone.
 
+## 2026-09-28 - MCP Virtual Pianist & PM Skill
+
+**Milestone: Antigravity Agent Integration complete.**
+
+- Implemented \irtual-pianist\ MCP server in \plugins/virtual-pianist\ using Playwright to mock Web MIDI for headless Practice Mode testing.
+- Registered MCP server in \mcp_config.json\.
+- Created \pianoflow-pm\ Skill in \.agents/skills/pianoflow-pm/SKILL.md\ to teach Antigravity how to triage bugs, review PRs, and manage CI/CD.
+- Ran headless browser checks successfully.
+
+---
+
 ---
 
 ## 2026-09-28 - AWS Infrastructure Redeployed & UI Upgraded
