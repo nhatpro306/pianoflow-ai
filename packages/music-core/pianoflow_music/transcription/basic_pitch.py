@@ -18,6 +18,7 @@ Without the extra, instantiation is fine but `transcribe()` raises
 import contextlib
 import os
 import tempfile
+import threading
 from statistics import mean
 
 from pianoflow_music.midi.hands import estimate_hands
@@ -30,6 +31,59 @@ ENGINE_NAME = "basic_pitch_v1"
 
 _NOTE_NAMES = ("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
 
+# ---------------------------------------------------------------------------
+# Model singleton cache — built once, reused across all jobs.
+# ---------------------------------------------------------------------------
+
+_cached_model = None
+_model_lock = threading.Lock()
+
+
+def _build_model(_sentinel=None):
+    """Construct a Basic Pitch Model instance. Deferred import keeps startup cheap.
+
+    The ``_sentinel`` parameter is unused; it exists only so the signature is
+    easy to monkeypatch in tests (callers pass no arguments).
+
+    Separated into its own function so tests can monkeypatch it without ever
+    importing the real ``basic_pitch`` package.
+    """
+    from basic_pitch import ICASSP_2022_MODEL_PATH  # type: ignore[import]
+    from basic_pitch.inference import Model  # type: ignore[import]
+
+    return Model(ICASSP_2022_MODEL_PATH)
+
+
+def _predict(audio_path: str, model_or_model_path):
+    """Call Basic Pitch predict. Separated so tests can monkeypatch without real import."""
+    from basic_pitch.inference import predict  # type: ignore[import]
+
+    return predict(audio_path, model_or_model_path=model_or_model_path)
+
+
+def _get_model():
+    """Return the cached Basic Pitch Model, building it on the first call.
+
+    Thread-safe via double-checked locking. Heavy ``basic_pitch`` imports stay
+    inside ``_build_model``; this function is safe to call at module import time
+    (though it is only called from ``_run_model``).
+
+    Raises:
+        TranscriptionError(code="ENGINE_UNAVAILABLE"): if ``basic_pitch`` is not installed.
+    """
+    global _cached_model
+    if _cached_model is None:
+        with _model_lock:
+            if _cached_model is None:
+                try:
+                    _cached_model = _build_model()
+                except ImportError as exc:
+                    raise TranscriptionError(
+                        "Basic Pitch engine is not installed. Install the 'basic-pitch' extra.",
+                        code="ENGINE_UNAVAILABLE",
+                    ) from exc
+    return _cached_model
+
 
 def _pitch_name(pitch: int) -> str:
     return f"{_NOTE_NAMES[pitch % 12]}{pitch // 12 - 1}"
@@ -39,21 +93,13 @@ class BasicPitchEngine:
     name = ENGINE_NAME
 
     def _run_model(self, audio_path: str):
-        """Call Basic Pitch inference. Single monkeypatch seam for tests."""
-        try:
-            from basic_pitch.inference import predict
-        except ImportError as exc:
-            raise TranscriptionError(
-                "Basic Pitch engine is not installed. Install the 'basic-pitch' extra.",
-                code="ENGINE_UNAVAILABLE",
-            ) from exc
-        return predict(audio_path)
+        """Call Basic Pitch inference. Single monkeypatch seam for tests.
 
-    def _estimate_beats(self, audio_path: str):
-        """Call librosa beat tracker. Single monkeypatch seam for tests."""
-        from pianoflow_music.transcription.beat import estimate_tempo_and_beats
-
-        return estimate_tempo_and_beats(audio_path)
+        Resolves the module-level cached model (built once per process) and
+        passes it to ``predict`` so the ONNX session is not re-created per job.
+        """
+        model = _get_model()
+        return _predict(audio_path, model_or_model_path=model)
 
     def transcribe(
         self,
@@ -77,7 +123,6 @@ class BasicPitchEngine:
         grid = opts.get("grid", "1/16")
 
         tmp_path = None
-        beats = None
         try:
             with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
                 tmp.write(audio_bytes)
@@ -85,11 +130,6 @@ class BasicPitchEngine:
                 tmp_path = tmp.name
 
             _model_output, midi_data, note_events = self._run_model(tmp_path)
-
-            try:
-                beats = self._estimate_beats(tmp_path)
-            except Exception:
-                beats = None
         finally:
             if tmp_path is not None:
                 with contextlib.suppress(OSError):
@@ -124,21 +164,18 @@ class BasicPitchEngine:
         if not cleaned_notes:
             raise TranscriptionError("No notes detected in audio.", code="NO_NOTES_DETECTED")
 
-        # Estimate tempo: prefer librosa beat tracker when available and in range.
+        # Estimate tempo: use midi_data.estimate_tempo() clamped to [40, 240].
+        # No second audio decode — the Basic Pitch MIDI object already has tempo info.
         bpm = 120.0
         tempo_source = "fallback"
-        if beats is not None and 40.0 <= beats[0] <= 240.0:
-            bpm = round(float(beats[0]), 2)
-            tempo_source = "librosa_beat"
-        else:
-            try:
-                raw_tempo = midi_data.estimate_tempo()
-                clamped = max(40.0, min(240.0, float(raw_tempo)))
-                bpm = round(clamped, 2)
-                tempo_source = "midi_estimate"
-            except Exception:
-                bpm = 120.0
-                tempo_source = "fallback"
+        try:
+            raw_tempo = midi_data.estimate_tempo()
+            clamped = max(40.0, min(240.0, float(raw_tempo)))
+            bpm = round(clamped, 2)
+            tempo_source = "midi_estimate"
+        except Exception:
+            bpm = 120.0
+            tempo_source = "fallback"
 
         # Optional quantization (opt-in via options["quantize"]).
         if quantize:
@@ -169,7 +206,7 @@ class BasicPitchEngine:
         mean_amp = round(float(mean(amps)), 2)
         # Timing confidence: reward dense, evenly-spaced notes; bounded 0..1.
         timing_conf = round(min(1.0, len(notes) / max(len(notes), 10) * mean_amp + 0.3), 2)
-        tempo_confidence = 0.8 if beats is not None else 0.5
+        tempo_confidence = 0.6 if tempo_source == "midi_estimate" else 0.5
         confidence = {
             "overall_confidence": mean_amp,
             "pitch_confidence": mean_amp,

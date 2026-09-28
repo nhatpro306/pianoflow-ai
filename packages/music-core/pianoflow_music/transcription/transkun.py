@@ -45,6 +45,66 @@ _BPM_FALLBACK = 120.0
 _BASE_CONFIDENCE = 0.7
 _TEMPO_CONFIDENCE = 0.6
 
+# ---------------------------------------------------------------------------
+# Model singleton cache — keyed by device string, built once per device.
+# ---------------------------------------------------------------------------
+
+import threading  # noqa: E402 — imported here to keep top-of-file imports minimal
+
+_model_cache: dict = {}
+_model_lock = threading.Lock()
+
+
+def _build_model(device: str):
+    """Construct the TransKun model for *device*. Deferred imports keep startup cheap.
+
+    Separated into its own function so tests can monkeypatch it without ever
+    importing the real ``transkun`` / ``torch`` packages.
+    """
+    import moduleconf  # type: ignore[import]
+    import pkg_resources  # type: ignore[import]
+    import torch  # type: ignore[import]
+
+    conf_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.conf")
+    ckpt_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.pt")
+
+    conf_manager = moduleconf.parseFromFile(conf_path)
+    TransKun = conf_manager["Model"].module.TransKun
+    conf = conf_manager["Model"].config
+
+    model = TransKun(conf=conf).to(device)
+    model.eval()
+
+    checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
+    if "best_state_dict" in checkpoint:
+        model.load_state_dict(checkpoint["best_state_dict"], strict=False)
+    else:
+        model.load_state_dict(checkpoint["state_dict"], strict=False)
+
+    return model
+
+
+def _get_model(device: str):
+    """Return the cached TransKun model for *device*, building it on the first call.
+
+    Thread-safe via double-checked locking. Each unique *device* value gets its
+    own cache entry so CPU and GPU models can coexist in the same process.
+
+    Raises:
+        TranscriptionError(code="ENGINE_UNAVAILABLE"): if transkun deps are not installed.
+    """
+    if device not in _model_cache:
+        with _model_lock:
+            if device not in _model_cache:
+                try:
+                    _model_cache[device] = _build_model(device)
+                except ImportError as exc:
+                    raise TranscriptionError(
+                        "Transkun engine is not installed. Install the 'transkun' extra.",
+                        code="ENGINE_UNAVAILABLE",
+                    ) from exc
+    return _model_cache[device]
+
 
 def _pitch_name(pitch: int) -> str:
     """Return scientific pitch name for a MIDI pitch number, e.g. 60 → 'C4'."""
@@ -61,41 +121,27 @@ class TranskunEngine:
           note_events  — list of ``(start_sec, end_sec, pitch, velocity_0to127)``
           pedal_events — list of ``(time_sec, value_0to127)``
           bpm          — float
+
+        The TransKun model is retrieved from the module-level cache (built once per
+        device per process) so the expensive ``torch.load`` + ``load_state_dict``
+        path is never repeated across jobs.
         """
         try:
-            import moduleconf
             import numpy as np
-            import pkg_resources
-            import pydub
-            import soxr
-            import torch
+            import pydub  # type: ignore[import]
+            import soxr  # type: ignore[import]
+            import torch  # type: ignore[import]
         except ImportError as exc:
             raise TranscriptionError(
                 "Transkun engine is not installed. Install the 'transkun' extra.",
                 code="ENGINE_UNAVAILABLE",
             ) from exc
 
-        device = "cpu"
+        device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        # Resolve bundled weights and config shipped with the transkun package.
-        conf_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.conf")
-        ckpt_path = pkg_resources.resource_filename("transkun", "pretrained/2.0.pt")
-
-        # Build model using pattern from transkun.transcribe.main:
-        #   conf_manager["Model"].module  → the transkun.ModelTransformer module
-        #   conf_manager["Model"].config  → instantiated ModelConfig object
-        conf_manager = moduleconf.parseFromFile(conf_path)
-        TransKun = conf_manager["Model"].module.TransKun
-        conf = conf_manager["Model"].config
-
-        model = TransKun(conf=conf).to(device)
-        model.eval()
-
-        checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
-        if "best_state_dict" in checkpoint:
-            model.load_state_dict(checkpoint["best_state_dict"], strict=False)
-        else:
-            model.load_state_dict(checkpoint["state_dict"], strict=False)
+        # Retrieve (or build on first call) the cached model for this device.
+        # The L2 cache keys by device, so the GPU model stays warm across jobs.
+        model = _get_model(device)
 
         # Decode audio file → numpy float32 array (samples, channels).
         audio_seg = pydub.AudioSegment.from_file(audio_path)
@@ -108,15 +154,16 @@ class TranskunEngine:
             y = soxr.resample(y, fs, model.fs)
 
         # Run inference.
+        # TODO: FP16 on CUDA is a later tuning toggle (verify op support first)
+        # Keep FP32 for now — Transkun's transcribe path is not verified FP16-safe.
         x = torch.from_numpy(y).to(device)
-        torch.set_grad_enabled(False)
-        raw_notes = model.transcribe(
-            x,
-            stepInSecond=None,
-            segmentSizeInSecond=None,
-            discardSecondHalf=False,
-        )
-        torch.set_grad_enabled(True)
+        with torch.inference_mode():
+            raw_notes = model.transcribe(
+                x,
+                stepInSecond=None,
+                segmentSizeInSecond=None,
+                discardSecondHalf=False,
+            )
 
         # Map Transkun Note objects to the normalised contract.
         note_events: list[tuple] = []
@@ -134,9 +181,16 @@ class TranskunEngine:
                     pedal_events.append((float(n.end), 0))
             # pitch == 0 is not a valid MIDI note — skip silently.
 
-        # BPM is not available from the Transkun model; return 0.0 so the
-        # caller falls back to _BPM_FALLBACK (120 bpm).
+        # Estimate tempo from the already-decoded array — no second file decode needed.
         bpm = 0.0
+        try:
+            from pianoflow_music.transcription.beat import estimate_tempo_from_array
+
+            result = estimate_tempo_from_array(y, model.fs)
+            if result is not None:
+                bpm = result
+        except Exception:
+            pass  # Tempo failure must not crash inference; caller falls back to _BPM_FALLBACK.
 
         return note_events, pedal_events, bpm
 
@@ -166,19 +220,10 @@ class TranskunEngine:
 
             note_events, pedal_events, bpm = self._run_model(tmp_path)
 
-            # Try to get a real tempo estimate from librosa (deferred import in beat.py).
-            tempo_source = "fallback_120"
-            if _BPM_MIN <= float(bpm) <= _BPM_MAX:
-                tempo_source = "transkun"
-            else:
-                from pianoflow_music.transcription.beat import estimate_tempo_and_beats
-
-                beat_result = estimate_tempo_and_beats(tmp_path)
-                if beat_result is not None:
-                    librosa_bpm, _ = beat_result
-                    if _BPM_MIN <= librosa_bpm <= _BPM_MAX:
-                        bpm = librosa_bpm
-                        tempo_source = "librosa"
+            # Tempo is now derived from the already-decoded array inside _run_model.
+            # No second file decode needed.
+            in_range = _BPM_MIN <= float(bpm) <= _BPM_MAX
+            tempo_source = "transkun_librosa" if in_range else "fallback_120"
         finally:
             if tmp_path is not None:
                 with contextlib.suppress(OSError):
@@ -247,12 +292,7 @@ class TranskunEngine:
 
         draft_midi_bytes = note_data_to_midi_bytes(note_data)
 
-        if tempo_source == "librosa":
-            tempo_confidence = 0.8
-        elif tempo_source == "transkun":
-            tempo_confidence = 0.6
-        else:
-            tempo_confidence = 0.5
+        tempo_confidence = 0.8 if tempo_source == "transkun_librosa" else 0.5
         confidence = {
             "overall_confidence": _BASE_CONFIDENCE,
             "pitch_confidence": _BASE_CONFIDENCE,
