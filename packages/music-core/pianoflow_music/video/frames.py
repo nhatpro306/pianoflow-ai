@@ -107,7 +107,7 @@ class FrameRenderer:
         gradient = np.zeros((fog_h, self.width, 4), dtype=np.uint8)
         # Non-linear (quadratic) fog for smoother blending
         t_vals = np.linspace(0.0, 1.0, fog_h)
-        alphas = (0.45 * (t_vals ** 2) * 255).astype(np.uint8)
+        alphas = (0.45 * (t_vals**2) * 255).astype(np.uint8)
         gradient[..., 0] = glow[0]
         gradient[..., 1] = glow[1]
         gradient[..., 2] = glow[2]
@@ -170,28 +170,36 @@ class FrameRenderer:
         for pitch, time_since_hit in hit_pulses:
             rect = self.layout.key_rect(pitch)
             cx = rect.x + rect.w / 2
-            
+
             progress = time_since_hit / _HIT_FLASH_SECONDS
-            
+
             # Horizontal glowing bar that expands and fades
             bar_width = rect.w * (2.0 + 4.0 * progress)
             bar_height = 4.0 * (1.0 - progress)
             alpha = int(200 * (1.0 - progress))
-            
+
             if alpha > 0:
                 draw_frame.ellipse(
-                    (cx - bar_width / 2, self.hit_y - bar_height / 2, 
-                     cx + bar_width / 2, self.hit_y + bar_height / 2),
+                    (
+                        cx - bar_width / 2,
+                        self.hit_y - bar_height / 2,
+                        cx + bar_width / 2,
+                        self.hit_y + bar_height / 2,
+                    ),
                     fill=(*self._rgb["hit_effect"], alpha),
                 )
-                
+
                 # Core bright spark
                 core_width = rect.w * (1.0 + 1.0 * progress)
                 core_height = 2.0
-                core_alpha = int(255 * (1.0 - progress)**2)
+                core_alpha = int(255 * (1.0 - progress) ** 2)
                 draw_frame.ellipse(
-                    (cx - core_width / 2, self.hit_y - core_height / 2, 
-                     cx + core_width / 2, self.hit_y + core_height / 2),
+                    (
+                        cx - core_width / 2,
+                        self.hit_y - core_height / 2,
+                        cx + core_width / 2,
+                        self.hit_y + core_height / 2,
+                    ),
                     fill=(*self._rgb["hit_effect"], core_alpha),
                 )
 

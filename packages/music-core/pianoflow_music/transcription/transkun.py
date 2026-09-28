@@ -98,9 +98,9 @@ def _get_model(device: str):
             if device not in _model_cache:
                 try:
                     _model_cache[device] = _build_model(device)
-                except ImportError as exc:
+                except Exception as exc:
                     raise TranscriptionError(
-                        "Transkun engine is not installed. Install the 'transkun' extra.",
+                        f"Transkun engine is not installed. Detail: {exc}",
                         code="ENGINE_UNAVAILABLE",
                     ) from exc
     return _model_cache[device]
@@ -133,7 +133,7 @@ class TranskunEngine:
             import torch  # type: ignore[import]
         except ImportError as exc:
             raise TranscriptionError(
-                "Transkun engine is not installed. Install the 'transkun' extra.",
+                f"Transkun engine is not installed. Detail: {exc}",
                 code="ENGINE_UNAVAILABLE",
             ) from exc
 

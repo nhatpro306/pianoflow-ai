@@ -10,7 +10,8 @@ image = (
     .pip_install(
         "torch",
         "demucs",
-        "transkun",
+        "transkun>=2.0",
+        "setuptools",
         "soxr",
         "pydub",
         "numpy",

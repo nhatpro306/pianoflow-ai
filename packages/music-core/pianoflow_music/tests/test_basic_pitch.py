@@ -6,10 +6,10 @@
 
 import pytest
 
+import pianoflow_music.transcription.basic_pitch as bp_module
 from pianoflow_music.midi.parse import parse_midi_bytes
 from pianoflow_music.transcription import BasicPitchEngine, TranscriptionError, get_engine
 from pianoflow_music.transcription.basic_pitch import ENGINE_NAME
-import pianoflow_music.transcription.basic_pitch as bp_module
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -384,9 +384,7 @@ def test_get_model_cache_is_none_after_reset(reset_bp_model_cache):
     assert bp_module._cached_model is None
 
 
-def test_get_model_missing_dependency_raises_engine_unavailable(
-    monkeypatch, reset_bp_model_cache
-):
+def test_get_model_missing_dependency_raises_engine_unavailable(monkeypatch, reset_bp_model_cache):
     """If basic_pitch cannot be imported, _get_model must raise ENGINE_UNAVAILABLE."""
     from pianoflow_music.transcription.engine import TranscriptionError
 
