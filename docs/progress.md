@@ -4,6 +4,26 @@ Newest entries first. Append with `/checkpoint` after completing a milestone.
 
 ---
 
+## 2026-09-28 - AWS Infrastructure Redeployed & UI Upgraded
+
+**Milestone: Stage 3 deployment fixed and UI primitives shipped.**
+
+### AWS Redeployment Success
+- Fixed GitHub Actions terraform state orphan issue by switching prefix to \pianoflow-v3\.
+- Injected \	erraform apply -target=module.ecr\ dynamically before Docker build to prevent \RepositoryNotFoundException\ race conditions.
+- Deployment run time reduced to < 4 minutes.
+- Verified API Gateway health check (\/healthz\ returning 200 OK).
+
+### UI / UX Improvements
+- Replaced manual UI logic with a consolidated \pps/web/components/ui/\ primitive design system (Button, Card, Input, Badge, Progress, Skeleton).
+- Streamlined project creation (\/create\) to accept both MIDI and Audio files natively.
+- Evaluated transcription algorithms in python (\scripts/run_eval_baseline.py\).
+- Authored plans for Web MIDI (\PRACTICE_WEB_MIDI_PLAN.md\) and Antigravity MCP integration (\ANTIGRAVITY_INTEGRATION_PLAN.md\).
+
+---
+
+
+
 ## 2026-06-15 — AWS Free-Tier Deployment Live + ECC Adopted
 
 **Milestone: Stage 3 deployment complete.**

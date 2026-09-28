@@ -152,7 +152,7 @@ export default function CreatePage() {
           Create Project
         </h1>
         <p className="max-w-lg text-sm text-zinc-400">
-          Drop a MIDI file, audio file, or paste a link — we'll prepare an editable lesson.
+          Drop a MIDI file, audio file, or paste a link — we&apos;ll prepare an editable lesson.
         </p>
       </div>
 
