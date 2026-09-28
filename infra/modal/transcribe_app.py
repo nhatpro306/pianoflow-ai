@@ -16,7 +16,7 @@ image = (
         "numpy",
         "mido",
         "librosa",
-        "yt-dlp[default]",
+        "yt-dlp[default]>=2026.8.19",
         "curl_cffi",
         "soundfile",
         "torchcodec",

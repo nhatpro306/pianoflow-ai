@@ -105,7 +105,9 @@ class FrameRenderer:
         fog_h = max(int(self.height * _FOG_HEIGHT_RATIO), 1)
         glow = self._rgb["glow"]
         gradient = np.zeros((fog_h, self.width, 4), dtype=np.uint8)
-        alphas = (np.linspace(0.0, 0.45, fog_h) * 255).astype(np.uint8)
+        # Non-linear (quadratic) fog for smoother blending
+        t_vals = np.linspace(0.0, 1.0, fog_h)
+        alphas = (0.45 * (t_vals ** 2) * 255).astype(np.uint8)
         gradient[..., 0] = glow[0]
         gradient[..., 1] = glow[1]
         gradient[..., 2] = glow[2]
@@ -130,7 +132,7 @@ class FrameRenderer:
         note_layer = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
         draw = ImageDraw.Draw(note_layer)
         active_pitches: list[int] = []
-        hit_pulses: list[int] = []
+        hit_pulses: list[tuple[int, float]] = []
 
         for note in self._visible_notes(t):
             rect = self.layout.key_rect(note.pitch)
@@ -149,7 +151,7 @@ class FrameRenderer:
             if note.start <= t <= note.end:
                 active_pitches.append(note.pitch)
             if note.start <= t <= note.start + _HIT_FLASH_SECONDS:
-                hit_pulses.append(note.pitch)
+                hit_pulses.append((note.pitch, t - note.start))
 
         if self.config.glow_intensity > 0:
             blur_radius = 2 + self.config.glow_intensity * 6
@@ -165,14 +167,33 @@ class FrameRenderer:
             (0, self.hit_y - _HIT_LINE_HEIGHT, self.width, self.hit_y),
             fill=(*self._rgb["hit_effect"], 230),
         )
-        for pitch in hit_pulses:
+        for pitch, time_since_hit in hit_pulses:
             rect = self.layout.key_rect(pitch)
             cx = rect.x + rect.w / 2
-            radius = rect.w * 1.2
-            draw_frame.ellipse(
-                (cx - radius, self.hit_y - radius, cx + radius, self.hit_y + radius),
-                fill=(*self._rgb["hit_effect"], 70),
-            )
+            
+            progress = time_since_hit / _HIT_FLASH_SECONDS
+            
+            # Horizontal glowing bar that expands and fades
+            bar_width = rect.w * (2.0 + 4.0 * progress)
+            bar_height = 4.0 * (1.0 - progress)
+            alpha = int(200 * (1.0 - progress))
+            
+            if alpha > 0:
+                draw_frame.ellipse(
+                    (cx - bar_width / 2, self.hit_y - bar_height / 2, 
+                     cx + bar_width / 2, self.hit_y + bar_height / 2),
+                    fill=(*self._rgb["hit_effect"], alpha),
+                )
+                
+                # Core bright spark
+                core_width = rect.w * (1.0 + 1.0 * progress)
+                core_height = 2.0
+                core_alpha = int(255 * (1.0 - progress)**2)
+                draw_frame.ellipse(
+                    (cx - core_width / 2, self.hit_y - core_height / 2, 
+                     cx + core_width / 2, self.hit_y + core_height / 2),
+                    fill=(*self._rgb["hit_effect"], core_alpha),
+                )
 
         # Keyboard with lit keys.
         keyboard = self._keyboard_base.copy()
