@@ -18,6 +18,7 @@ from app.api.v1.routers import (
     notes,
     outputs,
     projects,
+    stripe,
     uploads,
 )
 from app.api.v1.routers import settings as settings_router
@@ -77,6 +78,7 @@ def create_app() -> FastAPI:
     app.include_router(outputs.router)
     app.include_router(settings_router.router)
     app.include_router(gamification.router)
+    app.include_router(stripe.router)
     if settings.storage_backend == "local":
         app.include_router(internal_storage.router)
     return app

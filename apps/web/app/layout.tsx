@@ -13,6 +13,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#22d3ee" />
+      </head>
       <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
         <Providers>
           <header className="border-b border-zinc-800">
@@ -27,6 +31,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </Link>
                   <Link href="/projects" className="hover:text-zinc-100">
                     Projects
+                  </Link>
+                  <Link href="/pricing" className="hover:text-zinc-100">
+                    Pricing
                   </Link>
                 </div>
               </div>

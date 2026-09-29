@@ -154,6 +154,12 @@ export interface PracticeSessionResponse {
 // ── Calls ───────────────────────────────────────────────────
 
 export const api = {
+  createCheckoutSession: (priceId: string) =>
+    apiFetch<{ url: string }>("/api/v1/stripe/checkout", {
+      method: "POST",
+      body: JSON.stringify({ price_id: priceId }),
+    }),
+
   createProject: (name: string) =>
     apiFetch<Project>("/api/v1/projects", {
       method: "POST",
