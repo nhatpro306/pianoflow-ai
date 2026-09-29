@@ -41,9 +41,13 @@ function toBase64(buffer: ArrayBuffer): string {
 async function pollResult(
   callId: string,
   onStatus?: (s: TranscribeStatus) => void,
+  onProgress?: (percent: number) => void,
 ): Promise<TranscribeResult> {
   onStatus?.("processing");
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const progress = Math.min(98, Math.round(50 * Math.log10(attempt + 1) / Math.log10(MAX_ATTEMPTS) * 2));
+    onProgress?.(progress);
+    
     await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 
     const pollUrl = DIRECT
@@ -60,6 +64,7 @@ async function pollResult(
 
     if (payload.status === "done") {
       onStatus?.("done");
+      onProgress?.(100);
       if (!payload.result) throw new Error("Modal returned done but no result");
       return payload.result;
     }
@@ -76,6 +81,7 @@ export async function submitAudio(
   audioFile: File,
   options: Record<string, unknown> = {},
   onStatus?: (s: TranscribeStatus) => void,
+  onProgress?: (percent: number) => void,
 ): Promise<TranscribeResult> {
   // 1. Read file and encode to base64
   onStatus?.("uploading");
@@ -100,7 +106,7 @@ export async function submitAudio(
 
   const { call_id } = (await submitRes.json()) as { call_id: string };
 
-  return pollResult(call_id, onStatus);
+  return pollResult(call_id, onStatus, onProgress);
 }
 
 export async function submitUrl(
@@ -108,6 +114,7 @@ export async function submitUrl(
   rightsAttested: boolean,
   options: Record<string, unknown> = {},
   onStatus?: (s: TranscribeStatus) => void,
+  onProgress?: (percent: number) => void,
 ): Promise<TranscribeResult> {
   if (!DIRECT) {
     throw new Error("Link ingestion requires the direct Modal endpoint (NEXT_PUBLIC_MODAL_SUBMIT_URL).");
@@ -126,5 +133,5 @@ export async function submitUrl(
     throw new Error(detail ?? err ?? `Submit failed (${submitRes.status})`);
   }
   const { call_id } = (await submitRes.json()) as { call_id: string };
-  return pollResult(call_id, onStatus);
+  return pollResult(call_id, onStatus, onProgress);
 }

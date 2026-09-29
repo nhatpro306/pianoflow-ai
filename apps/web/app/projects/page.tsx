@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 
 import type { Project } from "@/lib/api";
 import { useDeleteProject, useProjects } from "@/lib/hooks";
 import { useRequireAuth } from "@/lib/useRequireAuth";
+import { Dialog, DialogActions } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
 
 const STATUS_STYLE: Record<Project["status"], string> = {
   created: "bg-zinc-700 text-zinc-200",
@@ -23,8 +26,7 @@ function formatDuration(seconds: number | undefined): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-function ProjectCard({ project }: { project: Project }) {
-  const del = useDeleteProject();
+function ProjectCard({ project, onDelete }: { project: Project; onDelete: (p: Project) => void }) {
   const summary = project.analysis_summary;
 
   return (
@@ -61,11 +63,7 @@ function ProjectCard({ project }: { project: Project }) {
       <div className="flex justify-between text-xs text-zinc-500">
         <span>{new Date(project.created_at).toLocaleDateString()}</span>
         <button
-          onClick={() => {
-            if (window.confirm(`Delete "${project.name}"? This cannot be undone.`)) {
-              del.mutate(project.id);
-            }
-          }}
+          onClick={() => onDelete(project)}
           className="text-red-400 hover:text-red-300"
         >
           Delete
@@ -78,8 +76,18 @@ function ProjectCard({ project }: { project: Project }) {
 export default function ProjectsPage() {
   const { authenticated } = useRequireAuth();
   const { data, isLoading, isError } = useProjects();
+  const del = useDeleteProject();
+  
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
   if (!authenticated) return null;
+
+  const handleDelete = () => {
+    if (deleteTarget) {
+      del.mutate(deleteTarget.id);
+      setDeleteTarget(null);
+    }
+  };
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
@@ -120,10 +128,30 @@ export default function ProjectsPage() {
       {data && data.items.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.items.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard 
+              key={project.id} 
+              project={project} 
+              onDelete={setDeleteTarget} 
+            />
           ))}
         </div>
       )}
+
+      <Dialog 
+        open={!!deleteTarget} 
+        onClose={() => setDeleteTarget(null)}
+        title="Delete Project?"
+      >
+        <p>Are you sure you want to delete &quot;{deleteTarget?.name}&quot;? This cannot be undone.</p>
+        <DialogActions>
+          <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDelete}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </main>
   );
 }

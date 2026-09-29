@@ -11,7 +11,7 @@ image = (
         "torch",
         "demucs",
         "transkun>=2.0",
-        "setuptools",
+        "setuptools<70.0.0",
         "soxr",
         "pydub",
         "numpy",

@@ -130,7 +130,7 @@ export default function PracticePage() {
                 </span>
               </div>
             ) : (
-              <span className="text-zinc-600">Waiting for input...</span>
+              <span className="text-zinc-500">Waiting for input...</span>
             )}
           </Card>
         </div>

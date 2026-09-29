@@ -11,14 +11,6 @@ import { Progress } from "@/components/ui/Progress";
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
 const ACCEPTED_TYPES = [".wav", ".mp3", ".m4a", ".mid", ".midi"];
 
-const STATUS_MESSAGES: Record<TranscribeStatus, string> = {
-  idle: "",
-  uploading: "Uploading audio…",
-  processing: "Converting audio to MIDI on GPU…",
-  done: "Done!",
-  error: "",
-};
-
 export default function CreatePage() {
   const router = useRouter();
   const { authenticated } = useRequireAuth();
@@ -30,6 +22,7 @@ export default function CreatePage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [processingProgress, setProcessingProgress] = useState(0);
   const [fullMix, setFullMix] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [rightsAttested, setRightsAttested] = useState(false);
@@ -99,7 +92,7 @@ export default function CreatePage() {
       const options = fullMix
         ? { engine: "transkun", separate: true, stem: "piano" }
         : { engine: "transkun", separate: false };
-      const res = await submitUrl(linkUrl.trim(), rightsAttested, options, (s) => setStatus(s));
+      const res = await submitUrl(linkUrl.trim(), rightsAttested, options, (s) => setStatus(s), setProcessingProgress);
       setSaving(true);
       await saveToProject(res.midi_b64, "Transcription from link");
     } catch (err) {
@@ -125,7 +118,7 @@ export default function CreatePage() {
       const options = fullMix
         ? { engine: "transkun", separate: true, stem: "piano" }
         : { engine: "transkun", separate: false };
-      const res = await submitAudio(file, options, (s) => setStatus(s));
+      const res = await submitAudio(file, options, (s) => setStatus(s), setProcessingProgress);
       setSaving(true);
       await saveToProject(res.midi_b64, file.name.replace(/\.[^.]+$/, "") ?? "Transcription");
     } catch (err) {
@@ -140,11 +133,6 @@ export default function CreatePage() {
   }
 
   const isWorking = status === "uploading" || status === "processing" || saving;
-
-  function statusText(): string {
-    if (saving) return "Saving to project…";
-    return STATUS_MESSAGES[status];
-  }
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-4xl flex-col items-center gap-8 px-6 py-12">
@@ -207,7 +195,7 @@ export default function CreatePage() {
             <strong className="text-zinc-200">MIDI</strong> file here, or click to browse
           </span>
         )}
-        <span className="text-xs text-zinc-600">Max 50 MB</span>
+        <span className="text-xs text-zinc-500">Max 50 MB</span>
       </div>
 
       {/* File validation error */}
@@ -221,7 +209,7 @@ export default function CreatePage() {
           value={linkUrl}
           onChange={(e) => setLinkUrl(e.target.value)}
           placeholder="https://www.youtube.com/watch?v=…"
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-cyan-500 focus:outline-none"
+          className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-cyan-500 focus:outline-none"
         />
         <label className="flex cursor-pointer items-start gap-2 text-xs text-zinc-400">
           <input
@@ -265,30 +253,89 @@ export default function CreatePage() {
         <button
           disabled={isWorking || !!fileError}
           onClick={() => void handleTranscribe()}
-          className="rounded-lg bg-cyan-500 px-8 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center justify-center gap-2 rounded-lg bg-cyan-500 px-8 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isWorking ? statusText() : (file.name.toLowerCase().endsWith(".mid") || file.name.toLowerCase().endsWith(".midi") ? "Upload MIDI project" : "Transcribe audio")}
+          {isWorking ? (
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent" />
+          ) : file.name.toLowerCase().endsWith(".mid") || file.name.toLowerCase().endsWith(".midi") ? (
+            "Upload MIDI project"
+          ) : (
+            "Transcribe audio"
+          )}
         </button>
       )}
 
-      {/* Progress indicator */}
-      {isWorking && (
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3 text-sm text-zinc-400">
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-zinc-600 border-t-cyan-400" />
-            {statusText()}
-          </div>
-          {uploadProgress > 0 && uploadProgress < 100 && (
-            <div className="w-full">
-              <div className="flex justify-between text-xs text-zinc-500 mb-1">
-                <span>Uploading...</span>
-                <span>{uploadProgress}%</span>
+      {/* 3-step progress pipeline */}
+      {isWorking && (() => {
+        const step1Done = status === "processing" || status === "done" || saving;
+        const step1Value = step1Done ? 100 : (status === "uploading" ? Math.max(uploadProgress, 5) : 0);
+        const step2Done = status === "done" || saving;
+        const step2Value = step2Done ? 100 : (status === "processing" ? processingProgress : 0);
+        const step3Done = status === "done";
+
+        return (
+          <div className="w-full max-w-md flex flex-col gap-4">
+            {/* Step 1: Upload */}
+            <div className="flex items-center gap-3">
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${step1Done ? "bg-cyan-400/20 text-cyan-400" : status === "uploading" ? "bg-cyan-400/10 text-cyan-400 animate-pulse" : "bg-zinc-800 text-zinc-600"}`}>
+                {step1Done ? (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                ) : (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13" /></svg>
+                )}
               </div>
-              <Progress value={uploadProgress} />
+              <div className="flex-1">
+                <Progress value={step1Value} />
+              </div>
+              <span className="w-10 text-right text-xs tabular-nums text-zinc-400">
+                {step1Value}%
+              </span>
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Step 2: AI Processing */}
+            <div className="flex items-center gap-3">
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${step2Done ? "bg-cyan-400/20 text-cyan-400" : status === "processing" ? "bg-cyan-400/10 text-cyan-400 animate-pulse" : "bg-zinc-800 text-zinc-600"}`}>
+                {step2Done ? (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                ) : (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z" /></svg>
+                )}
+              </div>
+              <div className="flex-1">
+                {status === "processing" && processingProgress === 0 ? (
+                  <Progress indeterminate />
+                ) : (
+                  <Progress value={step2Value} />
+                )}
+              </div>
+              <span className="w-10 text-right text-xs tabular-nums text-zinc-400">
+                {status === "processing" && processingProgress === 0 ? "…" : `${step2Value}%`}
+              </span>
+            </div>
+
+            {/* Step 3: Save */}
+            <div className="flex items-center gap-3">
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${step3Done ? "bg-cyan-400/20 text-cyan-400" : saving ? "bg-cyan-400/10 text-cyan-400 animate-pulse" : "bg-zinc-800 text-zinc-600"}`}>
+                {step3Done ? (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                ) : (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>
+                )}
+              </div>
+              <div className="flex-1">
+                {saving ? (
+                  <Progress indeterminate />
+                ) : (
+                  <Progress value={step3Done ? 100 : 0} />
+                )}
+              </div>
+              <span className="w-10 text-right text-xs tabular-nums text-zinc-400">
+                {saving ? "…" : step3Done ? "100%" : "—"}
+              </span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Error message */}
       {errorMsg && (

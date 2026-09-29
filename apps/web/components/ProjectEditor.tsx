@@ -5,11 +5,23 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { FallingNotePreview } from "@/components/FallingNotePreview";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { Progress } from "@/components/ui/Progress";
 import { api, ApiError } from "@/lib/api";
 import { useJob, useNotes, useOutputs, usePatchSettings, useProject, useSettings } from "@/lib/hooks";
+import { useRouter } from "next/navigation";
+
+const ERROR_MESSAGES: Record<string, string> = {
+  SIMPLIFIED_NOTES_NOT_READY: "Generate the beginner MIDI first.",
+  NOTES_NOT_READY: "Notes are still processing. They will appear automatically.",
+};
+
+function getFriendlyError(code: string | undefined | null, fallback: string) {
+  return ERROR_MESSAGES[code as string] || fallback;
+}
 
 export function ProjectEditor({ id }: { id: string }) {
   const project = useProject(id);
@@ -19,6 +31,7 @@ export function ProjectEditor({ id }: { id: string }) {
   const serverSettings = useSettings(id);
   const patchSettings = usePatchSettings(id);
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const [local, setLocal] = useState<RenderSettings | null>(null);
   const [sheetJobId, setSheetJobId] = useState<string | null>(null);
@@ -138,12 +151,18 @@ export function ProjectEditor({ id }: { id: string }) {
       <div className="mb-6 flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <h1 className="text-2xl font-bold">{p.name}</h1>
         {summary && (
-          <span className="font-mono text-sm text-zinc-400">
-            {summary.bpm} BPM / {Math.floor(summary.duration_sec / 60)}:
-            {String(Math.round(summary.duration_sec % 60)).padStart(2, "0")} /{" "}
-            {summary.note_count} notes / {summary.track_count} tracks / hands:{" "}
-            {summary.hand_split ?? "-"} <span className="text-zinc-600">(estimate)</span>
-          </span>
+          <div className="flex flex-wrap gap-2 text-sm mt-1">
+            <Badge>{summary.bpm} BPM</Badge>
+            <Badge>
+              {Math.floor(summary.duration_sec / 60)}:
+              {String(Math.round(summary.duration_sec % 60)).padStart(2, "0")}
+            </Badge>
+            <Badge>{summary.note_count} notes</Badge>
+            <Badge>{summary.track_count} tracks</Badge>
+            <Badge>
+              hands: {summary.hand_split ?? "-"} <span className="text-zinc-500 ml-1">(estimate)</span>
+            </Badge>
+          </div>
         )}
       </div>
 
@@ -201,45 +220,44 @@ export function ProjectEditor({ id }: { id: string }) {
                 )}
               </div>
             )}
-            <div className="mt-4 flex flex-wrap gap-2 text-sm">
-              {local.difficulty !== "original" && (
-                <button
-                  onClick={() => simplify.mutate()}
-                  disabled={simplify.isPending}
-                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:bg-zinc-900 disabled:opacity-50"
-                >
-                  {simplify.isPending ? "Simplifying..." : "Generate beginner MIDI"}
-                </button>
-              )}
-              <Link
-                href={`/projects/${id}/practice`}
-                className="rounded-md border border-green-700 bg-green-900/20 px-3 py-1.5 text-green-400 hover:bg-green-900/40"
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Button
+                variant="primary"
+                onClick={() => router.push(`/projects/${id}/practice`)}
               >
                 Start Practice (MIDI)
-              </Link>
-              <button
-                onClick={() => renderSheet.mutate()}
-                disabled={renderSheet.isPending}
-                className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:bg-zinc-900 disabled:opacity-50"
-              >
-                {renderSheet.isPending ? "Queued..." : "Generate sheet"}
-              </button>
-              <button
-                onClick={() => renderVideo.mutate()}
-                disabled={renderVideo.isPending}
-                className="rounded-md border border-cyan-700 px-3 py-1.5 text-cyan-200 hover:bg-cyan-950/40 disabled:opacity-50"
-              >
-                {renderVideo.isPending ? "Queued..." : "Generate tutorial video"}
-              </button>
+              </Button>
+              <div className="flex flex-wrap gap-2">
+                {local.difficulty !== "original" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => simplify.mutate()}
+                    disabled={simplify.isPending}
+                  >
+                    {simplify.isPending ? "Simplifying..." : "Generate beginner MIDI"}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() => renderSheet.mutate()}
+                  disabled={renderSheet.isPending}
+                >
+                  {renderSheet.isPending ? "Queued..." : "Generate sheet"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => renderVideo.mutate()}
+                  disabled={renderVideo.isPending}
+                >
+                  {renderVideo.isPending ? "Queued..." : "Generate tutorial video"}
+                </Button>
+              </div>
             </div>
             {notes.isError && (
               <p className="mt-3 rounded-md border border-amber-900 bg-amber-950/30 px-3 py-2 text-sm text-amber-200">
-                {notes.error instanceof ApiError &&
-                notes.error.code === "SIMPLIFIED_NOTES_NOT_READY"
-                  ? "Generate the beginner MIDI first."
-                  : notes.error instanceof ApiError && notes.error.code === "NOTES_NOT_READY"
-                    ? "Notes are still processing. They will appear automatically."
-                    : "Could not load notes for this difficulty."}
+                {notes.error instanceof ApiError
+                  ? getFriendlyError(notes.error.code, "Could not load notes for this difficulty.")
+                  : "Could not load notes for this difficulty."}
               </p>
             )}
 
@@ -264,11 +282,7 @@ export function ProjectEditor({ id }: { id: string }) {
                 ) : sheetJob.data?.status === "failed" ? (
                   <p className="text-xs text-red-400">
                     Sheet render failed:{" "}
-                    {sheetJob.data.error_type === "NOTES_NOT_READY"
-                      ? "Parsed notes aren't ready yet."
-                      : sheetJob.data.error_type === "SIMPLIFIED_NOTES_NOT_READY"
-                        ? "Generate the beginner MIDI first."
-                        : (sheetJob.data.error_message ?? "Unknown error.")}
+                    {getFriendlyError(sheetJob.data.error_type, sheetJob.data.error_message ?? "Unknown error.")}
                   </p>
                 ) : null}
 
@@ -288,11 +302,7 @@ export function ProjectEditor({ id }: { id: string }) {
                 ) : videoJob.data?.status === "failed" ? (
                   <p className="text-xs text-red-400">
                     Video render failed:{" "}
-                    {videoJob.data.error_type === "NOTES_NOT_READY"
-                      ? "Parsed notes aren't ready yet."
-                      : videoJob.data.error_type === "SIMPLIFIED_NOTES_NOT_READY"
-                        ? "Generate the beginner MIDI first."
-                        : (videoJob.data.error_message ?? "Unknown error.")}
+                    {getFriendlyError(videoJob.data.error_type, videoJob.data.error_message ?? "Unknown error.")}
                   </p>
                 ) : null}
 
