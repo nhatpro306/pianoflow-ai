@@ -72,6 +72,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(projects.router)
     app.include_router(uploads.router)
+    app.include_router(uploads.global_router)
     app.include_router(audio.router)
     app.include_router(notes.router)
     app.include_router(jobs.router)

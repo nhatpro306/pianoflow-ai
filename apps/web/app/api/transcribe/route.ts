@@ -14,6 +14,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Modal not configured" }, { status: 503 });
   }
 
+  const action = req.nextUrl.searchParams.get("action");
+  const base = submitUrl.replace(/\/submit\/?$/, "");
+  const finalUrl = action === "submit_url" ? `${base}/submit_url` : submitUrl;
+
   let body: unknown;
   try {
     body = await req.json();
@@ -22,7 +26,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const modalRes = await fetch(submitUrl, {
+    const modalRes = await fetch(finalUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

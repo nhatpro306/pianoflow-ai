@@ -111,6 +111,7 @@ export interface UploadInit {
   headers: Record<string, string>;
   expires_at: string;
   max_bytes: number;
+  download_url?: string;
 }
 
 export interface OutputFile {
@@ -193,6 +194,12 @@ export const api = {
     apiFetch<PracticeSessionResponse>("/api/v1/practice-sessions", {
       method: "POST",
       body: JSON.stringify(payload),
+    }),
+
+  initTempAudioUpload: (filename: string, sizeBytes: number, contentType: string) =>
+    apiFetch<UploadInit>(`/api/v1/uploads/audio`, {
+      method: "POST",
+      body: JSON.stringify({ filename, size_bytes: sizeBytes, content_type: contentType }),
     }),
 
   initUpload: (projectId: string, filename: string, sizeBytes: number) =>

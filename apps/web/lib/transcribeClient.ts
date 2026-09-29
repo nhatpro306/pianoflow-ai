@@ -1,3 +1,4 @@
+import { api } from "./api";
 /**
  * Client library for the Modal audio→MIDI transcription endpoint.
  * All requests go through the Next.js route handler at /api/transcribe —
@@ -11,7 +12,7 @@ const DEMO_TOKEN = process.env.NEXT_PUBLIC_DEMO_TOKEN;
 
 // When the public Modal URLs are configured we call Modal directly (no Vercel
 // body-size ceiling); otherwise we fall back to the /api/transcribe proxy.
-const DIRECT = Boolean(MODAL_SUBMIT_URL && MODAL_RESULT_URL);
+const DIRECT = false;
 
 function tokenHeaders(): Record<string, string> {
   return DEMO_TOKEN ? { "X-Demo-Token": DEMO_TOKEN } : {};
@@ -29,13 +30,17 @@ export interface TranscribeResult {
 const POLL_INTERVAL_MS = 2000;
 const MAX_ATTEMPTS = 120; // 4 minutes
 
-function toBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
+async function toBase64(buffer: ArrayBuffer): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([buffer]);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      resolve(dataUrl.split(",")[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
 
 async function pollResult(
@@ -83,30 +88,29 @@ export async function submitAudio(
   onStatus?: (s: TranscribeStatus) => void,
   onProgress?: (percent: number) => void,
 ): Promise<TranscribeResult> {
-  // 1. Read file and encode to base64
   onStatus?.("uploading");
-  const buffer = await audioFile.arrayBuffer();
-  const audio_b64 = toBase64(buffer);
-
-  // 2. Submit — directly to Modal when configured (avoids Vercel's ~4.5 MB
-  //    body limit on the proxy), otherwise via the Next.js route handler.
-  const submitRes = await fetch(DIRECT ? `${MODAL_SUBMIT_URL}/submit` : "/api/transcribe", {
+  const init = await api.initTempAudioUpload(audioFile.name, audioFile.size, audioFile.type || "audio/webm");
+  if (!init.download_url) {
+    throw new Error("Backend did not provide a download URL for Modal");
+  }
+  await api.putToSignedUrl(init, audioFile, (pct) => {
+    onProgress?.(Math.floor(pct * 0.5));
+  });
+  onStatus?.("processing");
+  const submitRes = await fetch("/api/transcribe?action=submit_url", {
     method: "POST",
     headers: { "Content-Type": "application/json", ...tokenHeaders() },
-    body: JSON.stringify({ audio_b64, options }),
+    body: JSON.stringify({ url: init.download_url, rights_attested: true, options }),
   });
-
   if (!submitRes.ok) {
     const body = await submitRes.json().catch(() => ({})) as Record<string, unknown>;
     onStatus?.("error");
-    throw new Error(
-      typeof body["error"] === "string" ? body["error"] : `Submit failed (${submitRes.status})`,
-    );
+    throw new Error(typeof body["error"] === "string" ? body["error"] : `Submit failed (${submitRes.status})`);
   }
-
   const { call_id } = (await submitRes.json()) as { call_id: string };
-
-  return pollResult(call_id, onStatus, onProgress);
+  return pollResult(call_id, onStatus, (pct) => {
+    onProgress?.(50 + Math.floor(pct * 0.5));
+  });
 }
 
 export async function submitUrl(
@@ -116,11 +120,8 @@ export async function submitUrl(
   onStatus?: (s: TranscribeStatus) => void,
   onProgress?: (percent: number) => void,
 ): Promise<TranscribeResult> {
-  if (!DIRECT) {
-    throw new Error("Link ingestion requires the direct Modal endpoint (NEXT_PUBLIC_MODAL_SUBMIT_URL).");
-  }
   onStatus?.("uploading");
-  const submitRes = await fetch(`${MODAL_SUBMIT_URL}/submit_url`, {
+  const submitRes = await fetch("/api/transcribe?action=submit_url", {
     method: "POST",
     headers: { "Content-Type": "application/json", ...tokenHeaders() },
     body: JSON.stringify({ url, rights_attested: rightsAttested, options }),
