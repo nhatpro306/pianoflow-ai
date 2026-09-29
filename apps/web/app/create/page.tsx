@@ -7,9 +7,10 @@ import { api, ApiError } from "@/lib/api";
 import { submitAudio, submitUrl, type TranscribeStatus } from "@/lib/transcribeClient";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import { Progress } from "@/components/ui/Progress";
+import { AudioRecorder } from "@/components/AudioRecorder";
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
-const ACCEPTED_TYPES = [".wav", ".mp3", ".m4a", ".mid", ".midi"];
+const ACCEPTED_TYPES = [".wav", ".mp3", ".m4a", ".mid", ".midi", ".webm"];
 
 export default function CreatePage() {
   const router = useRouter();
@@ -33,8 +34,8 @@ export default function CreatePage() {
   function validateAndSetFile(f: File) {
     setFileError(null);
     const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
-    if (!["wav", "mp3", "m4a", "mid", "midi"].includes(ext)) {
-      setFileError("Unsupported file type. Please upload a .wav, .mp3, .m4a, or .mid file.");
+    if (!["wav", "mp3", "m4a", "mid", "midi", "webm"].includes(ext)) {
+      setFileError("Unsupported file type. Please upload a .wav, .mp3, .m4a, .webm, or .mid file.");
       return;
     }
     if (f.size > MAX_FILE_BYTES) {
@@ -200,6 +201,12 @@ export default function CreatePage() {
 
       {/* File validation error */}
       {fileError && <p className="text-sm text-red-400">{fileError}</p>}
+
+      {/* Record audio directly */}
+      <AudioRecorder 
+        onRecordingComplete={validateAndSetFile} 
+        disabled={isWorking} 
+      />
 
       {/* Or paste a link */}
       <div className="flex w-full flex-col gap-2">

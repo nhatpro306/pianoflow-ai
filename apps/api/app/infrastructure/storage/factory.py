@@ -38,5 +38,6 @@ def get_storage() -> StorageService:
             bucket_sources=settings.s3_bucket_sources,
             bucket_analysis=settings.s3_bucket_analysis,
             bucket_outputs=settings.s3_bucket_outputs,
+            endpoint_url=settings.s3_endpoint_url,
         )
     raise NotImplementedError(f"Unknown STORAGE_BACKEND={settings.storage_backend!r}")

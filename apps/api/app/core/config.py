@@ -99,6 +99,7 @@ class Settings(BaseSettings):
     s3_bucket_sources: str = "pianoflow-sources"
     s3_bucket_analysis: str = "pianoflow-analysis"
     s3_bucket_outputs: str = "pianoflow-outputs"
+    s3_endpoint_url: str | None = None
 
     auth_mode: Literal["dev", "supabase"] = "dev"
     supabase_jwt_secret: str = ""

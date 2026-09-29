@@ -28,8 +28,9 @@ class S3StorageService:
         bucket_sources: str = "pianoflow-sources",
         bucket_analysis: str = "pianoflow-analysis",
         bucket_outputs: str = "pianoflow-outputs",
+        endpoint_url: str | None = None,
     ) -> None:
-        self._s3 = boto3.client("s3", region_name=region)
+        self._s3 = boto3.client("s3", region_name=region, endpoint_url=endpoint_url)
         self._buckets = {
             "sources": bucket_sources,
             "analysis": bucket_analysis,

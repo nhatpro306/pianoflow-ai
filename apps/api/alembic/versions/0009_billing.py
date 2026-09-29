@@ -10,6 +10,7 @@ Phase 4B: Freemium Billing (Stripe)
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "0009"
