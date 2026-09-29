@@ -76,3 +76,19 @@ export function useDeleteProject() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects"] }),
   });
 }
+
+export function useUserProgress() {
+  return useQuery({
+    queryKey: ["userProgress"],
+    queryFn: () => api.getUserProgress(),
+  });
+}
+
+export function useCreatePracticeSession() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Parameters<typeof api.createPracticeSession>[0]) =>
+      api.createPracticeSession(payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["userProgress"] }),
+  });
+}

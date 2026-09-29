@@ -8,6 +8,9 @@ import { useDeleteProject, useProjects } from "@/lib/hooks";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
+import { LevelProgress } from "@/components/ui/LevelProgress";
+import { StreakBadge } from "@/components/ui/StreakBadge";
+import { useUserProgress } from "@/lib/hooks";
 
 const STATUS_STYLE: Record<Project["status"], string> = {
   created: "bg-zinc-700 text-zinc-200",
@@ -76,6 +79,7 @@ function ProjectCard({ project, onDelete }: { project: Project; onDelete: (p: Pr
 export default function ProjectsPage() {
   const { authenticated } = useRequireAuth();
   const { data, isLoading, isError } = useProjects();
+  const { data: progressData } = useUserProgress();
   const del = useDeleteProject();
   
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
@@ -91,14 +95,26 @@ export default function ProjectsPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Projects</h1>
-        <Link
-          href="/upload"
-          className="rounded-md bg-cyan-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-cyan-400"
-        >
-          + New project
-        </Link>
+        <div className="flex items-center gap-4">
+          {progressData && (
+            <>
+              <StreakBadge streakDays={progressData.current_streak_days} />
+              <LevelProgress 
+                level={progressData.level} 
+                totalXp={progressData.total_xp} 
+                xpToNextLevel={progressData.xp_to_next_level} 
+              />
+            </>
+          )}
+          <Link
+            href="/upload"
+            className="rounded-md bg-cyan-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-cyan-400"
+          >
+            + New project
+          </Link>
+        </div>
       </div>
 
       {isLoading && (

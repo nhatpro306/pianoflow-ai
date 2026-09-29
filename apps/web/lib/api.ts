@@ -126,6 +126,31 @@ export interface OutputFile {
   created_at: string;
 }
 
+export interface UserProgress {
+  user_id: string;
+  total_xp: number;
+  level: number;
+  xp_to_next_level: number;
+  current_streak_days: number;
+  highest_streak_days: number;
+  last_practice_date: string | null;
+}
+
+export interface PracticeSessionPayload {
+  project_id: string;
+  score: number;
+  duration_seconds: number;
+  difficulty: string;
+}
+
+export interface PracticeSessionResponse {
+  session_id: string;
+  xp_gained: number;
+  total_xp: number;
+  level_up: boolean;
+  new_level: number;
+}
+
 // ── Calls ───────────────────────────────────────────────────
 
 export const api = {
@@ -154,6 +179,14 @@ export const api = {
     apiFetch<RenderSettings>(`/api/v1/projects/${id}/settings`, {
       method: "PATCH",
       body: JSON.stringify(patch),
+    }),
+
+  getUserProgress: () => apiFetch<UserProgress>("/api/v1/user/progress"),
+
+  createPracticeSession: (payload: PracticeSessionPayload) =>
+    apiFetch<PracticeSessionResponse>("/api/v1/practice-sessions", {
+      method: "POST",
+      body: JSON.stringify(payload),
     }),
 
   initUpload: (projectId: string, filename: string, sizeBytes: number) =>

@@ -53,17 +53,14 @@ def transcribe(audio_b64: str, options: dict) -> dict:
 
 
 # Hosts allowed for URL ingestion. No anti-bot evasion; on block we fail clean.
-_ALLOWED_HOSTS = {
+_ALLOWED_DOMAINS = [
     "youtube.com",
-    "www.youtube.com",
-    "m.youtube.com",
-    "music.youtube.com",
     "youtu.be",
     "tiktok.com",
-    "www.tiktok.com",
     "instagram.com",
-    "www.instagram.com",
-}
+    "facebook.com",
+    "fb.watch",
+]
 _MAX_DURATION_SEC = 600  # 10 min cap
 
 
@@ -71,7 +68,7 @@ def _host_allowed(url: str) -> bool:
     from urllib.parse import urlparse
 
     host = (urlparse(url).hostname or "").lower()
-    return host in _ALLOWED_HOSTS
+    return any(host == d or host.endswith("." + d) for d in _ALLOWED_DOMAINS)
 
 
 @app.function(gpu="A10G", image=image, timeout=900)

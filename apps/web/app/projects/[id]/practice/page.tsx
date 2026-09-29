@@ -10,13 +10,19 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 
+import { Dialog, DialogActions } from "@/components/ui/Dialog";
+import { useCreatePracticeSession } from "@/lib/hooks";
+
 export default function PracticePage() {
   const params = useParams();
   const projectId = params.id as string;
 
   const { midiAccess, activeNotes, error: midiError } = useWebMidi();
-  
   const notesQuery = useNotes(projectId, true);
+  const createSession = useCreatePracticeSession();
+
+  const [showXPDialog, setShowXPDialog] = useState(false);
+  const [xpData, setXpData] = useState<{ xp_gained: number; level_up: boolean; new_level: number } | null>(null);
 
   // Dummy expected notes for now (we would load this from the API)
   const dummyNotes = useMemo<ExpectedNote[]>(() => [
@@ -84,6 +90,22 @@ export default function PracticePage() {
     };
   }, [isPlaying, animate]); // Depend on activeNotes to re-eval instantly
 
+  const handleFinish = async () => {
+    setIsPlaying(false);
+    try {
+      const res = await createSession.mutateAsync({
+        project_id: projectId,
+        score: Math.floor(Math.random() * 100), // dummy score
+        duration_seconds: Math.floor(currentTime / 1000),
+        difficulty: "original",
+      });
+      setXpData(res);
+      setShowXPDialog(true);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-zinc-950 text-white overflow-hidden">
       {/* Header */}
@@ -107,6 +129,9 @@ export default function PracticePage() {
           </Button>
           <Button onClick={() => setIsPlaying(!isPlaying)}>
             {isPlaying ? 'Pause' : 'Start Playing'}
+          </Button>
+          <Button variant="primary" onClick={handleFinish} disabled={createSession.isPending}>
+            Finish Practice
           </Button>
         </div>
       </header>
@@ -142,6 +167,22 @@ export default function PracticePage() {
           <Keyboard activeNotes={activeNotes} expectedNotes={expectedNotesSet} />
         </div>
       </div>
+
+      <Dialog open={showXPDialog} onClose={() => setShowXPDialog(false)} title="Practice Complete!">
+        <div className="py-4 text-center">
+          <p className="text-3xl font-bold text-cyan-400 mb-2">+{xpData?.xp_gained} XP</p>
+          {xpData?.level_up && (
+            <p className="text-xl text-yellow-400 font-semibold mt-4">
+              Level Up! You are now Level {xpData.new_level}!
+            </p>
+          )}
+        </div>
+        <DialogActions>
+          <Button variant="primary" onClick={() => setShowXPDialog(false)}>
+            Awesome!
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

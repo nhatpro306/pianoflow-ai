@@ -220,3 +220,35 @@ class DailyUsage(Base):
         UniqueConstraint("user_id", "date", name="uq_daily_usage_user_date"),
         Index("idx_daily_usage_user_date", "user_id", "date"),
     )
+
+
+class UserProgress(Base):
+    __tablename__ = "user_progress"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True
+    )
+    total_xp: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    current_level: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    current_streak: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_practice_date: Mapped[datetime | None] = mapped_column(Date)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+
+class PracticeSession(Base):
+    __tablename__ = "practice_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
+    )
+    score: Mapped[int] = mapped_column(Integer, nullable=False)
+    accuracy_percent: Mapped[float] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
