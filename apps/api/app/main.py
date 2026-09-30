@@ -52,12 +52,10 @@ def create_app() -> FastAPI:
     if settings.cors_allowed_origins:
         cors_origins.extend(settings.cors_allowed_origins.split(","))
     cors_kwargs: dict = dict(
-        allow_origins=cors_origins,
+        allow_origins=["*"],
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    if settings.cors_allow_origin_regex:
-        cors_kwargs["allow_origin_regex"] = settings.cors_allow_origin_regex
     app.add_middleware(CORSMiddleware, **cors_kwargs)
 
     @app.middleware("http")
