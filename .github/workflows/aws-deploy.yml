@@ -75,41 +75,30 @@ jobs:
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - uses: hashicorp/setup-terraform@v3
-      - name: Initialize ECR repositories
-        working-directory: infra/terraform
-        env:
-          TF_VAR_api_image_tag: ${{ github.sha }}
-          TF_VAR_worker_image_tag: ${{ github.sha }}
-        run: |
-          terraform init -input=false
-          terraform apply -target=module.ecr -auto-approve
-
       - name: Build and push API image
         run: |
           IMAGE="${{ steps.ecr.outputs.registry }}/pianoflow-v3-api:${{ github.sha }}"
           docker build -f infra/docker/api.Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
-          echo "API_IMAGE_TAG=${{ github.sha }}" >> "$GITHUB_ENV"
+          echo "API_IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Deploy API to Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name pianoflow-v3-api \
+            --image-uri "${{ env.API_IMAGE }}" \
+            --region "${{ env.AWS_REGION }}"
 
       - name: Build and push worker image
         run: |
           IMAGE="${{ steps.ecr.outputs.registry }}/pianoflow-v3-worker:${{ github.sha }}"
           docker build -f infra/docker/worker.Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
+          echo "WORKER_IMAGE=$IMAGE" >> "$GITHUB_ENV"
 
-      - uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform plan
-        working-directory: infra/terraform
-        env:
-          TF_VAR_api_image_tag: ${{ github.sha }}
-          TF_VAR_worker_image_tag: ${{ github.sha }}
+      - name: Deploy Worker to Lambda
         run: |
-          terraform init -input=false
-          terraform plan -input=false -no-color -out=tfplan
-
-      - name: Terraform apply
-        if: inputs.apply
-        working-directory: infra/terraform
-        run: terraform apply -input=false tfplan
+          aws lambda update-function-code \
+            --function-name pianoflow-v3-worker \
+            --image-uri "${{ env.WORKER_IMAGE }}" \
+            --region "${{ env.AWS_REGION }}"
