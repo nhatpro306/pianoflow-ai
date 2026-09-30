@@ -61,6 +61,7 @@ def _get_project(db: Session, project_id: uuid.UUID, user: CurrentUser):
 
 global_router = APIRouter(prefix="/api/v1/uploads", tags=["uploads"])
 
+
 @global_router.post("/audio", response_model=UploadInitOut)
 def upload_audio_init(
     body: UploadInitIn,
@@ -69,9 +70,10 @@ def upload_audio_init(
     storage: StorageService = Depends(get_storage),
 ) -> UploadInitOut:
     import re
+
     safe_name = re.sub(r"[^A-Za-z0-9._ -]", "_", body.filename)
     key = f"users/{user.id}/audio/{uuid.uuid4()}_{safe_name}"
-    
+
     upload_url = storage.create_signed_upload_url(key, body.content_type, body.size_bytes)
     download_url = storage.create_signed_download_url(key, expires_in=7200)
 
@@ -84,6 +86,7 @@ def upload_audio_init(
         max_bytes=body.size_bytes,
         download_url=download_url.url,
     )
+
 
 @router.post("/upload-midi", response_model=UploadInitOut)
 def upload_midi_init(

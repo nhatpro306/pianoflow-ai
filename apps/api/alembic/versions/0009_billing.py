@@ -23,7 +23,13 @@ def upgrade() -> None:
     op.create_table(
         "subscriptions",
         sa.Column("id", sa.Uuid(), primary_key=True),
-        sa.Column("user_id", sa.Uuid(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True),
+        sa.Column(
+            "user_id",
+            sa.Uuid(),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+            unique=True,
+        ),
         sa.Column("stripe_customer_id", sa.String(), nullable=True),
         sa.Column("plan_id", sa.String(), nullable=False),
         sa.Column("status", sa.String(), nullable=False),

@@ -66,7 +66,9 @@ def evaluate_file(audio_path: Path, midi_path: Path):
     # Run metrics
     onset_metrics = onset_prf(reference_notes, predicted_notes)
     print(
-        f"  [Onset] F1: {onset_metrics['f1']:.3f} | Precision: {onset_metrics['precision']:.3f} | Recall: {onset_metrics['recall']:.3f}"
+        f"  [Onset] F1: {onset_metrics['f1']:.3f} | "
+        f"Precision: {onset_metrics['precision']:.3f} | "
+        f"Recall: {onset_metrics['recall']:.3f}"
     )
 
     advanced_metrics = onset_offset_velocity_prf(reference_notes, predicted_notes)

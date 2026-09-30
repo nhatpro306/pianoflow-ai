@@ -55,9 +55,7 @@ async def create_checkout_session(
 
 
 @router.post("/webhook")
-async def stripe_webhook(
-    request: Request, db: AsyncSession = Depends(get_db)
-) -> dict[str, str]:
+async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     settings = get_settings()
     if not settings.stripe_secret_key or not settings.stripe_webhook_secret:
         raise HTTPException(status_code=500, detail="Stripe is not configured.")
@@ -114,7 +112,7 @@ async def stripe_webhook(
                         current_period_end=current_period_end,
                     )
                     db.add(db_sub)
-                
+
                 await db.commit()
             except Exception as e:
                 logger.error(f"Error processing webhook: {e}")

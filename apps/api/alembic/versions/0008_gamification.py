@@ -23,7 +23,13 @@ def upgrade() -> None:
     op.create_table(
         "user_progress",
         sa.Column("id", sa.Uuid(), primary_key=True),
-        sa.Column("user_id", sa.Uuid(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True),
+        sa.Column(
+            "user_id",
+            sa.Uuid(),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+            unique=True,
+        ),
         sa.Column("total_xp", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("current_level", sa.Integer(), nullable=False, server_default="1"),
         sa.Column("current_streak", sa.Integer(), nullable=False, server_default="0"),
@@ -31,12 +37,19 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
-    
+
     op.create_table(
         "practice_sessions",
         sa.Column("id", sa.Uuid(), primary_key=True),
-        sa.Column("user_id", sa.Uuid(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("project_id", sa.Uuid(), sa.ForeignKey("projects.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "user_id", sa.Uuid(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        ),
+        sa.Column(
+            "project_id",
+            sa.Uuid(),
+            sa.ForeignKey("projects.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("score", sa.Integer(), nullable=False),
         sa.Column("accuracy_percent", sa.Float(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),

@@ -130,7 +130,7 @@ class Settings(BaseSettings):
     max_audio_seconds: int = 180
     transcriptions_per_day: int = 5
     audio_queue_name: str = "q_audio"
-    
+
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
 
