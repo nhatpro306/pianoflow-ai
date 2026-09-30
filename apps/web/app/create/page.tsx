@@ -81,7 +81,9 @@ export default function CreatePage() {
       await api.confirmUpload(project.id, init.upload_id);
       router.push(`/projects/${encodeURIComponent(project.id)}`);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Upload failed.");
+      console.error("Transcribe/Save Error:", err);
+      const msg = err instanceof Error ? err.message : "Upload failed.";
+      setErrorMsg(msg === "Failed to fetch" ? "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng hoặc thử lại." : msg);
       setSaving(false);
     }
   }
@@ -97,10 +99,12 @@ export default function CreatePage() {
       setSaving(true);
       await saveToProject(res.midi_b64, "Transcription from link");
     } catch (err) {
+      console.error("Transcribe/Save Error:", err);
       if (err instanceof ApiError) {
         setErrorMsg(err.message);
       } else {
-        setErrorMsg(err instanceof Error ? err.message : "An unexpected error occurred.");
+        const msg = err instanceof Error ? err.message : "An unexpected error occurred.";
+        setErrorMsg(msg === "Failed to fetch" ? "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng hoặc thử lại." : msg);
       }
     } finally {
       setSaving(false);
@@ -123,10 +127,12 @@ export default function CreatePage() {
       setSaving(true);
       await saveToProject(res.midi_b64, file.name.replace(/\.[^.]+$/, "") ?? "Transcription");
     } catch (err) {
+      console.error("Transcribe/Save Error:", err);
       if (err instanceof ApiError) {
         setErrorMsg(err.message);
       } else {
-        setErrorMsg(err instanceof Error ? err.message : "An unexpected error occurred.");
+        const msg = err instanceof Error ? err.message : "An unexpected error occurred.";
+        setErrorMsg(msg === "Failed to fetch" ? "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng hoặc thử lại." : msg);
       }
     } finally {
       setSaving(false);

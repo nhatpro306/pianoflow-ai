@@ -9,7 +9,9 @@ import { cleanEnv } from "./env";
 import { createClient } from "./supabase";
 
 const BASE_URL =
-  cleanEnv(process.env.NEXT_PUBLIC_API_BASE_URL) || "http://localhost:8000";
+  typeof window !== "undefined"
+    ? ""
+    : cleanEnv(process.env.NEXT_PUBLIC_API_BASE_URL) || "http://localhost:8000";
 
 const isAuthEnabled =
   typeof window !== "undefined" &&
