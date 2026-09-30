@@ -85,7 +85,7 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm transition-opacity motion-reduce:transition-none"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -99,7 +99,7 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(
           }}
           role="dialog"
           aria-modal="true"
-          className={`relative z-50 w-full max-w-md scale-100 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-6 opacity-100 shadow-xl transition-all duration-200 animate-in fade-in zoom-in-95 ${className}`}
+          className={`relative z-50 w-full max-w-md scale-100 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-6 opacity-100 shadow-xl transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-reduce:transition-none ${className}`}
           {...props}
         >
           {title && (

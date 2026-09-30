@@ -29,8 +29,16 @@ class S3StorageService:
         bucket_analysis: str = "pianoflow-analysis",
         bucket_outputs: str = "pianoflow-outputs",
         endpoint_url: str | None = None,
+        access_key: str | None = None,
+        secret_key: str | None = None,
     ) -> None:
-        self._s3 = boto3.client("s3", region_name=region, endpoint_url=endpoint_url)
+        self._s3 = boto3.client(
+            "s3",
+            region_name=region,
+            endpoint_url=endpoint_url,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+        )
         self._buckets = {
             "sources": bucket_sources,
             "analysis": bucket_analysis,

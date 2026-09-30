@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from app.core.config import Settings, get_settings
 from app.core.errors import ConflictError, NotFoundError
 from app.core.rate_limit import record_usage, require_upload_quota
 from app.core.security import CurrentUser, get_current_user
@@ -18,6 +19,31 @@ from app.infrastructure.queue.base import QueueService
 from app.infrastructure.queue.factory import get_queue
 from app.infrastructure.storage.base import StorageService
 from app.infrastructure.storage.factory import get_storage
+
+
+def get_upload_storage(
+    settings: Settings = Depends(get_settings),
+    default_storage: StorageService = Depends(get_storage),
+) -> StorageService:
+    if settings.r2_bucket:
+        from app.infrastructure.storage.s3 import S3StorageService
+
+        endpoint = (
+            f"https://{settings.r2_account_id}.r2.cloudflarestorage.com"
+            if settings.r2_account_id
+            else None
+        )
+        return S3StorageService(
+            region="auto",
+            bucket_sources=settings.r2_bucket,
+            bucket_analysis=settings.r2_bucket,
+            bucket_outputs=settings.r2_bucket,
+            endpoint_url=endpoint,
+            access_key=settings.r2_access_key,
+            secret_key=settings.r2_secret_key,
+        )
+    return default_storage
+
 
 router = APIRouter(prefix="/api/v1/projects/{project_id}", tags=["uploads"])
 
@@ -67,7 +93,7 @@ def upload_audio_init(
     body: UploadInitIn,
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
-    storage: StorageService = Depends(get_storage),
+    storage: StorageService = Depends(get_upload_storage),
 ) -> UploadInitOut:
     import re
 
@@ -94,7 +120,7 @@ def upload_midi_init(
     body: UploadInitIn,
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(get_current_user),
-    storage: StorageService = Depends(get_storage),
+    storage: StorageService = Depends(get_upload_storage),
 ) -> UploadInitOut:
     project = _get_project(db, project_id, user)
     result = init_upload(db, storage, user, project, body.filename, body.size_bytes)
@@ -115,7 +141,7 @@ def upload_midi_confirm(
     request: Request,
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(require_upload_quota),
-    storage: StorageService = Depends(get_storage),
+    storage: StorageService = Depends(get_upload_storage),
     queue: QueueService = Depends(get_queue),
 ) -> UploadConfirmOut:
     project = _get_project(db, project_id, user)

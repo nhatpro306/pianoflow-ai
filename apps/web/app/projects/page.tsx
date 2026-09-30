@@ -94,10 +94,10 @@ export default function ProjectsPage() {
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <main className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-10">
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Projects</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           {progressData && (
             <>
               <StreakBadge streakDays={progressData.current_streak_days} />

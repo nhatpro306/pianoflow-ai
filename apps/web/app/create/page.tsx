@@ -136,7 +136,7 @@ export default function CreatePage() {
   const isWorking = status === "uploading" || status === "processing" || saving;
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-4xl flex-col items-center gap-8 px-6 py-12">
+    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-4xl flex-col items-center gap-6 sm:gap-8 px-4 sm:px-6 py-8 sm:py-12">
       {/* Header */}
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-3xl font-bold text-white">
@@ -161,7 +161,7 @@ export default function CreatePage() {
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         className={[
-          "flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-8 py-12 transition-colors",
+          "flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 sm:px-8 py-8 sm:py-12 transition-colors",
           isDragging
             ? "border-cyan-400 bg-cyan-500/10"
             : "border-zinc-700 bg-zinc-900 hover:border-zinc-500 hover:bg-zinc-800/60",

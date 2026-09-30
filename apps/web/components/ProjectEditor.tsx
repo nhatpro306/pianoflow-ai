@@ -122,7 +122,7 @@ export function ProjectEditor({ id }: { id: string }) {
 
   if (project.isLoading) {
     return (
-      <main className="mx-auto max-w-7xl px-6 py-10">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-10">
         <div className="h-8 w-64 animate-pulse rounded bg-zinc-900" />
         <div className="mt-6 h-96 animate-pulse rounded-xl bg-zinc-900" />
       </main>
@@ -132,7 +132,7 @@ export function ProjectEditor({ id }: { id: string }) {
   if (project.isError) {
     const notFound = project.error instanceof ApiError && project.error.status === 404;
     return (
-      <main className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-6 py-24 text-center">
+      <main className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 sm:px-6 py-16 sm:py-24 text-center">
         <p className="text-lg text-zinc-300">
           {notFound ? "Project not found." : "Could not load this project."}
         </p>
@@ -147,8 +147,8 @@ export function ProjectEditor({ id }: { id: string }) {
   const summary = p.analysis_summary;
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-8">
-      <div className="mb-6 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+    <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
+      <div className="mb-6 flex flex-wrap items-baseline gap-x-4 gap-y-2">
         <h1 className="text-2xl font-bold">{p.name}</h1>
         {summary && (
           <div className="flex flex-wrap gap-2 text-sm mt-1">
@@ -200,7 +200,7 @@ export function ProjectEditor({ id }: { id: string }) {
 
       {ready && local && (
         <div className="flex flex-col gap-6 lg:flex-row">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 overflow-x-auto">
             {notes.data ? (
               <FallingNotePreview data={notes.data} settings={local} />
             ) : (

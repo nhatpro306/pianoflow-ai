@@ -62,7 +62,7 @@ _ALLOWED_DOMAINS = [
     "fb.watch",
     "supabase.co",
     "amazonaws.com",
-    "r2.cloudflarestorage.com"
+    "r2.cloudflarestorage.com",
 ]
 _MAX_DURATION_SEC = 600  # 10 min cap
 

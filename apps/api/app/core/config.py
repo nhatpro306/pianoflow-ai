@@ -101,6 +101,11 @@ class Settings(BaseSettings):
     s3_bucket_outputs: str = "pianoflow-outputs"
     s3_endpoint_url: str | None = None
 
+    r2_account_id: str = ""
+    r2_access_key: str = ""
+    r2_secret_key: str = ""
+    r2_bucket: str = ""
+
     auth_mode: Literal["dev", "supabase"] = "dev"
     supabase_jwt_secret: str = ""
     cors_allowed_origins: str = ""

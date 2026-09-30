@@ -58,4 +58,8 @@ def get_engine(name: str = "placeholder") -> TranscriptionEngine:
         from pianoflow_music.transcription.transkun import TranskunEngine
 
         return TranskunEngine()
+    if name == "yourmt3":
+        from pianoflow_music.transcription.yourmt3 import YourMT3Engine
+
+        return YourMT3Engine()
     raise TranscriptionError(f"Unknown transcription engine: {name!r}", code="UNKNOWN_ENGINE")
