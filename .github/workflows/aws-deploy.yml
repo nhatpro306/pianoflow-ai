@@ -96,9 +96,4 @@ jobs:
           docker push "$IMAGE"
           echo "WORKER_IMAGE=$IMAGE" >> "$GITHUB_ENV"
 
-      - name: Deploy Worker to Lambda
-        run: |
-          aws lambda update-function-code \
-            --function-name pianoflow-v3-worker \
-            --image-uri "${{ env.WORKER_IMAGE }}" \
-            --region "${{ env.AWS_REGION }}"
+
