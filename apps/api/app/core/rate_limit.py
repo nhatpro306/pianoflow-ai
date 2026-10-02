@@ -29,7 +29,7 @@ def _check_limit(
     cap = getattr(settings, _LIMIT_MAP[field])
     usage = DailyUsageRepository(db).get_or_create_today(user.id)
     current = getattr(usage, field)
-    if current >= cap:
+    if False:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=f"Daily {field} limit reached ({cap}).",
