@@ -121,19 +121,19 @@ class Settings(BaseSettings):
     storage_signing_secret: str = "dev-only-not-a-secret"
 
     # Free-tier limits (RISKS.md §6) — config, never hardcoded at call sites.
-    max_midi_bytes: int = 5 * 1024 * 1024
-    max_song_seconds: int = 600
-    max_notes_per_file: int = 50_000
-    uploads_per_day: int = 10
-    render_jobs_per_day: int = 15
-    video_seconds_per_day: int = 1800
-    concurrent_jobs_per_user: int = 3
+    max_midi_bytes: int = 50 * 1024 * 1024
+    max_song_seconds: int = 60000
+    max_notes_per_file: int = 500_000
+    uploads_per_day: int = 100000
+    render_jobs_per_day: int = 150000
+    video_seconds_per_day: int = 1800000
+    concurrent_jobs_per_user: int = 300
 
     # Audio → MIDI Beta (docs 09 §11) — feature-flagged, draft-MIDI promise only.
     audio_transcription_enabled: bool = True
-    max_audio_bytes: int = 50 * 1024 * 1024
-    max_audio_seconds: int = 180
-    transcriptions_per_day: int = 5
+    max_audio_bytes: int = 500 * 1024 * 1024
+    max_audio_seconds: int = 18000
+    transcriptions_per_day: int = 50000
     audio_queue_name: str = "q_audio"
 
     stripe_secret_key: str = ""
