@@ -46,28 +46,29 @@ const fs = require('fs');
   const transcribeLinkBtn = await page.locator('button', { hasText: /Transcribe from link/i }).first();
   await transcribeLinkBtn.click();
 
-  let networkResponses = [];
   page.on('response', async (response) => {
     const url = response.url();
-    if (url.includes('modal.run') || url.includes('/api/transcribe')) {
-      networkResponses.push(`${response.request().method()} ${url} - ${response.status()}`);
+    if (response.status() === 404) {
+      console.log(`[404 NOT FOUND] ${response.request().method()} ${url}`);
+    } else if (url.includes('/api')) {
+      console.log(`[NETWORK RESPONSE] ${response.request().method()} ${url} - ${response.status()}`);
     }
   });
 
   page.on('requestfailed', request => {
-    if (request.url().includes('modal.run') || request.url().includes('/api/transcribe')) {
-      console.log(`[NETWORK FAILED] ${request.url()} - ${request.failure().errorText}`);
-    }
+    console.log(`[NETWORK FAILED] ${request.url()} - ${request.failure().errorText}`);
   });
 
   await page.waitForTimeout(10000);
   
   try {
-    const errorMsg = page.locator('text=Submit failed').or(page.locator('text=Failed to fetch')).or(page.locator('text=Error'));
-    await expect(errorMsg).toBeVisible({ timeout: 15000 });
-    console.log("Found error on page: ", await errorMsg.textContent());
+    console.log("Waiting for navigation to project page...");
+    await page.waitForURL('**/projects/**', { timeout: 240000 });
+    console.log("Navigated to:", page.url());
+    console.log("Project successfully created and loaded!");
   } catch (e) {
-    console.log("No error message on page.");
+    console.error("Failed to navigate to project page or timeout.", e);
+    process.exitCode = 1;
   }
   
   await browser.close();

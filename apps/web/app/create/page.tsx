@@ -89,13 +89,17 @@ export default function CreatePage() {
   }
 
   async function handleTranscribeLink() {
-    if (!linkUrl.trim()) return;
+    let cleanedUrl = linkUrl.trim();
+    if (cleanedUrl && !cleanedUrl.startsWith("http://") && !cleanedUrl.startsWith("https://")) {
+      cleanedUrl = `https://${cleanedUrl}`;
+    }
+    if (!cleanedUrl) return;
     setErrorMsg(null);
     try {
       const options = fullMix
         ? { engine: "transkun", separate: true, stem: "piano" }
         : { engine: "transkun", separate: false };
-      const res = await submitUrl(linkUrl.trim(), rightsAttested, options, (s) => setStatus(s), setProcessingProgress);
+      const res = await submitUrl(cleanedUrl, rightsAttested, options, (s) => setStatus(s), setProcessingProgress);
       setSaving(true);
       await saveToProject(res.midi_b64, "Transcription from link");
     } catch (err) {

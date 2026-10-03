@@ -33,23 +33,126 @@ image = (
 _demo_secret = modal.Secret.from_name("pianoflow-demo")
 
 
+@app.function(gpu="A10G", image=image, timeout=600, max_containers=50)
+def transcribe_chunk(audio_bytes: bytes, options: dict) -> dict:
+    from pianoflow_music.transcription.pipeline import run_pipeline
+    
+    try:
+        res = run_pipeline(
+            audio_bytes,
+            engine=options.get("engine", "transkun"),
+            separate=options.get("separate", False),
+            options=options,
+        )
+        return {
+            "notes": res.notes.to_dict(),
+            "confidence": res.confidence,
+            "report": res.report,
+        }
+    except Exception as exc:
+        if type(exc).__name__ == "TranscriptionError" and getattr(exc, "code", "") == "NO_NOTES_DETECTED":
+            return {
+                "notes": {"notes": [], "bpm": 120.0, "sustain": []},
+                "confidence": {},
+                "report": {},
+            }
+        raise
+
+
+def _process_audio_map_reduce(audio: bytes, options: dict) -> dict:
+    import base64
+    import io
+    import os
+    import tempfile
+
+    import librosa
+    import soundfile as sf
+
+    from pianoflow_music.midi.write import note_data_to_midi_bytes
+    from pianoflow_music.notes.model import SCHEMA_VERSION, Note, NoteData
+
+    # 1. Split audio using librosa
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        tmp.write(audio)
+        tmp.flush()
+        y, sr = librosa.load(tmp.name, sr=None, mono=False)
+        os.unlink(tmp.name)
+
+    chunk_length_samples = sr * 10
+    chunks_params = []
+
+    for i in range(0, y.shape[-1], chunk_length_samples):
+        if y.ndim > 1:
+            chunk_data = y[:, i : i + chunk_length_samples]
+        else:
+            chunk_data = y[i : i + chunk_length_samples]
+
+        buf = io.BytesIO()
+        sf.write(buf, chunk_data.T if y.ndim > 1 else chunk_data, sr, format="WAV")
+        chunks_params.append((buf.getvalue(), options))
+
+    # 2. Map-Reduce on Modal
+    results = list(transcribe_chunk.starmap(chunks_params))
+
+    # 3. Merge MIDI notes
+    all_notes = []
+    all_sustain = []
+    note_id = 0
+    bpms = []
+
+    for i, res in enumerate(results):
+        chunk_start = (i * chunk_length_samples) / sr
+        notes_dict = res["notes"]
+        if notes_dict.get("bpm"):
+            bpms.append(notes_dict["bpm"])
+
+        for n_dict in notes_dict["notes"]:
+            n_dict["start"] = round(n_dict["start"] + chunk_start, 6)
+            n_dict["end"] = round(n_dict["end"] + chunk_start, 6)
+            n_dict["id"] = note_id
+            note_id += 1
+            all_notes.append(Note(**n_dict))
+
+        for s_dict in notes_dict.get("sustain", []):
+            s_dict["time"] = round(s_dict["time"] + chunk_start, 6)
+            all_sustain.append(s_dict)
+
+    duration_sec = round(y.shape[-1] / sr, 6)
+    bpm = round(sum(bpms) / len(bpms), 2) if bpms else 120.0
+
+    note_data = NoteData(
+        schema_version=SCHEMA_VERSION,
+        bpm=bpm,
+        duration_sec=duration_sec,
+        time_signature="4/4",
+        notes=all_notes,
+        tracks=[{"index": 0, "name": "transcribed", "note_count": len(all_notes)}],
+        meta={
+            "source": "audio_transcription",
+            "engine": "transkun_map_reduce",
+            "hand_split": "none",
+        },
+        sustain=all_sustain,
+    )
+
+    draft_midi_bytes = note_data_to_midi_bytes(note_data)
+
+    return {
+        "notes": note_data.to_dict(),
+        "midi_b64": base64.b64encode(draft_midi_bytes).decode(),
+        "confidence": results[0]["confidence"] if results else {},
+        "report": {
+            "note_count": len(all_notes),
+            "engine": "transkun_map_reduce",
+            "chunks": len(results),
+        },
+    }
+
+
 @app.function(gpu="A10G", image=image, timeout=600)
 def transcribe(audio_b64: str, options: dict) -> dict:
-    from pianoflow_music.transcription.pipeline import run_pipeline
-
     audio = base64.b64decode(audio_b64)
-    res = run_pipeline(
-        audio,
-        engine=options.get("engine", "transkun"),
-        separate=options.get("separate", False),
-        options=options,
-    )
-    return {
-        "notes": res.notes.to_dict(),
-        "midi_b64": base64.b64encode(res.draft_midi_bytes).decode(),
-        "confidence": res.confidence,
-        "report": res.report,
-    }
+    return _process_audio_map_reduce(audio, options)
 
 
 # Hosts allowed for URL ingestion. No anti-bot evasion; on block we fail clean.
@@ -57,9 +160,19 @@ _ALLOWED_DOMAINS = [
     "youtube.com",
     "youtu.be",
     "tiktok.com",
+    "douyin.com",
     "instagram.com",
     "facebook.com",
     "fb.watch",
+    "soundcloud.com",
+    "bilibili.com",
+    "b23.tv",
+    "vimeo.com",
+    "twitter.com",
+    "x.com",
+    "drive.google.com",
+    "dropbox.com",
+    "bandcamp.com",
     "supabase.co",
     "amazonaws.com",
     "r2.cloudflarestorage.com",
@@ -70,8 +183,18 @@ _MAX_DURATION_SEC = 600  # 10 min cap
 def _host_allowed(url: str) -> bool:
     from urllib.parse import urlparse
 
-    host = (urlparse(url).hostname or "").lower()
-    return any(host == d or host.endswith("." + d) for d in _ALLOWED_DOMAINS)
+    url = (url or "").strip()
+    if not url:
+        return False
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    if any(host == d or host.endswith("." + d) for d in _ALLOWED_DOMAINS):
+        return True
+    # Also allow direct audio/video file URLs
+    path = (parsed.path or "").lower()
+    return any(path.endswith(ext) for ext in [".mp3", ".wav", ".m4a", ".ogg", ".flac", ".webm", ".aac", ".mp4"])
 
 
 @app.function(gpu="A10G", image=image, timeout=900)
@@ -82,12 +205,13 @@ def transcribe_url(url: str, options: dict) -> dict:
     returns. Only the derived notes/MIDI are kept. Duration/filesize caps
     and --no-playlist guard against abuse. No anti-bot evasion.
     """
-    import base64 as _b64
     import subprocess
     import tempfile
     from pathlib import Path
 
-    from pianoflow_music.transcription.pipeline import run_pipeline
+    url = (url or "").strip()
+    if url and not url.startswith(("http://", "https://")):
+        url = f"https://{url}"
 
     if not _host_allowed(url):
         raise ValueError("URL host is not in the allowlist")
@@ -124,18 +248,7 @@ def transcribe_url(url: str, options: dict) -> dict:
             raise RuntimeError("no audio extracted (too long, too large, or unavailable)")
         audio = wavs[0].read_bytes()
 
-        res = run_pipeline(
-            audio,
-            engine=options.get("engine", "transkun"),
-            separate=options.get("separate", False),
-            options=options,
-        )
-        return {
-            "notes": res.notes.to_dict(),
-            "midi_b64": _b64.b64encode(res.draft_midi_bytes).decode(),
-            "confidence": res.confidence,
-            "report": res.report,
-        }
+        return _process_audio_map_reduce(audio, options)
 
 
 @app.function(image=image, secrets=[_demo_secret])
@@ -176,7 +289,9 @@ def web():
         if os.environ.get("ENABLE_URL_INGEST", "1") != "1":
             raise HTTPException(status_code=403, detail="URL ingestion is disabled")
         payload = await request.json()
-        url = payload.get("url", "")
+        url = (payload.get("url") or "").strip()
+        if url and not url.startswith(("http://", "https://")):
+            url = f"https://{url}"
         if not payload.get("rights_attested"):
             raise HTTPException(
                 status_code=403,
@@ -186,7 +301,7 @@ def web():
                 ),
             )
         if not _host_allowed(url):
-            raise HTTPException(status_code=400, detail="URL host not allowed")
+            raise HTTPException(status_code=400, detail=f"Trang web hoặc định dạng URL chưa được hỗ trợ: {url}")
         call = transcribe_url.spawn(url, payload.get("options", {}))
         return {"call_id": call.object_id}
 

@@ -49,3 +49,10 @@ smoke.wav
 
 # Claude session state (local only)
 .claude/session-state.md
+
+env.json
+*.txt
+submit.json
+test.mid
+vercel.json.bak
+

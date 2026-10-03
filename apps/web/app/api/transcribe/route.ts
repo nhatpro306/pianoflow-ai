@@ -35,15 +35,18 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    const data = (await modalRes.json()) as { call_id?: string };
-
     if (!modalRes.ok) {
-      return NextResponse.json(
-        { error: `Modal submit failed (${modalRes.status})` },
-        { status: 502 },
-      );
+      const errData = (await modalRes.json().catch(() => ({}))) as Record<string, unknown>;
+      const detail =
+        typeof errData["detail"] === "string"
+          ? errData["detail"]
+          : typeof errData["error"] === "string"
+            ? errData["error"]
+            : `Modal submit failed (${modalRes.status})`;
+      return NextResponse.json({ error: detail }, { status: modalRes.status });
     }
 
+    const data = (await modalRes.json()) as { call_id?: string };
     return NextResponse.json({ call_id: data.call_id });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

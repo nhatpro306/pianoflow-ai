@@ -154,10 +154,13 @@ class TranskunEngine:
             y = soxr.resample(y, fs, model.fs)
 
         # Run inference.
-        # TODO: FP16 on CUDA is a later tuning toggle (verify op support first)
-        # Keep FP32 for now — Transkun's transcribe path is not verified FP16-safe.
         x = torch.from_numpy(y).to(device)
-        with torch.inference_mode():
+        context = (
+            torch.autocast("cuda", dtype=torch.float16)
+            if device == "cuda"
+            else contextlib.nullcontext()
+        )
+        with torch.inference_mode(), context:
             raw_notes = model.transcribe(
                 x,
                 stepInSecond=None,
