@@ -36,7 +36,7 @@ _demo_secret = modal.Secret.from_name("pianoflow-demo")
 @app.function(gpu="A10G", image=image, timeout=600, max_containers=50)
 def transcribe_chunk(audio_bytes: bytes, options: dict) -> dict:
     from pianoflow_music.transcription.pipeline import run_pipeline
-    
+
     try:
         res = run_pipeline(
             audio_bytes,
@@ -50,7 +50,11 @@ def transcribe_chunk(audio_bytes: bytes, options: dict) -> dict:
             "report": res.report,
         }
     except Exception as exc:
-        if type(exc).__name__ == "TranscriptionError" and getattr(exc, "code", "") == "NO_NOTES_DETECTED":
+        is_no_notes = (
+            type(exc).__name__ == "TranscriptionError"
+            and getattr(exc, "code", "") == "NO_NOTES_DETECTED"
+        )
+        if is_no_notes:
             return {
                 "notes": {"notes": [], "bpm": 120.0, "sustain": []},
                 "confidence": {},
@@ -194,7 +198,8 @@ def _host_allowed(url: str) -> bool:
         return True
     # Also allow direct audio/video file URLs
     path = (parsed.path or "").lower()
-    return any(path.endswith(ext) for ext in [".mp3", ".wav", ".m4a", ".ogg", ".flac", ".webm", ".aac", ".mp4"])
+    valid_exts = (".mp3", ".wav", ".m4a", ".ogg", ".flac", ".webm", ".aac", ".mp4")
+    return any(path.endswith(ext) for ext in valid_exts)
 
 
 @app.function(gpu="A10G", image=image, timeout=900)
@@ -301,7 +306,8 @@ def web():
                 ),
             )
         if not _host_allowed(url):
-            raise HTTPException(status_code=400, detail=f"Trang web hoặc định dạng URL chưa được hỗ trợ: {url}")
+            err_msg = f"Trang web hoặc định dạng URL chưa được hỗ trợ: {url}"
+            raise HTTPException(status_code=400, detail=err_msg)
         call = transcribe_url.spawn(url, payload.get("options", {}))
         return {"call_id": call.object_id}
 
