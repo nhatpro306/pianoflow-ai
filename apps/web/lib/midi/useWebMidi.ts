@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export type MidiMessage = {
   command: number;
@@ -8,19 +8,36 @@ export type MidiMessage = {
   timestamp: number;
 };
 
-export function useWebMidi() {
+export interface UseWebMidiOptions {
+  onNoteOn?: (note: number, velocity: number) => void;
+  onNoteOff?: (note: number) => void;
+}
+
+export function useWebMidi(options?: UseWebMidiOptions) {
   const [midiAccess, setMidiAccess] = useState<MIDIAccess | null>(null);
   const [inputs, setInputs] = useState<MIDIInput[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<MidiMessage[]>([]);
   const [activeNotes, setActiveNotes] = useState<Set<number>>(new Set());
 
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
   useEffect(() => {
+    let accessObj: MIDIAccess | null = null;
+    let isMounted = true;
+
     if (typeof navigator !== 'undefined' && navigator.requestMIDIAccess) {
       navigator.requestMIDIAccess().then(
         (access) => {
+          if (!isMounted) {
+            access.onstatechange = null;
+            return;
+          }
+          accessObj = access;
           setMidiAccess(access);
           const updateInputs = () => {
+            if (!isMounted) return;
             const inputIterator = access.inputs.values();
             const inputsArray: MIDIInput[] = [];
             let nextInput = inputIterator.next();
@@ -35,12 +52,20 @@ export function useWebMidi() {
           access.onstatechange = updateInputs;
         },
         (err) => {
+          if (!isMounted) return;
           setError(`Web MIDI could not be initialized: ${err.message}`);
         }
       );
     } else {
       setError('Web MIDI is not supported in this browser.');
     }
+
+    return () => {
+      isMounted = false;
+      if (accessObj) {
+        accessObj.onstatechange = null;
+      }
+    };
   }, []);
 
   const handleMidiMessage = useCallback((event: Event) => {
@@ -58,6 +83,12 @@ export function useWebMidi() {
     const isNoteOff = command === 8 || (command === 9 && velocity === 0);
     const isNoteOn = command === 9 && velocity > 0;
     const normalizedCommand = isNoteOff ? 8 : command;
+
+    if (isNoteOn) {
+      optionsRef.current?.onNoteOn?.(note, velocity);
+    } else if (isNoteOff) {
+      optionsRef.current?.onNoteOff?.(note);
+    }
 
     setActiveNotes((prev) => {
       const next = new Set(prev);

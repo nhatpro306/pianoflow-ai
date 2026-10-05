@@ -25,10 +25,16 @@ class RedisQueueService:
     def __init__(self, redis_url: str) -> None:
         self._redis = redis.Redis.from_url(redis_url, decode_responses=True, socket_timeout=15)
 
-    def receive(self, queue_name: str | list[str], visibility_timeout: int) -> JobMessage | None:
+    def receive(
+        self,
+        queue_name: str | list[str],
+        visibility_timeout: int = 900,
+        wait_time_seconds: int | None = None,
+    ) -> JobMessage | None:
         keys = [queue_name] if isinstance(queue_name, str) else list(queue_name)
+        timeout = wait_time_seconds if wait_time_seconds is not None else 5
         try:
-            item = self._redis.blpop(keys, timeout=visibility_timeout)
+            item = self._redis.blpop(keys, timeout=timeout)
         except redis.RedisError as exc:
             raise QueueError("Failed to receive queue message.") from exc
         if item is None:
@@ -40,6 +46,9 @@ class RedisQueueService:
             queue_name=key,
             body=body,
         )
+
+    def change_visibility(self, message: JobMessage, visibility_timeout: int = 900) -> None:
+        return None
 
     def ack(self, message: JobMessage) -> None:
         return None
@@ -55,6 +64,8 @@ class RedisQueueService:
 
 class SqsQueueService:
     """Worker-side SQS adapter. Supports multi-queue polling."""
+
+    is_sqs = True
 
     def __init__(self, region: str = "us-east-1", queue_urls: dict[str, str] | None = None) -> None:
         import boto3
@@ -75,15 +86,27 @@ class SqsQueueService:
                 raise QueueError(f"Cannot resolve SQS queue '{queue_name}'.") from exc
         return self._url_cache[queue_name]
 
-    def receive(self, queue_name: str | list[str], visibility_timeout: int) -> JobMessage | None:
+    def receive(
+        self,
+        queue_name: str | list[str],
+        visibility_timeout: int = 900,
+        wait_time_seconds: int | None = None,
+    ) -> JobMessage | None:
         keys = [queue_name] if isinstance(queue_name, str) else list(queue_name)
+        if wait_time_seconds is not None:
+            wait_time = wait_time_seconds
+        elif len(keys) > 1:
+            wait_time = 1
+        else:
+            wait_time = min(visibility_timeout, 5)
+
         for name in keys:
             try:
                 resp = self._sqs.receive_message(
                     QueueUrl=self._queue_url(name),
                     MaxNumberOfMessages=1,
                     VisibilityTimeout=visibility_timeout,
-                    WaitTimeSeconds=min(visibility_timeout, 5),
+                    WaitTimeSeconds=wait_time,
                 )
             except Exception as exc:
                 raise QueueError("Failed to receive from SQS.") from exc
@@ -97,6 +120,16 @@ class SqsQueueService:
                     body=body,
                 )
         return None
+
+    def change_visibility(self, message: JobMessage, visibility_timeout: int = 900) -> None:
+        try:
+            self._sqs.change_message_visibility(
+                QueueUrl=self._queue_url(message.queue_name),
+                ReceiptHandle=message.id,
+                VisibilityTimeout=visibility_timeout,
+            )
+        except Exception as exc:
+            raise QueueError("Failed to change SQS message visibility.") from exc
 
     def ack(self, message: JobMessage) -> None:
         try:

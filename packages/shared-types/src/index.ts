@@ -52,9 +52,10 @@ export interface NoteData {
   duration_sec: number;
   time_signature: string;
   tempo_map?: { time: number; bpm: number }[];
-  tracks?: { index: number; name?: string; note_count: number }[];
+  tracks?: { index: number; name?: string; note_count: number; program?: number; is_drum?: boolean }[];
   sustain?: { time: number; value: number }[];
   notes: Note[];
+  meta?: Record<string, any>;
 }
 
 /** Settings v2 — VIDEO_TUTORIAL_SPEC.md §3. */

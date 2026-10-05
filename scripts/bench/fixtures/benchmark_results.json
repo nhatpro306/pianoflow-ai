@@ -1,0 +1,264 @@
+{
+  "timestamp": "2026-10-03 13:54:17Z",
+  "phase": "Wave 2 Verification (Post-Optimization)",
+  "system": {
+    "python_version": "3.14.4 (tags/v3.14.4:23116f9, Apr  7 2026, 14:10:54) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "win32"
+  },
+  "render_benchmarks": [
+    {
+      "name": "60s",
+      "resolution": "720p",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "duration_sec": 60.0,
+      "note_count": 400,
+      "total_frames": 1831,
+      "spread_sample": {
+        "mean": 11.873213999788277,
+        "p50": 12.336100000538863,
+        "p95": 15.416204999019099,
+        "min": 2.099999997881241,
+        "max": 19.963599999755388
+      },
+      "tail_sample": {
+        "mean": 6.20489600005385,
+        "p50": 7.7274499999475665,
+        "p95": 8.936954999262525,
+        "min": 2.043299999058945,
+        "max": 9.924000001774402
+      },
+      "projected_render_sec": 21.74,
+      "peak_rss_mb": 5.41
+    },
+    {
+      "name": "60s",
+      "resolution": "1080p",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "duration_sec": 60.0,
+      "note_count": 400,
+      "total_frames": 1831,
+      "spread_sample": {
+        "mean": 19.346511000112514,
+        "p50": 19.827550000627525,
+        "p95": 22.033815000759205,
+        "min": 5.151599998498568,
+        "max": 24.44130000003497
+      },
+      "tail_sample": {
+        "mean": 13.419172999674629,
+        "p50": 16.420399999333313,
+        "p95": 19.384789999821805,
+        "min": 4.58460000299965,
+        "max": 33.26999999990221
+      },
+      "projected_render_sec": 35.42,
+      "peak_rss_mb": 11.89
+    },
+    {
+      "name": "180s",
+      "resolution": "720p",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "duration_sec": 180.0,
+      "note_count": 1500,
+      "total_frames": 5431,
+      "spread_sample": {
+        "mean": 12.620846000063466,
+        "p50": 12.574600001244107,
+        "p95": 15.372829998159432,
+        "min": 3.0017999997653533,
+        "max": 19.843800000671763
+      },
+      "tail_sample": {
+        "mean": 6.042195999980322,
+        "p50": 7.900950000475859,
+        "p95": 9.670059998825309,
+        "min": 1.3093999987177085,
+        "max": 10.730000001785811
+      },
+      "projected_render_sec": 68.54,
+      "peak_rss_mb": 5.29
+    },
+    {
+      "name": "180s",
+      "resolution": "1080p",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "duration_sec": 180.0,
+      "note_count": 1500,
+      "total_frames": 5431,
+      "spread_sample": {
+        "mean": 27.97792599987588,
+        "p50": 27.362150000044494,
+        "p95": 35.08777500173892,
+        "min": 6.511100000352599,
+        "max": 84.62069999950472
+      },
+      "tail_sample": {
+        "mean": 16.806811000060407,
+        "p50": 21.45340000060969,
+        "p95": 24.97568000198953,
+        "min": 5.3010999981779605,
+        "max": 36.486700002569705
+      },
+      "projected_render_sec": 151.95,
+      "peak_rss_mb": 11.88
+    },
+    {
+      "name": "300s",
+      "resolution": "720p",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "duration_sec": 300.0,
+      "note_count": 3000,
+      "total_frames": 9031,
+      "spread_sample": {
+        "mean": 14.048514000169234,
+        "p50": 13.662850000400795,
+        "p95": 18.83702000013727,
+        "min": 1.7561999993631616,
+        "max": 27.404700002080062
+      },
+      "tail_sample": {
+        "mean": 6.534931000023789,
+        "p50": 8.276799999293871,
+        "p95": 12.13330000082351,
+        "min": 1.3698000002477784,
+        "max": 13.60009999916656
+      },
+      "projected_render_sec": 126.87,
+      "peak_rss_mb": 5.29
+    },
+    {
+      "name": "300s",
+      "resolution": "1080p",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "duration_sec": 300.0,
+      "note_count": 3000,
+      "total_frames": 9031,
+      "spread_sample": {
+        "mean": 25.433264000093914,
+        "p50": 24.5953500016185,
+        "p95": 31.699365002168634,
+        "min": 6.971599999815226,
+        "max": 39.03549999813549
+      },
+      "tail_sample": {
+        "mean": 14.270836999930907,
+        "p50": 17.9566499991779,
+        "p95": 23.929039999711677,
+        "min": 3.9824999985285103,
+        "max": 28.200200002174824
+      },
+      "projected_render_sec": 229.69,
+      "peak_rss_mb": 11.89
+    }
+  ],
+  "encode_benchmark": {
+    "status": "success",
+    "deadlocks": 0,
+    "wall_time_sec": 19.09,
+    "effective_fps": 95.9,
+    "mp4_size_mb": 3.01,
+    "resolution": "720p",
+    "total_frames": 1831,
+    "note": "FFmpeg encode verified without deadlock using stderr file redirection and streaming pipeline (Bug R3 fixed)"
+  },
+  "midi_simplify_benchmarks": {
+    "60s": {
+      "midi_size_bytes": 2948,
+      "note_count": 400,
+      "parse_mean_ms": 18.601,
+      "parse_p95_ms": 20.719,
+      "simplify_easy_mean_ms": 2.098,
+      "simplify_very_easy_mean_ms": 1.998
+    },
+    "180s": {
+      "midi_size_bytes": 10866,
+      "note_count": 1500,
+      "parse_mean_ms": 68.11,
+      "parse_p95_ms": 71.294,
+      "simplify_easy_mean_ms": 8.329,
+      "simplify_very_easy_mean_ms": 7.324
+    },
+    "300s": {
+      "midi_size_bytes": 21326,
+      "note_count": 3000,
+      "parse_mean_ms": 132.709,
+      "parse_p95_ms": 137.811,
+      "simplify_easy_mean_ms": 15.292,
+      "simplify_very_easy_mean_ms": 14.74
+    }
+  },
+  "reference_frames": [
+    {
+      "frame_index": 0,
+      "timestamp_sec": 0.0,
+      "resolution": "720p",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "glow_intensity": 0.6,
+      "file_name": "ref_frame_0000_720p.png",
+      "file_size_bytes": 10178,
+      "raw_sha256": "6478e1023bf05a5f5acebd6ceadd5915adca719eecfa9da0fc7f86438d488901"
+    },
+    {
+      "frame_index": 300,
+      "timestamp_sec": 10.0,
+      "resolution": "720p",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "glow_intensity": 0.6,
+      "file_name": "ref_frame_0300_720p.png",
+      "file_size_bytes": 14312,
+      "raw_sha256": "48f4d19e38eaf230e00de0511cd3036cfbbbf2063fd8247f107dce9393a07858"
+    },
+    {
+      "frame_index": 900,
+      "timestamp_sec": 30.0,
+      "resolution": "720p",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "glow_intensity": 0.6,
+      "file_name": "ref_frame_0900_720p.png",
+      "file_size_bytes": 12861,
+      "raw_sha256": "a09378bb60c5d0a147ca27a91c67479ecf0359437fd795231e54d12af328d611"
+    },
+    {
+      "frame_index": 1500,
+      "timestamp_sec": 50.0,
+      "resolution": "720p",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "glow_intensity": 0.6,
+      "file_name": "ref_frame_1500_720p.png",
+      "file_size_bytes": 8112,
+      "raw_sha256": "dd78bf9c36a14f87f678d37513aefba0ffadb30c1700ff52be3853c4253669b6"
+    },
+    {
+      "frame_index": 1800,
+      "timestamp_sec": 60.0,
+      "resolution": "720p",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "glow_intensity": 0.6,
+      "file_name": "ref_frame_1800_720p.png",
+      "file_size_bytes": 4568,
+      "raw_sha256": "05b28ee47759f05cff5613baf866786def0ccf6a9857675d94d7c61032d1ee79"
+    }
+  ]
+}

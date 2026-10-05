@@ -117,6 +117,7 @@ class Settings(BaseSettings):
     internal_metrics_token: str = ""
 
     api_base_url: str = "http://localhost:8000"
+    frontend_url: str = "http://localhost:3000"
     # Signs local-backend signed URLs only — never used in supabase/s3 modes.
     storage_signing_secret: str = "dev-only-not-a-secret"
 

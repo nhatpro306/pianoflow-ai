@@ -564,6 +564,9 @@ def _make_fake_torch(*, cuda_available: bool):
     fake_torch._inference_mode_entered = False
     fake_torch._inference_mode_exited = False
 
+    fake_torch.autocast = lambda *a, **k: contextlib.nullcontext()
+    fake_torch.float16 = "float16"
+
     return fake_torch
 
 

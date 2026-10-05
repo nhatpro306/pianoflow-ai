@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-10-03T17:55:11.187Z",
+  "results": {
+    "scenario_1_coaching_modal_overview": {
+      "passed": true,
+      "assertions": [
+        "Modal title \"AI Coaching & Session Analytics\" is visible",
+        "Performance Grade Banner (Grade, +85 XP, Streak) rendered",
+        "Bi-Directional Timing Gauge with Rushing indicator badge & labels rendered",
+        "Decoupled Hand Breakdown (Right Hand vs Left Hand metrics) displayed"
+      ]
+    },
+    "scenario_2_measure_heatmap": {
+      "passed": true,
+      "assertions": [
+        "MeasureHeatmap renders 4 measure tiles",
+        "Measure inspect card displays accuracy %, hits breakdown, and timing bias"
+      ]
+    },
+    "scenario_3_targeted_drill_action": {
+      "passed": true,
+      "assertions": [
+        "Targeted Loop Drills header rendered",
+        "CoachingModal closed upon applying drill",
+        "A-B loop pins A and B activated on timeline scrubber",
+        "Loop status indicates \"Loop: ON\"",
+        "Playback speed preset updated and highlighted at 0.75x"
+      ]
+    },
+    "scenario_bonus_dragging_verification": {
+      "passed": true,
+      "assertions": []
+    }
+  },
+  "consoleErrorsCount": 0,
+  "pageErrorsCount": 0
+}

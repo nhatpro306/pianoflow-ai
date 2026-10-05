@@ -8,6 +8,7 @@ import { submitAudio, submitUrl, type TranscribeStatus } from "@/lib/transcribeC
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import { Progress } from "@/components/ui/Progress";
 import { AudioRecorder } from "@/components/AudioRecorder";
+import { AudioPreviewWaveform } from "@/components/AudioPreviewWaveform";
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
 const ACCEPTED_TYPES = [".wav", ".mp3", ".m4a", ".mid", ".midi", ".webm"];
@@ -211,6 +212,37 @@ export default function CreatePage() {
 
       {/* File validation error */}
       {fileError && <p className="text-sm text-red-400">{fileError}</p>}
+
+      {/* Audio Waveform Preview & Auditioning (Phase K) */}
+      {file && !file.name.toLowerCase().endsWith(".mid") && !file.name.toLowerCase().endsWith(".midi") && (
+        <AudioPreviewWaveform
+          file={file}
+          fileName={file.name}
+          onRemove={() => setFile(null)}
+        />
+      )}
+
+      {/* MIDI File Selected Card */}
+      {file && (file.name.toLowerCase().endsWith(".mid") || file.name.toLowerCase().endsWith(".midi")) && (
+        <div className="w-full p-4 rounded-2xl border border-zinc-800 bg-zinc-900/80 shadow-md flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🎹</span>
+            <div>
+              <h4 className="text-sm font-bold text-white">{file.name}</h4>
+              <p className="text-xs text-zinc-400 font-mono">
+                Standard MIDI File • {(file.size / 1024).toFixed(1)} KB
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFile(null)}
+            className="text-xs text-zinc-400 hover:text-rose-400 font-semibold transition"
+          >
+            Remove
+          </button>
+        </div>
+      )}
 
       {/* Record audio directly */}
       <AudioRecorder 

@@ -6,7 +6,6 @@ import { api } from "./api";
  */
 import type { NoteData } from "@pianoflow/shared-types";
 
-const MODAL_SUBMIT_URL = process.env.NEXT_PUBLIC_MODAL_SUBMIT_URL;
 const MODAL_RESULT_URL = process.env.NEXT_PUBLIC_MODAL_RESULT_URL;
 const DEMO_TOKEN = process.env.NEXT_PUBLIC_DEMO_TOKEN;
 
@@ -29,19 +28,6 @@ export interface TranscribeResult {
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_ATTEMPTS = 120; // 4 minutes
-
-async function toBase64(buffer: ArrayBuffer): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const blob = new Blob([buffer]);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      resolve(dataUrl.split(",")[1]);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
 
 async function pollResult(
   callId: string,

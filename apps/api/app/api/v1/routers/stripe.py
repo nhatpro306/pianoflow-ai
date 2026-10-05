@@ -6,7 +6,7 @@ import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.security import get_current_user
@@ -45,8 +45,8 @@ async def create_checkout_session(
                 }
             ],
             mode="subscription",
-            success_url=f"{settings.api_base_url}/success?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{settings.api_base_url}/cancel",
+            success_url=f"{settings.frontend_url}/pricing?status=success",
+            cancel_url=f"{settings.frontend_url}/pricing?status=cancelled",
         )
         return {"url": checkout_session.url}
     except Exception as e:
@@ -55,7 +55,7 @@ async def create_checkout_session(
 
 
 @router.post("/webhook")
-async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
+async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dict[str, str]:
     settings = get_settings()
     if not settings.stripe_secret_key or not settings.stripe_webhook_secret:
         raise HTTPException(status_code=500, detail="Stripe is not configured.")
@@ -95,8 +95,7 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)) -
 
                 # UPSERT subscription
                 stmt = select(Subscription).where(Subscription.user_id == user_id_str)
-                result = await db.execute(stmt)
-                db_sub = result.scalars().first()
+                db_sub = db.scalars(stmt).first()
 
                 if db_sub:
                     db_sub.stripe_customer_id = stripe_customer_id
@@ -113,10 +112,10 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)) -
                     )
                     db.add(db_sub)
 
-                await db.commit()
+                db.commit()
             except Exception as e:
                 logger.error(f"Error processing webhook: {e}")
-                await db.rollback()
+                db.rollback()
                 raise HTTPException(status_code=500, detail="Database error") from e
 
     return {"status": "success"}

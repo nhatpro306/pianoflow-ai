@@ -1,0 +1,247 @@
+{
+  "timestamp": "2026-10-03T14:58:33.727Z",
+  "viewports": {
+    "desktop": {
+      "width": 1920,
+      "height": 1080
+    },
+    "tablet": {
+      "width": 768,
+      "height": 1024
+    },
+    "mobile": {
+      "width": 375,
+      "height": 667
+    }
+  },
+  "routes": {
+    "Landing_Page_Desktop": {
+      "pass": true,
+      "heroText": "🎹 PianoFlow AI",
+      "featuresCount": 4,
+      "timings": {
+        "dnsTimeMs": 1,
+        "tcpTimeMs": 1,
+        "ttfbMs": 3,
+        "domContentLoadedMs": 28,
+        "loadEventMs": 0
+      },
+      "durationMs": 280
+    },
+    "Landing_Page_Tablet": {
+      "pass": true,
+      "viewport": "768x1024"
+    },
+    "Landing_Page_Mobile_Drawer": {
+      "pass": true,
+      "initialExpanded": "false",
+      "openExpanded": "true",
+      "closedExpanded": "false",
+      "isDrawerVisible": true
+    },
+    "Pricing_Page_Desktop_And_Mobile": {
+      "pass": true,
+      "timings": {
+        "dnsTimeMs": 0,
+        "tcpTimeMs": 0,
+        "ttfbMs": 2,
+        "domContentLoadedMs": 20,
+        "loadEventMs": 0
+      },
+      "durationMs": 562
+    },
+    "Auth_Login_Page": {
+      "pass": true,
+      "signupToggled": true,
+      "timings": {
+        "dnsTimeMs": 0,
+        "tcpTimeMs": 1,
+        "ttfbMs": 2,
+        "domContentLoadedMs": 43,
+        "loadEventMs": 79
+      },
+      "durationMs": 1070
+    },
+    "Projects_Dashboard": {
+      "pass": true,
+      "hasXpText": true,
+      "hasNextLevel": true,
+      "hasStreak": true,
+      "hasNewProjectBtn": true,
+      "card1": true,
+      "card2": true,
+      "hasDeleteModal": true,
+      "modalClosed": true,
+      "timings": {
+        "dnsTimeMs": 0,
+        "tcpTimeMs": 0,
+        "ttfbMs": 2,
+        "domContentLoadedMs": 23,
+        "loadEventMs": 0
+      },
+      "durationMs": 1642
+    },
+    "Create_Upload_Page": {
+      "pass": true,
+      "hasDropzone": true,
+      "hasLinkInput": true,
+      "hasRightsCheckbox": true,
+      "timings": {
+        "dnsTimeMs": 0,
+        "tcpTimeMs": 0,
+        "ttfbMs": 4,
+        "domContentLoadedMs": 20,
+        "loadEventMs": 0
+      },
+      "durationMs": 711
+    },
+    "Project_Editor": {
+      "pass": true,
+      "hasStartPracticeBtn": true,
+      "hasSettingsPanel": true,
+      "hasFallingNotesPreview": true,
+      "timings": {
+        "dnsTimeMs": 0,
+        "tcpTimeMs": 0,
+        "ttfbMs": 10,
+        "domContentLoadedMs": 29,
+        "loadEventMs": 0
+      },
+      "durationMs": 625
+    },
+    "Practice_Mode_Desktop_Interactive": {
+      "pass": true,
+      "hasMidiReady": true,
+      "isCanvasVisible": true,
+      "controlsVisible": true,
+      "keyCount": 24,
+      "audioContextsCount": 1,
+      "desktopFps": {
+        "fps": 58,
+        "durationSec": 1.29,
+        "frameCount": 75
+      },
+      "hasCompleteModal": true,
+      "hasXpGained": true,
+      "modalDismissed": true,
+      "timings": {
+        "dnsTimeMs": 0,
+        "tcpTimeMs": 0,
+        "ttfbMs": 14,
+        "domContentLoadedMs": 32,
+        "loadEventMs": 0
+      },
+      "durationMs": 4207
+    },
+    "Practice_Mode_Tablet": {
+      "pass": true,
+      "viewport": "768x1024"
+    },
+    "Practice_Mode_Mobile_Octave_Controls": {
+      "pass": true,
+      "initialOctaveText": "C3 - B4 (Mid)",
+      "shiftedOctaveText": "C4 - B5 (Mid/High)",
+      "restoredOctaveText": "C3 - B4 (Mid)",
+      "full88Toggled": true,
+      "mobileFps": {
+        "fps": 61,
+        "durationSec": 0.98,
+        "frameCount": 60
+      }
+    },
+    "Legacy_Project_No_ID": {
+      "pass": true,
+      "hasMissingIdPrompt": true,
+      "hasBackLink": true
+    },
+    "Not_Found_404_Page": {
+      "pass": true,
+      "has404": true
+    }
+  },
+  "practiceMetrics": {
+    "desktopFps": {
+      "fps": 58,
+      "durationSec": 1.29,
+      "frameCount": 75
+    },
+    "mobileFps": {
+      "fps": 61,
+      "durationSec": 0.98,
+      "frameCount": 60
+    }
+  },
+  "timings": {
+    "/ (Desktop)": {
+      "dnsTimeMs": 1,
+      "tcpTimeMs": 1,
+      "ttfbMs": 3,
+      "domContentLoadedMs": 28,
+      "loadEventMs": 0
+    },
+    "/pricing (Desktop)": {
+      "dnsTimeMs": 0,
+      "tcpTimeMs": 0,
+      "ttfbMs": 2,
+      "domContentLoadedMs": 20,
+      "loadEventMs": 0
+    },
+    "/login (Desktop)": {
+      "dnsTimeMs": 0,
+      "tcpTimeMs": 1,
+      "ttfbMs": 2,
+      "domContentLoadedMs": 43,
+      "loadEventMs": 79
+    },
+    "/projects (Desktop)": {
+      "dnsTimeMs": 0,
+      "tcpTimeMs": 0,
+      "ttfbMs": 2,
+      "domContentLoadedMs": 23,
+      "loadEventMs": 0
+    },
+    "/create (Desktop)": {
+      "dnsTimeMs": 0,
+      "tcpTimeMs": 0,
+      "ttfbMs": 4,
+      "domContentLoadedMs": 20,
+      "loadEventMs": 0
+    },
+    "/projects/proj-123 (Desktop)": {
+      "dnsTimeMs": 0,
+      "tcpTimeMs": 0,
+      "ttfbMs": 10,
+      "domContentLoadedMs": 29,
+      "loadEventMs": 0
+    },
+    "/projects/proj-123/practice (Desktop)": {
+      "dnsTimeMs": 0,
+      "tcpTimeMs": 0,
+      "ttfbMs": 14,
+      "domContentLoadedMs": 32,
+      "loadEventMs": 0
+    }
+  },
+  "summary": {
+    "totalTests": 13,
+    "passedTests": 13,
+    "failedTests": 0
+  },
+  "integrity": {
+    "pageErrorsCount": 0,
+    "pageErrors": [],
+    "consoleErrorsCount": 1,
+    "consoleErrors": [
+      {
+        "url": "http://localhost:3000/non-existent-page-test-404",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      }
+    ],
+    "failedRequestsCount": 0,
+    "failedRequests": [],
+    "httpErrorsCount": 0,
+    "httpErrors": [],
+    "zeroUnhandledExceptions": true,
+    "zeroBrokenAssets": true
+  }
+}

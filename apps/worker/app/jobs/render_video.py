@@ -9,7 +9,9 @@ MP4, streaming-only (kind video_mp4 — never downloadable).
 import json
 import logging
 import uuid
+from contextlib import suppress
 from datetime import UTC, datetime
+from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -105,6 +107,7 @@ def _render_settings(snapshot: dict | None) -> RenderConfig:
         glow_intensity=float(snapshot.get("glow_intensity", 0.6)),
         keyboard_size=float(snapshot.get("keyboard_size", 1.0)),
         note_fall_speed=float(snapshot.get("note_fall_speed", 1.0)),
+        show_note_names=bool(snapshot.get("show_note_names", False)),
     )
 
 
@@ -216,60 +219,70 @@ def handle_render_video(payload: dict) -> None:
                     db.commit()
                 yield renderer.render_frame(index)
 
+        mp4_path: Path | None = None
         try:
-            mp4_bytes = get_video_encoder().encode(
-                frame_stream(), width, height, config.fps, wav_bytes
-            )
-        except VideoEncodeError as exc:
-            _fail_job(db, job, exc.code, str(exc), request_id)
-            db.commit()
-            return
-        except Exception as exc:
-            _retry_or_fail(db, job, type(exc).__name__, "Video encoding crashed.", request_id)
-            db.commit()
-            if job.status == "queued":
-                raise RequeueJob from exc
-            return
-
-        job.progress = 90
-        job.progress_message = "Combining audio and video"
-        db.commit()
-
-        video_key = f"projects/{job.project_id}/outputs/{job.id}/tutorial.mp4"
-        try:
-            job.progress = 95
-            job.progress_message = "Finalizing MP4"
-            db.commit()
-            storage.upload(video_key, mp4_bytes, "video/mp4")
-            db.add(
-                OutputFile(
-                    project_id=job.project_id,
-                    job_id=job.id,
-                    user_id=job.user_id,
-                    kind="video_mp4",
-                    storage_key=video_key,
-                    content_type="video/mp4",
-                    size_bytes=len(mp4_bytes),
-                    output_metadata={
-                        "resolution": config.resolution,
-                        "fps": config.fps,
-                        "speed_multiplier": speed,
-                        "difficulty": difficulty,
-                        "duration_sec": scaled.duration_sec,
-                        "download_allowed": False,
-                        "streaming_only": True,
-                        "access_policy": "private_streaming",
-                    },
+            try:
+                mp4_path = get_video_encoder().encode(
+                    frame_stream(), width, height, config.fps, wav_bytes
                 )
-            )
-        except Exception as exc:
-            _retry_or_fail(
-                db, job, type(exc).__name__, "Could not persist video output.", request_id
-            )
+            except VideoEncodeError as exc:
+                _fail_job(db, job, exc.code, str(exc), request_id)
+                db.commit()
+                return
+            except Exception as exc:
+                _retry_or_fail(db, job, type(exc).__name__, "Video encoding crashed.", request_id)
+                db.commit()
+                if job.status == "queued":
+                    raise RequeueJob from exc
+                return
+
+            job.progress = 90
+            job.progress_message = "Combining audio and video"
             db.commit()
-            if job.status == "queued":
-                raise RequeueJob from exc
-            return
+
+            video_key = f"projects/{job.project_id}/outputs/{job.id}/tutorial.mp4"
+            mp4_file = Path(mp4_path)
+            size_bytes = mp4_file.stat().st_size
+            try:
+                job.progress = 95
+                job.progress_message = "Finalizing MP4"
+                db.commit()
+                storage.upload_file(video_key, mp4_file, "video/mp4")
+                db.add(
+                    OutputFile(
+                        project_id=job.project_id,
+                        job_id=job.id,
+                        user_id=job.user_id,
+                        kind="video_mp4",
+                        storage_key=video_key,
+                        content_type="video/mp4",
+                        size_bytes=size_bytes,
+                        output_metadata={
+                            "resolution": config.resolution,
+                            "fps": config.fps,
+                            "speed_multiplier": speed,
+                            "difficulty": difficulty,
+                            "duration_sec": scaled.duration_sec,
+                            "download_allowed": False,
+                            "streaming_only": True,
+                            "access_policy": "private_streaming",
+                        },
+                    )
+                )
+            except Exception as exc:
+                _retry_or_fail(
+                    db, job, type(exc).__name__, "Could not persist video output.", request_id
+                )
+                db.commit()
+                if job.status == "queued":
+                    raise RequeueJob from exc
+                return
+        finally:
+            if mp4_path is not None:
+                with suppress(Exception):
+                    p = Path(mp4_path)
+                    if p.is_file():
+                        p.unlink()
 
         job.status = "completed"
         job.progress = 100

@@ -17,6 +17,8 @@ const eslintConfig = [
       "next-env.d.ts",
       "postcss.config.mjs",
       "public/**",
+      "test-*.js",
+      "*.js",
     ],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 import { Providers } from "./providers";
+import { MobileNav } from "@/components/MobileNav";
 import { UserMenu } from "@/components/UserMenu";
 
 export const metadata: Metadata = {
@@ -20,12 +21,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
         <Providers>
           <header className="border-b border-zinc-800">
-            <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+            <nav aria-label="Desktop navigation" className="relative mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
               <div className="flex items-center gap-6">
                 <Link href="/" className="font-bold tracking-tight">
                   <span aria-hidden="true">🎹</span> PianoFlow <span className="text-cyan-400">AI</span>
                 </Link>
-                <div className="flex gap-4 text-sm text-zinc-400">
+                <div className="hidden md:flex gap-4 text-sm text-zinc-400">
                   <Link href="/create" className="hover:text-zinc-100">
                     Create
                   </Link>
@@ -37,7 +38,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </Link>
                 </div>
               </div>
-              <UserMenu />
+              <div className="flex items-center gap-3">
+                <UserMenu />
+                <MobileNav />
+              </div>
             </nav>
           </header>
           {children}

@@ -108,13 +108,20 @@ class FakeVideoEncoder:
         self.frames_seen = 0
         self.args: dict = {}
 
-    def encode(self, frames, width, height, fps, wav_bytes) -> bytes:
+    def encode(self, frames, width, height, fps, wav_bytes):
+        import tempfile
+        from pathlib import Path
+
         self.args = {"width": width, "height": height, "fps": fps}
         for frame in frames:
             assert len(frame) == width * height * 3
             self.frames_seen += 1
         assert wav_bytes.startswith(b"RIFF")
-        return b"\x00\x00\x00\x18ftypmp42" + b"\x00" * 2000
+        fd, path_str = tempfile.mkstemp(prefix="pf-test-fake-video-", suffix=".mp4")
+        os.close(fd)
+        path = Path(path_str)
+        path.write_bytes(b"\x00\x00\x00\x18ftypmp42" + b"\x00" * 2000)
+        return path
 
 
 def test_render_video_creates_streaming_output(tmp_path, monkeypatch) -> None:
@@ -196,7 +203,7 @@ def test_ffmpeg_encoder_accepts_streamed_frames() -> None:
     width = 16
     height = 16
     frame = bytes([0, 0, 0]) * width * height
-    mp4 = FfmpegVideoEncoder().encode(
+    mp4_path = FfmpegVideoEncoder().encode(
         (frame for _ in range(3)),
         width,
         height,
@@ -204,4 +211,8 @@ def test_ffmpeg_encoder_accepts_streamed_frames() -> None:
         _tiny_wav_bytes(),
     )
 
-    assert mp4[4:8] == b"ftyp"
+    try:
+        assert mp4_path.is_file()
+        assert mp4_path.read_bytes()[4:8] == b"ftyp"
+    finally:
+        mp4_path.unlink()

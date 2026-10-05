@@ -1,0 +1,46 @@
+{
+  "allPassed": true,
+  "results": {
+    "scenario_1_new_hud": {
+      "pass": true,
+      "details": "Title visible: true, Back button: true, Counter: \"Bar 1 / 13\", All speed buttons: true, A-B buttons: true, Hands buttons: true, Scrubber track: true",
+      "screenshot": "01_practice_new_hud.png"
+    },
+    "scenario_2_speed_controls": {
+      "pass": true,
+      "details": "0.5x active style: true, 1.5x active style: true, 1.0x active style: true",
+      "screenshot": "02_speed_controls.png"
+    },
+    "scenario_3_hands_isolation": {
+      "pass": true,
+      "details": "RH active styling (bg-purple-600): true, LH active styling (bg-cyan-600): true, Both Hands active styling (bg-zinc-200): true",
+      "screenshot": "03_hands_isolation.png"
+    },
+    "scenario_4_ab_looping": {
+      "pass": true,
+      "details": "Marker A: true, Marker B: true, Loop: ON: true, Range Tag: \"00:01 / 00:25 🔁 A: 00:01 | B: 00:04 Set A Set B Loop: ON ✕ Bar 1 / 13 A B\", Playhead wrap verified: true",
+      "screenshot": "04_ab_looping_active.png"
+    },
+    "scenario_5_timeline_scrubber_seek": {
+      "pass": true,
+      "details": "Scrubbed time: 00:12 / 00:25 (~12s / 25s), Bar counter: \"Bar 7 / 13\", Expected ~12.5s (Bar 7)",
+      "screenshot": "05_timeline_scrubber_seek.png"
+    },
+    "scenario_6_hit_sparks_effect": {
+      "pass": true,
+      "details": "Perfect hits recorded: 1, Score: 102, Radiant hit beam and particle sparks rendered with 0 exceptions",
+      "screenshot": "06_hit_sparks_effect.png"
+    },
+    "scenario_7_mobile_responsive": {
+      "pass": true,
+      "details": "No horizontal overflow: true (scrollWidth=375, clientWidth=375), Octave Navigator: true, Mobile Scrubber: true, Canvas FPS: 60 FPS (Requirement >= 55.0 FPS)",
+      "fps": 60,
+      "screenshot": "07_mobile_responsive_practice.png"
+    }
+  },
+  "globalErrors": {
+    "consoleErrors": [],
+    "pageErrors": []
+  },
+  "timestamp": "2026-10-03T16:20:13.925Z"
+}

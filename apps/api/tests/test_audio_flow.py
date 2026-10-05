@@ -67,12 +67,15 @@ class TestAudioUploadInit:
         assert response.json()["error"]["code"] == "UNSUPPORTED_AUDIO_TYPE"
 
     def test_too_large_rejected(self, client: TestClient) -> None:
+        from app.core.config import get_settings
+
+        settings = get_settings()
         project_id = _create_project(client)
         response = client.post(
             f"/api/v1/projects/{project_id}/upload-audio",
             json={
                 "filename": "take.wav",
-                "size_bytes": 200 * 1024 * 1024,
+                "size_bytes": settings.max_audio_bytes + 1024,
                 "rights_attestation": True,
             },
         )

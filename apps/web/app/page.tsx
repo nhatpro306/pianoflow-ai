@@ -40,10 +40,15 @@ export default function LandingPage() {
         <p className="max-w-xl text-lg text-zinc-400">
           Turn any song into a lesson you can play — falling notes, sheet music, and beginner simplifications.
         </p>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center justify-center gap-3">
           <Link href="/create" tabIndex={-1}>
-            <Button size="lg">
+            <Button size="lg" className="bg-gradient-to-r from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-white shadow-lg shadow-cyan-950/40">
               Upload audio or MIDI
+            </Button>
+          </Link>
+          <Link href="/demo" tabIndex={-1}>
+            <Button variant="secondary" size="lg" className="border border-cyan-500/40 bg-cyan-950/40 hover:bg-cyan-900/50 text-cyan-200">
+              Explore Demo Library ✨
             </Button>
           </Link>
           <Link href="/projects" tabIndex={-1}>
@@ -52,6 +57,16 @@ export default function LandingPage() {
             </Button>
           </Link>
         </div>
+
+        {/* Classical Showcase Teaser Banner */}
+        <Link
+          href="/demo"
+          className="group flex flex-wrap items-center justify-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-950/30 px-5 py-2 text-xs text-cyan-200 transition-all hover:border-cyan-400 hover:bg-cyan-900/40 hover:shadow-lg hover:shadow-cyan-950/40"
+        >
+          <span className="font-semibold text-cyan-400">Instant Access • No Account Required:</span>
+          <span>Play Für Elise, Clair de Lune, Gymnopédie No. 1, and Canon in D right in your browser.</span>
+          <span className="font-bold text-cyan-400 group-hover:translate-x-0.5 transition-transform">→</span>
+        </Link>
       </section>
 
       {/* Features */}

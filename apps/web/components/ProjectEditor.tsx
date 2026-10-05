@@ -3,13 +3,27 @@
 import type { RenderSettings } from "@pianoflow/shared-types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { FallingNotePreview } from "@/components/FallingNotePreview";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { Progress } from "@/components/ui/Progress";
+import { TrackSelector } from "@/components/TrackSelector";
+import { ExportCenterModal } from "@/components/ExportCenterModal";
+import { DifficultySelector } from "@/components/practice/DifficultySelector";
+import {
+  simplifyNoteData,
+  type SimplificationDifficulty,
+} from "@/lib/midi/simplifyEngine";
+import {
+  extractTrackMetadata,
+  filterNotesByTracks,
+  getDefaultTrackSettings,
+  type TrackFilterSettings,
+  type TrackMetadata,
+} from "@/lib/midi/trackFilter";
 import { api, ApiError } from "@/lib/api";
 import { useJob, useNotes, useOutputs, usePatchSettings, useProject, useSettings } from "@/lib/hooks";
 import { useRouter } from "next/navigation";
@@ -37,6 +51,9 @@ export function ProjectEditor({ id }: { id: string }) {
   const [sheetJobId, setSheetJobId] = useState<string | null>(null);
   const [videoJobId, setVideoJobId] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [trackSettings, setTrackSettings] = useState<TrackFilterSettings | null>(null);
+  const [showTrackSelector, setShowTrackSelector] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const pendingRef = useRef<Partial<RenderSettings>>({});
   const timerRef = useRef<number | null>(null);
 
@@ -46,6 +63,41 @@ export function ProjectEditor({ id }: { id: string }) {
 
   const difficulty = local?.difficulty ?? serverSettings.data?.difficulty ?? "original";
   const notes = useNotes(id, ready, difficulty);
+
+  const tracks = useMemo<TrackMetadata[]>(() => {
+    if (!notes.data) return [];
+    return extractTrackMetadata(notes.data);
+  }, [notes.data]);
+
+  const activeSettings = useMemo<TrackFilterSettings>(() => {
+    if (trackSettings) return trackSettings;
+    return getDefaultTrackSettings(tracks);
+  }, [trackSettings, tracks]);
+
+  const filteredNoteData = useMemo(() => {
+    if (!notes.data) return undefined;
+    return filterNotesByTracks(notes.data, activeSettings);
+  }, [notes.data, activeSettings]);
+
+  // Phase J: Dynamic arrangement preview difficulty
+  const [previewDifficulty, setPreviewDifficulty] = useState<SimplificationDifficulty>("original");
+
+  const previewNoteData = useMemo(() => {
+    if (!filteredNoteData) return undefined;
+    return simplifyNoteData(filteredNoteData, previewDifficulty);
+  }, [filteredNoteData, previewDifficulty]);
+
+  const simplificationStats = useMemo(() => {
+    return previewNoteData?.stats;
+  }, [previewNoteData]);
+
+  const isFilterActive = useMemo(() => {
+    if (!trackSettings) return false;
+    if (trackSettings.soloTrackIndex !== null) return true;
+    if (trackSettings.mutedTrackIndices.length > 0) return true;
+    if (trackSettings.selectedTrackIndices.length < tracks.length) return true;
+    return false;
+  }, [trackSettings, tracks.length]);
 
   async function syncPendingSettings() {
     if (timerRef.current) {
@@ -201,8 +253,19 @@ export function ProjectEditor({ id }: { id: string }) {
       {ready && local && (
         <div className="flex flex-col gap-6 lg:flex-row">
           <div className="min-w-0 flex-1 overflow-x-auto">
-            {notes.data ? (
-              <FallingNotePreview data={notes.data} settings={local} />
+            {filteredNoteData && (
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span className="text-zinc-400 font-medium">Preview Arrangement:</span>
+                <DifficultySelector
+                  value={previewDifficulty}
+                  onChange={setPreviewDifficulty}
+                  stats={simplificationStats}
+                  compact
+                />
+              </div>
+            )}
+            {previewNoteData ?? filteredNoteData ? (
+              <FallingNotePreview data={previewNoteData ?? filteredNoteData!} settings={local} />
             ) : (
               <div className="flex h-96 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-950 text-sm text-zinc-400">
                 {notes.isError ? "Beginner notes not generated yet." : "Loading notes..."}
@@ -226,6 +289,34 @@ export function ProjectEditor({ id }: { id: string }) {
                 onClick={() => router.push(`/projects/${id}/practice`)}
               >
                 Start Practice (MIDI)
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/projects/${id}/sheet`)}
+                className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40"
+              >
+                View Sheet Music 🎼
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowTrackSelector(true)}
+                className={`border-zinc-700 hover:bg-zinc-800 ${
+                  isFilterActive ? "border-cyan-500 text-cyan-300 bg-cyan-950/30 font-semibold" : ""
+                }`}
+              >
+                Filter Tracks 🎛️
+                {isFilterActive && (
+                  <span className="ml-1.5 rounded-full bg-cyan-500/20 px-1.5 py-0.5 text-[10px] text-cyan-300">
+                    {filteredNoteData?.notes.length ?? 0}/{notes.data?.notes.length ?? 0}
+                  </span>
+                )}
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => setIsExportModalOpen(true)}
+                className="bg-gradient-to-r from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-white font-medium shadow-lg shadow-violet-950/40"
+              >
+                Export Center 🚀
               </Button>
               <div className="flex flex-wrap gap-2">
                 {local.difficulty !== "original" && (
@@ -377,6 +468,61 @@ export function ProjectEditor({ id }: { id: string }) {
           />
         </div>
       )}
+
+      {tracks.length > 0 && (
+        <TrackSelector
+          open={showTrackSelector}
+          onClose={() => setShowTrackSelector(false)}
+          tracks={tracks}
+          settings={activeSettings}
+          onApplySettings={(newSettings) => setTrackSettings(newSettings)}
+          totalNotesCount={notes.data?.notes.length}
+        />
+      )}
+
+      <ExportCenterModal
+        open={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        projectId={id}
+        projectName={p?.name ?? "Untitled Project"}
+        durationSec={notes.data?.duration_sec ?? summary?.duration_sec ?? 0}
+        totalNotes={notes.data?.notes.length ?? summary?.note_count ?? 0}
+        settings={local}
+        activeSettings={local ?? undefined}
+        filteredNoteData={previewNoteData ?? filteredNoteData}
+        outputs={outputs.data?.items ?? []}
+        jobs={{
+          sheet: sheetJob.data,
+          video: videoJob.data,
+          simplify: simplify.isPending
+            ? {
+                id: "simplify",
+                job_type: "simplify_midi",
+                status: "processing",
+                progress: 50,
+                progress_message: "Simplifying MIDI...",
+              }
+            : null,
+          active: activeJob.data,
+        }}
+        token={null}
+        onRenderVideo={async (options) => {
+          if (options) {
+            onChange({
+              resolution: options.resolution,
+              fps: options.fps,
+              difficulty: options.difficulty,
+            });
+          }
+          await renderVideo.mutateAsync();
+        }}
+        onRenderSheet={async () => {
+          await renderSheet.mutateAsync();
+        }}
+        onSimplifyMidi={async () => {
+          await simplify.mutateAsync();
+        }}
+      />
     </main>
   );
 }

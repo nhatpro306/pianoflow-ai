@@ -3,6 +3,7 @@
 import hashlib
 
 import pytest
+from PIL import Image
 
 from pianoflow_music.midi.parse import parse_midi_bytes
 from pianoflow_music.midi.write import note_data_to_midi_bytes
@@ -126,6 +127,64 @@ class TestFrameRenderer:
         )
         gold = FrameRenderer(data, RenderConfig(colors={"right_hand": "#f59e0b"})).render_frame(45)
         assert violet != gold
+
+    def test_hand_specific_key_lighting(self) -> None:
+        """Right hand notes light keys with violet, left hand notes light keys with cyan."""
+        data = NoteData(
+            schema_version=SCHEMA_VERSION,
+            bpm=120.0,
+            duration_sec=3.0,
+            time_signature="4/4",
+            notes=[
+                _note(0, 60, 1.0, 2.0, hand="R"),
+                _note(1, 48, 1.0, 2.0, hand="L"),
+            ],
+        )
+        renderer = FrameRenderer(data, RenderConfig(resolution="720p", fps=30))
+        frame_bytes = renderer.render_frame(30)
+        img = Image.frombytes("RGB", (renderer.width, renderer.height), frame_bytes)
+        rect_rh = renderer.layout.key_rect(60)
+        rect_lh = renderer.layout.key_rect(48)
+        rh_pixel = img.getpixel(
+            (int(rect_rh.x + rect_rh.w / 2), renderer.hit_y + renderer.keyboard_h // 2)
+        )
+        lh_pixel = img.getpixel(
+            (int(rect_lh.x + rect_lh.w / 2), renderer.hit_y + renderer.keyboard_h // 2)
+        )
+        assert rh_pixel == (124, 58, 237)
+        assert lh_pixel == (34, 211, 238)
+
+    def test_show_note_names_flag(self) -> None:
+        """Enabling show_note_names modifies rendered falling note bytes vs disabled."""
+        data = _note_data()
+        renderer_off = FrameRenderer(data, RenderConfig(fps=30, show_note_names=False))
+        renderer_on = FrameRenderer(data, RenderConfig(fps=30, show_note_names=True))
+        frame_off = renderer_off.render_frame(15)
+        frame_on = renderer_on.render_frame(15)
+        assert frame_off != frame_on
+
+    def test_radiant_vertical_glow(self) -> None:
+        """Active keys project radiant upward glow column above the hit line."""
+        data = NoteData(
+            schema_version=SCHEMA_VERSION,
+            bpm=120.0,
+            duration_sec=3.0,
+            time_signature="4/4",
+            notes=[_note(0, 60, 1.0, 1.05, hand="R")],
+        )
+        renderer = FrameRenderer(data, RenderConfig(fps=30, glow_intensity=0.8))
+        frame_active = renderer.render_frame(31)
+        frame_idle = renderer.render_frame(0)
+        img_active = Image.frombytes("RGB", (renderer.width, renderer.height), frame_active)
+        img_idle = Image.frombytes("RGB", (renderer.width, renderer.height), frame_idle)
+        rect = renderer.layout.key_rect(60)
+        sample_x = int(rect.x + rect.w / 2)
+        sample_y = renderer.hit_y - 50
+        active_pixel = img_active.getpixel((sample_x, sample_y))
+        idle_pixel = img_idle.getpixel((sample_x, sample_y))
+        assert active_pixel != idle_pixel
+        assert active_pixel[0] > idle_pixel[0]
+        assert active_pixel[2] > idle_pixel[2]
 
 
 class TestMidiWrite:

@@ -1,0 +1,62 @@
+[
+  {
+    "frame_index": 0,
+    "timestamp_sec": 0.0,
+    "resolution": "720p",
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "glow_intensity": 0.6,
+    "file_name": "ref_frame_0000_720p.png",
+    "file_size_bytes": 10178,
+    "raw_sha256": "6478e1023bf05a5f5acebd6ceadd5915adca719eecfa9da0fc7f86438d488901"
+  },
+  {
+    "frame_index": 300,
+    "timestamp_sec": 10.0,
+    "resolution": "720p",
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "glow_intensity": 0.6,
+    "file_name": "ref_frame_0300_720p.png",
+    "file_size_bytes": 14312,
+    "raw_sha256": "48f4d19e38eaf230e00de0511cd3036cfbbbf2063fd8247f107dce9393a07858"
+  },
+  {
+    "frame_index": 900,
+    "timestamp_sec": 30.0,
+    "resolution": "720p",
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "glow_intensity": 0.6,
+    "file_name": "ref_frame_0900_720p.png",
+    "file_size_bytes": 12861,
+    "raw_sha256": "a09378bb60c5d0a147ca27a91c67479ecf0359437fd795231e54d12af328d611"
+  },
+  {
+    "frame_index": 1500,
+    "timestamp_sec": 50.0,
+    "resolution": "720p",
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "glow_intensity": 0.6,
+    "file_name": "ref_frame_1500_720p.png",
+    "file_size_bytes": 8112,
+    "raw_sha256": "dd78bf9c36a14f87f678d37513aefba0ffadb30c1700ff52be3853c4253669b6"
+  },
+  {
+    "frame_index": 1800,
+    "timestamp_sec": 60.0,
+    "resolution": "720p",
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "glow_intensity": 0.6,
+    "file_name": "ref_frame_1800_720p.png",
+    "file_size_bytes": 4568,
+    "raw_sha256": "05b28ee47759f05cff5613baf866786def0ccf6a9857675d94d7c61032d1ee79"
+  }
+]

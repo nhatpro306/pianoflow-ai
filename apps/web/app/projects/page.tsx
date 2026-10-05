@@ -1,90 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import type { Project } from "@/lib/api";
-import { useDeleteProject, useProjects } from "@/lib/hooks";
+import { useDeleteProject, useProjects, useUserProgress } from "@/lib/hooks";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { LevelProgress } from "@/components/ui/LevelProgress";
 import { StreakBadge } from "@/components/ui/StreakBadge";
-import { useUserProgress } from "@/lib/hooks";
-
-const STATUS_STYLE: Record<Project["status"], string> = {
-  created: "bg-zinc-700 text-zinc-200",
-  uploading: "bg-amber-900 text-amber-200",
-  parsing: "bg-amber-900 text-amber-200",
-  transcribing: "bg-amber-900 text-amber-200",
-  ready: "bg-emerald-900 text-emerald-200",
-  failed: "bg-red-900 text-red-200",
-  archived: "bg-zinc-800 text-zinc-400",
-};
-
-function formatDuration(seconds: number | undefined): string {
-  if (seconds == null) return "—";
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-function ProjectCard({ project, onDelete }: { project: Project; onDelete: (p: Project) => void }) {
-  const summary = project.analysis_summary;
-
-  return (
-    <div className="flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-      <div className="flex items-start justify-between gap-2">
-        <Link
-          href={`/projects/${encodeURIComponent(project.id)}`}
-          className="font-semibold hover:text-cyan-400"
-        >
-          {project.name}
-        </Link>
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[project.status]}`}
-        >
-          {project.status}
-        </span>
-      </div>
-
-      <dl className="grid grid-cols-3 gap-2 text-xs text-zinc-400">
-        <div>
-          <dt className="text-zinc-600">Duration</dt>
-          <dd>{formatDuration(summary?.duration_sec)}</dd>
-        </div>
-        <div>
-          <dt className="text-zinc-600">BPM</dt>
-          <dd>{summary?.bpm ?? "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-zinc-600">Notes</dt>
-          <dd>{summary?.note_count ?? "—"}</dd>
-        </div>
-      </dl>
-
-      <div className="flex justify-between text-xs text-zinc-500">
-        <span>{new Date(project.created_at).toLocaleDateString()}</span>
-        <button
-          onClick={() => onDelete(project)}
-          className="text-red-400 hover:text-red-300"
-        >
-          Delete
-        </button>
-      </div>
-    </div>
-  );
-}
+import { ExportCenterModal } from "@/components/ExportCenterModal";
+import type {
+  ProjectStatusFilter,
+  ProjectSortOption,
+} from "@/types/projectDashboard";
+import {
+  computeStatusCounts,
+  filterProjects,
+  sortProjects,
+} from "@/lib/projectFilters";
+import { ProjectSearchBar } from "@/components/projects/ProjectSearchBar";
+import { ProjectCard } from "@/components/projects/ProjectCard";
+import { ProjectEmptyState } from "@/components/projects/ProjectEmptyState";
 
 export default function ProjectsPage() {
   const { authenticated } = useRequireAuth();
   const { data, isLoading, isError } = useProjects();
   const { data: progressData } = useUserProgress();
   const del = useDeleteProject();
-  
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<ProjectStatusFilter>("all");
+  const [sortOption, setSortOption] = useState<ProjectSortOption>("newest");
+  const [exportModalProject, setExportModalProject] = useState<Project | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
-  if (!authenticated) return null;
+  const rawProjects = useMemo(() => data?.items ?? [], [data?.items]);
+
+  const statusCounts = useMemo(
+    () => computeStatusCounts(rawProjects),
+    [rawProjects]
+  );
+
+  const filteredProjects = useMemo(
+    () => filterProjects(rawProjects, searchQuery, statusFilter),
+    [rawProjects, searchQuery, statusFilter]
+  );
+
+  const displayedProjects = useMemo(
+    () => sortProjects(filteredProjects, sortOption),
+    [filteredProjects, sortOption]
+  );
+
+  const isFiltering =
+    (searchQuery.trim().length > 0 || statusFilter !== "all") &&
+    rawProjects.length > 0;
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
+  };
 
   const handleDelete = () => {
     if (deleteTarget) {
@@ -92,6 +68,8 @@ export default function ProjectsPage() {
       setDeleteTarget(null);
     }
   };
+
+  if (!authenticated) return null;
 
   return (
     <main className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-10">
@@ -101,16 +79,17 @@ export default function ProjectsPage() {
           {progressData && (
             <>
               <StreakBadge streakDays={progressData.current_streak_days} />
-              <LevelProgress 
-                level={progressData.level} 
-                totalXp={progressData.total_xp} 
-                xpToNextLevel={progressData.xp_to_next_level} 
+              <LevelProgress
+                level={progressData.level}
+                totalXp={progressData.total_xp}
+                xpToNextLevel={progressData.xp_to_next_level}
               />
             </>
           )}
           <Link
-            href="/upload"
-            className="rounded-md bg-cyan-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-cyan-400"
+            href="/create"
+            aria-label="Create new piano project"
+            className="rounded-md bg-cyan-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-cyan-400 transition-colors"
           >
             + New project
           </Link>
@@ -120,7 +99,7 @@ export default function ProjectsPage() {
       {isLoading && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-36 animate-pulse rounded-xl bg-zinc-900" />
+            <div key={i} className="h-44 animate-pulse rounded-xl bg-zinc-900 border border-zinc-800" />
           ))}
         </div>
       )}
@@ -131,34 +110,53 @@ export default function ProjectsPage() {
         </p>
       )}
 
-      {data && data.items.length === 0 && (
-        <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-zinc-800 py-20 text-center">
-          <span className="text-4xl">🎼</span>
-          <p className="text-zinc-400">No projects yet.</p>
-          <Link href="/upload" className="text-cyan-400 hover:underline">
-            Upload your first MIDI →
-          </Link>
-        </div>
+      {!isLoading && !isError && rawProjects.length === 0 && (
+        <ProjectEmptyState isFiltering={false} />
       )}
 
-      {data && data.items.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {data.items.map((project) => (
-            <ProjectCard 
-              key={project.id} 
-              project={project} 
-              onDelete={setDeleteTarget} 
+      {!isLoading && !isError && rawProjects.length > 0 && (
+        <>
+          <ProjectSearchBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            statusCounts={statusCounts}
+            sortOption={sortOption}
+            onSortOptionChange={setSortOption}
+          />
+
+          {displayedProjects.length === 0 ? (
+            <ProjectEmptyState
+              isFiltering={isFiltering}
+              onClearFilters={handleClearFilters}
+              searchQuery={searchQuery}
+              statusFilter={statusFilter}
             />
-          ))}
-        </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {displayedProjects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  onDelete={setDeleteTarget}
+                  onExport={setExportModalProject}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
-      <Dialog 
-        open={!!deleteTarget} 
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         title="Delete Project?"
       >
-        <p>Are you sure you want to delete &quot;{deleteTarget?.name}&quot;? This cannot be undone.</p>
+        <p>
+          Are you sure you want to delete &quot;{deleteTarget?.name}&quot;? This cannot be undone.
+        </p>
         <DialogActions>
           <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
             Cancel
@@ -168,6 +166,15 @@ export default function ProjectsPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Unified Export Center Modal */}
+      {exportModalProject && (
+        <ExportCenterModal
+          project={exportModalProject}
+          isOpen={true}
+          onClose={() => setExportModalProject(null)}
+        />
+      )}
     </main>
   );
 }

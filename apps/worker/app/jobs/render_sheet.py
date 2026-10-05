@@ -14,7 +14,7 @@ from app.jobs.registry import register
 from app.storage import ObjectNotFoundError, get_storage
 from pianoflow_music.notes.model import NoteData
 from pianoflow_music.sheet.musicxml import note_data_to_musicxml
-from pianoflow_music.sheet.pdf import note_data_to_simple_pdf
+from pianoflow_music.sheet.pdf import note_data_to_pdf
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +150,7 @@ def handle_render_sheet(payload: dict) -> None:
             job.progress = 75
             job.progress_message = "Writing PDF"
             db.commit()
-            pdf = note_data_to_simple_pdf(note_data, title=project.name)
+            pdf = note_data_to_pdf(note_data, title=project.name)
         except ObjectNotFoundError:
             _fail_job(
                 db,
@@ -207,7 +207,11 @@ def handle_render_sheet(payload: dict) -> None:
                     storage_key=pdf_key,
                     content_type="application/pdf",
                     size_bytes=len(pdf),
-                    output_metadata={"source": "simple_pdf_fallback", "difficulty": difficulty},
+                    output_metadata={
+                        "source": "vector_grand_staff_engraver",
+                        "difficulty": difficulty,
+                        "format": "vector_grand_staff_pdf",
+                    },
                 )
             )
         except Exception as exc:

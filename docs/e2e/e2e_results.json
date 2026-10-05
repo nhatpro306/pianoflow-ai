@@ -1,0 +1,73 @@
+{
+  "results": {
+    "s1": {
+      "pass": true,
+      "details": "Canvas visible (1280x458), MIDI Ready badge active, pixel buffer diff confirmed falling notes animation, zero console/page errors."
+    },
+    "s2": {
+      "pass": true,
+      "details": "Score: 102, Accuracy: 50%, Perfect: 1, Good: 0, Miss: 1. Wrong pitch evaluated as MISS."
+    },
+    "s3": {
+      "pass": true,
+      "details": "Playhead cleanly froze on chord at 1000ms (pixel-identical canvas frames), and resumed advancing after chord was hit."
+    },
+    "s4": {
+      "pass": true,
+      "details": "Modal rendered with +XP, Score, Accuracy, Max Combo, and Current Streak. POST /api/v1/practice-sessions payload: {\"project_id\":\"proj-123\",\"score\":206,\"accuracy_percent\":100,\"duration_seconds\":1,\"difficulty\":\"original\"}"
+    },
+    "s5": {
+      "pass": true,
+      "details": "No horizontal overflow (w=375), Octave Prev/Next navigated correctly, virtual keys tappable, MobileNav drawer opened and closed cleanly."
+    },
+    "s6": {
+      "pass": true,
+      "details": "Baseline Desktop: 60.2 FPS (0 long tasks). Throttled 4x: 55.9 FPS (0 long tasks).",
+      "baseline": {
+        "fps": 60.2,
+        "frames": 302,
+        "elapsedMs": 5016,
+        "longTasks": []
+      },
+      "throttled": {
+        "fps": 55.9,
+        "frames": 280,
+        "elapsedMs": 5011,
+        "longTasks": []
+      }
+    },
+    "s7": {
+      "pass": true,
+      "details": "3 navigation cycles completed with 0 errors. AudioContext cleanup verified: total created=1, active open=1, closed=0.",
+      "stats": [
+        {
+          "totalCreated": 1,
+          "open": 1,
+          "closed": 0
+        },
+        {
+          "totalCreated": 1,
+          "open": 1,
+          "closed": 0
+        },
+        {
+          "totalCreated": 1,
+          "open": 1,
+          "closed": 0
+        }
+      ]
+    }
+  },
+  "globalState": {
+    "consoleErrors": [],
+    "pageErrors": [],
+    "sessionPostPayload": {
+      "project_id": "proj-123",
+      "score": 206,
+      "accuracy_percent": 100,
+      "duration_seconds": 1,
+      "difficulty": "original"
+    }
+  },
+  "timestamp": "2026-10-03T13:56:27.157Z"
+}

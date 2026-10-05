@@ -1,166 +1,187 @@
-# PianoFlow AI — Synthesia-Style Video Tutorial Feature Spec
+# PianoFlow AI — Synthesia-Style Video Tutorial Specification
 
-> Status: accepted, scheduled (see §2 phase mapping)
-> Supersedes/extends: `DESIGN.md` §5 (video rendering), parts of §3 render settings
-> Visual reference: classic YouTube piano tutorial look — black cinematic background,
-> glowing blue/purple/white vertical falling notes, bright hit line, soft fog/glow
-> above an 88-key keyboard, bloom on notes and lit keys.
+> Version: 2.0 (Post-Audit Visual & Audio Pipeline Specification)  
+> Scope: Visual composition, visual effects (bloom, fog, hit sparks), FluidSynth audio rendering, theme palettes, and streaming delivery policy  
+> Last updated: October 2026  
 
 ---
 
-## 1. Feature Summary
+## 1. Feature Summary & Visual Standards
 
-User uploads MIDI → app renders a Synthesia-style falling-note piano tutorial video with:
+PianoFlow AI produces broadcast-ready, Synthesia-style falling-note piano tutorial videos directly from parsed musical score data.
 
-- Real piano audio (SoundFont-rendered, in sync with visuals)
-- Customizable note colors (per hand), key highlight, glow, hit effect, background
-- Preset color themes + custom HEX input
-- YouTube-style playback speed: 0.25x / 0.5x / 0.75x / 1x / 1.25x / 1.5x / 2x (+ custom, clamped)
-- Real-time canvas preview with live audio before export
-- Private streaming-only MP4 (H.264 + AAC) that preserves the exact preview settings
-
-MIDI-only input (audio transcription stays Phase 12 — unchanged).
-
----
-
-## 2. Phase Mapping (decision)
-
-The request's 3 phases slot into the existing roadmap as follows. **Existing Phases 1–4 already cover upload, parsing, metadata display, and key mapping** — done and verified. The deltas land here:
-
-| Spec phase | Roadmap slot | Name | Contents |
-|---|---|---|---|
-| Phase 1 | **Phase 4B** (new, before queue work or parallel to Phase 5) | Live preview & settings | Color pickers + presets + HEX, speed selector + estimated duration, falling-note canvas preview animation, real-time piano audio (Web Audio), live speed control |
-| Phase 2 | **Phase 7** (replaces old Phase 7 scope) | Server-side export | FluidSynth MIDI→WAV, frame renderer with selected colors/speed, FFmpeg mux → private streaming-only MP4 |
-| Phase 3 | **Phase 7C** (polish, after Phase 8 OK) | Visual polish | Bloom upgrade, hit particles, better key lighting, fog refinement, perf tuning |
-
-Rationale: preview (4B) is pure frontend + already-parsed notes JSON — no queue dependency, immediate demo value. Export (7) needs the worker/queue from Phases 5–6. Polish (7C) is deferred until sheet + beginner mode exist, per the original anti-scope-creep rule.
-
-**Sequencing from today:** Phase 4B → Phase 5 (queue) → Phase 6 (sheet) → Phase 7 (this export) → 7C polish later.
+### Visual Reference & Design Standards
+- **Cinematic Dark Backdrop:** Deep dark background (`#050507`) ensuring maximum contrast with illuminated falling notes.
+- **Physical 88-Key Keyboard:** Accurately proportioned 88-key piano keyboard (52 white keys, 36 black keys) positioned at the bottom of the frame, with active keys illuminated in real time.
+- **Glowing Falling Bars:** Vertical note bars falling from top to bottom, with width equal to key width, height proportional to note duration and fall speed, and rounded end-caps.
+- **Atmospheric Fog & Bloom:** Soft volumetric fog layer hovering above the keyboard hit line, and Gaussian blur bloom surrounding falling notes and active keys.
+- **Dynamic Hit Sparks:** Explosive radial flares and hit pulses on the exact frame a note strikes the hit line.
+- **Dual Formats:**
+  - **16:9 Landscape:** 1920×1080 (1080p) or 1280×720 (720p) for YouTube tutorials and desktop learning.
+  - **9:16 Vertical:** 1080×1920 for mobile viewing, YouTube Shorts, TikTok, and Instagram Reels (features dynamic camera framing tracking active octaves).
 
 ---
 
-## 3. Settings Schema v2 (delta to `DATABASE.md` §3 `render_settings`)
+## 2. Visual Effects (VFX) Architecture
 
-```sql
--- migration when Phase 4B lands:
-ALTER TABLE render_settings
-    ADD COLUMN colors JSONB NOT NULL DEFAULT '{}',     -- see shape below
-    ADD COLUMN theme_preset TEXT NOT NULL DEFAULT 'classic',
-    ADD COLUMN glow_intensity REAL NOT NULL DEFAULT 0.6,   -- 0..1
-    ADD COLUMN note_fall_speed REAL NOT NULL DEFAULT 1.0,  -- visual speed multiplier (px/s scale)
-    ADD COLUMN keyboard_size REAL NOT NULL DEFAULT 1.0,    -- keyboard height scale 0.7..1.3
-    ADD COLUMN speed_multiplier REAL NOT NULL DEFAULT 1.0; -- replaces speed_percent semantics
--- fps CHECK relaxed to (30, 60); speed CHECK becomes 0.25 <= speed_multiplier <= 2.0
+All visual effects in the video rendering pipeline are computed headlessly on the CPU using NumPy, Pillow, and OpenCV, avoiding expensive GPU dependencies while maintaining 30–60 FPS encoding throughput.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 FRAME COMPOSITION PIPELINE                  │
+│                                                             │
+│  [Layer 1] Static Canvas: Base keyboard + background image   │
+│                             │                               │
+│  [Layer 2] Falling Notes: Sharp colored rounded rectangles  │
+│                             │                               │
+│  [Layer 3] Bloom Generator: Multi-pass Gaussian blur on L2  │
+│                             │                               │
+│  [Layer 4] Atmospheric Fog: Vertical alpha gradient band    │
+│                             │                               │
+│  [Layer 5] Hit Line & Sparks: Radial shockwaves & hit glow  │
+│                             │                               │
+│  [Layer 6] Active Keys: Lit keys + pressed-key bloom        │
+│                             │                               │
+│  [Layer 7] Optional HUD: Song title, progress bar, note text│
+└─────────────────────────────┬───────────────────────────────┘
+                              │ Pipe frames directly to FFmpeg
+                              ▼
+                FFmpeg H.264 Encoder (stdin)
 ```
 
-`colors` JSONB shape (also the TS type in `shared-types`):
+### 2.1 Bloom & Glow Engine (Without GPU)
 
-```json
-{
-  "right_hand": "#7c3aed",
-  "left_hand":  "#22d3ee",
-  "key_highlight": "#a78bfa",
-  "glow": "#8b5cf6",
-  "hit_effect": "#ffffff",
-  "background": "#050507"
-}
-```
+To simulate intense optical neon bloom without dedicated GPU shaders:
+1. **Isolated Note Layer:** In each frame, falling note rectangles are rendered onto an empty black image buffer.
+2. **Dual-Pass Gaussian Blur:**
+   $$\text{Blur}_{\text{core}} = \text{cv2.GaussianBlur}(L_{\text{notes}}, (15, 15), \sigma_1 = 4.0)$$
+   $$\text{Blur}_{\text{halo}} = \text{cv2.GaussianBlur}(L_{\text{notes}}, (45, 45), \sigma_2 = 12.0)$$
+3. **Additive Blending:**
+   $$\text{Bloom} = \text{cv2.addWeighted}(\text{Blur}_{\text{core}}, 0.6 \times \text{glow\_intensity}, \text{Blur}_{\text{halo}}, 0.4 \times \text{glow\_intensity}, 0)$$
+4. The bloom buffer is additively composited under the sharp note layer, producing a crisp core with a radiant outer glow.
 
-### Preset themes (constants in `shared-types`, one source for web + worker)
+### 2.2 Atmospheric Fog Gradient
 
-| Preset | RH | LH | Glow |
-|---|---|---|---|
-| `classic` (default, reset target) | violet `#7c3aed` | blue `#3b82f6` | `#8b5cf6` |
-| `white_glow` | `#f4f4f5` | `#a1a1aa` | `#ffffff` |
-| `neon` | pink `#ec4899` | cyan `#22d3ee` | `#f0abfc` |
-| `gold` | `#f59e0b` | `#fbbf24` | `#fde68a` |
-| `green_cyan` | `#10b981` | `#06b6d4` | `#34d399` |
-| `red_orange` | `#ef4444` | `#f97316` | `#fb923c` |
-| `custom` | user HEX | user HEX | user HEX |
+Directly above the keyboard hit line, an atmospheric fog strip simulates light scattering through stage smoke:
+- **Geometry:** Height = 140 pixels above the keyboard hit line.
+- **Falloff Curve:** Quadratic exponential alpha decay from $y = \text{hit\_line}$ ($\alpha = 0.35$) to $y = \text{hit\_line} - 140$ ($\alpha = 0.0$).
+- **Color:** Matches the active glow color tint, pre-rendered once as an alpha LUT (lookup table) and blended per frame using SIMD-accelerated array math.
 
-Validation: HEX `^#[0-9a-fA-F]{6}$` (API 400 `INVALID_HEX`); speed clamped to `[0.25, 2.0]` (`INVALID_SPEED`); presets fill the colors object server-side so export never depends on client-only state.
+### 2.3 Hit Sparks & Radial Pulses
+
+When a note reaches the hit line ($t_{\text{current}} = \text{note.start}$):
+1. **Hit Flash:** A bright horizontal line segment at the key's width flashes in pure white (`#ffffff`) or accent color for 3 frames (50–100 ms).
+2. **Radial Shockwave:** An expanding radial ellipse centered at $(x_{\text{key\_center}}, y_{\text{hit\_line}})$:
+   $$r(t) = r_{\text{max}} \times \left(\frac{t - t_{\text{onset}}}{\Delta t_{\text{life}}}\right)^{0.5}, \quad \alpha(t) = \alpha_{\text{initial}} \times \left(1 - \frac{t - t_{\text{onset}}}{\Delta t_{\text{life}}}\right)$$
+   Where $\Delta t_{\text{life}} \approx 150\text{ ms}$, creating a responsive, high-energy impact spark.
+
+### 2.4 Keyboard Layout & Active Key Geometry
+
+- **Physical 88-Key Bounds:** From MIDI note 21 ($A0$) to MIDI note 108 ($C8$).
+- **52 White Keys:** Distributed evenly across horizontal width $W$:
+  $$W_{\text{white}} = \frac{W}{52}$$
+- **36 Black Keys:** Positioned on the upper $62\%$ of the keyboard height, width $W_{\text{black}} \approx 0.62 \times W_{\text{white}}$, offset laterally according to acoustic grand piano standards (asymmetrical spacing around $C/D/E$ and $F/G/A/B$).
+- **Active Key Illumination (Hand-Specific):** When active, the entire key body is overlaid with the performer's hand color:
+  - **Right Hand (RH):** Vivid Violet `#7c3aed` $\rightarrow \text{RGB}(124, 58, 237)$
+  - **Left Hand (LH):** Vivid Cyan `#22d3ee` $\rightarrow \text{RGB}(34, 211, 238)$
+  - **Precedence:** Right Hand takes priority if both hands strike the same pitch simultaneously.
+  - **Geometry:** White keys illuminated along full height $(x + 1, 0, x + w - 1, keyboard\_h - 1)$; black keys illuminated along upper $62\%$ $(x, 0, x + w, keyboard\_h \times 0.62)$.
+
+### 2.5 Radiant Vertical Hit Glow Beams
+Directly above active keys during note sounding ($note.start \le t \le note.end$), an upward-projecting light beam radiates along the key lane:
+- **Geometry:** Height $H_{\text{beam}} = \min(keyboard\_h \times 1.2, 100\text{ px})$ above the hit line, width equal to key lane width.
+- **Falloff:** Quadratic alpha fade from $\alpha = 0.35 \times glow\_intensity$ at $y = hit\_y$ to $\alpha = 0.0$ at $y = hit\_y - H_{\text{beam}}$.
+- **Color:** Tinted to match the active hand's color (violet for RH, cyan for LH).
+
+### 2.6 Note Pitch Name Labels
+When configured via `config.show_note_names = True`:
+- **Dimensions Threshold:** Rendered on falling note bars where width $W_{\text{bar}} \ge 16\text{ px}$ and height $H_{\text{bar}} \ge 18\text{ px}$ to prevent clipping.
+- **Typography:** Centered horizontally within the bar ($X = x_0 + (W_{\text{bar}} - W_{\text{text}}) / 2$), anchored 4 pixels above the leading bottom hit edge ($Y = y_{\text{bottom}} - H_{\text{text}} - 4$).
+- **Contrast:** Crisp white text `(255, 255, 255)` with 1-pixel dark outline `(0, 0, 0)` for maximum legibility against glowing backgrounds.
 
 ---
 
-## 4. Single-Timeline Sync Model (the core rule)
+## 3. SoundFont Audio Pipeline (FluidSynth)
 
-**One timeline, in seconds, derived from MIDI; everything consumes it.**
+PianoFlow AI produces natural acoustic sound by synthesizing audio directly from speed-scaled musical events rather than stretching pre-rendered audio.
+
+### 3.1 Synthesis Architecture
 
 ```
-notes JSON (already seconds, tempo map applied at parse)
-        │
-        ▼  apply speed: t' = t / speed_multiplier   (one pure function, music-core notes/timeline.py)
-   scaled timeline ──┬──▶ preview animation clock (Web Audio currentTime)
-                     ├──▶ frame renderer  (frame i ⇒ t' = i / fps)
-                     └──▶ audio renderer  (note_on/off at t', durations scaled)
+Master Scaled Notes JSON
+           │
+           ▼  Extract Note On/Off + CC64 Sustain Pedal Events
+Speed-Scaled Standard MIDI File (.mid)
+           │
+           ▼  FluidSynth CLI with FluidR3_GM SoundFont
+High-Fidelity 44.1 kHz 16-Bit Stereo WAV
+           │
+           ▼  FFmpeg Synchronous Pipe Muxing
+Broadcast MP4 Video (H.264 High Profile + AAC Stereo)
 ```
 
-- Speed scales the *event times*, not playback-rate of an audio file → notes re-rendered at new timing through the SoundFont = clean sound at any speed (the "re-render MIDI, don't stretch MP3" rule).
-- Tempo changes already collapsed into absolute seconds at parse time → automatically respected under any multiplier.
-- Hit moment = note.start. The falling note's bottom edge reaches the hit line exactly at t' = start; key lights from start to end; audio note-on at start. All three read the same number — drift is structurally impossible in export.
-- Preview drift control: canvas animation clock is `audioContext.currentTime` (not rAF accumulation), so long songs can't drift in browser playback either.
-- Estimated final duration shown in UI: `duration_sec / speed_multiplier`.
+### 3.2 Timeline & Sustain Preservation
+1. **Speed Scaling:**
+   All note onsets, durations, and CC64 sustain pedal timestamps are divided by `speed_multiplier` before generating the temporary MIDI stream.
+2. **Sustain Pedal Modeling:**
+   Continuous CC64 damper pedal controller messages are fully preserved. FluidSynth naturally simulates prolonged acoustic resonance, sympathetic string vibration, and realistic damping release upon pedal lift.
+3. **SoundFont Selection:**
+   - Primary: **FluidR3_GM.sf2** (SoundFont bank preset 0, acoustic grand piano, ~140 MB).
+   - High-Fidelity Alternative: **MuseScore General SoundFont** or Yamaha C5 soundbank for Pro exports.
+
+### 3.3 Worker Audio CLI Execution
+
+The worker executes FluidSynth in fast-render non-interactive audio file mode:
+```bash
+fluidsynth -ni -g 1.2 -r 44100 /app/soundfonts/FluidR3_GM.sf2 \
+  /tmp/{job_id}/scaled.mid -F /tmp/{job_id}/audio.wav
+```
+
+### 3.4 FFmpeg Stream Multiplexing
+
+Frames drawn by Pillow/NumPy are streamed directly into FFmpeg through standard input (`stdin`), multiplexed with the synthesized audio WAV in a single pass:
+```bash
+ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 30 \
+  -i - -i /tmp/{job_id}/audio.wav \
+  -c:v libx264 -preset medium -crf 20 -pix_fmt yuv420p \
+  -c:a aac -b:a 192k \
+  -shortest -movflags +faststart \
+  /tmp/{job_id}/video.mp4
+```
 
 ---
 
-## 5. Audio Pipeline (Phase 7, worker)
+## 4. Color Theme Palettes & Custom Rules
 
-| Step | Tool | Notes |
-|---|---|---|
-| Build speed-scaled MIDI | `pianoflow_music.midi.write` (mido) | from scaled timeline; velocities preserved; CC64 sustain events copied with scaled times |
-| MIDI → WAV | **FluidSynth CLI** (`fluidsynth -ni soundfont.sf2 in.mid -F out.wav -r 44100`) | behind `AudioRenderer` adapter (same pattern as `SheetEngraver`) |
-| SoundFont | **FluidR3_GM** (piano program 0) baked into worker image (~140 MB) — MuseScore General as documented alternative | free, redistributable |
-| Velocity → volume | native to SoundFont rendering | nothing to do |
-| Sustain | CC64 passed through | natural decay handled by synth |
-| Mux | FFmpeg `-i frames_pipe -i out.wav -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest -movflags +faststart` | single pass, video+audio land together |
+Users can select from curated preset themes or define custom HEX colors.
 
-Parse delta (Phase 4B prerequisite): parser must also extract **channel** per note and **CC64 sustain events** into notes JSON (`schema_version: 2`, additive — old consumers ignore new fields).
+| Theme Preset | Right Hand (RH) | Left Hand (LH) | Glow Tint | Hit Effect | Background |
+|---|---|---|---|---|---|
+| **Classic** (Default) | Violet `#7c3aed` | Cyan `#22d3ee` | Purple `#8b5cf6` | White `#ffffff` | Dark `#050507` |
+| **White Glow** | White `#f4f4f5` | Slate `#a1a1aa` | Pure White `#ffffff` | Cyan `#38bdf8` | Black `#000000` |
+| **Neon Cyberpunk** | Pink `#ec4899` | Cyan `#06b6d4` | Violet `#c084fc` | White `#ffffff` | Deep Navy `#020617` |
+| **Gold Elegance** | Amber `#f59e0b` | Yellow `#fbbf24` | Gold `#fde68a` | White `#ffffff` | Charcoal `#0f0f11` |
+| **Emerald River** | Emerald `#10b981` | Teal `#14b8a6` | Mint `#6ee7b7` | White `#ffffff` | Deep Pine `#022c22` |
+| **Sunset Blaze** | Red `#ef4444` | Orange `#f97316` | Amber `#fb923c` | Yellow `#fef08a` | Dark Maroon `#180808` |
+| **Custom** | User HEX | User HEX | User HEX | User HEX | User HEX |
 
-## 6. Video Pipeline (Phase 7, worker — updates `DESIGN.md` §5)
-
-Composition (top→bottom): dark background (user color) → falling glowing notes → fog gradient band → bright hit line → keyboard (size scaled by `keyboard_size`).
-
-- **Glow/bloom without a GPU:** draw notes layer → `cv2.GaussianBlur` the layer (kernel ∝ `glow_intensity`) → additive-blend blur under the sharp layer. One extra blur per frame ≈ cheap at 1080p; benchmark in Phase 7 acceptance.
-- **Rounded vertical bars:** height ∝ duration × fall speed; min height for very short notes; black-key notes narrower (existing `keyRect` geometry — frontend `lib/piano.ts` and worker `video/layout.py` share constants via `shared-types`).
-- **Hit effects:** key flash in `key_highlight` + radial pulse in `hit_effect` at the hit line for the note's first 150 ms. Particles = Phase 7C only.
-- **Fog:** vertical alpha gradient strip (pre-rendered once, alpha-blended per frame).
-- **60 FPS:** allowed at 720p and 1080p, but counts double against the daily video-seconds quota (`RISKS.md` §6) — render cost is linear in frame count.
-- FFmpeg stdin pipe unchanged from `DESIGN.md` §5.2.
-
-## 7. Preview Player (Phase 4B, web)
-
-- `previewPlayer` = existing `PianoRollPreview` evolved: vertical orientation (notes fall top→bottom onto the keyboard, matching export), play/pause, speed dropdown.
-- Audio: **Web Audio API** with a small piano sample set (e.g. `smplr`/soft piano samples) or oscillator fallback — *preview* audio approximates; *export* audio is the FluidSynth ground truth. Documented honestly in UI ("preview sound is approximate").
-- Color changes re-render canvas immediately (colors are draw-time params, no data rebuild). Speed changes restart the audio scheduler from the current musical position.
-- Settings persist via existing `PATCH /settings` (debounced) so preview and export read identical state — the existing settings-snapshot-per-job mechanism (`DESIGN.md` §3.3) already guarantees export uses what was previewed.
-
-## 8. Progress UI (export job)
-
-Job `progress_message` steps emitted by the worker (existing throttled progress writer):
-
-```
-1 queued                      → "Waiting in queue"
-2 preparing                   → "Preparing timeline & layout"   (parse already done)
-3 audio                       → "Rendering piano audio"          (~10%)
-4 frames                      → "Drawing frames (N%)"            (10–85%, per-batch)
-5 mux                         → "Combining audio and video"      (~90%)
-6 finalize                    → "Finalizing MP4"                 (upload, 95–100%)
-```
-
-Upload/parse/layout/settings steps from the request happen before the job exists (Phases 3–4B flows) — already surfaced in their own UI states.
-
-## 9. Error Codes (additive to `API.md` §0)
-
-`INVALID_HEX`, `INVALID_SPEED`, `AUDIO_RENDER_FAILED` (FluidSynth nonzero/empty WAV), `FFMPEG_FAILED`, `EXPORT_TIMEOUT` (per-job wall-clock cap = `4 × duration/speed`, min 5 min), plus existing MIDI/file errors. All permanent (no retry) except `EXPORT_TIMEOUT` (one retry — may be a slow-node fluke).
-
-## 10. Acceptance Criteria (checked at Phase 7 completion)
-
-Functional: valid MIDI → private streaming-only MP4 with synced audio; notes aligned to correct keys (A0–C8, black keys offset); long/short notes render and sound proportionally; velocity audible; sustain respected; colors (per hand), presets, HEX, glow intensity, background all preserved exactly in export; reset-to-default restores `classic`; all 7 speed presets + custom work in both preview and export; estimated duration shown; key lights exactly at note start; no drift over a 10-minute file (assert: last-note audio onset vs frame position < 1 frame); H.264+AAC plays in Chrome/QuickTime through the app stream endpoint.
-
-Tests: golden-frame compares per theme; WAV onset-vs-timeline assertion (librosa onset detect on 5-note fixture); ffprobe duration == expected ± 1 frame; HEX/speed validation unit tests; preview clock drift test (mock audio clock).
+### Validation & Sanitization
+- All custom HEX inputs must match regex: `^#[0-9a-fA-F]{6}$`.
+- Missing or malformed color parameters fall back safely to the `classic` preset defaults.
 
 ---
 
-## 11. Out of Scope (unchanged guards)
+## 5. Streaming-Only & Delivery Policy
 
-Audio transcription (Phase 12), particles before 7C, resolution above 1080p, custom soundfont upload, per-note color editing, watermarks. Speed below 0.25x/above 2x rejected (quota abuse + absurd render cost at 0.1x).
+1. **HTTP Byte-Range Streaming (`Accept-Ranges: bytes`):**
+   - Video artifacts are delivered via presigned Cloudflare R2 / AWS S3 URLs supporting byte-range requests (`HTTP 206 Partial Content`).
+   - Enables instant in-browser seeking without downloading the full video file.
+2. **Moov Atom Fast-Start (`-movflags +faststart`):**
+   - FFmpeg relocates the MP4 `moov` atom (index headers and sample tables) to the absolute beginning of the MP4 file.
+   - The browser video player starts playback within < 200 ms of the first byte arrival.
+3. **Content-Disposition Headers:**
+   - **Streaming View:** `Content-Disposition: inline; filename="{title}.mp4"`.
+   - **Direct Download:** `Content-Disposition: attachment; filename="{title}.mp4"`.
+4. **Lifecycle & Expiry Policy:**
+   - Free-tier video artifacts expire after 7 days (`expires_at` database trigger + S3 lifecycle policy).
+   - Pro-tier video artifacts are retained for 90 days.

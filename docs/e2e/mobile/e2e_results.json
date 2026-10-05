@@ -1,0 +1,55 @@
+{
+  "timestamp": "2026-10-04T17:54:15Z",
+  "viewport_tested": [
+    { "name": "iPhone 14 Mobile", "width": 390, "height": 844 },
+    { "name": "Desktop Baseline", "width": 1440, "height": 900 }
+  ],
+  "tests": [
+    {
+      "name": "Mobile Navigation Drawer (<768px iPhone 14)",
+      "status": "passed",
+      "screenshot": "docs/e2e/mobile/01_mobile_nav_drawer.png",
+      "checks": [
+        "Hamburger button visible on <768px",
+        "Drawer renders dialog role and title",
+        "Navigation links: Create / Transcribe, My Projects, Pro Membership",
+        "Close button and Escape key dismiss drawer"
+      ]
+    },
+    {
+      "name": "Mobile Piano Keyboard Viewport & Octave Shift (<768px)",
+      "status": "passed",
+      "screenshot": "docs/e2e/mobile/02_mobile_keyboard_octave_shift.png",
+      "checks": [
+        "Playable octave window renders with key width >= 24px",
+        "Octave shift buttons [◄ Oct] and [Oct ►] functional",
+        "Active octave pill displays current range (C3-B4 Middle -> C4-B5 Treble)",
+        "Virtual strip translates smoothly with hardware acceleration"
+      ]
+    },
+    {
+      "name": "Auto-Tracking Centroid Camera & Canvas Synchronization",
+      "status": "passed",
+      "screenshot": "docs/e2e/mobile/03_mobile_canvas_autotracking.png",
+      "checks": [
+        "Falling notes canvas matches keyboard camera offset",
+        "Auto-follow toggle active during practice playback",
+        "No horizontal distortion or key misalignment"
+      ]
+    },
+    {
+      "name": "Desktop Viewport (1440x900) Responsive Baseline",
+      "status": "passed",
+      "checks": [
+        "Hamburger button hidden on >=768px (md:hidden)",
+        "Desktop navigation visible in header",
+        "Auto-follow status badge rendered in keyboard control bar"
+      ]
+    }
+  ],
+  "summary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0
+  }
+}

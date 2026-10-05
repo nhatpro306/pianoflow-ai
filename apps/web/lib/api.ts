@@ -142,16 +142,21 @@ export interface UserProgress {
 export interface PracticeSessionPayload {
   project_id: string;
   score: number;
-  duration_seconds: number;
-  difficulty: string;
+  accuracy_percent: number;
+  duration_seconds?: number;
+  difficulty?: string;
 }
 
 export interface PracticeSessionResponse {
-  session_id: string;
+  id?: string;
+  project_id?: string;
+  score: number;
+  accuracy_percent: number;
   xp_gained: number;
-  total_xp: number;
   level_up: boolean;
-  new_level: number;
+  current_level: number;
+  total_xp: number;
+  current_streak: number;
 }
 
 // ── Calls ───────────────────────────────────────────────────

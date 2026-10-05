@@ -65,6 +65,12 @@ class Settings(BaseSettings):
     # Comma-separated poll list. Local dev: one worker drains both queues.
     # Production audio-worker runs with QUEUE_NAMES=q_audio only.
     queue_names: str = "q_default,q_audio"
+    job_visibility_seconds: int = 900
+    poll_wait_seconds: int = 5
+
+    @property
+    def job_visibility_timeout(self) -> int:
+        return self.job_visibility_seconds
 
     @property
     def queue_name_list(self) -> list[str]:

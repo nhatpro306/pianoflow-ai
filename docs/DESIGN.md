@@ -1,419 +1,296 @@
-# PianoFlow AI — System Design Document
+# PianoFlow AI — System Design & Architecture Specification
 
-> Version: 1.0 (MVP design)
-> Scope: end-to-end architecture, job system, rendering pipelines, security, observability
-
----
-
-## 1. Architecture Overview
-
-### 1.1 Core principle
-
-**The API never does heavy work.** The API validates, persists metadata, and enqueues jobs. Workers do all parsing, rendering, and uploading. This keeps API latency low, lets workers scale independently, and survives long renders without HTTP timeouts.
-
-### 1.2 High-level diagram
-
-```
-┌──────────┐     HTTPS      ┌─────────────┐   enqueue    ┌─────────┐
-│  Browser  │ ────────────▶ │  Next.js     │              │  Queue   │
-│  (User)   │               │  Frontend    │              │ (Redis / │
-└──────────┘               └──────┬──────┘              │  SQS)    │
-                                   │ REST /api/v1         └────┬────┘
-                                   ▼                           │ dequeue
-                            ┌─────────────┐                    ▼
-                            │  FastAPI     │             ┌──────────┐
-                            │  API service │             │  Worker   │
-                            │  (no heavy   │             │  (Python) │
-                            │   work)      │             │ parse /   │
-                            └──────┬──────┘             │ render /  │
-                                   │ metadata            │ simplify  │
-                                   ▼                     └─────┬────┘
-                            ┌─────────────┐                    │ upload outputs,
-                            │ PostgreSQL   │ ◀──────────────────┤ update job status
-                            │ (metadata    │                    ▼
-                            │  only)       │             ┌──────────┐
-                            └─────────────┘             │  Object   │
-                                                         │  Storage  │
-                                                         │ (S3 /     │
-                                                         │ Supabase) │
-                                                         └──────────┘
-```
-
-Flow: `User → Next.js → FastAPI → Queue → Worker → Storage → PostgreSQL` (worker writes results to storage, status to DB; frontend polls API for status and gets signed URLs for downloads).
-
-### 1.3 Services
-
-| Service | Responsibility | Must NOT do |
-|---|---|---|
-| **web** (Next.js) | UI, piano-roll preview, settings form, job status polling, downloads via signed URLs | Talk to DB/queue/storage directly (except direct-to-storage upload via signed URL) |
-| **api** (FastAPI) | Auth, validation, CRUD on projects/settings, job creation, signed URL issuance, status reads | Parse MIDI bodies, render anything, block on long work |
-| **worker** (Python) | Consume jobs: parse MIDI, render video/sheet, simplify, upload outputs, report progress | Serve HTTP traffic, hold user sessions |
-| **music-core** (library) | Pure music logic: MIDI parsing, note model, simplification, sheet conversion, video frame drawing | I/O. No knowledge of S3/Redis/Postgres — receives bytes/paths, returns data/files |
-
-### 1.4 Data placement rules
-
-- **PostgreSQL** stores metadata only: users, projects, settings, jobs, file records, events, usage counters.
-- **Object storage** stores all binary/large data: uploaded MIDI, notes JSON, MP4, PDF, MusicXML, simplified MIDI, preview images.
-- **Notes JSON decision:** full parsed note data lives in **object storage**, not the database. A 5-minute piece can have 5,000+ notes (~500 KB JSON); storing that per project bloats the DB, slows backups, and gains nothing — the API never queries individual notes. The DB keeps a small `analysis_summary` JSONB (BPM, duration, track count, note count, pitch range, hand-split method) for list views. Rationale and schema in `DATABASE.md` §4.
+> Version: 2.0 (Post-Audit Full Architecture Baseline)  
+> Scope: End-to-end system topology, sync model, rendering tiers, database contract, security, and observability  
+> Last updated: October 2026  
 
 ---
 
-## 2. Adapter / Port Layer
+## 1. System Architecture & Topology
 
-Every external system is accessed through an interface. Domain and worker code depend on the interface, never on the vendor SDK.
+PianoFlow AI is built on a decoupled, asynchronous, and cloud-native architecture. The system separates interactive user interfaces, low-latency API coordination, CPU-bound batch rendering, and heavy serverless GPU machine learning.
 
-| Interface | MVP implementation | Scale implementation | Local/dev |
+### 1.1 Architectural Topology Diagram
+
+```mermaid
+flowchart TD
+    subgraph Client ["Client Layer (Web & Mobile PWA)"]
+        Browser["Next.js 15 App Router\n(React 19, Tailwind v4, TanStack Query)"]
+        WebMIDI["Web MIDI Controller\n(navigator.requestMIDIAccess)"]
+        AudioContext["Web Audio Engine\n(smplr SoundFont Synth / AudioContext)"]
+        AudioRec["In-Browser Mic Recorder\n(MediaRecorder WebM)"]
+    end
+
+    subgraph CDN_Gateway ["Routing & Proxy Tier"]
+        Vercel["Vercel Edge Network\n(Static SSR & Next.js API Routes)"]
+        APIGW["AWS API Gateway\n(ap-southeast-1 REST Endpoint)"]
+    end
+
+    subgraph Compute_API ["Core Backend API Tier"]
+        Lambda["FastAPI on AWS Lambda\n(Mangum ASGI Adapter)"]
+        SupabaseAuth["Supabase Auth / JWT Verification"]
+        StripeGateway["Stripe Payments & Webhooks"]
+    end
+
+    subgraph Messaging ["Asynchronous Broker Tier"]
+        SQS_Def["SQS Queue: q_default\n(parse, video, sheet, simplify)"]
+        SQS_DLQ["Dead Letter Queue (DLQ)\n(Max 3 Retries)"]
+    end
+
+    subgraph Worker_Host ["Always-On Batch Rendering Worker"]
+        EC2["EC2 t2.micro Worker\n(Docker, Python 3.12, 1GB RAM + 1GB Swap)"]
+        FluidSynth["FluidSynth CLI\n(FluidR3_GM.sf2 SoundFont)"]
+        FFmpeg["FFmpeg H.264 / AAC\n(Stdin pipe streaming muxer)"]
+        PillowCore["Pillow & NumPy\n(Frame Renderer)"]
+    end
+
+    subgraph GPU_Cloud ["Serverless GPU Transcription Tier"]
+        ModalGPU["Modal Cloud (A10G GPU)\n(Demucs v4 Hybrid Transformer + Transkun)"]
+        YTDLP["yt-dlp + curl_cffi\n(Audio Extraction from Video URLs)"]
+    end
+
+    subgraph Persistence ["Persistence & Object Storage Tier"]
+        PG["PostgreSQL (Supabase)\n(Users, Projects, Jobs, Usage, Gamification)"]
+        S3_Buckets["AWS S3 / Cloudflare R2\n(sources, analysis, outputs)"]
+    end
+
+    %% Client Interactions
+    Browser -->|Static SSR & Pages| Vercel
+    Browser -->|Audio Ingestion & URL Form| Vercel
+    Vercel -->|Proxy /api/transcribe| ModalGPU
+    ModalGPU --> YTDLP
+    ModalGPU -->|Transcribed Notes JSON & MIDI| Browser
+
+    Browser -->|REST API /api/v1/*| APIGW
+    APIGW --> Lambda
+    Lambda --> SupabaseAuth
+    Lambda --> StripeGateway
+    Lambda --> PG
+    Lambda -->|Presigned URLs| S3_Buckets
+    Lambda -->|Enqueue Render Jobs| SQS_Def
+
+    SQS_Def --> EC2
+    SQS_Def -.-> SQS_DLQ
+
+    EC2 --> PG
+    EC2 --> S3_Buckets
+    EC2 --> FluidSynth
+    EC2 --> FFmpeg
+    EC2 --> PillowCore
+
+    Browser -->|Direct PUT/GET via Signed URLs| S3_Buckets
+    Browser --> WebMIDI
+    Browser --> AudioContext
+    Browser --> AudioRec
+```
+
+---
+
+### 1.2 Subsystem Breakdown & Responsibilities
+
+| Subsystem | Technology Stack | Core Responsibilities | Constraints / Forbidden Actions |
 |---|---|---|---|
-| `StorageService` | Supabase Storage | AWS S3 | Local filesystem |
-| `QueueService` | Redis (RQ) | AWS SQS | Redis in Docker |
-| `DatabaseRepository` | Supabase Postgres (SQLAlchemy) | RDS PostgreSQL (same SQLAlchemy) | Postgres in Docker |
-| `RendererService` | OpenCV/Pillow + FFmpeg | Same code on bigger ECS tasks; optionally GPU later | Same |
-| `AuthProvider` | Supabase Auth (JWT verification) | Cognito or keep Supabase Auth | Stub/dev tokens |
+| **apps/web** | Next.js 15, React 19, Tailwind v4, TanStack Query, `smplr`, `next-pwa` | User interface, responsive layout, Falling Notes canvas engine, Web MIDI practice loop, in-browser audio recording. | **Must NOT** query DB directly or perform heavy CPU processing. |
+| **apps/api** | FastAPI, Mangum, SQLAlchemy 2.0, Pydantic v2 | Request validation, auth verification, job dispatching, presigned URL creation, Stripe subscription handling, gamification progress tracking. | **Must NOT** parse large audio/MIDI files directly or execute long-running tasks. |
+| **apps/worker** | Python 3.12, Docker, SQS Consumer | Consumes async jobs (`parse_midi`, `render_video`, `render_sheet`, `simplify_midi`), writes progress to DB, uploads artifacts to S3/R2. | **Must NOT** serve HTTP traffic or block on user interactions. |
+| **packages/music-core** | Python 3.12, Pillow, NumPy, Mido, pretty_midi | Pure music algorithms: MIDI validation, parsing, chord-aware hand splitting, rule-based simplification, frame drawing. | **Must NOT** perform network I/O or access databases. |
+| **infra/modal** | Modal serverless, PyTorch, Demucs v4, Transkun, yt-dlp | Polyphonic transcription, piano stem separation, URL audio extraction on NVIDIA A10G GPUs with map-reduce chunking. | Operates on-demand; scales to zero when idle. |
+| **Persistence** | Supabase PostgreSQL, AWS S3 / Cloudflare R2 | Relational metadata (projects, jobs, usage, gamification) and binary blob storage (audio, MIDI, MP4, PDF, MusicXML, notes JSON). | Object storage is private by default; access via signed URLs. |
 
-Contract sketches (final signatures in `CODE_ARCHITECTURE.md` §5):
+---
+
+## 2. Database Session Contract (Synchronous Architecture)
+
+> [!IMPORTANT]
+> **Synchronous Session Contract:** `get_db()` in `apps/api/app/infrastructure/database/session.py` yields a standard **synchronous** `sqlalchemy.orm.Session`. All domain services, repositories, and API routers MUST interact with the database using synchronous SQLAlchemy 2.0 idioms.
+
+### 2.1 The Architectural Contract
 
 ```python
-class StorageService(Protocol):
-    def upload(self, key: str, data: bytes | BinaryIO, content_type: str) -> StoredObject: ...
-    def download(self, key: str) -> bytes: ...
-    def create_signed_upload_url(self, key: str, content_type: str, max_bytes: int) -> SignedUrl: ...
-    def create_signed_download_url(self, key: str, expires_in: int = 3600) -> SignedUrl: ...
-    def delete(self, key: str) -> None: ...
-
-class QueueService(Protocol):
-    def enqueue(self, queue_name: str, payload: JobPayload) -> str: ...        # returns broker message id
-    def consume(self, queue_name: str) -> Iterator[JobMessage]: ...
-    def ack(self, message: JobMessage) -> None: ...
-    def nack(self, message: JobMessage, requeue: bool) -> None: ...
+# CORRECT: Synchronous domain operation
+def record_practice_session(db: Session, user_id: UUID, project_id: UUID, score: int, accuracy: float) -> UserProgress:
+    # 1. Synchronous statement execution
+    stmt = select(UserProgress).where(UserProgress.user_id == user_id)
+    progress = db.scalars(stmt).first()
+    
+    # 2. Domain logic & mutation
+    if not progress:
+        progress = UserProgress(user_id=user_id, total_xp=0, current_level=1)
+        db.add(progress)
+        
+    earned_xp = int(score * (accuracy / 100.0) * 10)
+    progress.total_xp += earned_xp
+    
+    # 3. Synchronous commit
+    db.commit()
+    db.refresh(progress)
+    return progress
 ```
 
-Migration consequence: moving Redis→SQS or Supabase Storage→S3 means writing one new adapter class and changing one environment variable (`QUEUE_BACKEND=sqs`, `STORAGE_BACKEND=s3`). No domain code changes. This is the single most important architectural property of the project.
+### 2.2 Strict Invariants
+1. **Never use `await` on database operations**: Statements like `await db.execute(...)` or `await db.commit()` are fatal runtime bugs that crash worker processes and FastAPI request handlers with `TypeError: object Result cannot be used in 'await' expression`.
+2. **Synchronous Dependency Injection**: Dependencies must be typed as `db: Session = Depends(get_db)`.
+3. **Explicit Transaction Boundaries**: Every write path must explicitly commit (`db.commit()`) or roll back on error (`db.rollback()`), handled cleanly by the context-managed session generator.
 
 ---
 
-## 3. Job System Design
+## 3. Single-Timeline Synchronization Model
 
-### 3.1 Job types
+To eliminate audio-visual-input drift, PianoFlow AI enforces a **single canonical timeline** defined in absolute floating-point seconds.
 
-| Job type | Input | Output | Typical duration |
+```
+Canonical Parsed Notes (seconds)
+              │
+              ▼  apply_speed: t_scaled = t_raw / speed_multiplier
+     Master Scaled Timeline
+              │
+    ┌─────────┼─────────────────────────┬─────────────────────────┐
+    ▼         ▼                         ▼                         ▼
+Web Audio   Falling Notes Canvas   Web MIDI Input Loop       Worker Video Export
+Clock       Animation              (Hit Detection Window)    (FluidSynth + FFmpeg)
+```
+
+### 3.1 Timing Coordinate System
+
+1. **Tempo Flattening at Ingestion:**
+   During MIDI parsing or audio transcription, all musical ticks, tempo changes, and time signatures are converted into an absolute timeline in seconds:
+   $$\text{onset}_{\text{sec}}, \quad \text{offset}_{\text{sec}}, \quad \text{duration}_{\text{sec}}$$
+2. **Speed Scaling:**
+   When playback or practice speed changes (e.g., $0.5\times$ or $1.25\times$), timestamps are scaled purely via:
+   $$t' = \frac{t}{\text{speed\_multiplier}}$$
+   *Audio is re-synthesized at the new timestamps rather than time-stretching an audio file*, preserving note pitch, attack transients, and acoustic decay.
+
+### 3.2 Browser Practice Mode Synchronization Loop
+
+In the interactive browser practice mode, three real-time loops synchronize against the Web Audio clock:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant AudioClock as Web Audio Context (currentTime)
+    participant GameLoop as Practice Game Loop (rAF)
+    participant Canvas as Falling Notes Canvas Engine
+    participant MIDI as Web MIDI Input Controller
+    participant Engine as MidiEngine (Scorer)
+
+    Note over GameLoop: requestAnimationFrame (~60 FPS)
+    GameLoop->>AudioClock: Read master playhead t_current
+    GameLoop->>Canvas: Render falling notes where |t_note - t_current| < lookahead
+    MIDI->>Engine: Physical Key Down (pitch, velocity, timestamp)
+    Engine->>AudioClock: Sample current playhead delta (t_midi - t_target)
+    alt Delta <= 50ms
+        Engine->>Canvas: Trigger "PERFECT" Hit Spark (+100 pts, Combo +1)
+    else Delta <= 120ms
+        Engine->>Canvas: Trigger "GOOD" Hit Flare (+50 pts, Combo +1)
+    else Delta > 120ms or Wrong Pitch
+        Engine->>Canvas: Trigger "MISS" Red Tint (0 pts, Combo Reset)
+    end
+    Engine->>AudioClock: Synthesize key sound immediately via SampledPiano
+```
+
+### 3.3 Wait Mode State Machine
+
+In **Wait Mode**, the song does not advance continuously. Instead:
+1. The playhead advances normally until approaching the next unplayed note or chord onset $T_{\text{target}}$.
+2. When $t_{\text{playhead}} \ge T_{\text{target}} - \epsilon$ (where $\epsilon \approx 10\text{ ms}$), the playhead freezes.
+3. The system highlights the expected keys on the virtual keyboard in ghost outline mode.
+4. Once the user strikes all required pitches on their MIDI keyboard:
+   - The keys flash in full hand color.
+   - The acoustic notes sound.
+   - The playhead unfreezes and smoothly transitions to the next note event.
+
+---
+
+## 4. Multi-Tier Rendering Architecture
+
+PianoFlow AI uses a tiered approach to visual and audio rendering, ensuring interactive responsiveness while minimizing compute cost.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        TIER 1: REAL-TIME CLIENT CANVAS                 │
+│  • Platform: Browser HTML5 2D Canvas (Next.js 15)                      │
+│  • Frame Rate: 60 FPS (Hardware accelerated requestAnimationFrame)     │
+│  • Audio: smplr SoundFont Synth via Web Audio API                      │
+│  • Latency: Zero network latency, instant user interaction             │
+│  • Use Case: Live song preview, interactive practice, Wait Mode        │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ Export / Heavy Job Trigger
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        TIER 2: SERVERLESS GPU ML                       │
+│  • Platform: Modal Cloud (NVIDIA A10G 24GB VRAM)                       │
+│  • Models: Demucs v4 (Hybrid Transformer) + Transkun (CRF Polyphonic)  │
+│  • Processing: Overlapping map-reduce chunking for long audio          │
+│  • Turnaround: ~45 seconds for 3-minute mixed audio                    │
+│  • Use Case: Mixed audio & YouTube/social link transcription           │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ Video / Sheet Export Job
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                     TIER 3: ASYNCHRONOUS CPU WORKER                    │
+│  • Platform: AWS EC2 t2.micro (1GB RAM + 1GB Swap, Docker)             │
+│  • Graphics: Pillow & NumPy frame drawing piped directly to FFmpeg     │
+│  • Audio: FluidSynth CLI rendering FluidR3_GM.sf2 to WAV               │
+│  • Encoding: H.264 High Profile (yuv420p) + AAC audio muxing           │
+│  • Use Case: 720p/1080p MP4 tutorial video & OSMD/MusicXML exports     │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 5. Asynchronous Job & Worker Architecture
+
+### 5.1 Queue Partitioning
+
+To prevent long-running video exports from starving fast validation and parsing tasks, queues are logically separated:
+
+| Queue Name | Job Types Handled | Expected Duration | Concurrency / Worker Assignment |
 |---|---|---|---|
-| `parse_midi` | uploaded MIDI key | notes JSON + analysis summary | 1–5 s |
-| `generate_preview` | notes JSON | piano-roll PNG thumbnail | 1–3 s |
-| `render_sheet` | notes JSON (or MIDI) + settings | MusicXML + PDF | 5–30 s |
-| `render_video` | notes JSON + settings | MP4 | 30–300 s |
-| `simplify_midi` | notes JSON + difficulty | simplified MIDI + simplified notes JSON | 1–5 s |
-| `transcribe_audio` | (future) audio file | MIDI | minutes, GPU |
+| `q_fast` | `parse_midi`, `simplify_midi`, `generate_preview` | 1–5 seconds | High concurrency, instant execution. |
+| `q_render` | `render_video`, `render_sheet` | 30–180 seconds | Throttled concurrency on EC2 worker to preserve 1GB memory. |
+| `q_audio` | `transcribe_audio` (worker fallback) | Minutes | Dispatched to serverless GPU runner (Modal) or CPU fallback. |
 
-### 3.2 Job statuses & lifecycle
+### 5.2 Worker Memory Protection on EC2 t2.micro
 
-```
-queued ──▶ processing ──▶ completed
-   │            │
-   │            ├──▶ failed (after retries exhausted)
-   └──▶ cancelled (user cancels while queued; processing jobs run to completion in MVP)
-```
-
-Status lives in the `render_jobs` table (source of truth). The queue message is transport only.
-
-### 3.3 Job payload structure
-
-The queue message is intentionally thin — IDs, not data. The worker loads everything else from DB/storage. This keeps messages under SQS's 256 KB limit forever and makes payloads replayable.
-
-```json
-{
-  "job_id": "9f1c2e34-...",
-  "job_type": "render_video",
-  "project_id": "7ab0c1d2-...",
-  "user_id": "3e4f5a6b-...",
-  "attempt": 1,
-  "settings_version": 4,
-  "input": {
-    "notes_key": "projects/7ab0.../notes/v3.json",
-    "settings_snapshot_id": "c0ffee12-..."
-  },
-  "created_at": "2026-06-11T10:00:00Z",
-  "trace_id": "req_8d7e..."
-}
-```
-
-- `settings_snapshot_id`: jobs render against a **snapshot** of settings taken at enqueue time, so the user editing settings mid-render doesn't produce mixed output.
-- `attempt`: incremented by the retry mechanism; logged for observability.
-
-### 3.4 Idempotency
-
-- **Job ID is the idempotency key.** The worker checks job status in DB before starting: if already `completed`, it acks and exits (handles duplicate delivery — both Redis re-delivery and SQS at-least-once).
-- **Deterministic output keys:** outputs are written to `projects/{project_id}/outputs/{job_id}/{filename}` — re-running a job overwrites its own output, never another job's.
-- **API-side dedup:** `POST .../jobs/render-video` returns the existing job if an identical job (same project, type, settings snapshot) is already `queued`/`processing`, instead of enqueueing a duplicate (HTTP 200 with existing job rather than 201).
-
-### 3.5 Retry strategy
-
-| Failure class | Examples | Action |
-|---|---|---|
-| Transient | storage timeout, DB connection drop, FFmpeg OOM-killed once | Retry with exponential backoff: 10 s, 60 s, 300 s. Max 3 attempts. |
-| Permanent | corrupt MIDI, unsupported feature, invalid settings | Fail immediately, no retry. Store `error_type` + human-readable message. |
-| Poison | crashes the worker process itself | After max attempts → status `failed`, message to dead-letter queue (SQS DLQ at scale; `failed` Redis registry in MVP). Alert. |
-
-Workers classify exceptions: `TransientError` vs `PermanentError` base classes in `music-core`/worker; unknown exceptions are treated as transient (retry) but flagged.
-
-### 3.6 Progress updates
-
-- Worker updates `render_jobs.progress` (0–100) and `progress_message` at coarse checkpoints, throttled to **at most once per 2 seconds** to avoid hammering the DB.
-- Video render reports per-frame-batch progress (e.g., every 5% of frames encoded).
-- Frontend polls `GET /api/v1/jobs/{job_id}` every 2 s while a job is active (see `API.md`). WebSocket/SSE push is a deliberate non-goal for MVP — polling is simpler and good enough at MVP traffic.
-
-### 3.7 Queue separation (scale path)
-
-MVP: a single Redis queue is fine. Designed-in separation for later:
-
-| Queue | Jobs | Why separate |
-|---|---|---|
-| `q_fast` | `parse_midi`, `simplify_midi`, `generate_preview` | Seconds-long; should never wait behind videos |
-| `q_render` | `render_video`, `render_sheet` | Minutes-long, CPU-heavy; scale worker count on queue depth |
-| `q_ml` (future) | `transcribe_audio` | GPU instances, different autoscaling, different cost profile |
-
-The `QueueService` interface takes `queue_name` from day one, so this split is a config change, not a refactor. On AWS: three SQS queues, two ECS worker services (fast + render) with depth-based autoscaling.
+To guarantee crash-free video rendering within a 1 GB RAM footprint:
+1. **FFmpeg Stdin Pipe Streaming:** Video frames are generated sequentially in memory and streamed directly to `ffmpeg -f rawvideo ... -i -`. Frames are never written to disk as intermediate PNG sequences.
+2. **Sliding-Window Note Visibility Index:** At frame $i$, the worker only iterates through notes active in the current viewport window ($O(\text{visible})$ rather than $O(\text{total})$).
+3. **Explicit Garbage Collection:** After completing frame batch encoding and FluidSynth WAV generation, Python memory is explicitly reclaimed via `gc.collect()`.
 
 ---
 
-## 4. MIDI Parsing & Analysis Pipeline
+## 6. Security & Authorization Design
 
-```
-MIDI bytes ─▶ validate (mido) ─▶ parse (pretty_midi) ─▶ normalize ─▶ analyze ─▶ notes JSON + summary
-```
-
-1. **Validate:** magic bytes `MThd`, parseable header, ≥1 track, ≥1 note, duration ≤ configured max (default 10 min). Reject otherwise with specific error codes (`INVALID_MIDI`, `EMPTY_MIDI`, `TOO_LONG`).
-2. **Parse:** extract tempo map, time signatures, tracks, notes (pitch, velocity, start, end).
-3. **Normalize:** merge duplicate notes, clamp negative durations, drop notes outside piano range (A0–C8) with a warning count.
-4. **Hand estimation heuristic (MVP):**
-   - If exactly 2 note-bearing tracks → track 0 = right hand, track 1 = left hand (the dominant convention in piano MIDI).
-   - Else: pitch split — notes ≥ middle C (60) right, < 60 left, with a sliding-window adjustment so chords aren't split mid-hand and crossovers follow the local center of mass.
-   - Stored per note as `"hand": "L" | "R"`; method recorded in summary (`"hand_split": "tracks" | "pitch_heuristic"`). UI labels it as an estimate.
-5. **Output:**
-   - `notes.json` (versioned key, schema in `DATABASE.md` §4) → object storage.
-   - `analysis_summary` JSONB → `projects` row.
-
-### Notes JSON schema (canonical internal format)
-
-```json
-{
-  "schema_version": 1,
-  "bpm": 120.0,
-  "tempo_map": [{"time": 0.0, "bpm": 120.0}],
-  "time_signature": "4/4",
-  "duration_sec": 154.2,
-  "tracks": [{"index": 0, "name": "Piano RH", "note_count": 812}],
-  "notes": [
-    {
-      "id": 0,
-      "pitch": 60,
-      "name": "C4",
-      "velocity": 80,
-      "start": 0.0,
-      "end": 0.5,
-      "duration": 0.5,
-      "track": 0,
-      "hand": "R"
-    }
-  ]
-}
-```
-
-This format is the contract between parser, frontend preview, video renderer, sheet generator, and simplifier. It is versioned (`schema_version`) so the format can evolve.
+1. **Authentication & Identity:**
+   - Identity managed via Supabase Auth (JWT).
+   - FastAPI inspects JWT claims on every protected endpoint, validating signature, issuer, and expiration.
+2. **Multi-Tenant Data Isolation:**
+   - Every database query for projects, files, jobs, and settings enforces `WHERE user_id = :current_user_id`.
+   - Cross-user UUID lookups return `404 Not Found` (never `403 Forbidden`) to eliminate resource enumeration side channels.
+3. **Direct-to-Storage Upload Protection:**
+   - File uploads bypass the API backend entirely. The API issues short-lived, presigned upload URLs restricted by exact `Content-Length` bounds and server-generated UUID storage keys (`projects/{project_id}/uploads/{uuid}.mid`).
+4. **Rate Limiting & Cost Guards:**
+   - Tier-based daily caps tracked in `daily_usage` (uploads, render jobs, video seconds, transcriptions).
+   - Middleware blocks abusive requests with HTTP `429 Too Many Requests` and a standard `Retry-After` header.
 
 ---
 
-## 5. Video Rendering Design (falling-note tutorial)
+## 7. Observability & Telemetry
 
-### 5.1 Visual composition
-
-```
-┌────────────────────────────────────┐
-│  (optional) title / progress bar    │  ← top strip
-│                                     │
-│      falling notes area             │  ← notes fall top→bottom
-│   ████      ██                      │     RH = color A (e.g. cyan)
-│        ██        ████               │     LH = color B (e.g. orange)
-│  ───────────────────────────────   │  ← HIT LINE
-│ ▐█▌▐█▌▐█▌ piano keyboard ▐█▌▐█▌    │  ← 88 keys; active keys glow
-└────────────────────────────────────┘
-```
-
-- **Falling notes:** rectangles; x = key position, width = key width, height ∝ note duration × fall speed, y = function of (note.start − current_time).
-- **Hit line:** the y where keyboard begins; a note "plays" when its bottom edge crosses it.
-- **Keyboard:** 88-key layout rendered once as a base image; active keys overlaid with highlight color (matching hand color) while a note is sounding.
-- **Note names (optional):** text label inside each falling rectangle, hidden when rectangle too small.
-- **Progress bar (optional):** thin bar at top, fill = current_time / duration.
-- **Themes:** dark (default) and light — background, key colors, note colors defined as theme palettes in `music-core/video`.
-
-### 5.2 Rendering flow
-
-```
-notes JSON
-   ▶ 1. timeline calc      : effective tempo = speed% applied; for each note compute
-                              y(t) per frame from fall_speed_px_per_sec
-   ▶ 2. static layer        : render keyboard base image + background once (Pillow)
-   ▶ 3. frame loop          : for frame i in 0..duration*fps:
-                                t = i / fps
-                                visible = notes where y intersects viewport  (precomputed
-                                          per-frame index via sorted starts — O(visible), not O(all))
-                                draw falling rects (+names) on copy of static layer
-                                overlay active-key highlights
-                                draw progress bar
-   ▶ 4. encode              : stream frames to FFmpeg via stdin pipe
-                              (rawvideo → libx264, yuv420p, faststart)
-                              audio: none in MVP v1; optional synthesized piano audio
-                              (FluidSynth + soundfont) is a fast-follow
-   ▶ 5. upload              : MP4 → storage at outputs/{job_id}/video.mp4
-   ▶ 6. finalize            : insert output_files row, job → completed
-```
-
-### 5.3 Performance & scalability decisions
-
-- **Stream frames to FFmpeg stdin** — never write thousands of PNGs to disk. One pipe, constant disk usage.
-- **NumPy-backed drawing** (OpenCV rectangles on ndarray) rather than per-pixel Pillow ops; Pillow only for text and the static layer.
-- **Per-frame cost is O(visible notes)** thanks to a start-time-sorted index with a sliding window.
-- **Resolution/FPS caps in MVP:** 1080p max, 30 fps fixed, duration ≤ 10 min — bounds worst-case render time and cost (see `RISKS.md` §Cost).
-- **Speed setting** (50/75/100%) stretches the timeline (note times ÷ speed); video gets proportionally longer.
-- **Vertical format** (1080×1920): same pipeline, different layout constants (keyboard shows a windowed key range that follows the active notes' center). Designed now, shipped for Shorts/TikTok later.
-- **Scale path:** rendering is embarrassingly parallel across jobs — scale by adding worker instances, not by parallelizing one render. If single-video latency ever matters: segment-based rendering (render N-second chunks in parallel, FFmpeg concat) is compatible with this design but explicitly **not** MVP.
-
----
-
-## 6. Sheet Music Generation Design
-
-### 6.1 Flow
-
-```
-MIDI / notes JSON
-   ▶ music21 stream construction (two parts: RH treble, LH bass, from hand estimate)
-   ▶ quantization to nearest grid (16th note default; configurable)
-   ▶ metadata (title from project name, tempo mark, time signature)
-   ▶ export MusicXML
-   ▶ MuseScore CLI:  mscore input.musicxml -o output.pdf   (headless, in worker image)
-        └─ fallback: LilyPond if MuseScore unavailable
-   ▶ upload PDF + MusicXML, register output_files rows
-```
-
-MuseScore CLI chosen over LilyPond as primary: better default engraving from MusicXML, single binary, actively maintained. LilyPond kept as documented fallback because it's lighter in Docker. Decision recorded here so the `SheetRenderer` adapter keeps both behind one interface.
-
-### 6.2 Known MVP limitations (documented honestly, also shown in UI)
-
-| Limitation | Cause | MVP stance |
-|---|---|---|
-| **Quantization artifacts** | Real/humanized MIDI has imprecise timings; snapping to a 16th grid distorts rubato, triplets, grace notes | Accept. Offer grid choice (8th/16th) later. UI: "Sheet is auto-generated; rhythm is approximate." |
-| **Rhythm spelling** | music21 may choose awkward tied-note spellings across beats | Accept in MVP; post-process pass is a future improvement |
-| **Hand/staff split errors** | Heuristic hand estimate | Accept; future: user can flip hand per note in editor (non-MVP) |
-| **No dynamics/pedal/fingering** | Not reliably derivable from MIDI in MVP | Velocity→rough dynamics is a future improvement; pedal CC64 import is future |
-| **Dense music renders ugly** | Black-MIDI style files | Duration/note-count limits reject pathological inputs |
-
-### 6.3 Future improvements (post-MVP)
-
-- Triplet & swing detection before quantization.
-- Voice separation within a staff (music21 `voiceAssignment` tuning).
-- Velocity-derived dynamics marks; CC64 → pedal marks.
-- User-selectable transposition and key-signature override.
-
----
-
-## 7. Beginner Mode (Rule-Based Simplification)
-
-**Positioning (must appear in UI copy):** this is *rule-based simplification*, not AI arrangement. It makes songs *playable*, not *re-arranged*. Honest framing is a product principle.
-
-### 7.1 Pipeline
-
-```
-notes JSON ─▶ filter ─▶ chord reduction ─▶ melody preservation ─▶ density cap ─▶ tempo adjust ─▶ simplified notes JSON ─▶ simplified MIDI
-```
-
-### 7.2 Rules per difficulty
-
-| Rule | `original` | `easy` | `very_easy` |
-|---|---|---|---|
-| Remove notes shorter than | — | 60 ms | 100 ms |
-| Max simultaneous notes (total) | — | 4 | 2 |
-| Max notes per chord per hand | — | 2 (keep lowest = bass, highest = top voice) | 1 (keep highest in RH, lowest in LH) |
-| Melody preservation | — | Highest-pitch line in RH is never removed | Same; RH reduced to melody only (optional toggle: RH-melody-only output) |
-| Tempo | 100% | 85% suggested (written into MIDI tempo) | 70% suggested |
-| Octave doubling removal | — | yes | yes |
-
-Order matters: melody identification runs **before** chord reduction so reduction never deletes the melody note. Melody heuristic (MVP): top-most sounding pitch in the RH stream, smoothed to avoid octave jumps from ornaments.
-
-### 7.3 Outputs
-
-- `simplified.mid` (downloadable)
-- `simplified_notes.json` (so video + sheet jobs can render the simplified version when difficulty ≠ original)
-- Video and sheet jobs take a `difficulty` setting and consume the corresponding notes JSON — simplification is one job whose output feeds the others.
-
----
-
-## 8. Security Design
-
-| Concern | Control |
-|---|---|
-| File type | Validate magic bytes (`MThd`) server-side and in worker; never trust extension or `Content-Type` |
-| File size | Hard limit (default **5 MB** for MIDI) enforced at signed-upload-URL creation and re-checked by API/worker |
-| Upload path | Client uploads **directly to storage via signed URL** (API issues it); API never proxies file bytes. Key is server-generated — `projects/{project_id}/uploads/{uuid}.mid` — so filenames are never user-controlled (no path traversal, no unsafe names). Original filename stored as display metadata only, sanitized. |
-| Authorization | Every project/job/file query is scoped `WHERE user_id = :current_user`. Ownership checked in the service layer, not just the router. IDs are UUIDv4 (non-enumerable). |
-| Downloads | Storage buckets **private by default**; downloads only via short-lived signed URLs (1 h). Public sharing = future feature with explicit opt-in share tokens. |
-| Rate limits | Per user: uploads/day, render jobs/day, concurrent active jobs (defaults in `RISKS.md` §Cost; enforced via `usage_limits` table + middleware). 429 with `Retry-After`. |
-| Auth | Supabase Auth JWT; FastAPI verifies signature + expiry on every request. No session state in API. |
-| Worker isolation | Workers process untrusted MIDI: parsing wrapped in resource limits (max notes, max tracks, timeout per job) to prevent decompression-bomb-style MIDI (huge tick values, absurd track counts). |
-| Secrets | Env vars only; never in repo. Per-stage secret management in `DEPLOYMENT.md`. |
-| Copyright | Users upload content they have rights to (ToS). No public library in MVP. Full risk discussion in `RISKS.md` §Legal. |
-
----
-
-## 9. Observability Design
-
-### 9.1 Structured logging
-
-JSON logs everywhere (API + worker), one event per line:
-
-```json
-{
-  "ts": "2026-06-11T10:00:03.412Z",
-  "level": "info",
-  "service": "worker",
-  "event": "job.completed",
-  "request_id": "req_8d7e...",
-  "user_id": "3e4f...",
-  "project_id": "7ab0...",
-  "job_id": "9f1c...",
-  "job_type": "render_video",
-  "duration_ms": 48211,
-  "error_type": null
-}
-```
-
-- `request_id` generated by API middleware, propagated into job payloads (`trace_id`) so one upload→render→download flow is traceable across services.
-- `error_type` is a stable machine-readable code (`INVALID_MIDI`, `FFMPEG_FAILED`, `STORAGE_TIMEOUT`…), distinct from the human message.
-
-### 9.2 Metrics (MVP: derived from logs + DB queries; scale: CloudWatch)
-
-| Metric | Source |
-|---|---|
-| Total uploads / day | `uploaded_files` count |
-| Jobs completed / failed (by type) | `render_jobs` aggregates |
-| Average + p95 render time by job type | `started_at`/`finished_at` deltas |
-| Queue delay (enqueue → start) | `created_at` → `started_at` delta |
-| Storage usage per user / total | `output_files.size_bytes` sum + bucket metrics |
-| Active workers / queue depth | Redis introspection (MVP) / SQS `ApproximateNumberOfMessages` (scale) |
-
-MVP exposes an internal `/internal/metrics` summary (protected) good enough for a portfolio dashboard. Scale stage: CloudWatch Logs (structured JSON → Logs Insights), CloudWatch custom metrics, alarms on: failure rate > 10% (15 min), queue delay p95 > 2 min, DLQ depth > 0, worker CPU > 85% sustained.
-
----
-
-## 10. Key Design Decisions (summary table)
-
-| # | Decision | Alternatives considered | Why |
-|---|---|---|---|
-| 1 | Async job queue; API never renders | Sync rendering in API | HTTP timeouts, no scaling isolation, blocks event loop |
-| 2 | Notes JSON in object storage, summary in DB | Notes as DB rows / JSONB | DB stays small & fast; notes are read-whole, never queried per-row |
-| 3 | Adapter layer for storage/queue/DB/renderer | Direct SDK calls | Enables MVP→AWS migration with zero domain-code changes |
-| 4 | Thin queue payloads (IDs only) | Fat payloads with note data | SQS 256 KB limit; replayability; single source of truth in DB |
-| 5 | Settings snapshot per job | Read live settings in worker | Reproducible output; no mid-render setting races |
-| 6 | Frames streamed to FFmpeg stdin | PNG sequence on disk | Constant disk usage; faster; container-friendly |
-| 7 | MuseScore CLI primary, LilyPond fallback | LilyPond only | Better MusicXML engraving; both behind one adapter |
-| 8 | Polling for job status | WebSocket/SSE | Simpler MVP; 2 s polls fine at MVP scale; interface allows swap later |
-| 9 | Direct-to-storage uploads via signed URL | Upload through API | API stays light; no large bodies through Render/Railway dyno |
-| 10 | Rule-based simplification, honestly labeled | "AI arrangement" claims | Shippable, testable, truthful; ML arrangement is future work |
+1. **Structured JSON Logging:**
+   All logs across FastAPI and worker containers emit structured JSON with correlation IDs:
+   ```json
+   {
+     "timestamp": "2026-10-03T11:20:00.123Z",
+     "level": "INFO",
+     "service": "worker",
+     "event": "video.render.progress",
+     "job_id": "9f1c2e34-5678-4321-abcd-ef0123456789",
+     "project_id": "7ab0c1d2-3456-7890-abcd-ef0123456789",
+     "progress": 65,
+     "frame_batch": 1950,
+     "memory_rss_mb": 412
+   }
+   ```
+2. **CloudWatch Metrics & Alarms:**
+   - Alarms configured for: DLQ message count $> 0$, worker CPU $> 85\%$ for 10 minutes, and API 5xx error rate $> 1\%$.

@@ -7,17 +7,21 @@ import signal
 import sys
 import threading
 import time
+import uuid
+from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from types import TracebackType
 from typing import Literal
 
 from app.config import get_settings
 from app.jobs.base import RequeueJob
 from app.jobs.registry import get_handler
-from app.queue import QueueError, get_queue
+from app.queue import JobMessage, QueueError, SqsQueueService, get_queue
 
 logger = logging.getLogger(__name__)
 
 POLL_TIMEOUT_SECONDS = 5
+DEFAULT_JOB_VISIBILITY_SECONDS = 900
 
 _shutdown = False
 
@@ -31,6 +35,175 @@ def _handle_signal(signum: int, frame: object) -> None:
 ProcessResult = Literal["ack", "drop", "requeue"]
 
 
+class MessageHeartbeat:
+    """Background thread that keeps SQS visibility timeout alive during long-running tasks.
+
+    If queue is SQS, calls change_visibility every `interval_seconds` (default 30s)
+    to prevent message from returning to queue during long jobs (e.g. video rendering).
+    Stops cleanly when the job completes, fails, or crashes.
+    """
+
+    def __init__(
+        self,
+        queue: object,
+        message: JobMessage,
+        interval_seconds: float = 30.0,
+        visibility_timeout: int = DEFAULT_JOB_VISIBILITY_SECONDS,
+    ) -> None:
+        self.queue = queue
+        self.message = message
+        self.interval = interval_seconds
+        self.visibility_timeout = visibility_timeout
+        self._stop_event = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    def start(self) -> None:
+        if not (isinstance(self.queue, SqsQueueService) or getattr(self.queue, "is_sqs", False)):
+            return
+        self._stop_event.clear()
+        self._thread = threading.Thread(
+            target=self._run,
+            name=f"heartbeat-{self.message.id[:8]}",
+            daemon=True,
+        )
+        self._thread.start()
+
+    def _run(self) -> None:
+        while not self._stop_event.wait(self.interval):
+            try:
+                if hasattr(self.queue, "change_visibility"):
+                    self.queue.change_visibility(
+                        self.message, visibility_timeout=self.visibility_timeout
+                    )
+                logger.debug(
+                    "heartbeat renewed message visibility",
+                    extra={
+                        "event": "worker.heartbeat_renewed",
+                        "message_id": self.message.id,
+                        "visibility_timeout": self.visibility_timeout,
+                    },
+                )
+            except Exception as exc:
+                logger.warning(
+                    "failed to renew message visibility",
+                    extra={
+                        "event": "worker.heartbeat_failed",
+                        "message_id": self.message.id,
+                        "error": str(exc),
+                    },
+                )
+
+    def stop(self) -> None:
+        self._stop_event.set()
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout=2.0)
+            self._thread = None
+
+    def __enter__(self) -> "MessageHeartbeat":
+        self.start()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        self.stop()
+
+
+def _should_skip_duplicate(payload: dict) -> bool:
+    job_id_raw = payload.get("job_id")
+    if not job_id_raw:
+        return False
+    try:
+        job_id = uuid.UUID(str(job_id_raw))
+    except (ValueError, TypeError):
+        return False
+
+    try:
+        from app.db import RenderJob, make_sessionmaker
+
+        SessionMaker = make_sessionmaker()
+        with SessionMaker() as db:
+            job = db.get(RenderJob, job_id)
+            if job is None:
+                return False
+            if job.status == "completed":
+                logger.info(
+                    "job already completed, skipping duplicate",
+                    extra={"event": "job.duplicate_completed_skip", "job_id": str(job_id)},
+                )
+                return True
+            if job.status == "processing" and job.started_at is not None:
+                now = datetime.now(UTC)
+                started_at = (
+                    job.started_at if job.started_at.tzinfo else job.started_at.replace(tzinfo=UTC)
+                )
+                elapsed = (now - started_at).total_seconds()
+                if 0 <= elapsed <= 120:
+                    logger.warning(
+                        "job already processing within 120s, skipping duplicate execution",
+                        extra={
+                            "event": "job.duplicate_processing_skip",
+                            "job_id": str(job_id),
+                            "elapsed_seconds": elapsed,
+                        },
+                    )
+                    return True
+    except Exception:
+        logger.debug("duplicate guard check skipped (db query error)")
+    return False
+
+
+def _record_worker_crash(payload: dict, exc: Exception) -> None:
+    job_id_raw = payload.get("job_id")
+    if not job_id_raw:
+        return
+    try:
+        job_id = uuid.UUID(str(job_id_raw))
+    except (ValueError, TypeError):
+        return
+
+    try:
+        from app.db import ProjectEvent, RenderJob, make_sessionmaker
+
+        SessionMaker = make_sessionmaker()
+        with SessionMaker() as db:
+            job = db.get(RenderJob, job_id)
+            if job is not None and job.status != "completed":
+                job.status = "failed"
+                job.progress = 100
+                job.error_type = "WORKER_CRASH"
+                job.error_message = str(exc)
+                job.finished_at = datetime.now(UTC)
+                trace_id = payload.get("trace_id")
+                db.add(
+                    ProjectEvent(
+                        project_id=job.project_id,
+                        user_id=job.user_id,
+                        job_id=job.id,
+                        event_type="job.failed",
+                        payload={
+                            "job_type": job.job_type,
+                            "error_type": "WORKER_CRASH",
+                            "error": str(exc),
+                        },
+                        request_id=trace_id,
+                    )
+                )
+                db.commit()
+                logger.info(
+                    "updated job status to failed after worker crash",
+                    extra={"event": "job.marked_crashed", "job_id": str(job_id)},
+                )
+    except Exception:
+        logger.exception(
+            "failed to record worker crash in db",
+            extra={"event": "job.record_crash_failed", "job_id": str(job_id_raw)},
+        )
+
+
 def process_payload(payload: dict) -> ProcessResult:
     job_type = payload.get("job_type", "")
     handler = get_handler(job_type)
@@ -41,6 +214,9 @@ def process_payload(payload: dict) -> ProcessResult:
         )
         return "drop"
 
+    if _should_skip_duplicate(payload):
+        return "ack"
+
     try:
         handler(payload)
     except RequeueJob:
@@ -49,11 +225,12 @@ def process_payload(payload: dict) -> ProcessResult:
             extra={"event": "job.retry_requested", "job_type": job_type},
         )
         return "requeue"
-    except Exception:
+    except Exception as exc:
         logger.exception(
             "job handler crashed",
             extra={"event": "job.handler_crashed", "job_type": job_type},
         )
+        _record_worker_crash(payload, exc)
         return "drop"
     return "ack"
 
@@ -106,11 +283,17 @@ def run() -> None:
     logger.info("worker started", extra={"event": "worker.started"})
 
     queue_names = settings.queue_name_list
+    visibility_timeout = settings.job_visibility_seconds
+    poll_wait = settings.poll_wait_seconds
 
     while not _shutdown:
         try:
-            # Single blocking pop across all queues (BLPOP key order = priority).
-            message = queue.receive(queue_names, visibility_timeout=POLL_TIMEOUT_SECONDS)
+            # Polling across configured queues.
+            message = queue.receive(
+                queue_names,
+                visibility_timeout=visibility_timeout,
+                wait_time_seconds=poll_wait,
+            )
         except QueueError as exc:
             logger.warning(
                 "queue poll error, retrying",
@@ -120,7 +303,15 @@ def run() -> None:
             continue
         if message is None:
             continue
-        result = process_payload(message.body)
+
+        with MessageHeartbeat(
+            queue=queue,
+            message=message,
+            interval_seconds=30.0,
+            visibility_timeout=visibility_timeout,
+        ):
+            result = process_payload(message.body)
+
         if result == "ack":
             queue.ack(message)
         elif result == "requeue":

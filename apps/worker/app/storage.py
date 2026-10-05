@@ -1,5 +1,6 @@
 """Worker storage adapter subset."""
 
+import shutil
 from pathlib import Path
 from typing import Protocol
 
@@ -16,6 +17,8 @@ class ObjectNotFoundError(StorageError):
 
 class StorageService(Protocol):
     def upload(self, key: str, data: bytes, content_type: str) -> None: ...
+
+    def upload_file(self, key: str, file_path: Path | str, content_type: str) -> None: ...
 
     def download(self, key: str) -> bytes: ...
 
@@ -35,6 +38,14 @@ class LocalStorageService:
         path = self._path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
+
+    def upload_file(self, key: str, file_path: Path | str, content_type: str) -> None:
+        src = Path(file_path).resolve()
+        if not src.is_file():
+            raise StorageError(f"Source file not found: {file_path}")
+        dest = self._path(key)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, dest)
 
     def download(self, key: str) -> bytes:
         path = self._path(key)
@@ -91,6 +102,19 @@ class SupabaseStorageService:
         if response.status_code >= 400:
             raise StorageError(f"Supabase upload failed ({response.status_code}) for {key!r}.")
 
+    def upload_file(self, key: str, file_path: Path | str, content_type: str) -> None:
+        path = Path(file_path).resolve()
+        if not path.is_file():
+            raise StorageError(f"Source file not found: {file_path}")
+        with open(path, "rb") as f:
+            response = self._client.post(
+                self._object_url(key),
+                content=f,
+                headers={"Content-Type": content_type, "x-upsert": "true"},
+            )
+        if response.status_code >= 400:
+            raise StorageError(f"Supabase upload failed ({response.status_code}) for {key!r}.")
+
     def download(self, key: str) -> bytes:
         response = self._client.get(self._object_url(key))
         if response.status_code == 404:
@@ -133,6 +157,21 @@ class S3StorageService:
             )
         except Exception as exc:
             raise StorageError(f"S3 upload failed for {key!r}.") from exc
+
+    def upload_file(self, key: str, file_path: Path | str, content_type: str) -> None:
+        path = Path(file_path).resolve()
+        if not path.is_file():
+            raise StorageError(f"Source file not found: {file_path}")
+        try:
+            extra_args = {"ContentType": content_type} if content_type else {}
+            self._s3.upload_file(
+                Filename=str(path),
+                Bucket=self._bucket_for(key),
+                Key=key,
+                ExtraArgs=extra_args,
+            )
+        except Exception as exc:
+            raise StorageError(f"S3 upload_file failed for {key!r}.") from exc
 
     def download(self, key: str) -> bytes:
         try:

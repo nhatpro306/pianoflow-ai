@@ -1,0 +1,39 @@
+{
+  "timestamp": "2026-10-03T17:05:25.596Z",
+  "results": {
+    "scenario_1_sheet_music_viewer": {
+      "passed": true,
+      "assertions": [
+        "Treble clef 𝄞 rendered",
+        "Bass clef 𝄢 rendered",
+        "Staves verified (40 staff lines found)",
+        "Noteheads rendered (11 ellipses found)",
+        "Stems rendered (11 stems found)",
+        "Ledger lines rendered (7 ledger lines found)",
+        "Play button present",
+        "Speed selectors (0.5x, 0.75x, 1x, 1.25x) present",
+        "Zoom controls (+/- and 100%) present",
+        "Print button present",
+        "Playhead advances automatically (from 169.60224999999997 to 351.60225)",
+        "Measure click seek successfully relocated playhead to x1=598.0757499999997"
+      ]
+    },
+    "scenario_2_practice_mic_mode": {
+      "passed": true,
+      "assertions": [
+        "Input mode toggle [ 🎹 MIDI | 🎙️ Mic ] present",
+        "Acoustic Mic Active status badge visible",
+        "Sheet Music 🎼 navigation link present with href=\"/projects/123/sheet\""
+      ]
+    },
+    "scenario_3_project_editor_nav": {
+      "passed": true,
+      "assertions": [
+        "View Sheet Music 🎼 action button present",
+        "Clicking View Sheet Music 🎼 routes successfully to /projects/123/sheet"
+      ]
+    }
+  },
+  "consoleErrorsCount": 0,
+  "pageErrorsCount": 0
+}
