@@ -5,7 +5,10 @@ export type GenreCategory =
   | "Anime & Ghibli"
   | "K-Pop"
   | "Modern & Pop"
-  | "Cinematic & Game";
+  | "Cinematic & Game"
+  | "Jazz & Lo-Fi";
+
+export type GenreFilter = GenreCategory | "All";
 
 export type SongDifficulty = "Beginner" | "Intermediate" | "Master";
 

@@ -4,6 +4,7 @@ import { ANIME_SONGS } from "./anime";
 import { KPOP_SONGS } from "./kpop";
 import { MODERN_POP_SONGS } from "./modernPop";
 import { CINEMATIC_GAME_SONGS } from "./cinematicGame";
+import { JAZZ_LOFI_SONGS } from "./jazzLofi";
 
 export * from "./types";
 export { CLASSICAL_SONGS } from "./classical";
@@ -11,6 +12,7 @@ export { ANIME_SONGS } from "./anime";
 export { KPOP_SONGS } from "./kpop";
 export { MODERN_POP_SONGS } from "./modernPop";
 export { CINEMATIC_GAME_SONGS } from "./cinematicGame";
+export { JAZZ_LOFI_SONGS } from "./jazzLofi";
 
 export const ALL_REPERTOIRE_SONGS: RepertoireSong[] = [
   ...CLASSICAL_SONGS,
@@ -18,6 +20,7 @@ export const ALL_REPERTOIRE_SONGS: RepertoireSong[] = [
   ...KPOP_SONGS,
   ...MODERN_POP_SONGS,
   ...CINEMATIC_GAME_SONGS,
+  ...JAZZ_LOFI_SONGS,
 ];
 
 export const GENRE_CATEGORIES = [
@@ -27,6 +30,7 @@ export const GENRE_CATEGORIES = [
   "Modern & Pop",
   "Cinematic & Game",
   "Classical",
+  "Jazz & Lo-Fi",
 ] as const;
 
 export type GenreFilter = (typeof GENRE_CATEGORIES)[number];

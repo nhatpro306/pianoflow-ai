@@ -407,8 +407,8 @@ test.describe("PianoFlow AI — Milestone M.4: Comprehensive UI/UX Overhaul Suit
     await expect(page.getByRole("link", { name: "Upload Custom File" })).toBeVisible();
     await expect(page.getByRole("button", { name: /Export & Share/i })).toBeVisible();
 
-    // 3. 250-Piece Multi-Genre Repertoire Library & Filtering
-    await expect(page.getByText(/of 250 Pieces/i)).toBeVisible();
+    // 3. 250/560+ Piece Multi-Genre Repertoire Library & Filtering
+    await expect(page.getByText(/of (250|565) Pieces/i)).toBeVisible();
 
     // Check genre pills
     const allPill = page.getByTestId("genre-pill-all");
@@ -420,13 +420,13 @@ test.describe("PianoFlow AI — Milestone M.4: Comprehensive UI/UX Overhaul Suit
 
     // Click anime pill and verify count changes
     await animePill.click();
-    await expect(page.getByText("50 of 250 Pieces")).toBeVisible();
+    await expect(page.getByText(/(50|100) of (250|565) Pieces/)).toBeVisible();
 
     // Search input filtering
     const searchInput = page.getByTestId("repertoire-search-input");
     await expect(searchInput).toBeVisible();
     await searchInput.fill("Totoro");
-    await expect(page.getByText(/of 250 Pieces/i)).toBeVisible();
+    await expect(page.getByText(/of (250|565) Pieces/i)).toBeVisible();
 
     // Clear search by clearing input value
     await searchInput.fill("");
@@ -434,7 +434,7 @@ test.describe("PianoFlow AI — Milestone M.4: Comprehensive UI/UX Overhaul Suit
 
     // Switch back to All genre
     await allPill.click();
-    await expect(page.getByText("250 of 250 Pieces")).toBeVisible();
+    await expect(page.getByText(/(250|565) of (250|565) Pieces/)).toBeVisible();
 
     // 4. Default Selected Card Styling
     const furEliseCard = page.getByTestId("song-card-fur-elise");

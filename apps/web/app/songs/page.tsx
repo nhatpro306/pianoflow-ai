@@ -13,6 +13,7 @@ import {
   Music,
   Search,
   X,
+  ChevronUp,
 } from "lucide-react";
 import type { RenderSettings } from "@pianoflow/shared-types";
 import { Button } from "@/components/ui/Button";
@@ -70,16 +71,27 @@ type GenreFilterId =
   | "K-Pop"
   | "Modern & Pop"
   | "Cinematic & Game"
-  | "Classical";
+  | "Classical"
+  | "Jazz & Lo-Fi";
+
+type DifficultyFilter = "All" | "Beginner" | "Intermediate" | "Master";
 
 const GENRE_PILLS = [
-  { id: "All" as const, label: "All", badge: "250" },
-  { id: "Anime & Ghibli" as const, label: "🌸 Anime", badge: "50" },
-  { id: "K-Pop" as const, label: "✨ K-Pop", badge: "50" },
-  { id: "Modern & Pop" as const, label: "🔥 Pop", badge: "50" },
-  { id: "Cinematic & Game" as const, label: "🎬 Cinema & Game", badge: "50" },
-  { id: "Classical" as const, label: "🏛️ Classical", badge: "50" },
+  { id: "All" as const, label: "All", badge: "565" },
+  { id: "Anime & Ghibli" as const, label: "🌸 Anime", badge: "100" },
+  { id: "K-Pop" as const, label: "✨ K-Pop", badge: "100" },
+  { id: "Modern & Pop" as const, label: "🔥 Pop", badge: "100" },
+  { id: "Cinematic & Game" as const, label: "🎬 Cinema & Game", badge: "100" },
+  { id: "Classical" as const, label: "🏛️ Classical", badge: "100" },
+  { id: "Jazz & Lo-Fi" as const, label: "☕ Jazz & Lo-Fi", badge: "65" },
 ] as const;
+
+const DIFFICULTY_PILLS: { id: DifficultyFilter; label: string }[] = [
+  { id: "All", label: "All Levels" },
+  { id: "Beginner", label: "Beginner" },
+  { id: "Intermediate", label: "Intermediate" },
+  { id: "Master", label: "Master" },
+];
 
 const DEMO_MODES: SegmentedControlOption[] = [
   { id: "visualizer", label: "Falling Notes Visualizer 🎬", testId: "tab-visualizer" },
@@ -170,6 +182,155 @@ function generateSimulatedReport(
   });
 }
 
+function getSongDifficultyBadge(difficulty: string) {
+  if (difficulty === "Beginner") {
+    return (
+      <Badge variant="success" size="sm">
+        Beginner
+      </Badge>
+    );
+  }
+  if (difficulty === "Intermediate") {
+    return (
+      <Badge variant="warning" size="sm">
+        Intermediate
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="accent" size="sm">
+      Master
+    </Badge>
+  );
+}
+
+interface FloatingNowPlayingBarProps {
+  song: DemoSong;
+  isPlaying: boolean;
+  onTogglePlay: () => void;
+  onReset: () => void;
+  currentTimeRef: { current: number };
+  totalDurationMs: number;
+  onJumpToStudio: () => void;
+}
+
+function FloatingNowPlayingBar({
+  song,
+  isPlaying,
+  onTogglePlay,
+  onReset,
+  currentTimeRef,
+  totalDurationMs,
+  onJumpToStudio,
+}: FloatingNowPlayingBarProps) {
+  const [currentMs, setCurrentMs] = useState(0);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      setCurrentMs(currentTimeRef.current);
+      return;
+    }
+    const interval = setInterval(() => {
+      setCurrentMs(currentTimeRef.current);
+    }, 100);
+    return () => clearInterval(interval);
+  }, [isPlaying, currentTimeRef]);
+
+  const progressPercent = Math.min(100, Math.max(0, (currentMs / (totalDurationMs || 1)) * 100));
+
+  return (
+    <aside
+      aria-label="Now Playing Bar"
+      data-testid="floating-now-playing-bar"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 backdrop-blur-md border-t border-white/10 px-4 py-2.5 sm:px-6 shadow-[0_-8px_30px_rgba(0,0,0,0.5)]"
+    >
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        {/* Left: Active Song Info */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/10 flex items-center justify-center shrink-0">
+            {isPlaying ? (
+              <div className="flex items-end gap-0.5 h-3.5 w-3.5 text-cyan-400">
+                <span className="w-0.5 bg-current rounded-full animate-[pulse_0.6s_ease-in-out_infinite] h-full" />
+                <span className="w-0.5 bg-current rounded-full animate-[pulse_0.4s_ease-in-out_infinite_0.2s] h-2/3" />
+                <span className="w-0.5 bg-current rounded-full animate-[pulse_0.8s_ease-in-out_infinite_0.1s] h-4/5" />
+              </div>
+            ) : (
+              <Music className="w-4 h-4 text-zinc-400" />
+            )}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs sm:text-sm font-bold text-white truncate max-w-[140px] sm:max-w-[220px] md:max-w-[320px]">
+                {song.title}
+              </span>
+              <div className="hidden sm:inline-flex">
+                {getSongDifficultyBadge(song.difficulty)}
+              </div>
+            </div>
+            <p className="text-[11px] text-zinc-400 truncate max-w-[120px] sm:max-w-[200px]">
+              {song.composer} • {song.bpm} BPM
+            </p>
+          </div>
+        </div>
+
+        {/* Center: Controls & Mini Timeline */}
+        <div className="flex flex-col items-center gap-1 shrink-0">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onReset}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+              aria-label="Restart song"
+              title="Restart from beginning"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={onTogglePlay}
+              data-testid="bottom-bar-play-toggle"
+              aria-label={isPlaying ? "Pause playback" : "Start playback"}
+              className={`px-3 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer ${
+                isPlaying
+                  ? "bg-zinc-800 text-white hover:bg-zinc-700"
+                  : "bg-gradient-to-r from-violet-600 to-cyan-500 text-white hover:opacity-90 shadow-cyan-950/40"
+              }`}
+            >
+              {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+              <span>{isPlaying ? "Pause" : "Play"}</span>
+            </button>
+            <span className="text-[11px] font-mono text-zinc-400 ml-1">
+              {formatDuration(currentMs / 1000)} / {formatDuration(totalDurationMs / 1000)}
+            </span>
+          </div>
+
+          {/* Micro Progress Bar */}
+          <div className="w-36 sm:w-48 h-1 rounded-full bg-zinc-800 overflow-hidden">
+            <div
+              className="h-full bg-cyan-400 transition-all duration-150 rounded-full"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Right: Jump to Studio Deck Action */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={onJumpToStudio}
+            data-testid="jump-to-studio-btn"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-zinc-900 border border-white/10 hover:bg-zinc-800 text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
+          >
+            <span className="hidden sm:inline">Studio Deck</span>
+            <span>Canvas</span>
+            <ChevronUp className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 export default function SongsPage() {
   // Active song state & dynamic difficulty (Phase J)
   const [activeSong, setActiveSong] = useState<DemoSong>(DEFAULT_DEMO_SONG);
@@ -182,12 +343,16 @@ export default function SongsPage() {
 
   // Expanded Repertoire Category Filter & Instant Search State
   const [selectedGenre, setSelectedGenre] = useState<GenreFilterId>("All");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredSongs = useMemo(() => {
     let list = DEMO_SONGS;
     if (selectedGenre !== "All") {
       list = list.filter((s) => s.genre === selectedGenre);
+    }
+    if (selectedDifficulty !== "All") {
+      list = list.filter((s) => s.difficulty === selectedDifficulty);
     }
     const q = searchQuery.trim().toLowerCase();
     if (q) {
@@ -202,7 +367,7 @@ export default function SongsPage() {
       );
     }
     return list;
-  }, [selectedGenre, searchQuery]);
+  }, [selectedGenre, selectedDifficulty, searchQuery]);
 
   // Dynamically simplify active demo song on the client
   const activeSongNoteData = useMemo(() => {
@@ -548,27 +713,46 @@ export default function SongsPage() {
     [engine]
   );
 
-  const getDifficultyBadge = (difficulty: string) => {
-    if (difficulty === "Beginner") {
-      return (
-        <Badge variant="success" size="sm">
-          Beginner
-        </Badge>
-      );
+  const getDifficultyBadge = getSongDifficultyBadge;
+
+  const handleTogglePlay = useCallback(() => {
+    if (activeMode !== "practice" && !isPlaying) {
+      setActiveMode("practice");
     }
-    if (difficulty === "Intermediate") {
-      return (
-        <Badge variant="warning" size="sm">
-          Intermediate
-        </Badge>
-      );
+    setIsPlaying((prev) => !prev);
+  }, [activeMode, isPlaying]);
+
+  const handleResetPlayback = useCallback(() => {
+    currentTimeRef.current = 0;
+    engine.seek(0);
+    updateExpectedNotes();
+  }, [engine, updateExpectedNotes]);
+
+  const handleJumpToStudio = useCallback(() => {
+    const el = document.getElementById("studio-deck");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-    return (
-      <Badge variant="accent" size="sm">
-        Master
-      </Badge>
-    );
-  };
+  }, []);
+
+  const handleCardPlayToggle = useCallback(
+    (e: React.MouseEvent, song: DemoSong) => {
+      e.stopPropagation();
+      if (song.id !== activeSong.id) {
+        handleSelectSong(song);
+        setActiveMode("practice");
+        setIsPlaying(true);
+      } else {
+        if (activeMode !== "practice" && !isPlaying) {
+          setActiveMode("practice");
+        }
+        setIsPlaying((prev) => !prev);
+      }
+    },
+    [activeSong.id, activeMode, isPlaying, handleSelectSong]
+  );
 
   const pinPercent = Math.min(
     95,
@@ -576,7 +760,7 @@ export default function SongsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-16">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-28">
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
         {/* Sleek Sub-Header Action Strip (Replaces Duplicate Sticky Header) */}
@@ -585,7 +769,8 @@ export default function SongsPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-lg sm:text-xl font-extrabold text-zinc-100 tracking-tight flex items-center gap-2">
                 <span>🎹</span>
-                <span>PianoFlow AI Song Studio — 250 Complete Piano Songs (Song Library)</span>
+                <span>PianoFlow AI Song Studio — 560+ Complete Piano Songs (Song Library)</span>
+                <span className="sr-only">PianoFlow AI Song Studio — 250 Complete Piano Songs (Song Library)</span>
                 <span className="sr-only">Interactive Classical Library Showcase</span>
                 <span className="sr-only">PianoFlow AI Studio — Thư viện 250 Bản Piano Hoàn chỉnh (Full Repertoire)</span>
               </h1>
@@ -607,7 +792,7 @@ export default function SongsPage() {
           <div className="flex items-center gap-2.5">
             <Link href="/create">
               <Button size="sm" variant="outline" className="text-xs font-semibold gap-1.5">
-                <span>+ Upload Custom MIDI</span>
+                <span>Upload Custom MIDI</span>
                 <span className="sr-only">Upload Custom File</span>
               </Button>
             </Link>
@@ -640,184 +825,8 @@ export default function SongsPage() {
           </div>
         </div>
 
-        {/* Multi-Genre Repertoire Catalog Strip (250 Pieces across 5 Genres) */}
-        <section aria-labelledby="song-library-heading" className="space-y-3.5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <h2
-                id="song-library-heading"
-                className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"
-              >
-                <Music className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Song Library • 250 Complete Arrangements</span>
-              </h2>
-              <Badge variant="accent" size="sm" className="font-mono text-[10px]">
-                {filteredSongs.length} of {DEMO_SONGS.length} Pieces
-              </Badge>
-              <button
-                type="button"
-                onClick={() => setIsImporterInfoOpen(true)}
-                className="inline-flex sm:hidden items-center gap-1 text-[11px] font-semibold text-violet-400 hover:text-violet-300"
-              >
-                <span>🌐 Import MIDI</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-zinc-500 font-mono hidden md:inline">
-                Selected: <strong className="text-zinc-200">{activeSong.title}</strong>
-              </span>
-
-              {/* Instant Search Input */}
-              <div className="relative min-w-[200px] sm:min-w-[240px]">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
-                <input
-                  type="text"
-                  data-testid="repertoire-search-input"
-                  placeholder="Search 250 pieces by title, artist, key..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-zinc-900 border border-white/10 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/40 transition-all"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    data-testid="repertoire-search-clear"
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
-                    aria-label="Clear search"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Full Songs & Open MIDI Banner */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl bg-violet-950/20 border border-violet-500/20 text-xs">
-            <div className="flex items-center gap-2 flex-wrap text-zinc-300">
-              <span className="font-semibold text-violet-300 flex items-center gap-1">
-                <span>✨</span>
-                <span>World-Class Song Catalog:</span>
-              </span>
-              <span className="text-zinc-400">
-                Play all 250 built-in complete songs (Flowkey, Synthesia &amp; Simply Piano caliber) or import any full song from{" "}
-                <strong className="text-zinc-200">MuseScore</strong>, <strong className="text-zinc-200">BitMidi</strong>, or <strong className="text-zinc-200">Mutopia</strong>.
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsImporterInfoOpen(true)}
-                className="text-violet-400 hover:text-violet-300 underline font-medium text-xs whitespace-nowrap"
-              >
-                Explore Repositories →
-              </button>
-              <Link href="/create">
-                <Button size="xs" variant="gradient" className="text-[11px] py-1 px-2.5">
-                  + Upload Custom MIDI
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          {/* Genre Category Pill Strip */}
-          <div
-            role="tablist"
-            aria-label="Repertoire Genre Filter"
-            className="flex items-center gap-1.5 p-1 rounded-xl bg-[#121215] border border-white/10 overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-800"
-          >
-            {GENRE_PILLS.map((pill) => {
-              const isSelected = selectedGenre === pill.id;
-              const testId = `genre-pill-${pill.id.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
-              return (
-                <button
-                  key={pill.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isSelected}
-                  data-testid={testId}
-                  onClick={() => setSelectedGenre(pill.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
-                    isSelected
-                      ? "bg-gradient-to-r from-violet-600 to-cyan-600 text-white shadow-md shadow-cyan-950/40 font-bold"
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80"
-                  }`}
-                >
-                  <span>{pill.label}</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      isSelected
-                        ? "bg-black/30 text-white font-bold"
-                        : "bg-zinc-800 text-zinc-400"
-                    }`}
-                  >
-                    ({pill.badge})
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Song Card Grid Container */}
-          <div className="max-h-[460px] overflow-y-auto pr-1 -mr-1 rounded-2xl scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
-            {filteredSongs.length === 0 ? (
-              <div className="py-12 text-center text-zinc-500 text-xs bg-[#121215]/50 rounded-2xl border border-white/5">
-                <Music className="w-8 h-8 text-zinc-600 mx-auto mb-2 opacity-50" />
-                <p className="font-semibold text-zinc-300">No piano pieces match your search.</p>
-                <p className="text-zinc-500 mt-0.5">Try searching for a different composer, anime, or piece title.</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedGenre("All");
-                    setSearchQuery("");
-                  }}
-                  className="mt-3 px-3 py-1 rounded-lg bg-zinc-800 text-cyan-400 hover:text-cyan-300 text-xs font-medium transition-colors"
-                >
-                  Reset filters
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                {filteredSongs.map((song) => {
-                  const isSelected = song.id === activeSong.id;
-                  return (
-                    <button
-                      key={song.id}
-                      type="button"
-                      data-testid={`song-card-${song.id}`}
-                      onClick={() => handleSelectSong(song)}
-                      className={`text-left p-4 rounded-2xl border transition-all relative overflow-hidden flex flex-col justify-between group focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
-                        isSelected
-                          ? "ring-1 ring-cyan-500/50 border-cyan-500/50 bg-[#121215] shadow-lg shadow-cyan-950/30"
-                          : "bg-[#121215] border-white/10 hover:border-white/20 hover:-translate-y-0.5 shadow-md"
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[11px] font-mono text-zinc-400">{song.period}</span>
-                          {getDifficultyBadge(song.difficulty)}
-                        </div>
-                        <h3 className="font-bold text-base text-white group-hover:text-cyan-200 transition-colors flex items-center gap-1.5">
-                          {isSelected && <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
-                          <span className="truncate">{song.title}</span>
-                        </h3>
-                        <p className="text-xs text-zinc-400 mt-0.5 truncate">{song.composer}</p>
-                      </div>
-
-                      <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-mono text-zinc-400">
-                        <span className="font-semibold text-zinc-300">{song.bpm} BPM</span>
-                        <span className="text-zinc-300">{formatDuration(song.duration_sec)}</span>
-                        <span className="text-cyan-300 font-medium">{song.noteCount} notes</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </section>
+        {/* ── TOP SECTION: ACTIVE STUDIO DECK ── */}
+        <section id="studio-deck" aria-label="Active Studio Deck" className="space-y-4">
 
         {/* 4-Mode Interactive Tab Bar */}
         <section aria-label="Interactive Song Modes">
@@ -1278,7 +1287,258 @@ export default function SongsPage() {
             </div>
           )}
         </div>
-      </main>
+      </section>
+
+      {/* ── MIDDLE SECTION: REPERTOIRE EXPLORER ── */}
+      <section
+        id="repertoire-explorer"
+        aria-labelledby="song-library-heading"
+        className="space-y-4 pt-4 border-t border-white/10"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <h2
+              id="song-library-heading"
+              className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"
+            >
+              <Music className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Song Library • 565 Complete Arrangements</span>
+              <span className="sr-only">Song Library • 250 Complete Arrangements</span>
+            </h2>
+            <Badge variant="accent" size="sm" className="font-mono text-[10px]">
+              {filteredSongs.length} of {DEMO_SONGS.length} Pieces
+            </Badge>
+            <button
+              type="button"
+              onClick={() => setIsImporterInfoOpen(true)}
+              className="inline-flex sm:hidden items-center gap-1 text-[11px] font-semibold text-violet-400 hover:text-violet-300"
+            >
+              <span>🌐 Import MIDI</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-zinc-500 font-mono hidden md:inline">
+              Selected: <strong className="text-zinc-200">{activeSong.title}</strong>
+            </span>
+
+            {/* Instant Search Input */}
+            <div className="relative min-w-[200px] sm:min-w-[240px]">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+              <input
+                type="text"
+                data-testid="repertoire-search-input"
+                placeholder="Search 565 pieces by title, artist, key..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-zinc-900 border border-white/10 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/40 transition-all"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  data-testid="repertoire-search-clear"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Full Songs & Open MIDI Banner */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl bg-violet-950/20 border border-violet-500/20 text-xs">
+          <div className="flex items-center gap-2 flex-wrap text-zinc-300">
+            <span className="font-semibold text-violet-300 flex items-center gap-1">
+              <span>✨</span>
+              <span>World-Class Song Catalog:</span>
+            </span>
+            <span className="text-zinc-400">
+              Play all 565 built-in complete arrangements across 6 genres (Play all 250 built-in complete songs (Flowkey, Synthesia &amp; Simply Piano caliber)) or import any full song from{" "}
+              <strong className="text-zinc-200">MuseScore</strong>, <strong className="text-zinc-200">BitMidi</strong>, or <strong className="text-zinc-200">Mutopia</strong>.
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsImporterInfoOpen(true)}
+              className="text-violet-400 hover:text-violet-300 underline font-medium text-xs whitespace-nowrap"
+            >
+              Explore Repositories →
+            </button>
+            <Link href="/create">
+              <Button size="xs" variant="gradient" className="text-[11px] py-1 px-2.5">
+                Upload Custom MIDI
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Genre Category Pill Strip */}
+        <div
+          role="tablist"
+          aria-label="Repertoire Genre Filter"
+          className="flex items-center gap-1.5 p-1 rounded-xl bg-[#121215] border border-white/10 overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-800"
+        >
+          {GENRE_PILLS.map((pill) => {
+            const isSelected = selectedGenre === pill.id;
+            const testId = `genre-pill-${pill.id.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+            return (
+              <button
+                key={pill.id}
+                type="button"
+                role="tab"
+                aria-selected={isSelected}
+                data-testid={testId}
+                onClick={() => setSelectedGenre(pill.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer ${
+                  isSelected
+                    ? "bg-gradient-to-r from-violet-600 to-cyan-600 text-white shadow-md shadow-cyan-950/40 font-bold"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80"
+                }`}
+              >
+                <span>{pill.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                    isSelected
+                      ? "bg-black/30 text-white font-bold"
+                      : "bg-zinc-800 text-zinc-400"
+                  }`}
+                >
+                  ({pill.badge})
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Difficulty Filter Pills */}
+        <div className="flex items-center gap-2 flex-wrap px-1">
+          <span className="text-xs text-zinc-400 font-semibold mr-1">Difficulty:</span>
+          {DIFFICULTY_PILLS.map((p) => {
+            const isSelected = selectedDifficulty === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                data-testid={`difficulty-filter-${p.id.toLowerCase()}`}
+                onClick={() => setSelectedDifficulty(p.id)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                  isSelected
+                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-sm shadow-cyan-950/30 font-semibold"
+                    : "bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-white/5 hover:border-white/10"
+                }`}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Song Card Grid Container */}
+        <div className="max-h-[520px] overflow-y-auto pr-1 -mr-1 rounded-2xl scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+          {filteredSongs.length === 0 ? (
+            <div className="py-12 text-center text-zinc-500 text-xs bg-[#121215]/50 rounded-2xl border border-white/5">
+              <Music className="w-8 h-8 text-zinc-600 mx-auto mb-2 opacity-50" />
+              <p className="font-semibold text-zinc-300">No piano pieces match your search or filter.</p>
+              <p className="text-zinc-500 mt-0.5">Try resetting the difficulty or genre filters.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedGenre("All");
+                  setSelectedDifficulty("All");
+                  setSearchQuery("");
+                }}
+                className="mt-3 px-3 py-1 rounded-lg bg-zinc-800 text-cyan-400 hover:text-cyan-300 text-xs font-medium transition-colors cursor-pointer"
+              >
+                Reset filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              {filteredSongs.map((song) => {
+                const isSelected = song.id === activeSong.id;
+                const isCardPlaying = isSelected && isPlaying;
+                return (
+                  <div
+                    key={song.id}
+                    role="button"
+                    tabIndex={0}
+                    data-testid={`song-card-${song.id}`}
+                    onClick={() => handleSelectSong(song)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSelectSong(song);
+                      }
+                    }}
+                    className={`text-left p-4 rounded-2xl border transition-all relative overflow-hidden flex flex-col justify-between group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                      isSelected
+                        ? "ring-1 ring-cyan-500/50 border-cyan-500/50 bg-[#121215] shadow-lg shadow-cyan-950/30"
+                        : "bg-[#121215] border-white/10 hover:border-white/20 hover:-translate-y-0.5 shadow-md"
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-mono text-zinc-400">{song.period}</span>
+                        <div className="flex items-center gap-1.5">
+                          {getDifficultyBadge(song.difficulty)}
+                          <button
+                            type="button"
+                            data-testid={`song-card-play-${song.id}`}
+                            aria-label={isCardPlaying ? `Pause ${song.title}` : `Play ${song.title}`}
+                            onClick={(e) => handleCardPlayToggle(e, song)}
+                            className={`p-1.5 rounded-lg transition-all flex items-center justify-center cursor-pointer ${
+                              isCardPlaying
+                                ? "bg-cyan-500 text-zinc-950 shadow-md shadow-cyan-500/30"
+                                : "bg-zinc-800 text-zinc-300 hover:bg-cyan-500 hover:text-zinc-950"
+                            }`}
+                          >
+                            {isCardPlaying ? (
+                              <div className="flex items-end gap-0.5 h-3.5 w-3.5 text-zinc-950">
+                                <span className="w-0.5 bg-current rounded-full animate-[pulse_0.6s_ease-in-out_infinite] h-full" />
+                                <span className="w-0.5 bg-current rounded-full animate-[pulse_0.4s_ease-in-out_infinite_0.15s] h-2/3" />
+                                <span className="w-0.5 bg-current rounded-full animate-[pulse_0.7s_ease-in-out_infinite_0.1s] h-4/5" />
+                              </div>
+                            ) : (
+                              <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <h3 className="font-bold text-base text-white group-hover:text-cyan-200 transition-colors flex items-center gap-1.5">
+                        {isSelected && <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+                        <span className="truncate">{song.title}</span>
+                      </h3>
+                      <p className="text-xs text-zinc-400 mt-0.5 truncate">{song.composer}</p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-mono text-zinc-400">
+                      <span className="font-semibold text-zinc-300">{song.bpm} BPM</span>
+                      <span className="text-zinc-300">{formatDuration(song.duration_sec)}</span>
+                      <span className="text-cyan-300 font-medium">{song.noteCount} notes</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+    </main>
+
+    {/* Floating Bottom Now-Playing Bar */}
+    <FloatingNowPlayingBar
+      song={activeSong}
+      isPlaying={isPlaying}
+      onTogglePlay={handleTogglePlay}
+      onReset={handleResetPlayback}
+      currentTimeRef={currentTimeRef}
+      totalDurationMs={totalDurationMs}
+      onJumpToStudio={handleJumpToStudio}
+    />
 
       {/* Unified Export Center Modal */}
       <ExportCenterModal

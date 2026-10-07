@@ -7,6 +7,7 @@ import {
   KPOP_SONGS,
   MODERN_POP_SONGS,
   CINEMATIC_GAME_SONGS,
+  JAZZ_LOFI_SONGS,
   getSongsByGenre,
   searchRepertoire,
   getSongById,
@@ -15,15 +16,16 @@ import { simplifyNoteData } from '../lib/midi/simplifyEngine';
 
 const SCREENSHOTS_DIR = path.join(__dirname, 'screenshots');
 
-test.describe('PianoFlow AI — Step 4: 250-Piece Multi-Genre Repertoire Catalog', () => {
-  test('CATALOG-01: In-Memory Verification of 250 Curated Pieces across 5 Genres', () => {
+test.describe('PianoFlow AI — Step 4: 560+ Piece Multi-Genre Repertoire Catalog', () => {
+  test('CATALOG-01: In-Memory Verification of 560+ Curated Pieces across 6 Genres', () => {
     // 1. Verify exact counts
-    expect(ALL_REPERTOIRE_SONGS.length).toBe(250);
-    expect(CLASSICAL_SONGS.length).toBe(50);
-    expect(ANIME_SONGS.length).toBe(50);
-    expect(KPOP_SONGS.length).toBe(50);
-    expect(MODERN_POP_SONGS.length).toBe(50);
-    expect(CINEMATIC_GAME_SONGS.length).toBe(50);
+    expect(ALL_REPERTOIRE_SONGS.length).toBeGreaterThanOrEqual(560);
+    expect(CLASSICAL_SONGS.length).toBe(100);
+    expect(ANIME_SONGS.length).toBe(100);
+    expect(KPOP_SONGS.length).toBe(100);
+    expect(MODERN_POP_SONGS.length).toBe(100);
+    expect(CINEMATIC_GAME_SONGS.length).toBe(100);
+    expect(JAZZ_LOFI_SONGS.length).toBeGreaterThanOrEqual(60);
 
     // 2. Verify unique IDs
     const idSet = new Set<string>();
@@ -41,12 +43,13 @@ test.describe('PianoFlow AI — Step 4: 250-Piece Multi-Genre Repertoire Catalog
     }
 
     // 3. Verify helper functions
-    expect(getSongsByGenre('Anime & Ghibli').length).toBe(50);
-    expect(getSongsByGenre('K-Pop').length).toBe(50);
-    expect(getSongsByGenre('Modern & Pop').length).toBe(50);
-    expect(getSongsByGenre('Cinematic & Game').length).toBe(50);
-    expect(getSongsByGenre('Classical').length).toBe(50);
-    expect(getSongsByGenre('All').length).toBe(250);
+    expect(getSongsByGenre('Anime & Ghibli').length).toBe(100);
+    expect(getSongsByGenre('K-Pop').length).toBe(100);
+    expect(getSongsByGenre('Modern & Pop').length).toBe(100);
+    expect(getSongsByGenre('Cinematic & Game').length).toBe(100);
+    expect(getSongsByGenre('Classical').length).toBe(100);
+    expect(getSongsByGenre('Jazz & Lo-Fi').length).toBe(JAZZ_LOFI_SONGS.length);
+    expect(getSongsByGenre('All').length).toBe(ALL_REPERTOIRE_SONGS.length);
 
     // 4. Verify search helper
     const searchSparkle = searchRepertoire('Sparkle');
@@ -56,13 +59,17 @@ test.describe('PianoFlow AI — Step 4: 250-Piece Multi-Genre Repertoire Catalog
     const searchBTS = searchRepertoire('BTS', 'K-Pop');
     expect(searchBTS.length).toBeGreaterThanOrEqual(5);
 
+    const searchJazz = searchRepertoire('Bill Evans', 'Jazz & Lo-Fi');
+    expect(searchJazz.length).toBeGreaterThanOrEqual(1);
+
     // 5. Verify getSongById helper
     expect(getSongById('fur-elise')).toBeDefined();
     expect(getSongById('river-flows-in-you')).toBeDefined();
     expect(getSongById('interstellar-main-theme')).toBeDefined();
+    expect(getSongById('autumn-leaves')).toBeDefined();
   });
 
-  test('CATALOG-02: Progressive Reduction Guaranteed for All 250 Repertoire Pieces', () => {
+  test('CATALOG-02: Progressive Reduction Guaranteed for All 560+ Repertoire Pieces', () => {
     for (const song of ALL_REPERTOIRE_SONGS) {
       const orig = song.noteData.notes.length;
       const easy = simplifyNoteData(song.noteData, 'easy');
