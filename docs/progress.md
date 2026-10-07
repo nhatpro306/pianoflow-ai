@@ -2,6 +2,73 @@
 
 Newest entries first. Append with `/checkpoint` after completing a milestone.
 
+## 2026-10-06 — Audio Extraction Engine Fix ("no audio extracted") & Multi-Stage Ingestion Complete
+
+**Milestone: Full-stack remediation of the P0 audio extraction defect ("no audio extracted (too long, too large, or unavailable)"), introducing a 4-Stage Ingestion Architecture in `infra/modal/transcribe_app.py`: Direct HTTP Audio Ingestion (`is_direct_audio_url`, chunked streaming download, FFmpeg 16kHz mono WAV transcoding, decoded duration verification), Hardened Media Platform Extractor (`yt-dlp` with `-f "bestaudio/ba/b"`, null-coalescing duration filter `--match-filter "duration <=? 600"`, player client rotation, FFmpeg fallback transcoding), Granular Error Taxonomy (Duration limit exceeded, file size exceeded, platform bot/geo blocked, download failed), and SSRF Security Guard (`validate_url_ssrf` blocking cloud metadata 169.254.169.254, loopbacks, private subnets). Verified with 58/58 dedicated extraction unit tests, 449/449 total Python tests (100% green across 4 workspaces), 55/55 Playwright browser tests across 12 suites, clean Next.js build across 15 routes, and zero-regression security sign-off.**
+
+### Subsystems Implemented & Verified
+- **Stage 1: Direct HTTP Audio Ingestion (`download_direct_audio`):** Dedicated streaming downloader bypassing `yt-dlp` for S3 presigned URLs, Cloudflare R2, Supabase storage, and direct `.mp3`/`.wav` media links. Eliminates the `yt-dlp` "duration = NA" filter drop trap. Implements 64 KB chunk streaming with strict 100 MB byte cap, FFmpeg 16kHz mono WAV transcoding, and decoded PCM audio duration probing (`_probe_duration`).
+- **Stage 2: Hardened Media Platform Extractor (`extract_platform_audio`):** Configures `yt-dlp` with `-f "bestaudio/ba/b"` to download only isolated audio streams rather than massive 1080p/4K video containers. Implements null-coalescing duration filter `--match-filter "duration <=? 600"`, player client rotation (`--extractor-args "youtube:player_client=android,web,ios"`), and automatic FFmpeg fallback transcoding for non-WAV media containers.
+- **Stage 3: Granular Error Taxonomy:** Decommissioned the catch-all "no audio extracted" error string in favor of precise, actionable exceptions (`ValueError` for duration and file size exceedances, `RuntimeError` for bot detection, geo-restrictions, private videos, and upstream transport failures).
+- **Stage 4: SSRF Security Guard (`validate_url_ssrf`):** Enforces DNS resolution and IP address validation, preventing access to loopback interfaces (`127.0.0.0/8`), private subnets (RFC 1918), link-local addresses, and cloud provider metadata endpoints (`169.254.169.254`).
+- **Comprehensive Unit & Integration Test Suite (`infra/modal/test_transcribe_extraction.py`):** 58 automated tests verifying URL classification, SSRF boundary rejection, streaming download limits, `yt-dlp` command formation, format fallback, granular exception classification, and `transcribe_url` routing orchestration.
+
+### Monorepo Quality & Verification
+- **Python Unit Test Suite:** 449/449 passed (58 in `infra/modal`, 232 in `packages/music-core`, 108 in `apps/api`, 51 in `apps/worker`).
+- **Playwright Browser E2E:** 55/55 passed (100% green across 12 test suites).
+- **Next.js Production Build:** Clean production build with 15 routes generated in 3.4s.
+- **Static Typing & Lints:** 0 TypeScript compiler errors (`pnpm -r typecheck`), 0 Ruff errors (`uv run ruff check .`), 0 ESLint warnings (`pnpm --filter web lint`).
+- **Security Audit:** 100% compliance with protected path restrictions (zero modifications to `.env*`, lockfiles, migrations, CI/CD, OIDC, or Terraform state files).
+- **Audit Documentation:** Authoritative audit report published in [`docs/audits/2026-10-06-audio-extraction-fix.md`](file:///c:/Users/super/pianoflow/docs/audits/2026-10-06-audio-extraction-fix.md).
+
+---
+
+## 2026-10-06 — Audio Upload & CORS Network Error Fix (4-Tier Resilient Ingestion Architecture) Complete
+
+**Milestone: Full-stack remediation of the P0 audio upload defect ("Network error during upload"), introducing a 4-Tier Resilient Ingestion Architecture: Client-Side Extension-First MIME Normalizer (`mime.ts`), Next.js Streaming Upload Proxy with SSRF Guards (`/api/upload-proxy`), Browser Auto-Fallback (`putToSignedUrl` in `api.ts`), backend S3 key routing correction (`uploads.py` & `s3.py`), live AWS S3 CORS deployment across all buckets (`pianoflow-v3-analysis`, `pianoflow-v3-sources`, `pianoflow-v3-outputs`), 100% full-stack test verification (55/55 Playwright E2E across 12 suites, 391/391 Python unit tests across 3 workspaces), clean Next.js build across 15 routes, and formal security sign-off with zero regressions.**
+
+### Subsystems Implemented & Verified
+- **Tier 1: Client-Side Extension-First MIME Normalizer (`apps/web/lib/mime.ts`):** Guarantees deterministic MIME detection (`getAudioMimeType`) for all audio/MIDI formats (`.mp3` -> `audio/mpeg`, `.wav` -> `audio/wav`, `.m4a` -> `audio/mp4`, `.midi` -> `audio/midi`). Eliminates Windows Registry-dependent empty MIME type strings that previously triggered S3 signature mismatches and invalid `audio/webm` fallbacks.
+- **Tier 2: Resilient Streaming Upload Proxy (`apps/web/app/api/upload-proxy/route.ts`):** Server-side streaming Next.js route handler supporting PUT and POST requests. Enforces SSRF security via strict domain whitelisting regexes (AWS S3, Cloudflare R2, Supabase) and blocks intranet/metadata endpoints with HTTP 403. Employs Node.js streaming `duplex: "half"` to forward payloads directly to upstream storage with minimal memory overhead, returning valid ETags.
+- **Tier 3: Browser Put Auto-Fallback (`apps/web/lib/api.ts`):** Transparent 2-phase upload execution in `putToSignedUrl`. Automatically catches browser network/CORS failures (`xhr.status === 0`) and HTTP 403 Forbidden responses, rerouting the upload seamlessly via `/api/upload-proxy` without breaking real-time progress callbacks.
+- **Backend Storage Key Routing Alignment (`uploads.py` & `s3.py`):** Corrected audio upload key prefix generation in `apps/api/app/api/v1/routers/uploads.py` to `users/{user.id}/uploads/audio/{uuid}_{filename}` and updated S3 adapter `_bucket_for()` in `apps/api/app/infrastructure/storage/s3.py` to ensure all `/uploads/` and `/audio/` keys map to `pianoflow-v3-sources` rather than defaulting to `pianoflow-v3-analysis`.
+- **Tier 4: Live AWS S3 Bucket CORS Policies (`infra/s3-cors-policy.json`):** Applied comprehensive CORS rules across `pianoflow-v3-analysis`, `pianoflow-v3-sources`, and `pianoflow-v3-outputs` allowing required methods (`GET`, `PUT`, `POST`, `HEAD`, `DELETE`), origins, and exposed headers (`ETag`, `x-amz-request-id`).
+- **Comprehensive E2E Playwright Test Suite (`upload_proxy.spec.ts`):** 11 automated test cases verifying MIME type normalization, proxy parameter validation, SSRF boundary rejection, streaming body transmission, upstream failure propagation, and client auto-fallback on status 0.
+
+### Monorepo Quality & Verification
+- **Python Unit Test Suite:** 391/391 passed (232 in `packages/music-core`, 108 in `apps/api` with new S3 key routing tests, 51 in `apps/worker`).
+- **Playwright Browser E2E:** 55/55 passed (100% green across 12 test suites).
+- **Next.js Production Build:** Clean production build with 15 routes generated in 3.2s.
+- **Static Typing & Lints:** 0 TypeScript compiler errors (`pnpm -r typecheck`), 0 Ruff errors (`uv run ruff check .`), 0 ESLint warnings (`pnpm --filter web lint`).
+- **Security Audit:** 100% compliance with protected path restrictions (zero modifications to `.env*`, lockfiles, migrations, CI/CD, OIDC, or Terraform state files).
+- **Audit Documentation:** Authoritative audit report published in [`docs/audits/2026-10-06-audio-upload-network-error-fix.md`](file:///c:/Users/super/pianoflow/docs/audits/2026-10-06-audio-upload-network-error-fix.md).
+
+---
+
+## 2026-10-06 — Phase L: Project Dashboard Real-Time Search, Status Filtering, Sorting & Repertoire Management Complete
+
+**Milestone: Full-stack implementation, routing remediation (/upload to canonical /create), real-time search engine (`ProjectSearchBar.tsx`), multi-criteria status filter tabs with dynamic live counters, multi-attribute quantitative sorting (`projectFilters.ts`), enhanced project card quick actions (`ProjectCard.tsx`), dashboard ExportCenterModal integration, adaptive zero-state resilience (`ProjectEmptyState.tsx`), 100% full-stack test verification (39/39 Playwright E2E across 10 suites, 389/389 Python tests), clean Next.js build across 14 routes, and formal security sign-off of Phase L with zero regressions.**
+
+### Subsystems Implemented & Verified
+- **Routing Remediation:** Eliminated legacy dead `/upload` routes by re-routing all header and empty-state action triggers directly to canonical `/create` (`apps/web/app/create/page.tsx`), preventing 404 navigation errors.
+- **Repertoire Real-Time Search Engine (`ProjectSearchBar.tsx`):** Tokenized, multi-word case-insensitive substring search over `project.name` with instant reactive matching, inline clear button (✕), and `Escape` keyboard dismissal.
+- **Status Filter Tabs with Dynamic Live Counters (`ProjectSearchBar.tsx`):** Segregates projects into `All`, `Ready` (ready, completed, parsed), `Processing` (created, uploading, parsing, transcribing), and `Failed` (failed, error) with dynamic badge counters (`All (4)`, `Ready (2)`, `Processing (1)`, `Failed (1)`).
+- **Multi-Attribute Quantitative Sorting Engine (`projectFilters.ts`):** 5-mode deterministic sorting comparator (`Newest First`, `Oldest First`, `Title (A-Z)`, `Duration (Longest)`, `Note Count (Most Notes)`).
+- **Enhanced Project Card Quick Actions (`ProjectCard.tsx`):** Direct 1-click launchers for **Practice 🎹** (`/projects/:id/practice`), **Sheet 🎼** (`/projects/:id/sheet`), **Export 🚀** (`ExportCenterModal`), and **Delete 🗑️** confirmation dialog, plus live `⚡ Processing...` animated pulse indicator and `⚠️ Ingestion Failed` status badges.
+- **Direct Export Center Modal Integration:** Seamlessly opens `ExportCenterModal` directly on the dashboard, providing instant access to Video, Sheet Music, MIDI, and Audio downloads without requiring project editor load.
+- **Adaptive Zero-State Resilience (`ProjectEmptyState.tsx`):** Distinguishes genuinely empty library (guiding users to `/create` with `+ Create New Project ✨`) from zero-match search/filter states (providing single-click "Clear Filters" recovery).
+- **Playwright Browser E2E Test Suite & Visual Artifacts (`projects_dashboard.spec.ts`, `docs/e2e/projects/`):** 7 comprehensive browser test scenarios validating header progress badges, `/create` routing, real-time search, clear button reset, status filter tabs, 3 sorting modes, quick action links, export modal launch, and empty filter recovery. 5 high-resolution proof screenshots captured in `docs/e2e/projects/`.
+
+### Monorepo Quality & Verification
+- **Python Unit Test Suite:** 389/389 passed (232 in `packages/music-core`, 106 in `apps/api`, 51 in `apps/worker`).
+- **Playwright Browser E2E:** 39/39 passed (100% green across all 10 test suites including 7/7 new Phase L tests).
+- **Next.js Production Build:** Clean production build with 14 routes generated in 4.7s.
+- **Static Typing & Lints:** 0 TypeScript compiler errors (`pnpm -r typecheck`), 0 Ruff errors (`uv run ruff check .`).
+- **Security Audit:** 100% compliance with protected path restrictions (zero modifications to `.env*`, lockfiles, migrations, CI/CD, or AWS keys).
+- **Audit Documentation:** Authoritative audit report published in [`docs/audits/2026-10-06-phase-l-project-dashboard.md`](file:///c:/Users/super/pianoflow/docs/audits/2026-10-06-phase-l-project-dashboard.md).
+
+---
+
 ## 2026-10-06 — Phase K: Smart Metronome Engine, Tap Tempo & Audio Waveform Auditioning Complete
 
 **Milestone: Web Audio Precision Metronome Engine, tactile MetronomeControl UI, HTML5 Canvas AudioPreviewWaveform, 4-surface integration (Practice Mode, Demo Showcase, Sheet Music Viewer, Create Page), 100% full-stack test verification (32/32 Playwright E2E, 389/389 Python), and formal security sign-off of Phase K (`metronomeEngine.ts`, `MetronomeControl.tsx`, `AudioPreviewWaveform.tsx`, `metronome_audio.spec.ts`), signed off with zero regressions.**

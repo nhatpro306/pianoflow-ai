@@ -98,7 +98,7 @@ def upload_audio_init(
     import re
 
     safe_name = re.sub(r"[^A-Za-z0-9._ -]", "_", body.filename)
-    key = f"users/{user.id}/audio/{uuid.uuid4()}_{safe_name}"
+    key = f"users/{user.id}/uploads/audio/{uuid.uuid4()}_{safe_name}"
 
     upload_url = storage.create_signed_upload_url(key, body.content_type, body.size_bytes)
     download_url = storage.create_signed_download_url(key, expires_in=7200)

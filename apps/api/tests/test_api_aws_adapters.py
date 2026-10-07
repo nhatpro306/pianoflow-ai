@@ -165,6 +165,38 @@ class TestS3Storage:
             obj = service.upload("p1/uploads/f1/file.mid", b"data", "audio/midi")
         assert obj.size_bytes == 4
 
+    def test_upload_routes_audio_key_to_sources_bucket(self, s3_service):
+        service, stubber = s3_service
+        stubber.add_response(
+            "put_object",
+            {},
+            {
+                "Bucket": "pf-sources",
+                "Key": "users/u1/uploads/audio/a1.mp3",
+                "Body": b"audio-data",
+                "ContentType": "audio/mpeg",
+            },
+        )
+        with stubber:
+            obj = service.upload("users/u1/uploads/audio/a1.mp3", b"audio-data", "audio/mpeg")
+        assert obj.size_bytes == 10
+
+    def test_upload_routes_legacy_audio_key_to_sources_bucket(self, s3_service):
+        service, stubber = s3_service
+        stubber.add_response(
+            "put_object",
+            {},
+            {
+                "Bucket": "pf-sources",
+                "Key": "users/u1/audio/a1.mp3",
+                "Body": b"audio-data",
+                "ContentType": "audio/mpeg",
+            },
+        )
+        with stubber:
+            obj = service.upload("users/u1/audio/a1.mp3", b"audio-data", "audio/mpeg")
+        assert obj.size_bytes == 10
+
     def test_upload_routes_outputs_key_to_outputs_bucket(self, s3_service):
         service, stubber = s3_service
         stubber.add_response(

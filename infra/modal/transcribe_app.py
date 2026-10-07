@@ -1,7 +1,14 @@
 import base64
 import os
 
-import modal
+try:
+    import modal
+except ImportError:  # pragma: no cover
+    from unittest.mock import MagicMock
+
+    modal = MagicMock()
+    modal.App.return_value.function.return_value = lambda f: f
+    modal.asgi_app.return_value = lambda f: f
 
 app = modal.App("pianoflow-transcribe")
 image = (
@@ -178,10 +185,393 @@ _ALLOWED_DOMAINS = [
     "dropbox.com",
     "bandcamp.com",
     "supabase.co",
+    "supabase.in",
     "amazonaws.com",
     "r2.cloudflarestorage.com",
+    "cloudflarestorage.com",
 ]
-_MAX_DURATION_SEC = 600  # 10 min cap
+_MAX_DURATION_SEC = 600.0  # 10 min cap
+_MAX_FILE_BYTES = 100 * 1024 * 1024  # 100 MB cap
+
+DIRECT_AUDIO_EXTENSIONS = (
+    ".mp3",
+    ".wav",
+    ".m4a",
+    ".aac",
+    ".flac",
+    ".ogg",
+    ".webm",
+    ".opus",
+    ".wma",
+)
+
+DIRECT_STORAGE_DOMAINS = (
+    "amazonaws.com",
+    "cloudflarestorage.com",
+    "r2.cloudflarestorage.com",
+    "supabase.co",
+    "supabase.in",
+)
+
+
+def is_direct_audio_url(url: str) -> bool:
+    """Detects S3 presigned URLs (.amazonaws.com), Cloudflare R2 (.cloudflarestorage.com),
+    Supabase storage, or URLs ending with audio extensions (.mp3, .wav, .m4a, .aac, .flac, .ogg,
+    .webm), or URLs with audio query parameters.
+    """
+    from urllib.parse import parse_qs, urlparse
+
+    url = (url or "").strip()
+    if not url:
+        return False
+    if not url.startswith(("http://", "https://")):
+        url = f"https://{url}"
+
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    path = (parsed.path or "").lower()
+
+    # Cloud storage signed URLs (S3, Cloudflare R2, Supabase)
+    if any(host == d or host.endswith("." + d) for d in DIRECT_STORAGE_DOMAINS):
+        return True
+
+    # Supabase storage in URL path
+    if "supabase" in host and "/storage/" in path:
+        return True
+
+    # Direct audio file extensions in path
+    if any(path.endswith(ext) for ext in DIRECT_AUDIO_EXTENSIONS):
+        return True
+
+    # Audio query parameters or content disposition / filename
+    qs = parse_qs(parsed.query)
+    for k, vals in qs.items():
+        k_lower = k.lower()
+        for v in vals:
+            v_lower = v.lower()
+            if any(v_lower.endswith(ext) for ext in DIRECT_AUDIO_EXTENSIONS):
+                return True
+            if "audio/" in v_lower:
+                return True
+            if k_lower in ("format", "ext", "type") and any(
+                v_lower == ext.lstrip(".") for ext in DIRECT_AUDIO_EXTENSIONS
+            ):
+                return True
+
+    return False
+
+
+def validate_url_ssrf(url: str) -> None:
+    """Validates target URL against private subnets (127.0.0.1, 10.0.0.0/8, 172.16.0.0/12,
+    192.168.0.0/16, AWS metadata 169.254.169.254). Raises ValueError if blocked.
+    """
+    import ipaddress
+    import socket
+    from urllib.parse import urlparse
+
+    url = (url or "").strip()
+    if not url:
+        raise ValueError("Invalid URL: URL is empty")
+    if not url.startswith(("http://", "https://")):
+        url = f"https://{url}"
+
+    parsed = urlparse(url)
+    hostname = parsed.hostname
+    if not hostname:
+        raise ValueError("Invalid URL: missing hostname")
+
+    # If hostname is already an IP address
+    try:
+        ip = ipaddress.ip_address(hostname)
+        ips = [ip]
+    except ValueError:
+        # Hostname is a domain name, resolve via DNS
+        try:
+            addr_info = socket.getaddrinfo(hostname, None)
+            ips = [ipaddress.ip_address(sockaddr[0]) for _, _, _, _, sockaddr in addr_info]
+        except socket.gaierror as exc:
+            raise ValueError(f"Could not resolve host: {hostname}") from exc
+
+    for ip in ips:
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+            or ip.is_unspecified
+        ):
+            raise ValueError(f"Access to private/local address {ip} is forbidden")
+
+
+validate_url_safety = validate_url_ssrf
+
+
+def _probe_duration(wav_path: str) -> float:
+    """Probe audio duration in seconds using soundfile, standard library wave, or ffprobe."""
+    # 1. Try soundfile
+    try:
+        import soundfile as sf
+
+        info = sf.info(wav_path)
+        return float(info.duration)
+    except Exception:
+        pass
+
+    # 2. Try wave module for PCM WAV
+    try:
+        import wave
+
+        with wave.open(wav_path, "rb") as wf:
+            frames = wf.getnframes()
+            rate = wf.getframerate()
+            if rate > 0:
+                return float(frames / rate)
+    except Exception:
+        pass
+
+    # 3. Fallback to ffprobe
+    try:
+        import json
+        import subprocess
+
+        probe_cmd = [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "json",
+            wav_path,
+        ]
+        res = subprocess.run(probe_cmd, capture_output=True, text=True, check=True)
+        data = json.loads(res.stdout)
+        return float(data["format"]["duration"])
+    except Exception as exc:
+        raise RuntimeError(f"Could not determine audio duration: {exc}") from exc
+
+
+def download_direct_audio(
+    url: str,
+    out_wav_path: str,
+    max_bytes: int = _MAX_FILE_BYTES,
+    max_duration_sec: float = _MAX_DURATION_SEC,
+) -> tuple[str, float]:
+    """Downloads audio directly from URL, enforces max_bytes, and transcodes to 16kHz mono WAV."""
+    import subprocess
+    import urllib.request
+    from pathlib import Path
+
+    validate_url_ssrf(url)
+
+    out_path = Path(out_wav_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    raw_path = out_path.parent / f"raw_download_{out_path.stem}"
+
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "PianoFlow/3.0 (Audio Ingestion Engine)"},
+    )
+
+    downloaded = 0
+    try:
+        with urllib.request.urlopen(req, timeout=45) as resp:
+            content_length = resp.headers.get("Content-Length")
+            if content_length and int(content_length) > max_bytes:
+                raise ValueError("File size exceeds 100 MB limit")
+
+            with open(raw_path, "wb") as f:
+                while True:
+                    chunk = resp.read(65536)
+                    if not chunk:
+                        break
+                    downloaded += len(chunk)
+                    if downloaded > max_bytes:
+                        raise ValueError("File size exceeds 100 MB limit")
+                    f.write(chunk)
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(f"Failed to download audio file: HTTP {exc.code} {exc.reason}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"Failed to connect to audio host: {exc.reason}") from exc
+
+    try:
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-v",
+            "error",
+            "-i",
+            str(raw_path),
+            "-ar",
+            "16000",
+            "-ac",
+            "1",
+            "-c:a",
+            "pcm_s16le",
+            str(out_path),
+        ]
+        proc = subprocess.run(cmd, capture_output=True, timeout=60, text=True)
+        if proc.returncode != 0:
+            raise RuntimeError(
+                f"Failed to transcode audio: {proc.stderr[-300:] or 'Unsupported format'}"
+            )
+
+        duration = _probe_duration(str(out_path))
+        if duration > max_duration_sec:
+            raise ValueError("Audio exceeds maximum duration of 10 minutes")
+
+        return str(out_path), duration
+    finally:
+        if raw_path.exists():
+            import contextlib
+
+            with contextlib.suppress(OSError):
+                raw_path.unlink()
+
+
+def extract_platform_audio(
+    url: str,
+    out_wav_path: str,
+    max_duration_sec: float = _MAX_DURATION_SEC,
+) -> tuple[str, float]:
+    """Extracts audio stream from video platforms using hardened yt-dlp
+    and transcodes to 16kHz mono WAV.
+    """
+    import os
+    import subprocess
+    import tempfile
+    from pathlib import Path
+
+    out_path = Path(out_wav_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with tempfile.TemporaryDirectory(prefix="pf-ytdlp-") as tmp:
+        cmd = [
+            "yt-dlp",
+            "--no-playlist",
+            "-f",
+            "bestaudio/ba/b",
+            "--extract-audio",
+            "--audio-format",
+            "wav",
+            "--audio-quality",
+            "0",
+            "--match-filter",
+            f"duration <=? {int(max_duration_sec)}",
+            "--max-filesize",
+            "100M",
+            "--socket-timeout",
+            "30",
+            "--extractor-args",
+            "youtube:player_client=android,web,ios",
+            "-o",
+            os.path.join(tmp, "audio.%(ext)s"),
+            url,
+        ]
+
+        try:
+            proc = subprocess.run(cmd, capture_output=True, timeout=120, text=True)
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError("Audio extraction timed out after 120 seconds") from exc
+
+        tmp_path = Path(tmp)
+        wav_files = list(tmp_path.glob("*.wav"))
+        source_audio = None
+
+        if wav_files:
+            source_audio = wav_files[0]
+        else:
+            # Check if another audio format was produced (e.g. audio.opus, audio.m4a, audio.webm)
+            other_audio = [
+                f
+                for f in tmp_path.glob("audio.*")
+                if f.suffix.lower() not in (".part", ".ytdl", ".temp")
+            ]
+            if not other_audio:
+                other_audio = [
+                    f
+                    for f in tmp_path.iterdir()
+                    if f.is_file() and f.suffix.lower() not in (".part", ".ytdl", ".temp")
+                ]
+            if other_audio:
+                source_audio = other_audio[0]
+
+        if source_audio is not None and source_audio.exists() and source_audio.stat().st_size > 0:
+            conv_cmd = [
+                "ffmpeg",
+                "-y",
+                "-v",
+                "error",
+                "-i",
+                str(source_audio),
+                "-ar",
+                "16000",
+                "-ac",
+                "1",
+                "-c:a",
+                "pcm_s16le",
+                str(out_path),
+            ]
+            conv_proc = subprocess.run(conv_cmd, capture_output=True, timeout=60, text=True)
+            if conv_proc.returncode != 0:
+                raise RuntimeError(
+                    f"Failed to transcode extracted audio to 16kHz WAV: {conv_proc.stderr[-300:]}"
+                )
+        else:
+            combined_err = (proc.stderr or "") + " " + (proc.stdout or "")
+            combined_err_lower = combined_err.lower()
+
+            if (
+                "file is larger than max-filesize" in combined_err_lower
+                or "max-filesize" in combined_err_lower
+                or "larger than 100m" in combined_err_lower
+            ):
+                raise ValueError("File size exceeds 100 MB limit")
+
+            if (
+                "does not pass filter (duration" in combined_err_lower
+                or "filter (duration" in combined_err_lower
+                or "duration exceeds" in combined_err_lower
+            ):
+                raise ValueError("Video duration exceeds maximum allowed limit (10 minutes)")
+
+            if (
+                "sign in to confirm you're not a bot" in combined_err_lower
+                or "bot detection" in combined_err_lower
+                or "video unavailable" in combined_err_lower
+                or "private video" in combined_err_lower
+                or "this video is private" in combined_err_lower
+                or "geo-restricted" in combined_err_lower
+                or "not available in your country" in combined_err_lower
+            ):
+                raise RuntimeError(
+                    "Audio stream could not be extracted from this URL "
+                    "(video may be private, geo-blocked, or unavailable)"
+                )
+
+            err_msg = proc.stderr.strip()[-300:] if proc.stderr else ""
+            if err_msg:
+                raise RuntimeError(
+                    "Audio stream could not be extracted from this URL "
+                    f"(video may be private, geo-blocked, or unavailable): {err_msg}"
+                )
+            raise RuntimeError(
+                "Audio stream could not be extracted from this URL "
+                "(video may be private, geo-blocked, or unavailable)"
+            )
+
+        if not out_path.exists() or out_path.stat().st_size == 0:
+            raise RuntimeError(
+                "Audio stream could not be extracted from this URL "
+                "(video may be private, geo-blocked, or unavailable)"
+            )
+
+        duration = _probe_duration(str(out_path))
+        if duration > max_duration_sec:
+            raise ValueError("Video duration exceeds maximum allowed limit (10 minutes)")
+
+        return str(out_path), duration
 
 
 def _host_allowed(url: str) -> bool:
@@ -196,21 +586,21 @@ def _host_allowed(url: str) -> bool:
     host = (parsed.hostname or "").lower()
     if any(host == d or host.endswith("." + d) for d in _ALLOWED_DOMAINS):
         return True
-    # Also allow direct audio/video file URLs
+    if is_direct_audio_url(url):
+        return True
     path = (parsed.path or "").lower()
-    valid_exts = (".mp3", ".wav", ".m4a", ".ogg", ".flac", ".webm", ".aac", ".mp4")
-    return any(path.endswith(ext) for ext in valid_exts)
+    return any(path.endswith(ext) for ext in DIRECT_AUDIO_EXTENSIONS)
 
 
 @app.function(gpu="A10G", image=image, timeout=900)
 def transcribe_url(url: str, options: dict) -> dict:
     """Download audio from an allowlisted URL (ephemeral) then transcribe.
 
-    Source audio is written to a temp dir and deleted when the function
-    returns. Only the derived notes/MIDI are kept. Duration/filesize caps
-    and --no-playlist guard against abuse. No anti-bot evasion.
+    Dispatches automatically between direct HTTP streaming download
+    (for S3 signed URLs, R2, Supabase, direct .mp3/.wav files) and
+    hardened yt-dlp (for YouTube, TikTok, Douyin, etc.).
+    Source audio is written to a temporary directory and unlinked upon completion.
     """
-    import subprocess
     import tempfile
     from pathlib import Path
 
@@ -219,41 +609,35 @@ def transcribe_url(url: str, options: dict) -> dict:
         url = f"https://{url}"
 
     if not _host_allowed(url):
-        raise ValueError("URL host is not in the allowlist")
+        raise ValueError(f"URL host is not in the allowlist: {url}")
+
+    # Step 1: Validate SSRF
+    validate_url_ssrf(url)
 
     with tempfile.TemporaryDirectory(prefix="pf-ingest-") as tmp:
-        out_tmpl = str(Path(tmp) / "src.%(ext)s")
-        cmd = [
-            "yt-dlp",
-            # curl_cffi-backed TLS/HTTP impersonation. TikTok (and increasingly
-            # other hosts) block plain requests; without a target yt-dlp warns
-            # "no impersonate target is available" and the download fails.
-            "--impersonate",
-            "chrome",
-            "-x",
-            "--audio-format",
-            "wav",
-            "--no-playlist",
-            "--match-filter",
-            f"duration < {_MAX_DURATION_SEC}",
-            "--max-filesize",
-            "60M",
-            "--socket-timeout",
-            "30",
-            "-o",
-            out_tmpl,
-            url,
-        ]
-        proc = subprocess.run(cmd, capture_output=True, timeout=300, text=True)
-        if proc.returncode != 0:
-            raise RuntimeError(f"download failed: {proc.stderr[-500:] or proc.stdout[-500:]}")
+        target_wav = Path(tmp) / "standardized_input.wav"
 
-        wavs = list(Path(tmp).glob("*.wav"))
-        if not wavs:
-            raise RuntimeError("no audio extracted (too long, too large, or unavailable)")
-        audio = wavs[0].read_bytes()
+        # Step 2: Check is_direct_audio_url(url)
+        if is_direct_audio_url(url):
+            download_direct_audio(
+                url,
+                str(target_wav),
+                max_bytes=_MAX_FILE_BYTES,
+                max_duration_sec=_MAX_DURATION_SEC,
+            )
+        else:
+            extract_platform_audio(
+                url,
+                str(target_wav),
+                max_duration_sec=_MAX_DURATION_SEC,
+            )
 
-        return _process_audio_map_reduce(audio, options)
+        if not target_wav.exists() or target_wav.stat().st_size == 0:
+            raise RuntimeError("Audio extraction failed to produce a valid audio file.")
+
+        audio_bytes = target_wav.read_bytes()
+        # Step 3: Pass the clean 16kHz mono WAV to the Transkun transcription pipeline
+        return _process_audio_map_reduce(audio_bytes, options)
 
 
 @app.function(image=image, secrets=[_demo_secret])
@@ -308,6 +692,10 @@ def web():
         if not _host_allowed(url):
             err_msg = f"Trang web hoặc định dạng URL chưa được hỗ trợ: {url}"
             raise HTTPException(status_code=400, detail=err_msg)
+        try:
+            validate_url_ssrf(url)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         call = transcribe_url.spawn(url, payload.get("options", {}))
         return {"call_id": call.object_id}
 

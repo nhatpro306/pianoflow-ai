@@ -6,6 +6,7 @@
 import type { NoteData, RenderSettings } from "@pianoflow/shared-types";
 
 import { cleanEnv } from "./env";
+import { getAudioMimeType } from "./mime";
 import { createClient } from "./supabase";
 
 const BASE_URL =
@@ -203,11 +204,13 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  initTempAudioUpload: (filename: string, sizeBytes: number, contentType: string) =>
-    apiFetch<UploadInit>(`/api/v1/uploads/audio`, {
+  initTempAudioUpload: (filename: string, sizeBytes: number, contentType: string) => {
+    const normalizedType = getAudioMimeType(filename, contentType);
+    return apiFetch<UploadInit>(`/api/v1/uploads/audio`, {
       method: "POST",
-      body: JSON.stringify({ filename, size_bytes: sizeBytes, content_type: contentType }),
-    }),
+      body: JSON.stringify({ filename, size_bytes: sizeBytes, content_type: normalizedType }),
+    });
+  },
 
   initUpload: (projectId: string, filename: string, sizeBytes: number) =>
     apiFetch<UploadInit>(`/api/v1/projects/${projectId}/upload-midi`, {
@@ -288,27 +291,122 @@ export const api = {
       message: string;
     }>(`/api/v1/projects/${projectId}/transcription`),
 
-  /** Raw PUT to the signed URL — not under BASE_URL, not JSON. */
-  putToSignedUrl: async (init: UploadInit, file: Blob, onProgress?: (percent: number) => void) => {
-    return new Promise<void>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open(init.method, init.upload_url, true);
-      if (init.headers) {
-        for (const [key, value] of Object.entries(init.headers)) {
-          xhr.setRequestHeader(key, value as string);
+  /**
+   * High-reliability upload to signed URL with automatic server proxy fallback.
+   * Phase 1: Attempts direct browser PUT to signed URL.
+   * Phase 2: If direct PUT fails with status 0 (CORS/network error) or 403,
+   *          seamlessly falls back to /api/upload-proxy?upload_url=...
+   */
+  putToSignedUrl: async (
+    init: UploadInit,
+    file: Blob,
+    onProgress?: (percent: number) => void,
+  ): Promise<void> => {
+    // Helper to perform XHR upload to a target URL
+    const executeXhr = (
+      url: string,
+      headers: Record<string, string>,
+    ): Promise<{ status: number; error?: string }> => {
+      return new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", url, true);
+        for (const [key, value] of Object.entries(headers)) {
+          xhr.setRequestHeader(key, value);
+        }
+        if (onProgress && xhr.upload) {
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable && e.total > 0) {
+              onProgress(Math.round((e.loaded / e.total) * 100));
+            }
+          };
+        }
+        xhr.onload = () => resolve({ status: xhr.status });
+        xhr.onerror = () => resolve({ status: 0, error: "Network/CORS error" });
+        xhr.ontimeout = () => resolve({ status: 0, error: "Timeout" });
+        xhr.send(file);
+      });
+    };
+
+    const directHeaders: Record<string, string> = {};
+    if (init.headers) {
+      for (const [key, value] of Object.entries(init.headers)) {
+        if (value != null) {
+          directHeaders[key] = String(value);
         }
       }
-      if (onProgress && xhr.upload) {
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
-        };
+    }
+
+    if (typeof XMLHttpRequest !== "undefined") {
+      // 1. Direct upload attempt
+      const res = await executeXhr(init.upload_url, directHeaders);
+      if (res.status >= 200 && res.status < 300) {
+        return;
       }
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) resolve();
-        else reject(new ApiError(xhr.status, "UPLOAD_FAILED", "Upload to storage failed."));
-      };
-      xhr.onerror = () => reject(new ApiError(0, "UPLOAD_FAILED", "Network error during upload."));
-      xhr.send(file);
+
+      // 2. Fallback to /api/upload-proxy on CORS (0) or Forbidden (403)
+      if (res.status === 0 || res.status === 403) {
+        console.warn(
+          `Direct upload failed (status ${res.status}). Retrying via /api/upload-proxy...`,
+        );
+
+        const proxyUrl = `/api/upload-proxy?upload_url=${encodeURIComponent(init.upload_url)}`;
+        const proxyHeaders: Record<string, string> = {};
+        if (directHeaders["Content-Type"]) {
+          proxyHeaders["Content-Type"] = directHeaders["Content-Type"];
+        } else if (file.type) {
+          proxyHeaders["Content-Type"] = file.type;
+        }
+
+        const proxyRes = await executeXhr(proxyUrl, proxyHeaders);
+        if (proxyRes.status >= 200 && proxyRes.status < 300) {
+          return;
+        }
+
+        throw new ApiError(
+          proxyRes.status || 0,
+          "UPLOAD_FAILED",
+          "Upload failed through both direct storage and server proxy. Please check your network connection.",
+        );
+      }
+
+      throw new ApiError(
+        res.status,
+        "UPLOAD_FAILED",
+        `Upload to storage failed (HTTP ${res.status}).`,
+      );
+    }
+
+    // Fallback for non-browser environments where XMLHttpRequest is undefined
+    const res = await fetch(init.upload_url, {
+      method: init.method || "PUT",
+      headers: directHeaders,
+      body: file,
     });
+    if (res.ok) return;
+
+    if (res.status === 403) {
+      const proxyUrl = `/api/upload-proxy?upload_url=${encodeURIComponent(init.upload_url)}`;
+      const proxyRes = await fetch(proxyUrl, {
+        method: "PUT",
+        headers: directHeaders,
+        body: file,
+      });
+      if (proxyRes.ok) return;
+      throw new ApiError(
+        proxyRes.status,
+        "UPLOAD_FAILED",
+        "Upload failed through both direct storage and server proxy.",
+      );
+    }
+
+    throw new ApiError(
+      res.status,
+      "UPLOAD_FAILED",
+      `Upload to storage failed (HTTP ${res.status}).`,
+    );
   },
 };
+
+if (typeof window !== "undefined") {
+  (window as unknown as { __api?: typeof api }).__api = api;
+}

@@ -46,7 +46,7 @@ class S3StorageService:
         }
 
     def _bucket_for(self, key: str) -> str:
-        if "/uploads/" in key:
+        if "/uploads/" in key or "/audio/" in key:
             return self._buckets["sources"]
         if "/outputs/" in key:
             return self._buckets["outputs"]

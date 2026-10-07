@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { getAudioMimeType } from "./mime";
 /**
  * Client library for the Modal audio→MIDI transcription endpoint.
  * All requests go through the Next.js route handler at /api/transcribe —
@@ -75,7 +76,11 @@ export async function submitAudio(
   onProgress?: (percent: number) => void,
 ): Promise<TranscribeResult> {
   onStatus?.("uploading");
-  const init = await api.initTempAudioUpload(audioFile.name, audioFile.size, audioFile.type || "audio/webm");
+  const init = await api.initTempAudioUpload(
+    audioFile.name,
+    audioFile.size,
+    getAudioMimeType(audioFile.name, audioFile.type),
+  );
   if (!init.download_url) {
     throw new Error("Backend did not provide a download URL for Modal");
   }
