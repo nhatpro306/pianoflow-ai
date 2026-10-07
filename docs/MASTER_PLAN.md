@@ -379,13 +379,20 @@ In **Wait Mode**:
 
 ---
 
-## 6. UI/UX Design System & Mobile Keyboard Specifications
+## 6. UI/UX Design System & Full-Site Overhaul Specifications
 
-### 6.1 Theme & Accessible Design Tokens
-- **Backdrop:** `#050507` (deep dark).
-- **Surfaces:** `#09090b` (cards), `#18181b` (elevated dropdowns), `#27272a` (borders).
-- **Text:** `#f4f4f5` (primary, 15.2:1 contrast), `#a1a1aa` (secondary, 7.1:1 contrast, strictly exceeding WCAG 2.1 AA 4.5:1 requirement).
-- **Hand Palette:** Right Hand Violet (`#7c3aed`), Left Hand Cyan (`#22d3ee`), Active Glow (`#8b5cf6`), Hit Flash (`#ffffff`).
+### 6.1 Theme & Accessible Design Tokens ("Dark-Stage Concert Elegance Meets Linear Precision")
+- **True Black Canvas:** `#050507` (deep dark backdrop for falling note canvas and video stage).
+- **Pitch Black Base:** `#09090b` (root page background across all routes).
+- **Card Surfaces:** `#121215` (repertoire cards, editor inspector panels, modal content).
+- **Elevated Surfaces:** `#18181b` (floating toolbars, HUD chips, popover panels).
+- **Hairline Alpha Borders:** `border-white/5` (subtlest outer boundaries) to `border-white/15` (hover/focus boundaries).
+- **Typography:**
+  - UI Headings & Body: `Inter` sans-serif (`font-sans`), high legibility, crisp contrast (`#f4f4f5` text-primary, 15.2:1 AAA; `#a1a1aa` text-muted, 7.1:1 AAA).
+  - Musical & Technical Telemetry: `JetBrains Mono` monospace (`font-mono`, `tabular-nums`) for pitches, tempo, BPM, measure numbers, and latencies.
+- **Chromatic Hand Identity:** Right Hand Electric Violet (`#8b5cf6` halo / `#7c3aed` core), Left Hand Neon Cyan (`#22d3ee` halo / `#06b6d4` core).
+- **Functional State Tokens:** Emerald Success (`#10b981`), Amber Warning (`#f59e0b`), Rose Error (`#f43f5e`), Gold Streak flame (`#eab308`).
+- **Tactile Physics & Micro-Interactions:** `active:scale-[0.98]` on button taps, spring hovers, and glowing focus rings (`focus-visible:ring-2 focus-visible:ring-violet-500/70`).
 
 ### 6.2 Mobile Responsive Keyboard (Octave Pan & Zoom)
 - **Viewport Windowing:** On screens `<768px`, rather than rendering all 88 keys at 3px width, the keyboard displays a window of 2–3 octaves (e.g., $C3$ to $C5$, ~20 white keys, 18px width each).
@@ -435,6 +442,9 @@ Phase K (P10): Smart Metronome Engine, Tap Tempo & Audio Waveform Auditioning
       │
       ▼
 Phase L (P11): Project Dashboard Real-Time Search, Filtering, Sorting & Repertoire Hub
+      │
+      ▼
+Phase M (P12): Comprehensive UI/UX Design System & Full-Site Overhaul
 ```
 
 ### Detailed Execution Matrix
@@ -452,7 +462,8 @@ Phase L (P11): Project Dashboard Real-Time Search, Filtering, Sorting & Repertoi
 | **Phase I** | **P8** | `packages/music-core`, `apps/worker`, `apps/web` | 1. Build pure Python vector Grand Staff PDF engine (`pianoflow_music/sheet/engraver.py`) emitting standard ISO 32000-1 (PDF 1.4) binary streams without external dependencies.<br>2. Support US Letter multi-page layout, Treble/Bass staves, clefs, time signatures, rotated elliptical noteheads, diatonic step mapping, and dynamic ledger lines.<br>3. Update worker job `render_sheet.py` tagging metadata `"source": "vector_grand_staff_engraver"`.<br>4. Expose high-res vector PDF downloads in `ExportCenterModal.tsx`, `SheetMusicViewer.tsx`, and `/demo`.<br>5. Unit test PDF structure and Playwright E2E browser test. | `uv run pytest packages/music-core/pianoflow_music/tests/test_sheet.py`<br>`uv run pytest apps/worker`<br>`pnpm -r typecheck` |
 | **Phase J** | **P9** | `apps/web` | **Completed.** 1. Authored pure TypeScript client-side simplification engine (`apps/web/lib/midi/simplifyEngine.ts`) with melody preservation, chord reduction (Easy $\le 2$, Very Easy $\le 1$ note/hand), octave pruning, dissonance removal, and density capping.<br>2. Built segmented Difficulty Selector UI pill (`[ Original \| Easy 🟢 \| Very Easy 🟡 ]`).<br>3. Wired dynamic difficulty into Practice Mode (`practice/page.tsx`), Demo Showcase (`demo/page.tsx`), and Project Editor (`ProjectEditor.tsx`).<br>4. Enabled instant client-side simplified MIDI export in `ExportCenterModal.tsx`.<br>5. Unit tests & Playwright browser E2E test suite (`tests/beginner_mode.spec.ts`, 7/7 passing). | `pnpm --filter @pianoflow/web test tests/beginner_mode.spec.ts`<br>`pnpm -r typecheck` |
 | **Phase K** | **P10** | `apps/web` | **Completed.** 1. Built Web Audio Smart Metronome Engine (`apps/web/lib/audio/metronomeEngine.ts`) using 2-clock lookahead precision scheduler with `AudioContext.currentTime`, 1200 Hz downbeat accent / 800 Hz click synthesis, 4/4, 3/4, 3/8, 6/8, 2/4 time signatures, and outlier-filtered Tap Tempo estimator.<br>2. Built Metronome & Tempo Control UI (`apps/web/components/practice/MetronomeControl.tsx`) with BPM steppers, tap button, and flashing beat LED indicator dots (`● ○ ○ ○`).<br>3. Integrated into Practice Mode (`practice/page.tsx`), Demo Showcase (`demo/page.tsx`), and Sheet Music Viewer (`SheetMusicViewer.tsx`).<br>4. Built Audio Waveform Preview & Auditioning Player (`apps/web/components/AudioPreviewWaveform.tsx`) with HTML5 Canvas dual-envelope peak rendering and scrubbable playback on `/create`.<br>5. Unit tests & Playwright browser E2E test suite (`tests/metronome_audio.spec.ts`). | `pnpm --filter @pianoflow/web test tests/metronome_audio.spec.ts`<br>`pnpm -r typecheck` |
-| **Phase L** | **P11** | `apps/web` | **Active Spec.** 1. Fix dead `/upload` links in `projects/page.tsx` to point to `/create`.<br>2. Build client-side debounced search and status tabs (`All`, `Ready`, `Processing`, `Failed`) with dynamic count badges.<br>3. Implement 5-attribute quantitative sorting (`Newest`, `Oldest`, `Title`, `Duration`, `Notes`).<br>4. Add Quick Actions to `ProjectCard` (`Practice 🎹`, `Sheet 🎼`, `Export 🚀`, `Delete 🗑️`) and wire `ExportCenterModal`.<br>5. Handle empty repertoire vs zero-match search feedback with reset CTA.<br>6. Author and execute Playwright E2E suite (`tests/projects_dashboard.spec.ts`). | `pnpm --filter @pianoflow/web test tests/projects_dashboard.spec.ts`<br>`pnpm -r typecheck` |
+| **Phase L** | **P11** | `apps/web` | **Completed.** 1. Fixed dead `/upload` links in `projects/page.tsx` to point to `/create`.<br>2. Built client-side debounced search and status tabs (`All`, `Ready`, `Processing`, `Failed`) with dynamic count badges.<br>3. Implemented 5-attribute quantitative sorting (`Newest`, `Oldest`, `Title`, `Duration`, `Notes`).<br>4. Added Quick Actions to `ProjectCard` (`Practice 🎹`, `Sheet 🎼`, `Export 🚀`, `Delete 🗑️`) and wired `ExportCenterModal`.<br>5. Handled empty repertoire vs zero-match search feedback with reset CTA.<br>6. Authored and verified Playwright E2E suite (`tests/projects_dashboard.spec.ts`, 7/7 passed). | `pnpm --filter @pianoflow/web test tests/projects_dashboard.spec.ts`<br>`pnpm -r typecheck` |
+| **Phase M** | **P12** | `apps/web` | **Active Spec.** 1. Author and enforce PianoFlow AI Design System based on "Dark-Stage Concert Elegance Meets Linear Precision" (`globals.css` CSS variables, unified token hierarchy).<br>2. Harmonize component library: `Button.tsx` (gradient, tactile scale), `Badge.tsx` (status, hand, metric, streak), `SegmentedControl.tsx`, `Card.tsx`, `Input.tsx`, and `Progress.tsx`.<br>3. Overhaul Global Header (`Navbar.tsx` with active route highlight, persistent streak badge, and refined user menu).<br>4. Overhaul Landing Page (`app/page.tsx`), Pricing Page (`app/pricing/page.tsx` with billing cycle toggle & comparison matrix), and Auth Page (`app/login/page.tsx` glassmorphism).<br>5. Eliminate duplicate sticky header in `/demo`, streamline song carousel, and frame canvas in concert well.<br>6. Streamline Practice HUD into floating performance pill, add radiant Wait Mode target key pulse, and ensure 44px mobile touch targets.<br>7. Verify complete Playwright browser E2E test greenness across all routes. | `pnpm --filter @pianoflow/web lint`<br>`pnpm -r typecheck`<br>`pnpm --filter @pianoflow/web test` |
 
 ---
 

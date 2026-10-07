@@ -185,3 +185,15 @@ Users can select from curated preset themes or define custom HEX colors.
 4. **Lifecycle & Expiry Policy:**
    - Free-tier video artifacts expire after 7 days (`expires_at` database trigger + S3 lifecycle policy).
    - Pro-tier video artifacts are retained for 90 days.
+
+---
+
+## 6. Document Cross-References
+
+- Comprehensive UI/UX Design System Overhaul Specification: [`plans/2026-10-07-comprehensive-ui-ux-design-system-overhaul-spec.md`](./plans/2026-10-07-comprehensive-ui-ux-design-system-overhaul-spec.md)
+- UI/UX & Responsive Design System: [`UI_UX.md`](./UI_UX.md)
+- Product Specification & Vision: [`PRODUCT.md`](./PRODUCT.md)
+- System Architecture & Design: [`DESIGN.md`](./DESIGN.md)
+- Active Engineering Roadmap: [`ROADMAP.md`](./ROADMAP.md)
+- Master Execution Plan: [`MASTER_PLAN.md`](./MASTER_PLAN.md)
+

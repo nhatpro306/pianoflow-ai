@@ -1,34 +1,40 @@
 # PianoFlow AI — UI/UX Design & Frontend Specification
 
-> Version: 2.0 (Post-Audit Design System & Practice HUD Specification)  
-> Scope: Dark-first design system, responsive layout, mobile piano keyboard pan/zoom, navigation drawer, and integrated Practice Mode HUD  
+> Version: 3.0 (Phase M Full-Site Design System & Overhaul Specification)  
+> Scope: "Dark-Stage Concert Elegance Meets Linear Precision", unified tokens, responsive layouts, mobile piano keyboard pan/zoom, navigation drawer, streamlined Practice Mode HUD, and cross-site component harmonization  
+> Specification: [`docs/plans/2026-10-07-comprehensive-ui-ux-design-system-overhaul-spec.md`](./plans/2026-10-07-comprehensive-ui-ux-design-system-overhaul-spec.md)  
 > Last updated: October 2026  
 
 ---
 
 ## 1. Design Language & Aesthetic Tokens
 
-PianoFlow AI follows a sleek, dark-first visual language tailored for musicians and content creators. It pairs deep cinematic backgrounds with vibrant, illuminated musical elements.
+PianoFlow AI follows a sleek visual language tailored for musicians and content creators: **"Dark-Stage Concert Elegance Meets Linear Precision"**. It pairs deep cinematic obsidian backgrounds with vibrant illuminated musical elements, tactile 60 FPS micro-interactions, and crisp hairline alpha borders.
 
 ### 1.1 Color Tokens & Contrast Ratios (WCAG 2.1 AA Compliant)
 
 | Token Name | Value | Purpose / Usage | Minimum Contrast Ratio |
 |---|---|---|---|
-| `bg-primary` | `#050507` | Canvas and app-wide dark backdrop | Baseline |
-| `bg-surface` | `#09090b` | Card backgrounds, dialogs, drawers | 1.1:1 vs backdrop |
-| `bg-elevated` | `#18181b` | Dropdowns, hover states, keyboard wells | 1.4:1 vs backdrop |
-| `border-subtle` | `#27272a` | Dividers, card borders, key dividers | 2.1:1 vs surface |
+| `bg-void` | `#050507` | Canvas stage, concert floor, app-wide dark backdrop | Baseline |
+| `bg-canvas` | `#09090b` | Root page container background | 1.1:1 vs backdrop |
+| `bg-card` | `#121215` | Content cards, inspector sidebars, modal content | 1.2:1 vs backdrop |
+| `bg-elevated` | `#18181b` | Floating toolbars, dropdowns, keyboard wells | 1.4:1 vs backdrop |
+| `border-subtle` | `rgba(255,255,255,0.06)` | Hairline card boundaries, dividers (`border-white/6`) | 2.1:1 vs surface |
+| `border-active` | `rgba(255,255,255,0.15)` | Active rings, hover outlines (`border-white/15`) | 3.2:1 vs surface |
 | `text-primary` | `#f4f4f5` | Headings, primary labels, note text | 15.2:1 (AAA) |
-| `text-secondary` | `#a1a1aa` | Subheadings, metadata, tooltips | 7.1:1 (AAA) |
-| `hand-right` | `#7c3aed` | Right hand notes, treble staff, RH keys | 4.8:1 against `#050507` |
-| `hand-left` | `#22d3ee` | Left hand notes, bass staff, LH keys | 8.5:1 against `#050507` |
+| `text-muted` | `#a1a1aa` | Subheadings, metadata, tooltips | 7.1:1 (AAA) |
+| `text-subtle` | `#71717a` | Minor timestamps, disabled captions | 4.6:1 (AA) |
+| `hand-right` | `#8b5cf6` (halo) / `#7c3aed` (core) | Right hand notes, treble staff, RH keys | 4.8:1 against `#050507` |
+| `hand-left` | `#22d3ee` (halo) / `#06b6d4` (core) | Left hand notes, bass staff, LH keys | 8.5:1 against `#050507` |
 | `glow-accent` | `#8b5cf6` | Canvas bloom halos, active key highlights | Luminescent |
 | `hit-flash` | `#ffffff` | Note strike sparks, hit line flare | Maximum luminosity |
-| `error-miss` | `#ef4444` | Wrong notes, connection drops, miss state | 4.6:1 against `#050507` |
+| `error-miss` | `#f43f5e` | Wrong notes, connection drops, miss state | 4.6:1 against `#050507` |
 | `success-perfect` | `#10b981` | Perfect hit timing, streak indicators | 5.2:1 against `#050507` |
+| `warning-good` | `#f59e0b` | Good hit timing, continuous mode badge | 5.0:1 against `#050507` |
+| `streak-flame` | `#eab308` | Gamification streak flame 🔥, level badges | 6.8:1 against `#050507` |
 
 > [!NOTE]
-> All inactive metadata and secondary labels use `text-zinc-400` (`#a1a1aa`) or brighter, strictly satisfying the WCAG 2.1 AA minimum contrast threshold of 4.5:1.
+> All inactive metadata and secondary labels use `text-zinc-400` (`#a1a1aa`) or brighter, strictly satisfying the WCAG 2.1 AA minimum contrast threshold of 4.5:1. Active controls feature tactile scale (`active:scale-[0.98]`) and luminous violet focus rings (`focus-visible:ring-violet-500/70`).
 
 ### 1.2 Typography System
 
@@ -198,3 +204,17 @@ The Unified Export Center consolidates project delivery, video rendering, sheet 
 - **Progress Tracking:** Embedded `Progress.tsx` bars with live percentage and stage feedback (e.g. "Drawing frames (45%)").
 - **Shareable Link Utility:** Prominent read-only input field with a single-click "Copy Link" action providing instant clipboard feedback (`"Copied!"` badge).
 - **Access Policy Notice:** In strict alignment with `12_NO_TUTORIAL_DOWNLOAD_POLICY`, tutorial videos feature private streaming-only controls and stream URLs rather than direct download links.
+
+---
+
+## 7. Harmonized UI Component System (Phase M)
+
+For complete technical specifications, see [`docs/plans/2026-10-07-comprehensive-ui-ux-design-system-overhaul-spec.md`](./plans/2026-10-07-comprehensive-ui-ux-design-system-overhaul-spec.md).
+
+### 7.1 Unified Component Suite
+1. **`Button.tsx`:** Standardized on 6 variants (`gradient`, `primary`, `secondary`, `outline`, `ghost`, `danger`) with spring hover physics, tactile tap scales (`active:scale-[0.98]`), and loading state spinners.
+2. **`Badge.tsx`:** Standardized on 8 semantic variants (`default`, `success`, `warning`, `danger`, `hand-rh`, `hand-lh`, `accent`, `streak`) with dot indicator options and high-contrast styling.
+3. **`SegmentedControl.tsx`:** High-contrast pill switcher for mode selection (`Visualizer`, `Practice`, `Sheet`, `Coaching`), hand filtering (`Both`, `RH`, `LH`), and difficulty voicings (`Original`, `Easy`, `Very Easy`).
+4. **`Dialog.tsx`:** Obsidian backdrop blur (`bg-black/80 backdrop-blur-md`), elevated card shell (`bg-[#121215] border border-white/10`), focus trapping, and escape dismiss.
+5. **`Progress.tsx`:** Shimmer pulse animation with linear gradient (`from-violet-500 to-cyan-400`) and tabular-nums percentage telemetry.
+

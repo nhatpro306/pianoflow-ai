@@ -420,12 +420,12 @@ export function AudioPreviewWaveform({
     <div
       ref={containerRef}
       data-testid="audio-preview-waveform-container"
-      className={`w-full rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 shadow-xl backdrop-blur-md flex flex-col gap-3.5 ${className}`}
+      className={`w-full rounded-2xl border border-white/10 bg-[#121215]/80 p-5 shadow-2xl backdrop-blur-xl flex flex-col gap-4 ${className}`}
     >
       {/* File Header & Metadata Badges */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-zinc-800/80">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-white/5">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 shrink-0">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 shrink-0 border border-cyan-500/20">
             <FileAudio className="w-4 h-4" />
           </div>
           <div className="min-w-0">

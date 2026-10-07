@@ -294,3 +294,17 @@ To guarantee crash-free video rendering within a 1 GB RAM footprint:
    ```
 2. **CloudWatch Metrics & Alarms:**
    - Alarms configured for: DLQ message count $> 0$, worker CPU $> 85\%$ for 10 minutes, and API 5xx error rate $> 1\%$.
+
+---
+
+## 7. Document Cross-References
+
+- Product Specification & Full Feature Vision: [`PRODUCT.md`](./PRODUCT.md)
+- UI/UX & Responsive Design System: [`UI_UX.md`](./UI_UX.md)
+- Comprehensive UI/UX Design System Overhaul Specification: [`plans/2026-10-07-comprehensive-ui-ux-design-system-overhaul-spec.md`](./plans/2026-10-07-comprehensive-ui-ux-design-system-overhaul-spec.md)
+- Video & Audio Synthesis Pipeline: [`VIDEO_TUTORIAL_SPEC.md`](./VIDEO_TUTORIAL_SPEC.md)
+- Active Engineering Roadmap: [`ROADMAP.md`](./ROADMAP.md)
+- Master Execution Plan: [`MASTER_PLAN.md`](./MASTER_PLAN.md)
+- REST API Reference: [`API.md`](./API.md)
+- Database Schema: [`DATABASE.md`](./DATABASE.md)
+

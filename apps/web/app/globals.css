@@ -1,7 +1,119 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand hand colors (UI_UX.md §1) — also defined in shared-types constants.json */
+  /* Legacy brand hand colors (UI_UX.md §1) */
   --hand-right: #22d3ee;
   --hand-left: #fb923c;
+
+  /* Canonical Surfaces */
+  --void: #050507;
+  --canvas: #09090b;
+  --card: #121215;
+  --elevated: #18181b;
+
+  --pf-bg-void: var(--void);
+  --pf-bg-canvas: var(--canvas);
+  --pf-bg-card: var(--card);
+  --pf-bg-elevated: var(--elevated);
+
+  /* Hairline Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-active: rgba(255, 255, 255, 0.15);
+  --pf-border-subtle: var(--border-subtle);
+  --pf-border-active: var(--border-active);
+
+  /* Hand Identity (RH Electric Violet / LH Neon Cyan) */
+  --hand-rh: #7c3aed;
+  --hand-rh-glow: #8b5cf6;
+  --hand-lh: #06b6d4;
+  --hand-lh-glow: #22d3ee;
+  --pf-hand-rh: var(--hand-rh);
+  --pf-hand-lh: var(--hand-lh);
+
+  /* Functional & Gamification States */
+  --state-perfect: #10b981;
+  --state-good: #f59e0b;
+  --state-miss: #f43f5e;
+  --streak-flame: #eab308;
+  --pf-state-perfect: var(--state-perfect);
+  --pf-state-good: var(--state-good);
+  --pf-state-miss: var(--state-miss);
+}
+
+/* Surface Utility Classes */
+.bg-void {
+  background-color: var(--void);
+}
+
+.bg-canvas {
+  background-color: var(--canvas);
+}
+
+.bg-card {
+  background-color: var(--card);
+}
+
+.bg-elevated {
+  background-color: var(--elevated);
+}
+
+/* Border Utility Classes */
+.border-subtle {
+  border-color: var(--border-subtle);
+}
+
+.border-active {
+  border-color: var(--border-active);
+}
+
+/* Glassmorphism */
+.glass-card {
+  background-color: rgba(18, 18, 21, 0.8);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Ambient Hand Glows */
+.glow-rh {
+  box-shadow: 0 0 24px rgba(139, 92, 246, 0.35);
+}
+
+.glow-lh {
+  box-shadow: 0 0 24px rgba(6, 182, 212, 0.35);
+}
+
+/* Tactile Physics */
+.btn-tactile {
+  transition-property: transform;
+  transition-duration: 100ms;
+}
+
+.btn-tactile:active {
+  transform: scale(0.98);
+}
+
+/* Luminous Focus Ring Utility */
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #09090b, 0 0 0 4px rgba(124, 58, 237, 0.5);
+}
+
+/* Keyframe Animations */
+@keyframes pf-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: pf-shimmer 2s infinite linear;
 }

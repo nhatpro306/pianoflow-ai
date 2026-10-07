@@ -191,6 +191,7 @@ The practice suite bridges digital hardware and browser visualization:
 - Architecture & System Topology: [`DESIGN.md`](./DESIGN.md)
 - Video & Audio Synthesis Specification: [`VIDEO_TUTORIAL_SPEC.md`](./VIDEO_TUTORIAL_SPEC.md)
 - UI/UX & Responsive Design System: [`UI_UX.md`](./UI_UX.md)
+- Comprehensive UI/UX Design System Overhaul Specification: [`plans/2026-10-07-comprehensive-ui-ux-design-system-overhaul-spec.md`](./plans/2026-10-07-comprehensive-ui-ux-design-system-overhaul-spec.md)
 - Phased Implementation Roadmap: [`ROADMAP.md`](./ROADMAP.md)
 - Consolidated Implementation Master Plan: [`MASTER_PLAN.md`](./MASTER_PLAN.md)
 - REST API Reference: [`API.md`](./API.md)

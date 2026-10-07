@@ -26,11 +26,12 @@
 | **Phase 12** | Audio-to-MIDI Transcription | **Superseded** | Basic Pitch ONNX replaced on web by Modal serverless GPU pipeline (Demucs v4 stem isolation + Transkun). |
 | **Phase J** | Beginner Mode Simplification | **Completed** | Pure TypeScript melody-preserving chord reduction engine (`simplifyEngine.ts`), dynamic difficulty selector pill, instant client MIDI export, and Playwright E2E test suite. |
 | **Phase K** | Smart Metronome & Audio Preview | **Completed** | Lookahead precision Web Audio scheduler (`metronomeEngine.ts`), Tap Tempo, beat LED flashing UI (`MetronomeControl.tsx`), and HTML5 canvas waveform auditioning player (`AudioPreviewWaveform.tsx`). |
-| **Phase L** | Project Dashboard & Repertoire | **Active Spec** | Real-time search, multi-criteria status filtering (Ready, Processing, Failed), multi-attribute sorting, quick actions (Practice, Sheet, Export, Delete), routing repair (`/create`), and Playwright E2E suite. |
+| **Phase L** | Project Dashboard & Repertoire | **Completed** | Real-time search, multi-criteria status filtering (Ready, Processing, Failed), multi-attribute sorting, quick actions (Practice, Sheet, Export, Delete), routing repair (`/create`), and Playwright E2E suite. |
+| **Phase M** | Comprehensive UI/UX & Design System Overhaul | **Active Spec** | Full-site visual synchronization, "Dark-Stage Concert Elegance meets Linear Precision", unified token architecture, harmonized buttons/badges/tabs/dialogs, single-header /demo architecture, streamlined practice HUD, and complete Playwright verification. |
 
 ---
 
-## 2. Active Execution Roadmap (Phases A through L)
+## 2. Active Execution Roadmap (Phases A through M)
 
 ```mermaid
 flowchart LR
@@ -46,6 +47,7 @@ flowchart LR
     PhaseJ["Phase J (P9)\nBeginner Mode Simplification\n• Client-Side TS Engine\n• Dynamic Practice Pill\n• Instant MIDI Export"]
     PhaseK["Phase K (P10)\nSmart Metronome & Audio Preview\n• Web Audio Lookahead\n• Tap Tempo & Beat LEDs\n• Canvas Waveform Preview"]
     PhaseL["Phase L (P11)\nProject Dashboard & Repertoire\n• Real-Time Search\n• Status Tabs & Sorting\n• Quick Actions & Modal"]
+    PhaseM["Phase M (P12)\nComprehensive UI/UX Overhaul\n• Dark-Stage Elegance\n• Unified Tokens & Palette\n• Route-by-Route Synchrony\n• Single Header & Sleek HUD"]
 
     PhaseA --> PhaseB
     PhaseB --> PhaseC
@@ -58,6 +60,7 @@ flowchart LR
     PhaseI --> PhaseJ
     PhaseJ --> PhaseK
     PhaseK --> PhaseL
+    PhaseL --> PhaseM
 ```
 
 ---
@@ -331,3 +334,37 @@ flowchart LR
      - DASH-E2E-01 through DASH-E2E-07 covering header routing, title search, status tabs, sorting, card quick action navigation, export modal opening, and zero-match state recovery.
      - Capture screenshots in `docs/e2e/projects/`.
 - **Deliverables:** Streamlined repertoire management experience, zero 404 links, 1-click launch into practice and sheet music, and 100% green Playwright test suite.
+
+---
+
+### Phase M: Comprehensive UI/UX Design System & Full-Site Overhaul (P12 — Active Milestone)
+
+- **Goal:** Execute a comprehensive, multi-route UI/UX overhaul of PianoFlow AI based on the "Dark-Stage Concert Elegance Meets Linear Precision" philosophy. Harmonize visual tokens, colors, component design systems, and responsive layouts across every page, eliminate duplicate headers and disjointed styles, and verify with complete automated Playwright tests.
+- **Specification:** [`docs/plans/2026-10-07-comprehensive-ui-ux-design-system-overhaul-spec.md`](./plans/2026-10-07-comprehensive-ui-ux-design-system-overhaul-spec.md)
+- **Tasks:**
+  1. **Foundational Token Architecture (`globals.css`):**
+     - Define centralized CSS variables: True Black canvas (`#050507`), pitch black surface (`#09090b`), card base (`#121215`), elevated (`#18181b`), alpha hairline borders (`border-white/5` to `border-white/15`).
+     - Standardize chromatic hand identity: Right Hand Electric Violet (`#8b5cf6` / `#7c3aed`), Left Hand Neon Cyan (`#06b6d4` / `#22d3ee`).
+     - Standardize functional states: Emerald Success (`#10b981`), Amber Warning (`#f59e0b`), Rose Error (`#f43f5e`), Gold Streaks (`#eab308`).
+  2. **Harmonized Component Suite (`apps/web/components/ui/`):**
+     - Enhance `Button.tsx` with gradient variant, tactile tap feedback (`active:scale-[0.98]`), and icon slots.
+     - Upgrade `Badge.tsx` with unified status, hand, metric, and streak variants.
+     - Create accessible `SegmentedControl.tsx` for mode toggling, difficulty selection, and hand filtering.
+     - Refactor `Card.tsx`, `Input.tsx`, and `Progress.tsx` with unified alpha borders, luminous focus rings, and animated progress shimmers.
+  3. **Global Navigation & Marketing Experience:**
+     - Extract `Navbar.tsx` into `layout.tsx` featuring active route highlighting, persistent streak badge (`🔥 5 Days`), and refined user profile dropdown.
+     - Overhaul Landing Page (`apps/web/app/page.tsx`): Concert-stage ambient glow, hero typography hierarchy, interactive falling note demo teaser, and modernized feature cards.
+     - Modernize Pricing Page (`apps/web/app/pricing/page.tsx`): Monthly/Annual billing toggle (-20%), balanced tier cards, and comprehensive feature matrix table.
+     - Modernize Auth Page (`apps/web/app/login/page.tsx`): Glassmorphic card, unified input components, and social sign-in buttons.
+  4. **Repertoire Hub & Ingestion Studio:**
+     - Refactor Projects Hub (`apps/web/app/projects/page.tsx`): Harmonized header, streak pill, "+ New Project" gradient CTA, unified card badges, and duration/BPM/note grid.
+     - Upgrade Creation Studio (`apps/web/app/create/page.tsx`): Neon glow drag-and-drop zone, platform tags for URL video ingestion, and a sleek 3-step progress pipeline tracker.
+  5. **Interactive Studios & Final Polish:**
+     - Classical Demo Showcase (`apps/web/app/demo/page.tsx`): Eliminate duplicate sticky header bug (reclaiming ~120px vertical space), streamline song carousel, and consolidate 4-mode tabs into an obsidian concert well.
+     - Interactive Practice Studio (`/projects/[id]/practice`): Streamline Practice HUD into a single top bar and floating frosted-glass score overlay; add radiant pulses to target keys in Wait Mode; ensure mobile 44px touch targets.
+     - Vector Sheet Music Viewer (`/projects/[id]/sheet`): Harmonize toolbar with unified buttons, add numeric zoom percentage steppers, and refine pure white vector print stylesheets.
+  6. **Automated Verification & Testing Matrix:**
+     - Run full TypeScript compiler and ESLint passes (`pnpm -r typecheck`, `pnpm --filter @pianoflow/web lint`).
+     - Execute complete Playwright E2E browser test suite verifying all routes, active links, HUD scoring, and responsive viewports.
+- **Deliverables:** Complete visual synchronization across 100% of routes, unified component library, zero duplicate headers, 44px mobile touch targets, and green test suite.
+

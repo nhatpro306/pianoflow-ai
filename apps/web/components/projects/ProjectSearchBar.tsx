@@ -6,6 +6,7 @@ import type {
   ProjectSortOption,
   StatusCounts,
 } from "@/types/projectDashboard";
+import { Badge } from "@/components/ui/Badge";
 
 export interface ProjectSearchBarProps {
   searchQuery: string;
@@ -38,7 +39,7 @@ export function ProjectSearchBar({
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         {/* Search input with search icon and clear button */}
         <div className="relative flex-1">
-          <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-400">
+          <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400">
             <svg
               className="h-4 w-4"
               fill="none"
@@ -67,7 +68,7 @@ export function ProjectSearchBar({
             placeholder="Search projects by title..."
             aria-label="Search projects by title"
             data-testid="project-search-input"
-            className="w-full rounded-lg border border-zinc-800 bg-zinc-900/80 py-2 pl-9 pr-9 text-sm text-zinc-100 placeholder-zinc-500 transition-colors focus:border-cyan-500 focus:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+            className="w-full rounded-xl border border-white/10 bg-[#121215]/80 py-2.5 pl-10 pr-9 text-sm text-zinc-100 placeholder-zinc-500 backdrop-blur-xl transition-all focus:border-cyan-500/50 focus:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
           />
           {searchQuery.length > 0 && (
             <button
@@ -75,7 +76,7 @@ export function ProjectSearchBar({
               onClick={() => onSearchChange("")}
               aria-label="Clear search"
               data-testid="project-search-clear-button"
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-zinc-200 transition-colors"
+              className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-zinc-400 hover:text-zinc-100 transition-colors"
             >
               ✕
             </button>
@@ -84,7 +85,7 @@ export function ProjectSearchBar({
 
         {/* Sorting selector */}
         <div className="flex items-center gap-2">
-          <label htmlFor="project-sort-select" className="text-xs text-zinc-400 whitespace-nowrap hidden sm:inline">
+          <label htmlFor="project-sort-select" className="text-xs text-zinc-400 whitespace-nowrap hidden sm:inline font-medium">
             Sort by:
           </label>
           <select
@@ -93,7 +94,7 @@ export function ProjectSearchBar({
             data-testid="project-sort-select"
             value={sortOption}
             onChange={(e) => onSortOptionChange(e.target.value as ProjectSortOption)}
-            className="rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-xs text-zinc-200 transition-colors focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+            className="rounded-xl border border-white/10 bg-[#121215]/80 px-3.5 py-2.5 text-xs text-zinc-200 backdrop-blur-xl transition-all focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 shadow-sm"
           >
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
@@ -121,23 +122,21 @@ export function ProjectSearchBar({
               aria-selected={isActive}
               data-testid={`status-tab-${tab.id}`}
               onClick={() => onStatusFilterChange(tab.id)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
+              className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-semibold backdrop-blur-xl transition-all select-none ${
                 isActive
-                  ? "border-cyan-500/50 bg-cyan-500/20 text-cyan-300 shadow-sm"
-                  : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700 hover:bg-zinc-800/50 hover:text-zinc-200"
+                  ? "border-cyan-500/40 bg-cyan-500/15 text-cyan-300 shadow-md shadow-cyan-950/40"
+                  : "border-white/5 bg-[#121215]/60 text-zinc-400 hover:border-white/15 hover:bg-white/5 hover:text-zinc-200"
               }`}
             >
               <span>{tab.label}</span>
-              <span
+              <Badge
+                variant={isActive ? "accent" : "default"}
+                size="sm"
                 data-testid={`status-count-${tab.id}`}
-                className={`rounded-full px-1.5 py-0.2 text-[11px] ${
-                  isActive
-                    ? "bg-cyan-500/30 text-cyan-200"
-                    : "bg-zinc-800 text-zinc-400"
-                }`}
+                className="px-1.5 py-0 text-[11px] font-mono tabular-nums"
               >
                 ({count})
-              </span>
+              </Badge>
             </button>
           );
         })}
@@ -145,3 +144,4 @@ export function ProjectSearchBar({
     </div>
   );
 }
+

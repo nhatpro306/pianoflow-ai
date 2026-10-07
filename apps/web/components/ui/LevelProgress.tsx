@@ -13,35 +13,34 @@ export function LevelProgress({
   xpToNextLevel,
   className = "",
 }: LevelProgressProps) {
-  // Depends on backend implementation if it's total or level specific. Assuming the formula: progress = xpInCurrentLevel / (xpInCurrentLevel + xpToNextLevel).
-  // Actually, let's assume totalXp is all-time XP, and xpToNextLevel is what remains to get from current XP to the next level threshold.
-  // Wait, let's just make a generic xp bar, but without knowing the base XP for the current level it's hard to make a percentage.
-  // Let's assume progress is some arbitrary value based on current xp and next level if not specified.
-  // We'll calculate a percentage. Usually, totalXP / (totalXp + xpToNextLevel) is not right because 0 XP in level N isn't 0 total.
-  // Let's just do a simple visual where we don't know the percentage, we can just show XP to next level text.
-  // Oh, wait, the API returns: total_xp, xp_to_next_level.
-  // The XP for the *current level* is not provided, so we don't know the exact percentage of the current level.
-  // But maybe we can just pretend it's a fixed amount per level, e.g., 1000? No, let's just render the text and a basic bar that maybe represents total XP loosely.
-  // Better yet, just don't show a bar filling up if we can't calculate it precisely, or we assume something like percentage = 100 - (xpToNextLevel / 1000 * 100) (if next level is 1000 XP).
-  // Let's create a generic XP progress bar that fills up a bit.
+  const currentLevelXp = Math.max(0, totalXp);
+  const nextLevelThreshold = totalXp + xpToNextLevel;
+  const percentage = Math.min(
+    100,
+    Math.max(10, Math.round((currentLevelXp / Math.max(1, nextLevelThreshold)) * 100))
+  );
+
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-500 font-bold border border-cyan-500/30">
-        {level}
+    <div
+      data-testid="linear-level-progress"
+      className={`inline-flex items-center gap-2.5 rounded-xl border border-white/5 bg-[#121215]/80 px-3 py-1.5 backdrop-blur-md shadow-sm ${className}`}
+    >
+      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600/30 to-cyan-500/30 text-cyan-300 text-xs font-mono font-bold border border-cyan-500/30 shadow-sm">
+        Lv.{level}
       </div>
-      <div className="flex flex-col gap-1">
-        <div className="flex justify-between text-xs font-medium text-zinc-400">
-          <span>{totalXp} XP</span>
-          <span>{xpToNextLevel} to next</span>
+      <div className="flex flex-col gap-1 min-w-[100px]">
+        <div className="flex justify-between items-center text-[11px] font-mono font-medium text-zinc-400 leading-none">
+          <span className="text-zinc-200 font-semibold">{totalXp} XP</span>
+          <span className="text-zinc-500">{xpToNextLevel} to next</span>
         </div>
-        <div className="h-2 w-32 overflow-hidden rounded-full bg-zinc-800">
-          {/* We'll just put a 50% width if we don't know, or calculate a mock percentage */}
+        <div className="h-1.5 w-28 overflow-hidden rounded-full bg-zinc-900 border border-white/5">
           <div
-            className="h-full bg-cyan-500 rounded-full"
-            style={{ width: "50%" }}
+            className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 rounded-full transition-all duration-300"
+            style={{ width: `${percentage}%` }}
           />
         </div>
       </div>
     </div>
   );
 }
+

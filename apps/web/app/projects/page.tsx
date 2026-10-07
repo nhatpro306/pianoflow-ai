@@ -73,9 +73,17 @@ export default function ProjectsPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-10">
-      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">Projects</h1>
-        <div className="flex flex-wrap items-center gap-4">
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
+            <span>My Repertoire Projects</span>
+            <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">🎹</span>
+          </h1>
+          <p className="text-xs text-zinc-400">
+            Manage, practice, and export your transcribed and imported piano repertoire.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
           {progressData && (
             <>
               <StreakBadge streakDays={progressData.current_streak_days} />
@@ -89,9 +97,12 @@ export default function ProjectsPage() {
           <Link
             href="/create"
             aria-label="Create new piano project"
-            className="rounded-md bg-cyan-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-cyan-400 transition-colors"
+            data-testid="new-project-link"
+            className="inline-flex"
           >
-            + New project
+            <Button variant="gradient" size="sm" className="shadow-lg shadow-violet-500/20">
+              + New Project
+            </Button>
           </Link>
         </div>
       </div>

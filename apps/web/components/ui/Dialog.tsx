@@ -14,11 +14,23 @@ export interface DialogProps extends HTMLAttributes<HTMLDivElement> {
   open: boolean;
   onClose: () => void;
   title?: string;
+  showCloseButton?: boolean;
   children: ReactNode;
 }
 
 export const Dialog = forwardRef<HTMLDivElement, DialogProps>(
-  ({ open, onClose, title, children, className = "", ...props }, ref) => {
+  (
+    {
+      open,
+      onClose,
+      title,
+      showCloseButton = true,
+      children,
+      className = "",
+      ...props
+    },
+    ref
+  ) => {
     const dialogRef = useRef<HTMLDivElement>(null);
     const [mounted, setMounted] = useState(false);
 
@@ -31,11 +43,12 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(
 
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Escape") {
+          e.preventDefault();
           onClose();
         } else if (e.key === "Tab") {
           if (!dialogRef.current) return;
           const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
-            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
           );
           if (focusableElements.length === 0) return;
 
@@ -67,7 +80,7 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(
         prevFocusRef.current = document.activeElement as HTMLElement | null;
         if (dialogRef.current) {
           const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
-            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
           );
           if (focusableElements.length > 0) {
             focusableElements[0]?.focus();
@@ -83,14 +96,14 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(
 
     return createPortal(
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* Backdrop */}
+        {/* Obsidian modal backdrop blur */}
         <div
-          className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm transition-opacity motion-reduce:transition-none"
+          className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity motion-reduce:transition-none"
           onClick={onClose}
           aria-hidden="true"
         />
 
-        {/* Dialog Content */}
+        {/* Elevated card shell */}
         <div
           ref={(node) => {
             if (typeof ref === "function") ref(node);
@@ -99,11 +112,57 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(
           }}
           role="dialog"
           aria-modal="true"
-          className={`relative z-50 w-full max-w-md scale-100 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-6 opacity-100 shadow-xl transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-reduce:transition-none ${className}`}
+          aria-labelledby={title ? "dialog-title" : undefined}
+          className={`relative z-50 w-full max-w-lg scale-100 overflow-hidden rounded-2xl border border-white/10 bg-[#121215] p-6 text-zinc-100 shadow-2xl transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-reduce:transition-none ${className}`}
           {...props}
         >
-          {title && (
-            <h2 className="mb-4 text-lg font-semibold text-zinc-100">{title}</h2>
+          {title ? (
+            <div className="mb-4 flex items-center justify-between gap-4 border-b border-white/5 pb-3">
+              <h2 id="dialog-title" className="text-lg font-semibold tracking-tight text-zinc-100">
+                {title}
+              </h2>
+              {showCloseButton && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60"
+                  aria-label="Close dialog"
+                >
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          ) : (
+            showCloseButton && (
+              <div className="absolute top-4 right-4 z-10">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60"
+                  aria-label="Close dialog"
+                >
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )
           )}
           <div className="text-sm text-zinc-300">{children}</div>
         </div>
@@ -123,7 +182,7 @@ export const DialogActions = forwardRef<HTMLDivElement, DialogActionsProps>(
     return (
       <div
         ref={ref}
-        className={`mt-6 flex justify-end gap-3 ${className}`}
+        className={`mt-6 flex justify-end gap-3 border-t border-white/5 pt-4 ${className}`}
         {...props}
       >
         {children}
@@ -132,3 +191,5 @@ export const DialogActions = forwardRef<HTMLDivElement, DialogActionsProps>(
   }
 );
 DialogActions.displayName = "DialogActions";
+
+export const DialogFooter = DialogActions;
