@@ -61,9 +61,7 @@ def make_rotated_ellipse_path(
     ops = [f"{t_pts[0][0]:.2f} {t_pts[0][1]:.2f} m"]
     for i in range(1, len(t_pts), 3):
         p1, p2, p3 = t_pts[i], t_pts[i + 1], t_pts[i + 2]
-        ops.append(
-            f"{p1[0]:.2f} {p1[1]:.2f} {p2[0]:.2f} {p2[1]:.2f} {p3[0]:.2f} {p3[1]:.2f} c"
-        )
+        ops.append(f"{p1[0]:.2f} {p1[1]:.2f} {p2[0]:.2f} {p2[1]:.2f} {p3[0]:.2f} {p3[1]:.2f} c")
     return " ".join(ops)
 
 
@@ -323,9 +321,7 @@ class GrandStaffEngraver:
 
         return pages
 
-    def _render_page_stream(
-        self, page: EngravedPage, total_measures_count: int
-    ) -> bytes:
+    def _render_page_stream(self, page: EngravedPage, total_measures_count: int) -> bytes:
         """Emits PDF vector and text operations for a single engraved page."""
         ops: list[str] = []
 
@@ -342,35 +338,25 @@ class GrandStaffEngraver:
             # Title: centered at X = 306, Y = 744 in Helvetica-Bold 20pt
             approx_title_w = len(self.title) * 20.0 * 0.52
             x_title = max(self.MARGIN_LEFT, 306.0 - (approx_title_w / 2.0))
-            ops.append(
-                f"BT /F2 20 Tf {x_title:.2f} 744.00 Td ({title_esc}) Tj ET"
-            )
+            ops.append(f"BT /F2 20 Tf {x_title:.2f} 744.00 Td ({title_esc}) Tj ET")
 
             # Subtitle: centered at X = 306, Y = 724 in Helvetica-Oblique 10pt
             approx_sub_w = len(subtitle_esc) * 10.0 * 0.5
             x_sub = max(self.MARGIN_LEFT, 306.0 - (approx_sub_w / 2.0))
-            ops.append(
-                f"BT /F3 10 Tf {x_sub:.2f} 724.00 Td ({subtitle_esc}) Tj ET"
-            )
+            ops.append(f"BT /F3 10 Tf {x_sub:.2f} 724.00 Td ({subtitle_esc}) Tj ET")
 
             # Tempo marking with tiny vector quarter note icon:
             # Quarter note icon at X = 38.0, Y = 700.0
-            ops.append(
-                f"{make_rotated_ellipse_path(39.0, 700.5, 2.5, 1.8, 18.0)} f"
-            )
+            ops.append(f"{make_rotated_ellipse_path(39.0, 700.5, 2.5, 1.8, 18.0)} f")
             ops.append("0.85 w 41.20 700.50 m 41.20 710.00 l s")
             # Text "= {bpm} BPM"
             tempo_str = f"= {int(self.bpm)} BPM"
-            ops.append(
-                f"BT /F2 11 Tf 46.00 698.00 Td ({tempo_str}) Tj ET"
-            )
+            ops.append(f"BT /F2 11 Tf 46.00 698.00 Td ({tempo_str}) Tj ET")
 
             # Composer: right-aligned at X = 576, Y = 700 in Helvetica 10pt
             approx_comp_w = len(self.composer) * 10.0 * 0.52
             x_comp = max(self.MARGIN_LEFT, 576.0 - approx_comp_w)
-            ops.append(
-                f"BT /F1 10 Tf {x_comp:.2f} 698.00 Td ({composer_esc}) Tj ET"
-            )
+            ops.append(f"BT /F1 10 Tf {x_comp:.2f} 698.00 Td ({composer_esc}) Tj ET")
 
             # System Y-positions on Page 1 (3 systems capacity)
             system_y_coords = [
@@ -382,16 +368,10 @@ class GrandStaffEngraver:
             # Subsequent page running header
             title_esc = _pdf_text_escape(self.title)
             page_str = f"Page {page.page_number}"
-            ops.append(
-                f"BT /F1 9 Tf {self.MARGIN_LEFT:.2f} 760.00 Td ({title_esc}) Tj ET"
-            )
-            ops.append(
-                f"BT /F1 9 Tf 536.00 760.00 Td ({page_str}) Tj ET"
-            )
+            ops.append(f"BT /F1 9 Tf {self.MARGIN_LEFT:.2f} 760.00 Td ({title_esc}) Tj ET")
+            ops.append(f"BT /F1 9 Tf 536.00 760.00 Td ({page_str}) Tj ET")
             # Thin divider rule
-            ops.append(
-                f"0.5 w {self.MARGIN_LEFT:.2f} 752.00 m 576.00 752.00 l s"
-            )
+            ops.append(f"0.5 w {self.MARGIN_LEFT:.2f} 752.00 m 576.00 752.00 l s")
 
             # System Y-positions on Page 2+ (4 systems capacity)
             system_y_coords = [
@@ -484,16 +464,12 @@ class GrandStaffEngraver:
             f"1.2 w {x_treble_clef - 2.0:.2f} {y_t - 7.0:.2f} m {t_c1} {t_c2} {t_c3} {t_c4} {t_c5}"
         )
         # Teardrop terminal dot at bottom of Treble clef
-        ops.append(
-            f"{make_rotated_ellipse_path(x_treble_clef - 2.0, y_t - 7.5, 1.8, 1.8, 0.0)} f"
-        )
+        ops.append(f"{make_rotated_ellipse_path(x_treble_clef - 2.0, y_t - 7.5, 1.8, 1.8, 0.0)} f")
 
         # Bass Clef (F-Clef centered on F3 line: y_b + 21.0)
         x_bass_clef = 44.0
         # Filled anchor dot on line 4 (F3)
-        ops.append(
-            f"{make_rotated_ellipse_path(x_bass_clef, y_b + 21.0, 2.2, 2.2, 0.0)} f"
-        )
+        ops.append(f"{make_rotated_ellipse_path(x_bass_clef, y_b + 21.0, 2.2, 2.2, 0.0)} f")
         # Upper arch of Bass clef
         b_c1 = (
             f"{x_bass_clef + 3.5:.2f} {y_b + 27.0:.2f} "
@@ -507,12 +483,8 @@ class GrandStaffEngraver:
         )
         ops.append(f"1.6 w {x_bass_clef:.2f} {y_b + 21.0:.2f} m {b_c1} {b_c2}")
         # Two Bass clef dots in space 3 (y_b + 17.5) and space 4 (y_b + 24.5)
-        ops.append(
-            f"{make_rotated_ellipse_path(x_bass_clef + 11.5, y_b + 17.5, 1.3, 1.3, 0.0)} f"
-        )
-        ops.append(
-            f"{make_rotated_ellipse_path(x_bass_clef + 11.5, y_b + 24.5, 1.3, 1.3, 0.0)} f"
-        )
+        ops.append(f"{make_rotated_ellipse_path(x_bass_clef + 11.5, y_b + 17.5, 1.3, 1.3, 0.0)} f")
+        ops.append(f"{make_rotated_ellipse_path(x_bass_clef + 11.5, y_b + 24.5, 1.3, 1.3, 0.0)} f")
 
         # 4. Time Signature (Rendered on first system of piece)
         x_measures_start = 66.0
@@ -556,9 +528,7 @@ class GrandStaffEngraver:
             # Measure number box and label
             m_num_label = str(measure.index + 1)
             # Box badge using 're' operator
-            ops.append(
-                f"0.5 w {m_start_x + 1.0:.2f} {y_t + 30.5:.2f} 14.00 9.00 re s"
-            )
+            ops.append(f"0.5 w {m_start_x + 1.0:.2f} {y_t + 30.5:.2f} 14.00 9.00 re s")
             ops.append(
                 f"BT /F1 7 Tf {m_start_x + 3.0:.2f} {y_t + 32.5:.2f} Td ({m_num_label}) Tj ET"
             )
@@ -639,8 +609,7 @@ class GrandStaffEngraver:
                         f"{ax + 1.5:.2f} {note_y + 6.5:.2f} l s"
                     )
                     ops.append(
-                        f"1.2 w {ax - 3.5:.2f} {note_y - 2.0:.2f} m "
-                        f"{ax + 3.5:.2f} {note_y:.2f} l s"
+                        f"1.2 w {ax - 3.5:.2f} {note_y - 2.0:.2f} m {ax + 3.5:.2f} {note_y:.2f} l s"
                     )
                     ops.append(
                         f"1.2 w {ax - 3.5:.2f} {note_y + 1.0:.2f} m "
@@ -665,9 +634,7 @@ class GrandStaffEngraver:
                         f"1.3 w {make_rotated_ellipse_path(note_x, note_y, 4.8, 3.0, 18.0)} s"
                     )
                 else:
-                    ops.append(
-                        f"{make_rotated_ellipse_path(note_x, note_y, 4.8, 3.2, 18.0)} f"
-                    )
+                    ops.append(f"{make_rotated_ellipse_path(note_x, note_y, 4.8, 3.2, 18.0)} f")
 
                 # Stem and flags (if not whole note)
                 if not dnote.is_whole:
@@ -675,8 +642,7 @@ class GrandStaffEngraver:
                         stem_x = note_x + 4.2
                         stem_tip_y = note_y + 26.0
                         ops.append(
-                            f"0.85 w {stem_x:.2f} {note_y:.2f} m "
-                            f"{stem_x:.2f} {stem_tip_y:.2f} l s"
+                            f"0.85 w {stem_x:.2f} {note_y:.2f} m {stem_x:.2f} {stem_tip_y:.2f} l s"
                         )
                         # Eighth flag
                         if 0.35 <= dnote.duration_beats < 0.75:
@@ -704,8 +670,7 @@ class GrandStaffEngraver:
                         stem_x = note_x - 4.2
                         stem_tip_y = note_y - 26.0
                         ops.append(
-                            f"0.85 w {stem_x:.2f} {note_y:.2f} m "
-                            f"{stem_x:.2f} {stem_tip_y:.2f} l s"
+                            f"0.85 w {stem_x:.2f} {note_y:.2f} m {stem_x:.2f} {stem_tip_y:.2f} l s"
                         )
                         # Eighth flag
                         if 0.35 <= dnote.duration_beats < 0.75:
@@ -767,9 +732,7 @@ class GrandStaffEngraver:
         # Append Page and Content objects
         for p_idx, page in enumerate(pages):
             content_id = content_obj_ids[p_idx]
-            stream_bytes = self._render_page_stream(
-                page, total_measures_count=total_measures_count
-            )
+            stream_bytes = self._render_page_stream(page, total_measures_count=total_measures_count)
 
             p_box = f"[0 0 {self.PAGE_WIDTH:.0f} {self.PAGE_HEIGHT:.0f}]"
             page_dict = (
