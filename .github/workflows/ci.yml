@@ -120,5 +120,6 @@ jobs:
           MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
           MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
         run: |
+          uv pip install modal
           uv run modal deploy infra/modal/transcribe_app.py
           echo "Modal deployed successfully"
