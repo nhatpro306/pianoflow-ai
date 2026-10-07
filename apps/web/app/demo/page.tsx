@@ -29,6 +29,7 @@ import { SheetMusicViewer } from "@/components/sheet/SheetMusicViewer";
 import { MeasureHeatmap } from "@/components/practice/MeasureHeatmap";
 import { CoachRecommendations } from "@/components/practice/CoachRecommendations";
 import { ExportCenterModal } from "@/components/ExportCenterModal";
+import { QuickStartGuideModal } from "@/components/practice/QuickStartGuideModal";
 import {
   MidiEngine,
   type ExpectedNote,
@@ -110,6 +111,13 @@ const DEFAULT_RENDER_SETTINGS: RenderSettings = {
   version: 2,
 };
 
+function formatDuration(sec: number): string {
+  const totalSec = Math.round(sec);
+  const minutes = Math.floor(totalSec / 60);
+  const remainingSec = totalSec % 60;
+  return `${minutes}:${remainingSec.toString().padStart(2, "0")}`;
+}
+
 function generateSimulatedReport(
   song: DemoSong,
   userTimingEvents: SignedTimingEvent[],
@@ -166,6 +174,7 @@ export default function DemoPage() {
   const [difficulty, setDifficulty] = useState<SimplificationDifficulty>("original");
   const [activeMode, setActiveMode] = useState<DemoMode>("visualizer");
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [renderSettings, setRenderSettings] = useState<RenderSettings>(DEFAULT_RENDER_SETTINGS);
 
   // Expanded Repertoire Category Filter & Instant Search State
@@ -573,7 +582,8 @@ export default function DemoPage() {
             <div className="flex items-center gap-2">
               <h1 className="text-lg sm:text-xl font-extrabold text-zinc-100 tracking-tight flex items-center gap-2">
                 <span>🎹</span>
-                <span>Interactive Classical Library Showcase</span>
+                <span>PianoFlow AI Studio — Thư viện 250 Bản Piano Hoàn chỉnh (Full Repertoire)</span>
+                <span className="sr-only">Interactive Classical Library Showcase</span>
               </h1>
               <Badge variant="accent" size="sm" className="hidden sm:inline-flex">
                 Zero Auth • Instant Play
@@ -587,6 +597,14 @@ export default function DemoPage() {
                 Upload Custom File
               </Button>
             </Link>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsGuideOpen(true)}
+              className="text-xs font-semibold gap-1.5"
+            >
+              <span>📖 Hướng dẫn sử dụng</span>
+            </Button>
             <Button
               size="sm"
               variant="gradient"
@@ -732,7 +750,7 @@ export default function DemoPage() {
 
                       <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-mono text-zinc-400">
                         <span className="font-semibold text-zinc-300">{song.bpm} BPM</span>
-                        <span>{song.time_signature}</span>
+                        <span className="text-zinc-300">{formatDuration(song.duration_sec)}</span>
                         <span className="text-cyan-300 font-medium">{song.noteCount} notes</span>
                       </div>
                     </button>
@@ -1214,6 +1232,12 @@ export default function DemoPage() {
         totalNotes={activeSongNoteData.notes.length}
         filteredNoteData={activeSongNoteData}
         settings={renderSettings}
+      />
+
+      {/* Quick Start Guide Modal */}
+      <QuickStartGuideModal
+        open={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
       />
     </div>
   );

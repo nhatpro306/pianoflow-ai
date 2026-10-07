@@ -78,14 +78,25 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
   const isWaltz = timeSig === "3/4" || timeSig === "3/8";
   const beatsPerBar = isWaltz ? 3 : 4;
   const beatSec = (60 / bpm) * (timeSig === "3/8" ? 0.5 : 1);
-  const totalBars = input.bars ?? (isWaltz ? 6 : 4);
+  const totalBars = input.bars ?? (isWaltz ? 36 : 32);
 
-  // Chord progressions (relative to root)
-  const defaultProgression =
-    input.chordRoots ??
-    (scaleType === "minor"
-      ? [0, 8, 3, 10, 0, 8, 5, 7].slice(0, totalBars)
-      : [0, 7, 9, 5, 0, 7, 5, 0].slice(0, totalBars));
+  // Multi-section musical form progressions (32-36 bars)
+  const SECTION_PROGRESSIONS = {
+    major: {
+      intro: [0, 5, 0, 7],
+      verse: [0, 7, 9, 5, 0, 7, 5, 0],
+      chorus: [9, 5, 0, 7, 9, 5, 7, 0],
+      bridge: [5, 0, 5, 7, 9, 7, 5, 7],
+      outro: [5, 7, 0, 0, 5, 7, 0, 0],
+    },
+    minor: {
+      intro: [0, 8, 0, 7],
+      verse: [0, 8, 3, 10, 0, 8, 5, 7],
+      chorus: [8, 10, 0, 3, 8, 10, 7, 0],
+      bridge: [3, 7, 8, 10, 3, 5, 7, 7],
+      outro: [8, 5, 7, 0, 8, 5, 7, 0],
+    },
+  };
 
   // Melody offsets relative to chord root or tonic
   const defaultMelody =
@@ -99,18 +110,213 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
 
   for (let bar = 0; bar < totalBars; bar++) {
     const barStart = bar * beatsPerBar * beatSec;
-    const chordOffset = defaultProgression[bar % defaultProgression.length] ?? 0;
+
+    // Musical section definition
+    let section: "intro" | "verse" | "chorus" | "bridge" | "outro";
+    let sectionBar: number;
+    if (bar < 4) {
+      section = "intro";
+      sectionBar = bar;
+    } else if (bar < 12) {
+      section = "verse";
+      sectionBar = bar - 4;
+    } else if (bar < 20) {
+      section = "chorus";
+      sectionBar = bar - 12;
+    } else if (bar < 28) {
+      section = "bridge";
+      sectionBar = bar - 20;
+    } else {
+      section = "outro";
+      sectionBar = bar - 28;
+    }
+
+    // Chord progression
+    let chordOffset = 0;
+    if (input.chordRoots && input.chordRoots.length > 0) {
+      chordOffset = input.chordRoots[bar % input.chordRoots.length] ?? 0;
+    } else {
+      const modeKey = scaleType === "minor" ? "minor" : "major";
+      const prog = SECTION_PROGRESSIONS[modeKey][section];
+      chordOffset = prog[sectionBar % prog.length] ?? 0;
+    }
+
     const currentRoot = root + chordOffset;
     const bassPitch = currentRoot - 24; // Low octave for bass root
+    const registerShift = section === "chorus" ? 12 : 0;
+
+    // Velocity configurations mapped to section dynamics:
+    // Intro (~65), Verse (~78), Chorus (~88), Bridge (~76), Outro (~70)
+    const dynamics = {
+      intro: {
+        lhBass: 65,
+        lhChord1: 56,
+        lhChord2: 52,
+        rhTriad2: 58,
+        rhTriad1: 62,
+        rhMelody: 68,
+        rhMelody1: 65,
+        rhMelody2a: 62,
+        rhMelody2b: 65,
+        rhMelody3a: 62,
+        rhMelody3b: 65,
+        rhHarm2: 58,
+      },
+      verse: {
+        lhBass: 78,
+        lhChord1: 64,
+        lhChord2: 60,
+        rhTriad2: 68,
+        rhTriad1: 74,
+        rhMelody: 86,
+        rhMelody1: 80,
+        rhMelody2a: 78,
+        rhMelody2b: 82,
+        rhMelody3a: 78,
+        rhMelody3b: 82,
+        rhHarm2: 70,
+      },
+      chorus: {
+        lhBass: 88,
+        lhChord1: 76,
+        lhChord2: 72,
+        rhTriad2: 76,
+        rhTriad1: 82,
+        rhMelody: 94,
+        rhMelody1: 88,
+        rhMelody2a: 86,
+        rhMelody2b: 90,
+        rhMelody3a: 86,
+        rhMelody3b: 90,
+        rhHarm2: 78,
+      },
+      bridge: {
+        lhBass: 76,
+        lhChord1: 62,
+        lhChord2: 58,
+        rhTriad2: 66,
+        rhTriad1: 72,
+        rhMelody: 82,
+        rhMelody1: 78,
+        rhMelody2a: 76,
+        rhMelody2b: 80,
+        rhMelody3a: 76,
+        rhMelody3b: 80,
+        rhHarm2: 68,
+      },
+      outro: {
+        lhBass: 70,
+        lhChord1: 58,
+        lhChord2: 54,
+        rhTriad2: 60,
+        rhTriad1: 66,
+        rhMelody: 76,
+        rhMelody1: 72,
+        rhMelody2a: 70,
+        rhMelody2b: 74,
+        rhMelody3a: 70,
+        rhMelody3b: 74,
+        rhHarm2: 62,
+      },
+    }[section];
+
+    // Outro / Grand Cadence: Final sustaining chord in last bar
+    if (bar === totalBars - 1) {
+      const finalChordDur = Number((beatSec * (isWaltz ? 2.85 : 3.85)).toFixed(3));
+      // LH Grand Cadence: Sustained Root + Fifth + Octave
+      notes.push(
+        {
+          id: noteId++,
+          pitch: root - 24,
+          name: pitchToName(root - 24),
+          velocity: 74,
+          start: Number(barStart.toFixed(3)),
+          end: Number((barStart + finalChordDur).toFixed(3)),
+          duration: finalChordDur,
+          track: 0,
+          hand: "L",
+        },
+        {
+          id: noteId++,
+          pitch: root - 17,
+          name: pitchToName(root - 17),
+          velocity: 68,
+          start: Number(barStart.toFixed(3)),
+          end: Number((barStart + finalChordDur).toFixed(3)),
+          duration: finalChordDur,
+          track: 0,
+          hand: "L",
+        },
+        {
+          id: noteId++,
+          pitch: root - 12,
+          name: pitchToName(root - 12),
+          velocity: 70,
+          start: Number(barStart.toFixed(3)),
+          end: Number((barStart + finalChordDur).toFixed(3)),
+          duration: finalChordDur,
+          track: 0,
+          hand: "L",
+        }
+      );
+      // RH Grand Cadence: Sustained Full Tonic Quad-Chord (Tonic, 3rd, 5th, Octave)
+      notes.push(
+        {
+          id: noteId++,
+          pitch: root,
+          name: pitchToName(root),
+          velocity: 66,
+          start: Number(barStart.toFixed(3)),
+          end: Number((barStart + finalChordDur).toFixed(3)),
+          duration: finalChordDur,
+          track: 1,
+          hand: "R",
+        },
+        {
+          id: noteId++,
+          pitch: root + thirdInterval,
+          name: pitchToName(root + thirdInterval),
+          velocity: 70,
+          start: Number(barStart.toFixed(3)),
+          end: Number((barStart + finalChordDur).toFixed(3)),
+          duration: finalChordDur,
+          track: 1,
+          hand: "R",
+        },
+        {
+          id: noteId++,
+          pitch: root + fifthInterval,
+          name: pitchToName(root + fifthInterval),
+          velocity: 72,
+          start: Number(barStart.toFixed(3)),
+          end: Number((barStart + finalChordDur).toFixed(3)),
+          duration: finalChordDur,
+          track: 1,
+          hand: "R",
+        },
+        {
+          id: noteId++,
+          pitch: root + 12,
+          name: pitchToName(root + 12),
+          velocity: 76,
+          start: Number(barStart.toFixed(3)),
+          end: Number((barStart + finalChordDur).toFixed(3)),
+          duration: finalChordDur,
+          track: 1,
+          hand: "R",
+        }
+      );
+      continue;
+    }
 
     if (isWaltz) {
-      // ── WALTZ PATTERN (3/4 or 3/8) ──
+      // ── WALTZ PATTERN (3/4 or 3/8) across 36 bars ──
       // LH: Beat 0 = deep bass root (sustained)
       notes.push({
         id: noteId++,
         pitch: bassPitch,
         name: pitchToName(bassPitch),
-        velocity: 78,
+        velocity: dynamics.lhBass,
         start: Number(barStart.toFixed(3)),
         end: Number((barStart + beatSec * 2.8).toFixed(3)),
         duration: Number((beatSec * 2.8).toFixed(3)),
@@ -125,7 +331,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: chordPitch1,
         name: pitchToName(chordPitch1),
-        velocity: 64,
+        velocity: dynamics.lhChord1,
         start: Number((barStart + beatSec).toFixed(3)),
         end: Number((barStart + beatSec * 1.85).toFixed(3)),
         duration: Number((beatSec * 0.85).toFixed(3)),
@@ -136,7 +342,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: chordPitch2,
         name: pitchToName(chordPitch2),
-        velocity: 64,
+        velocity: dynamics.lhChord1,
         start: Number((barStart + beatSec).toFixed(3)),
         end: Number((barStart + beatSec * 1.85).toFixed(3)),
         duration: Number((beatSec * 0.85).toFixed(3)),
@@ -149,7 +355,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: chordPitch1,
         name: pitchToName(chordPitch1),
-        velocity: 60,
+        velocity: dynamics.lhChord2,
         start: Number((barStart + beatSec * 2).toFixed(3)),
         end: Number((barStart + beatSec * 2.85).toFixed(3)),
         duration: Number((beatSec * 0.85).toFixed(3)),
@@ -160,7 +366,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: chordPitch2,
         name: pitchToName(chordPitch2),
-        velocity: 60,
+        velocity: dynamics.lhChord2,
         start: Number((barStart + beatSec * 2).toFixed(3)),
         end: Number((barStart + beatSec * 2.85).toFixed(3)),
         duration: Number((beatSec * 0.85).toFixed(3)),
@@ -169,8 +375,8 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
       });
 
       // RH: Beat 0 = 3-note melodic triad (ensures N_very_easy < N_easy < N_original)
-      const melodyIdx = (bar * 3) % defaultMelody.length;
-      const melPitch = root + defaultMelody[melodyIdx];
+      const melodyIdx = ((bar * 3) + (section === "bridge" ? 2 : 0)) % defaultMelody.length;
+      const melPitch = root + registerShift + defaultMelody[melodyIdx];
       const harmPitch1 = melPitch - thirdInterval;
       const harmPitch2 = melPitch - fifthInterval;
 
@@ -178,7 +384,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: harmPitch2,
         name: pitchToName(harmPitch2),
-        velocity: 68,
+        velocity: dynamics.rhTriad2,
         start: Number(barStart.toFixed(3)),
         end: Number((barStart + beatSec * 0.9).toFixed(3)),
         duration: Number((beatSec * 0.9).toFixed(3)),
@@ -189,7 +395,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: harmPitch1,
         name: pitchToName(harmPitch1),
-        velocity: 74,
+        velocity: dynamics.rhTriad1,
         start: Number(barStart.toFixed(3)),
         end: Number((barStart + beatSec * 0.9).toFixed(3)),
         duration: Number((beatSec * 0.9).toFixed(3)),
@@ -200,7 +406,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: melPitch,
         name: pitchToName(melPitch),
-        velocity: 86,
+        velocity: dynamics.rhMelody,
         start: Number(barStart.toFixed(3)),
         end: Number((barStart + beatSec * 0.9).toFixed(3)),
         duration: Number((beatSec * 0.9).toFixed(3)),
@@ -209,12 +415,12 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
       });
 
       // RH: Beat 1 = cantabile melody note
-      const m1 = root + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
+      const m1 = root + registerShift + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
       notes.push({
         id: noteId++,
         pitch: m1,
         name: pitchToName(m1),
-        velocity: 80,
+        velocity: dynamics.rhMelody1,
         start: Number((barStart + beatSec).toFixed(3)),
         end: Number((barStart + beatSec * 1.9).toFixed(3)),
         duration: Number((beatSec * 0.9).toFixed(3)),
@@ -223,13 +429,13 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
       });
 
       // RH: Beat 2 = two eighth melody notes (passing contour)
-      const m2a = root + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
-      const m2b = root + defaultMelody[(melodyIdx + 3) % defaultMelody.length];
+      const m2a = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
+      const m2b = root + registerShift + defaultMelody[(melodyIdx + 3) % defaultMelody.length];
       notes.push({
         id: noteId++,
         pitch: m2a,
         name: pitchToName(m2a),
-        velocity: 78,
+        velocity: dynamics.rhMelody2a,
         start: Number((barStart + beatSec * 2).toFixed(3)),
         end: Number((barStart + beatSec * 2.45).toFixed(3)),
         duration: Number((beatSec * 0.45).toFixed(3)),
@@ -240,7 +446,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: m2b,
         name: pitchToName(m2b),
-        velocity: 82,
+        velocity: dynamics.rhMelody2b,
         start: Number((barStart + beatSec * 2.5).toFixed(3)),
         end: Number((barStart + beatSec * 2.95).toFixed(3)),
         duration: Number((beatSec * 0.45).toFixed(3)),
@@ -248,13 +454,13 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         hand: "R",
       });
     } else {
-      // ── 4/4 PATTERNS (BALLAD / POP / ARPEGGIO / CINEMATIC) ──
-      // LH: Beat 0 = Bass Root + fifth harmonic
+      // ── 4/4 PATTERNS (BALLAD / POP / ARPEGGIO / CINEMATIC) across 32 bars ──
+      // LH: Beat 0 = Bass Root
       notes.push({
         id: noteId++,
         pitch: bassPitch,
         name: pitchToName(bassPitch),
-        velocity: 78,
+        velocity: dynamics.lhBass,
         start: Number(barStart.toFixed(3)),
         end: Number((barStart + beatSec * 1.8).toFixed(3)),
         duration: Number((beatSec * 1.8).toFixed(3)),
@@ -268,7 +474,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: fifthPitch,
         name: pitchToName(fifthPitch),
-        velocity: 68,
+        velocity: dynamics.lhChord1,
         start: Number((barStart + beatSec).toFixed(3)),
         end: Number((barStart + beatSec * 1.9).toFixed(3)),
         duration: Number((beatSec * 0.9).toFixed(3)),
@@ -282,7 +488,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: octPitch,
         name: pitchToName(octPitch),
-        velocity: 72,
+        velocity: dynamics.lhChord1 + 4,
         start: Number((barStart + beatSec * 2).toFixed(3)),
         end: Number((barStart + beatSec * 3.8).toFixed(3)),
         duration: Number((beatSec * 1.8).toFixed(3)),
@@ -296,7 +502,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: tenthPitch,
         name: pitchToName(tenthPitch),
-        velocity: 64,
+        velocity: dynamics.lhChord2,
         start: Number((barStart + beatSec * 3).toFixed(3)),
         end: Number((barStart + beatSec * 3.9).toFixed(3)),
         duration: Number((beatSec * 0.9).toFixed(3)),
@@ -305,8 +511,8 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
       });
 
       // RH: Beat 0 = 3-note melodic triad chord
-      const melodyIdx = (bar * 4) % defaultMelody.length;
-      const melPitch = root + defaultMelody[melodyIdx];
+      const melodyIdx = ((bar * 4) + (section === "bridge" ? 2 : 0)) % defaultMelody.length;
+      const melPitch = root + registerShift + defaultMelody[melodyIdx];
       const harmPitch1 = melPitch - thirdInterval;
       const harmPitch2 = melPitch - fifthInterval;
 
@@ -314,7 +520,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: harmPitch2,
         name: pitchToName(harmPitch2),
-        velocity: 68,
+        velocity: dynamics.rhTriad2,
         start: Number(barStart.toFixed(3)),
         end: Number((barStart + beatSec * 0.9).toFixed(3)),
         duration: Number((beatSec * 0.9).toFixed(3)),
@@ -325,7 +531,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: harmPitch1,
         name: pitchToName(harmPitch1),
-        velocity: 74,
+        velocity: dynamics.rhTriad1,
         start: Number(barStart.toFixed(3)),
         end: Number((barStart + beatSec * 0.9).toFixed(3)),
         duration: Number((beatSec * 0.9).toFixed(3)),
@@ -336,7 +542,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: melPitch,
         name: pitchToName(melPitch),
-        velocity: 86,
+        velocity: dynamics.rhMelody,
         start: Number(barStart.toFixed(3)),
         end: Number((barStart + beatSec * 0.9).toFixed(3)),
         duration: Number((beatSec * 0.9).toFixed(3)),
@@ -345,13 +551,13 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
       });
 
       // RH: Beat 1 = 8th notes
-      const m1a = root + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
-      const m1b = root + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
+      const m1a = root + registerShift + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
+      const m1b = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
       notes.push({
         id: noteId++,
         pitch: m1a,
         name: pitchToName(m1a),
-        velocity: 78,
+        velocity: dynamics.rhMelody1,
         start: Number((barStart + beatSec).toFixed(3)),
         end: Number((barStart + beatSec * 1.45).toFixed(3)),
         duration: Number((beatSec * 0.45).toFixed(3)),
@@ -362,7 +568,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: m1b,
         name: pitchToName(m1b),
-        velocity: 80,
+        velocity: dynamics.rhMelody1 + 2,
         start: Number((barStart + beatSec * 1.5).toFixed(3)),
         end: Number((barStart + beatSec * 1.95).toFixed(3)),
         duration: Number((beatSec * 0.45).toFixed(3)),
@@ -371,13 +577,13 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
       });
 
       // RH: Beat 2 = 2-note melody interval
-      const m2 = root + defaultMelody[(melodyIdx + 3) % defaultMelody.length];
+      const m2 = root + registerShift + defaultMelody[(melodyIdx + 3) % defaultMelody.length];
       const h2 = m2 - 5;
       notes.push({
         id: noteId++,
         pitch: h2,
         name: pitchToName(h2),
-        velocity: 70,
+        velocity: dynamics.rhHarm2,
         start: Number((barStart + beatSec * 2).toFixed(3)),
         end: Number((barStart + beatSec * 2.9).toFixed(3)),
         duration: Number((beatSec * 0.9).toFixed(3)),
@@ -388,7 +594,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: m2,
         name: pitchToName(m2),
-        velocity: 84,
+        velocity: dynamics.rhMelody - 2,
         start: Number((barStart + beatSec * 2).toFixed(3)),
         end: Number((barStart + beatSec * 2.9).toFixed(3)),
         duration: Number((beatSec * 0.9).toFixed(3)),
@@ -397,13 +603,13 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
       });
 
       // RH: Beat 3 = 8th notes leading into next bar
-      const m3a = root + defaultMelody[(melodyIdx + 4) % defaultMelody.length];
-      const m3b = root + defaultMelody[(melodyIdx + 5) % defaultMelody.length];
+      const m3a = root + registerShift + defaultMelody[(melodyIdx + 4) % defaultMelody.length];
+      const m3b = root + registerShift + defaultMelody[(melodyIdx + 5) % defaultMelody.length];
       notes.push({
         id: noteId++,
         pitch: m3a,
         name: pitchToName(m3a),
-        velocity: 78,
+        velocity: dynamics.rhMelody3a,
         start: Number((barStart + beatSec * 3).toFixed(3)),
         end: Number((barStart + beatSec * 3.45).toFixed(3)),
         duration: Number((beatSec * 0.45).toFixed(3)),
@@ -414,7 +620,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         id: noteId++,
         pitch: m3b,
         name: pitchToName(m3b),
-        velocity: 82,
+        velocity: dynamics.rhMelody3b,
         start: Number((barStart + beatSec * 3.5).toFixed(3)),
         end: Number((barStart + beatSec * 3.95).toFixed(3)),
         duration: Number((beatSec * 0.45).toFixed(3)),
