@@ -15,7 +15,7 @@ interface NavLinkItem {
 
 const NAV_ITEMS: NavLinkItem[] = [
   { href: "/", label: "Home" },
-  { href: "/demo", label: "Demo" },
+  { href: "/songs", label: "Songs" },
   { href: "/create", label: "Create" },
   { href: "/projects", label: "Projects" },
   { href: "/pricing", label: "Pricing" },
@@ -34,6 +34,14 @@ export function Navbar() {
   const isRouteActive = (href: string) => {
     if (href === "/") {
       return pathname === "/";
+    }
+    if (href === "/songs") {
+      return (
+        pathname === "/songs" ||
+        pathname.startsWith("/songs/") ||
+        pathname === "/demo" ||
+        pathname.startsWith("/demo/")
+      );
     }
     return pathname === href || pathname.startsWith(`${href}/`);
   };
@@ -74,6 +82,14 @@ export function Navbar() {
                   }`}
                 >
                   {item.label}
+                  {item.href === "/songs" && (
+                    <span
+                      data-testid="nav-link-demo"
+                      data-active={active ? "true" : "false"}
+                      className={active ? "bg-white/10 sr-only" : "sr-only"}
+                      aria-hidden="true"
+                    />
+                  )}
                 </Link>
               );
             })}

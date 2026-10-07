@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@pianoflow/shared-types": "workspace:*",

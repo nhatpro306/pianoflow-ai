@@ -60,12 +60,20 @@ export function MobileNavDrawer({ isOpen, onClose }: MobileNavDrawerProps) {
     if (href === "/") {
       return pathname === "/";
     }
+    if (href === "/songs") {
+      return (
+        pathname === "/songs" ||
+        pathname.startsWith("/songs/") ||
+        pathname === "/demo" ||
+        pathname.startsWith("/demo/")
+      );
+    }
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
   const navLinks = [
     { href: "/", label: "Home", icon: Home },
-    { href: "/demo", label: "Demo Library", icon: PlayCircle },
+    { href: "/songs", label: "Song Library", icon: PlayCircle },
     { href: "/create", label: "Create / Transcribe", icon: Sparkles },
     { href: "/projects", label: "My Projects", icon: Music },
     { href: "/pricing", label: "Pro Membership", icon: CreditCard },
