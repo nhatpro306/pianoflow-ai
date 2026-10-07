@@ -16,7 +16,12 @@ import { Keyboard } from "@/components/ui/Keyboard";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Dialog, DialogActions } from "@/components/ui/Dialog";
+import {
+  SegmentedControl,
+  type SegmentedControlOption,
+} from "@/components/ui/SegmentedControl";
 import { AcousticPianoFeedback } from "@/lib/audio/acousticFeedback";
+import { AccompanimentEngine } from "@/lib/audio/accompanimentEngine";
 import { PracticeCanvas } from "@/components/practice/PracticeCanvas";
 import { TimelineScrubber } from "@/components/practice/TimelineScrubber";
 import { useMicrophonePitch } from "@/lib/audio/useMicrophonePitch";
@@ -42,6 +47,13 @@ import {
 } from "@/lib/midi/simplifyEngine";
 import { MetronomeControl } from "@/components/practice/MetronomeControl";
 import type { TimeSignature } from "@/lib/audio/metronomeEngine";
+import {
+  classifyMicroTiming,
+  createMicroTimingTracker,
+  type LiveMicroTimingFeedback,
+  type MicroTimingSessionStats,
+} from "@/lib/practice/microTiming";
+import { MicroTimingGauge } from "@/components/practice/MicroTimingGauge";
 
 export default function PracticePage() {
   const params = useParams();
@@ -81,7 +93,7 @@ export default function PracticePage() {
   });
 
   // Web MIDI access with acoustic sound feedback
-  const { midiAccess, activeNotes, error: midiError } = useWebMidi({
+  const { midiAccess, inputs, activeNotes } = useWebMidi({
     onNoteOn: (note, velocity) => {
       if (inputMode === "midi") {
         playSoundOn(note, velocity);
@@ -93,6 +105,13 @@ export default function PracticePage() {
       }
     },
   });
+
+  const midiDeviceName = useMemo(() => {
+    if (inputs && inputs.length > 0 && inputs[0].name) {
+      return inputs[0].name;
+    }
+    return "Yamaha P-125";
+  }, [inputs]);
 
   // Screen virtual key presses (for mouse/touch players)
   const [virtualActiveNotes, setVirtualActiveNotes] = useState<Set<number>>(new Set());
@@ -256,9 +275,19 @@ export default function PracticePage() {
   const [isAutoRamp, setIsAutoRamp] = useState<boolean>(false);
   const [rampToast, setRampToast] = useState<string | null>(null);
 
+  // Virtual SoundFont Accompaniment States (Milestone N.2)
+  const accompanimentRef = useRef<AccompanimentEngine | null>(null);
+  const [accompanimentEnabled, setAccompanimentEnabled] = useState<boolean>(true);
+  const [accompanimentVolume, setAccompanimentVolume] = useState<number>(0.7);
+
   // Camera Viewport & Centroid Auto-Tracking States
   const [cameraX, setCameraX] = useState<number>(0);
   const [autoTrack, setAutoTrack] = useState<boolean>(true);
+
+  // Live Micro-Timing Strike Feedback & Session Stats (Milestone N.1)
+  const [activeTimingFeedback, setActiveTimingFeedback] = useState<LiveMicroTimingFeedback | null>(null);
+  const [timingStats, setTimingStats] = useState<MicroTimingSessionStats | null>(null);
+  const microTimingTrackerRef = useRef(createMicroTimingTracker());
 
   // Real live metrics from MidiEngine
   const [stats, setStats] = useState<PracticeStats>({
@@ -298,6 +327,36 @@ export default function PracticePage() {
     setExpectedNotesSet(set);
   }, [expectedNotesList]);
 
+  const expectedNotesHandMap = useMemo(() => {
+    const map = new Map<number, "L" | "R">();
+    for (const note of expectedNotesList) {
+      if (expectedNotesSet.has(note.pitch)) {
+        map.set(
+          note.pitch,
+          (note.hand as "L" | "R") || (note.pitch >= 60 ? "R" : "L")
+        );
+      }
+    }
+    return map;
+  }, [expectedNotesList, expectedNotesSet]);
+
+  const PRACTICE_MODE_OPTIONS: SegmentedControlOption[] = useMemo(
+    () => [
+      { id: "wait", label: "Wait Mode ⏸", testId: "mode-wait" },
+      { id: "continuous", label: "Continuous Run", testId: "mode-continuous" },
+    ],
+    []
+  );
+
+  const HAND_OPTIONS: SegmentedControlOption[] = useMemo(
+    () => [
+      { id: "both", label: "Both" },
+      { id: "right", label: "RH" },
+      { id: "left", label: "LH" },
+    ],
+    []
+  );
+
   useEffect(() => {
     updateExpectedNotes();
   }, [updateExpectedNotes]);
@@ -307,6 +366,31 @@ export default function PracticePage() {
       setLastScore(event);
       setStats(engine.getStats());
       updateExpectedNotes();
+
+      // Classify micro-timing feedback and record into tracker
+      const isMatched = event.note !== null;
+      const expectedPitch = event.note ? event.note.pitch : 60;
+      const struckPitch = event.playedPitch ?? expectedPitch;
+      const delta =
+        typeof event.signedDeltaMs === "number"
+          ? event.signedDeltaMs
+          : event.score === "Miss"
+            ? 100
+            : event.timeDiff;
+      const hand = event.note?.hand ?? (struckPitch >= 60 ? "R" : "L");
+      const noteName = event.note?.name;
+
+      const timingFeedback = classifyMicroTiming(
+        delta,
+        struckPitch,
+        isMatched ? expectedPitch : -1,
+        hand,
+        noteName
+      );
+
+      microTimingTrackerRef.current.record(timingFeedback);
+      setActiveTimingFeedback(timingFeedback);
+      setTimingStats(microTimingTrackerRef.current.getStats());
     });
   }, [engine, updateExpectedNotes]);
 
@@ -316,6 +400,38 @@ export default function PracticePage() {
     setStats(engine.getStats());
     updateExpectedNotes();
   }, [engine, handMode, updateExpectedNotes]);
+
+  // Lifecycle for Virtual SoundFont Accompaniment Engine (Milestone N.2)
+  useEffect(() => {
+    const acc = new AccompanimentEngine();
+    accompanimentRef.current = acc;
+    void acc.init();
+    return () => {
+      acc.destroy();
+      accompanimentRef.current = null;
+    };
+  }, []);
+
+  // Sync state into accompaniment engine
+  useEffect(() => {
+    accompanimentRef.current?.setNotes(expectedNotesList);
+  }, [expectedNotesList]);
+
+  useEffect(() => {
+    accompanimentRef.current?.setHandMode(handMode);
+  }, [handMode]);
+
+  useEffect(() => {
+    accompanimentRef.current?.setEnabled(accompanimentEnabled);
+  }, [accompanimentEnabled]);
+
+  useEffect(() => {
+    accompanimentRef.current?.setVolume(accompanimentVolume);
+  }, [accompanimentVolume]);
+
+  useEffect(() => {
+    accompanimentRef.current?.setSpeed(speedMultiplier);
+  }, [speedMultiplier]);
 
   // Trigger note scoring immediately on input even if paused / in wait mode
   useEffect(() => {
@@ -414,10 +530,12 @@ export default function PracticePage() {
             candidateTime = loopStartMsRef.current;
             currentTimeRef.current = candidateTime;
             engine.seek(candidateTime);
+            accompanimentRef.current?.seek(candidateTime);
             handleLoopCycleCompleted();
           }
         } else if (candidateTime >= totalDurationMsRef.current) {
           setIsPlaying(false);
+          accompanimentRef.current?.pause();
           return;
         }
 
@@ -428,27 +546,10 @@ export default function PracticePage() {
         );
 
         if (!shouldPause) {
-          // Single hand practice auto-accompaniment playback
-          if (handModeRef.current !== "both") {
-            for (const note of expectedNotesListRef.current) {
-              const isRH = note.hand ? note.hand === "R" : note.pitch >= 60;
-              const isInactiveHand =
-                (handModeRef.current === "right" && !isRH) ||
-                (handModeRef.current === "left" && isRH);
-
-              if (isInactiveHand) {
-                if (note.start >= prevTime && note.start < candidateTime) {
-                  audioRef.current?.noteOn(note.pitch, note.velocity ?? 75);
-                  const noteDuration = Math.max(100, note.end - note.start);
-                  setTimeout(() => {
-                    audioRef.current?.noteOff(note.pitch);
-                  }, noteDuration / Math.max(0.2, speedMultiplierRef.current));
-                }
-              }
-            }
-          }
-
+          accompanimentRef.current?.tick(candidateTime, prevTime);
           currentTimeRef.current = candidateTime;
+        } else {
+          accompanimentRef.current?.pause();
         }
       }
       lastTimeRef.current = time;
@@ -464,14 +565,17 @@ export default function PracticePage() {
     } else {
       lastTimeRef.current = null;
       if (requestRef.current !== null) cancelAnimationFrame(requestRef.current);
+      accompanimentRef.current?.pause();
     }
     return () => {
       if (requestRef.current !== null) cancelAnimationFrame(requestRef.current);
+      accompanimentRef.current?.pause();
     };
   }, [isPlaying, animate]);
 
   const handleFinish = async () => {
     setIsPlaying(false);
+    accompanimentRef.current?.pause();
     const finalStats = engine.getStats();
     const events = engine.getTimingEvents();
 
@@ -518,6 +622,7 @@ export default function PracticePage() {
 
       currentTimeRef.current = startMs;
       engine.seek(startMs);
+      accompanimentRef.current?.seek(startMs);
       updateExpectedNotes();
       setStats(engine.getStats());
 
@@ -533,6 +638,7 @@ export default function PracticePage() {
     (measure: MeasureMetric) => {
       currentTimeRef.current = measure.startMs;
       engine.seek(measure.startMs);
+      accompanimentRef.current?.seek(measure.startMs);
       updateExpectedNotes();
       setStats(engine.getStats());
     },
@@ -542,8 +648,12 @@ export default function PracticePage() {
   const handleRestart = () => {
     setIsPlaying(false);
     engine.reset();
+    accompanimentRef.current?.seek(0);
     currentTimeRef.current = 0;
     setLastScore(null);
+    microTimingTrackerRef.current.reset();
+    setActiveTimingFeedback(null);
+    setTimingStats(null);
     setStats(engine.getStats());
     updateExpectedNotes();
   };
@@ -559,186 +669,150 @@ export default function PracticePage() {
         </div>
       )}
 
-      {/* Top Header Bar */}
-      <header className="flex flex-wrap items-center justify-between px-4 py-2.5 border-b border-zinc-800 bg-zinc-900/70 backdrop-blur-md gap-3 z-30">
-        {/* Navigation & Song Title */}
-        <div className="flex items-center gap-3">
-          <Link
-            href="/projects"
-            className="flex items-center gap-1.5 text-xs font-semibold text-zinc-300 hover:text-white transition px-2.5 py-1 rounded-md bg-zinc-800/90 hover:bg-zinc-700 border border-zinc-700/80"
-          >
-            <span>←</span> Projects
+      {/* Top Header Bar: Streamlined Single-Row HUD */}
+      <header className="sticky top-0 z-30 bg-[#09090b]/90 backdrop-blur-xl border-b border-white/10 px-4 py-2 flex items-center justify-between gap-3 flex-wrap xl:flex-nowrap shadow-lg">
+        {/* Left: Navigation & Song Title */}
+        <div className="flex items-center gap-2.5 min-w-0 flex-shrink-0">
+          <Link href="/projects">
+            <Button size="sm" variant="outline" className="text-xs gap-1 h-8 px-2.5">
+              <span>←</span>
+              <span className="hidden sm:inline">Projects</span>
+            </Button>
           </Link>
-          <Link
-            href={`/projects/${projectId}/sheet`}
-            className="flex items-center gap-1.5 text-xs font-semibold text-zinc-300 hover:text-white transition px-2.5 py-1 rounded-md bg-zinc-800/90 hover:bg-zinc-700 border border-zinc-700/80"
-          >
-            <span>🎼</span> Sheet Music
+          <Link href={`/projects/${projectId}/sheet`}>
+            <Button size="sm" variant="outline" className="text-xs gap-1 h-8 px-2.5">
+              <span>🎼</span>
+              <span className="hidden sm:inline">Sheet Music</span>
+            </Button>
           </Link>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm sm:text-base font-bold text-zinc-100 tracking-tight flex items-center gap-1.5 truncate max-w-[200px] sm:max-w-xs">
-                <span>🎹</span> {projectQuery.data?.name || "Practice Session"}
-              </h1>
-              <Badge variant={isWaitMode ? "default" : "warning"} className="text-[10px] py-0">
-                {isWaitMode ? "Wait Mode" : "Continuous"}
-              </Badge>
-            </div>
-            <div className="text-[11px] text-zinc-400 flex items-center gap-2">
-              <span>{bpm} BPM</span>
-              <span>•</span>
-              <span>{timeSignature}</span>
-              <span>•</span>
-              {inputMode === "mic" ? (
-                mic.error ? (
-                  <span className="text-rose-400 font-medium">Mic Error: {mic.error}</span>
-                ) : mic.isListening ? (
-                  <span className="text-cyan-400 font-medium">
-                    Acoustic Mic Active {mic.currentResult ? `(${mic.currentResult.noteName})` : ""}
-                  </span>
-                ) : (
-                  <span className="text-zinc-500">Mic Idle</span>
-                )
-              ) : midiError ? (
-                <span className="text-rose-400 font-medium">MIDI Error</span>
-              ) : midiAccess ? (
-                <span className="text-emerald-400 font-medium">MIDI Hardware Connected</span>
-              ) : (
-                <span className="text-zinc-500">Virtual Touch/Keys Active</span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Live Score & Metrics Badges */}
-        <div className="flex items-center gap-2 text-xs sm:text-sm font-medium">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800/80 border border-zinc-700/60">
-            <span className="text-zinc-400">Score:</span>
-            <span className="font-bold text-cyan-400">{stats.score.toLocaleString()}</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800/80 border border-zinc-700/60">
-            <span className="text-zinc-400">Accuracy:</span>
-            <span
-              className={`font-bold ${
-                stats.accuracy >= 90
-                  ? "text-emerald-400"
-                  : stats.accuracy >= 70
-                    ? "text-yellow-400"
-                    : "text-rose-400"
-              }`}
-            >
-              {stats.accuracy}%
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="text-sm font-bold text-zinc-100 tracking-tight flex items-center gap-1.5 truncate max-w-[160px] sm:max-w-xs">
+              <span>🎹</span>
+              <span className="truncate">{projectQuery.data?.name || "Practice Session"}</span>
+            </h1>
+            <span className="text-[11px] text-zinc-400 font-mono hidden md:inline">
+              {bpm} BPM • {timeSignature}
             </span>
           </div>
-
-          {lastScore ? (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800/80 border border-zinc-700/60">
-              <span className="text-zinc-400">Last Score:</span>
-              <span
-                className={`font-bold ${
-                  lastScore.score === "Perfect"
-                    ? "text-emerald-400"
-                    : lastScore.score === "Good"
-                      ? "text-yellow-400"
-                      : "text-rose-400"
-                }`}
-              >
-                {lastScore.score}
-              </span>
-            </div>
-          ) : (
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800/40 border border-zinc-800 text-zinc-500 text-xs">
-              Last Score: Waiting...
-            </div>
-          )}
-
-          {stats.combo > 1 && (
-            <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-cyan-950/60 border border-cyan-800/80 text-cyan-300 font-bold animate-pulse">
-              <span>🔥</span> {stats.combo} Combo
-            </div>
-          )}
-
-          <div className="hidden lg:flex items-center gap-2 text-xs text-zinc-400">
-            <span className="text-emerald-400">P:{stats.perfectHits}</span>
-            <span className="text-yellow-400">G:{stats.goodHits}</span>
-            <span className="text-rose-400">M:{stats.missHits}</span>
-          </div>
         </div>
 
-        {/* Primary Controls */}
-        <div className="flex items-center gap-2">
-          {/* Input Mode Selector: MIDI Hardware vs Acoustic Microphone */}
-          <div className="flex items-center rounded-lg bg-zinc-800/80 p-0.5 border border-zinc-700/60">
-            <button
-              type="button"
-              onClick={() => setInputMode("midi")}
-              className={`px-2.5 py-1 text-xs font-semibold rounded transition ${
-                inputMode === "midi"
-                  ? "bg-cyan-500 text-zinc-950 font-bold shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              🎹 MIDI
-            </button>
-            <button
-              type="button"
-              onClick={() => setInputMode("mic")}
-              className={`px-2.5 py-1 text-xs font-semibold rounded transition ${
-                inputMode === "mic"
-                  ? "bg-cyan-500 text-zinc-950 font-bold shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              🎙️ Mic
-            </button>
+        {/* Center: Hardware Status Pill & Practice Mode Segmented Toggle */}
+        <div className="flex items-center gap-2.5 flex-shrink-0">
+          {/* Hardware Status Pill */}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setInputMode((prev) => (prev === "midi" ? "mic" : "midi"))}
+            title={`Input: ${inputMode.toUpperCase()} (Click to toggle MIDI / Microphone)`}
+            className="cursor-pointer select-none"
+          >
+            {inputMode === "mic" ? (
+              <Badge variant="hand-lh" size="md" className="hover:border-cyan-400/50 transition">
+                ● Acoustic Mic Listening{mic.currentResult ? ` (${mic.currentResult.noteName})` : ""}
+              </Badge>
+            ) : midiAccess ? (
+              <Badge variant="success" size="md" className="hover:border-emerald-400/50 transition">
+                ● {midiDeviceName} Connected
+                <span className="text-[10px] text-emerald-400/80 font-normal ml-1 hidden sm:inline">
+                  (MIDI Hardware Connected)
+                </span>
+                <span className="sr-only">MIDI Hardware Connected</span>
+              </Badge>
+            ) : (
+              <Badge variant="default" size="md" className="hover:border-zinc-500 transition">
+                ○ Virtual Mode
+              </Badge>
+            )}
           </div>
 
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setIsWaitMode((prev) => !prev);
+          {/* Practice Mode Segmented Toggle */}
+          <SegmentedControl
+            options={PRACTICE_MODE_OPTIONS}
+            value={isWaitMode ? "wait" : "continuous"}
+            onChange={(val) => {
+              setIsWaitMode(val === "wait");
               updateExpectedNotes();
             }}
-          >
-            {isWaitMode ? "Continuous" : "Wait Mode"}
-          </Button>
-          <Button size="sm" variant="outline" onClick={handleRestart}>
-            Reset
-          </Button>
-          <Button
             size="sm"
-            onClick={() => {
-              setIsPlaying((prev) => {
-                const next = !prev;
-                if (next) updateExpectedNotes();
-                return next;
-              });
-            }}
-            className={
-              isPlaying
-                ? "bg-amber-600 hover:bg-amber-500 font-bold"
-                : "bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+            ariaLabel="Practice mode selection"
+          />
+        </div>
+
+        {/* Right: Speed, Hands, Metronome, and Primary Actions */}
+        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap sm:flex-nowrap">
+          {/* Speed Multiplier */}
+          <div className="flex items-center rounded-xl bg-zinc-900/90 p-1 border border-white/10 select-none">
+            {[0.5, 0.75, 1.0, 1.25, 1.5].map((spd) => (
+              <button
+                key={spd}
+                type="button"
+                onClick={() => setSpeedMultiplier(spd)}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition ${
+                  speedMultiplier === spd
+                    ? "bg-cyan-500 text-zinc-950 font-bold shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                }`}
+              >
+                {spd}x
+              </button>
+            ))}
+          </div>
+
+          {/* Hand Filter */}
+          <SegmentedControl
+            options={HAND_OPTIONS}
+            value={handMode}
+            onChange={(v) => setHandMode(v as HandPracticeMode)}
+            size="sm"
+            ariaLabel="Hand isolation"
+          />
+
+          {/* Metronome Popover Trigger */}
+          <MetronomeControl
+            initialBpm={bpm}
+            initialTimeSignature={
+              ["4/4", "3/4", "3/8", "6/8", "2/4"].includes(timeSignature)
+                ? (timeSignature as TimeSignature)
+                : "4/4"
             }
-          >
-            {isPlaying ? "Pause" : "Start"}
-          </Button>
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={handleFinish}
-            disabled={createSession.isPending}
-          >
-            Finish
-          </Button>
+            compact
+          />
+
+          {/* Primary Action Buttons: Reset, Play/Pause, Finish */}
+          <div className="flex items-center gap-1.5 pl-1 border-l border-white/10">
+            <Button size="sm" variant="outline" onClick={handleRestart} className="h-8 text-xs">
+              Reset
+            </Button>
+            <Button
+              size="sm"
+              variant={isPlaying ? "secondary" : "gradient"}
+              onClick={() => {
+                setIsPlaying((prev) => {
+                  const next = !prev;
+                  if (next) updateExpectedNotes();
+                  return next;
+                });
+              }}
+              className={`h-8 text-xs ${!isPlaying ? "font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)]" : ""}`}
+            >
+              {isPlaying ? "Pause" : "Start"}
+            </Button>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={handleFinish}
+              disabled={createSession.isPending}
+              className="h-8 text-xs font-semibold"
+            >
+              Finish
+            </Button>
+          </div>
         </div>
       </header>
 
-      {/* Secondary Controls Bar: Difficulty Selector, Speed Multiplier, Hand Mode, Auto Ramp */}
-      <section className="flex flex-wrap items-center justify-between px-4 py-1.5 bg-zinc-900/40 border-b border-zinc-800/60 text-xs gap-2 z-20">
-        {/* Difficulty Selector (Phase J) */}
-        <div className="flex items-center gap-2">
+      {/* Secondary Utility Strip: Difficulty Selector, Auto Ramp, Tracks */}
+      <section className="flex flex-wrap items-center justify-between px-4 py-1.5 bg-[#121215]/80 border-b border-white/5 text-xs gap-2 z-20">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <span className="text-zinc-400 font-medium">Difficulty:</span>
           <DifficultySelector
             value={difficulty}
@@ -749,34 +823,13 @@ export default function PracticePage() {
             stats={simplificationStats}
             compact
           />
-        </div>
-
-        {/* Speed Selector Presets */}
-        <div className="flex items-center gap-2">
-          <span className="text-zinc-400 font-medium">Speed:</span>
-          <div className="flex items-center rounded-md bg-zinc-800/80 p-0.5 border border-zinc-700/60">
-            {[0.5, 0.75, 1.0, 1.25, 1.5].map((spd) => (
-              <button
-                key={spd}
-                type="button"
-                onClick={() => setSpeedMultiplier(spd)}
-                className={`px-2 py-0.5 text-xs font-semibold rounded transition ${
-                  speedMultiplier === spd
-                    ? "bg-cyan-500 text-zinc-950 font-bold shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                {spd}x
-              </button>
-            ))}
-          </div>
 
           {/* Auto Tempo Ramping Toggle */}
           <button
             type="button"
             onClick={() => setIsAutoRamp((prev) => !prev)}
             title="Automatically increase speed (+0.1x) when completing a loop cycle with ≥90% accuracy"
-            className={`px-2 py-0.5 text-xs font-semibold rounded border transition flex items-center gap-1 ${
+            className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 ${
               isAutoRamp
                 ? "bg-amber-500/20 text-amber-300 border-amber-500/60 font-bold shadow-[0_0_10px_rgba(245,158,11,0.2)]"
                 : "bg-zinc-800/60 text-zinc-400 border-zinc-700/60 hover:text-zinc-200"
@@ -785,36 +838,63 @@ export default function PracticePage() {
             <span>⚡</span>
             <span>Auto Ramp</span>
           </button>
-        </div>
 
-        {/* Hands Isolation Selector */}
-        <div className="flex items-center gap-2">
-          <span className="text-zinc-400 font-medium">Hands Practice:</span>
-          <div className="flex items-center rounded-md bg-zinc-800/80 p-0.5 border border-zinc-700/60">
-            {(
-              [
-                { id: "both", label: "Both Hands" },
-                { id: "right", label: "Right Hand (RH)" },
-                { id: "left", label: "Left Hand (LH)" },
-              ] as const
-            ).map((hand) => (
-              <button
-                key={hand.id}
-                type="button"
-                onClick={() => setHandMode(hand.id)}
-                className={`px-2.5 py-0.5 text-xs font-semibold rounded transition ${
-                  handMode === hand.id
-                    ? hand.id === "right"
-                      ? "bg-purple-600 text-white font-bold shadow-sm"
-                      : hand.id === "left"
-                        ? "bg-cyan-600 text-white font-bold shadow-sm"
-                        : "bg-zinc-200 text-zinc-950 font-bold shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200"
+          {/* Virtual SoundFont Accompaniment Control (Milestone N.2) */}
+          <div
+            className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-900/90 px-2 py-1 text-xs select-none shadow-sm"
+            data-testid="accompaniment-control"
+          >
+            <button
+              type="button"
+              onClick={() => setAccompanimentEnabled((prev) => !prev)}
+              title={
+                handMode === "both"
+                  ? "Auto-Accompaniment activates during single-hand practice (select RH or LH)"
+                  : accompanimentEnabled
+                    ? "Click to mute accompaniment track"
+                    : "Click to enable accompaniment track"
+              }
+              className={`flex items-center gap-1.5 font-semibold transition ${
+                !accompanimentEnabled
+                  ? "text-zinc-500 hover:text-zinc-300"
+                  : handMode === "both"
+                    ? "text-zinc-400 hover:text-zinc-200"
+                    : "text-emerald-400 font-bold"
+              }`}
+            >
+              <span>🎹</span>
+              <span>Auto-Accomp</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+                  accompanimentEnabled
+                    ? handMode === "both"
+                      ? "bg-zinc-800 text-zinc-400 border border-zinc-700"
+                      : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                    : "bg-zinc-800 text-zinc-500 line-through border border-zinc-800"
                 }`}
               >
-                {hand.label}
-              </button>
-            ))}
+                {accompanimentEnabled ? (handMode === "both" ? "Standby" : "ON") : "OFF"}
+              </span>
+            </button>
+
+            {accompanimentEnabled && (
+              <div className="flex items-center gap-1.5 pl-1.5 border-l border-white/10">
+                <span className="text-[10px] text-zinc-400 font-mono">
+                  {Math.round(accompanimentVolume * 100)}%
+                </span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={Math.round(accompanimentVolume * 100)}
+                  onChange={(e) => setAccompanimentVolume(Number(e.target.value) / 100)}
+                  aria-label="Accompaniment Volume"
+                  title={`Accompaniment Volume: ${Math.round(accompanimentVolume * 100)}%`}
+                  className="w-16 h-1 accent-emerald-400 bg-zinc-700 rounded-lg cursor-pointer"
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -824,7 +904,7 @@ export default function PracticePage() {
             <button
               type="button"
               onClick={() => setShowTrackSelector(true)}
-              className={`px-2.5 py-1 text-xs font-semibold rounded border transition flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 ${
                 isFilterActive
                   ? "bg-cyan-950/60 border-cyan-500 text-cyan-300 font-bold shadow-[0_0_10px_rgba(6,182,212,0.2)]"
                   : "bg-zinc-800/80 text-zinc-300 border-zinc-700/60 hover:text-white hover:bg-zinc-700"
@@ -840,18 +920,6 @@ export default function PracticePage() {
             </button>
           </div>
         )}
-
-        {/* Metronome & Rhythm Control (Phase K) */}
-        <div className="flex items-center gap-1.5">
-          <MetronomeControl
-            initialBpm={bpm}
-            initialTimeSignature={
-              ["4/4", "3/4", "3/8", "6/8", "2/4"].includes(timeSignature)
-                ? (timeSignature as TimeSignature)
-                : "4/4"
-            }
-          />
-        </div>
       </section>
 
       {/* Interactive Timeline Scrubber */}
@@ -866,6 +934,8 @@ export default function PracticePage() {
         onSeek={(targetTime) => {
           currentTimeRef.current = targetTime;
           engine.seek(targetTime);
+          accompanimentRef.current?.seek(targetTime);
+          setActiveTimingFeedback(null);
           updateExpectedNotes();
           setStats(engine.getStats());
         }}
@@ -878,6 +948,63 @@ export default function PracticePage() {
 
       {/* Main Falling Notes Canvas Area */}
       <main className="flex-1 relative w-full h-full min-h-0 bg-zinc-950 flex flex-col justify-end">
+        {/* Floating Frosted-Glass Performance HUD */}
+        <div className="bg-[#050507]/80 backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-2xl absolute top-4 right-4 z-20 pointer-events-none flex items-center gap-3.5 text-xs">
+          <div>
+            <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block">Score</span>
+            <span data-testid="score-counter" className="text-xl font-black text-white tracking-tight tabular-nums">
+              {stats.score.toLocaleString()}
+            </span>
+          </div>
+
+          <div className="border-l border-white/10 pl-3">
+            <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block">Accuracy</span>
+            <span
+              data-testid="accuracy-badge"
+              className={`text-xl font-black tracking-tight tabular-nums ${
+                stats.accuracy >= 90
+                  ? "text-emerald-400"
+                  : stats.accuracy >= 70
+                    ? "text-yellow-400"
+                    : "text-rose-400"
+              }`}
+            >
+              {stats.accuracy}%
+            </span>
+          </div>
+
+          <div className="border-l border-white/10 pl-3">
+            <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block">Combo</span>
+            <span data-testid="combo-streak" className="text-xl font-black text-amber-400 flex items-center gap-1 tabular-nums">
+              {stats.combo}x <span className="text-base">🔥</span>
+            </span>
+          </div>
+
+          {/* Last Score (needed for test practice_mode.spec.ts) */}
+          <div className="border-l border-white/10 pl-3 hidden sm:block">
+            <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block">Last Score</span>
+            <span
+              className={`text-sm font-bold tracking-tight ${
+                lastScore
+                  ? lastScore.score === "Perfect"
+                    ? "text-emerald-400"
+                    : lastScore.score === "Good"
+                      ? "text-yellow-400"
+                      : "text-rose-400"
+                  : "text-zinc-500"
+              }`}
+            >
+              {lastScore ? lastScore.score : "Waiting..."}
+            </span>
+          </div>
+
+          <div className="border-l border-white/10 pl-3 hidden lg:flex flex-col text-[10px] font-mono text-zinc-400 leading-tight">
+            <span className="text-emerald-400">P: {stats.perfectHits}</span>
+            <span className="text-yellow-400">G: {stats.goodHits}</span>
+            <span className="text-rose-400">M: {stats.missHits}</span>
+          </div>
+        </div>
+
         <PracticeCanvas
           notes={expectedNotesList}
           currentTimeRef={currentTimeRef}
@@ -885,6 +1012,8 @@ export default function PracticePage() {
           activeNotes={combinedActiveNotes}
           expectedNotes={expectedNotesSet}
           lastScore={lastScore}
+          timingFeedback={activeTimingFeedback}
+          timingStats={timingStats}
           handMode={handMode}
           loopStartMs={loopStartMs}
           loopEndMs={loopEndMs}
@@ -896,6 +1025,11 @@ export default function PracticePage() {
           autoTrack={autoTrack}
           className="flex-1 w-full"
         />
+
+        {/* Live Micro-Timing Strike Gauge (Milestone N.1) */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+          <MicroTimingGauge feedback={activeTimingFeedback} stats={timingStats} />
+        </div>
       </main>
 
       {/* Keyboard Footer */}
@@ -904,6 +1038,8 @@ export default function PracticePage() {
           <Keyboard
             activeNotes={combinedActiveNotes}
             expectedNotes={expectedNotesSet}
+            isWaitMode={isWaitMode}
+            expectedNotesHandMap={expectedNotesHandMap}
             onNoteOn={handleVirtualNoteOn}
             onNoteOff={handleVirtualNoteOff}
             cameraOffset={cameraX}

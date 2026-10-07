@@ -3,6 +3,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { keyRect, WHITE_KEY_COUNT } from "@/lib/piano";
 import type { ExpectedNote, ScoreEvent, HandPracticeMode } from "@/lib/midi/MidiEngine";
+import type {
+  LiveMicroTimingFeedback,
+  MicroTimingSessionStats,
+} from "@/lib/practice/microTiming";
+import { MicroTimingGauge } from "./MicroTimingGauge";
 
 interface PracticeCanvasProps {
   notes: ExpectedNote[];
@@ -26,6 +31,12 @@ interface PracticeCanvasProps {
   autoTrack?: boolean;
   /** Forced full 88-key view (no horizontal camera zoom) */
   isFullView?: boolean;
+  /** Live micro-timing strike feedback (Milestone N.1) */
+  timingFeedback?: LiveMicroTimingFeedback | null;
+  /** Mini session stats for micro-timing HUD */
+  timingStats?: MicroTimingSessionStats | null;
+  /** Whether to render embedded MicroTimingGauge overlay inside canvas */
+  showTimingGauge?: boolean;
   className?: string;
 }
 
@@ -199,6 +210,9 @@ export function PracticeCanvas({
   onCameraChange,
   autoTrack = false,
   isFullView = false,
+  timingFeedback = null,
+  timingStats = null,
+  showTimingGauge = false,
   className = "",
 }: PracticeCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -290,6 +304,46 @@ export function PracticeCanvas({
       }
     }
   }, [lastScore, virtualWidth, dimensions.height]);
+
+  // Micro-timing calibrated particle spark emission
+  useEffect(() => {
+    if (timingFeedback) {
+      const pitch = timingFeedback.notePitch;
+      if (pitch && pitch >= 21 && pitch <= 108) {
+        const lane = keyRect(pitch, virtualWidth);
+        const sparkX = lane.x + lane.w / 2;
+        const sparkY = dimensions.height - 4;
+
+        if (timingFeedback.rating === "pocket") {
+          particlePoolRef.current.spawn(
+            sparkX,
+            sparkY,
+            ["#ffffff", "#10b981", "#34d399", "#a7f3d0"],
+            18,
+            5.0
+          );
+        } else if (timingFeedback.rating === "early") {
+          particlePoolRef.current.spawn(
+            sparkX,
+            sparkY,
+            ["#ffffff", "#f59e0b", "#fbbf24", "#fef08a"],
+            14,
+            4.0
+          );
+        } else if (timingFeedback.rating === "late") {
+          particlePoolRef.current.spawn(
+            sparkX,
+            sparkY,
+            ["#ffffff", "#0284c7", "#38bdf8", "#bae6fd"],
+            14,
+            4.0
+          );
+        } else if (timingFeedback.rating === "miss") {
+          particlePoolRef.current.spawn(sparkX, sparkY, ["#f43f5e", "#fb7185"], 6, 2.0);
+        }
+      }
+    }
+  }, [timingFeedback, virtualWidth, dimensions.height]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -596,8 +650,15 @@ export function PracticeCanvas({
         style={{ width: dimensions.width, height: dimensions.height }}
       />
 
+      {/* Embedded Live Micro-Timing Strike Gauge (when enabled) */}
+      {showTimingGauge && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-20">
+          <MicroTimingGauge feedback={timingFeedback} stats={timingStats} />
+        </div>
+      )}
+
       {/* Real-time Hit Feedback Popup Overlay in Screen Space */}
-      {activeFeedback && Date.now() - activeFeedback.time < 1200 && (
+      {!showTimingGauge && activeFeedback && Date.now() - activeFeedback.time < 1200 && (
         <div className="absolute bottom-12 left-1/2 -translate-x-1/2 pointer-events-none transition-all duration-300 animate-in fade-in zoom-in-90 flex flex-col items-center">
           <span
             className={`text-2xl font-black tracking-wider uppercase drop-shadow-[0_0_15px_rgba(0,0,0,0.8)] ${

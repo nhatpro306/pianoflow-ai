@@ -1,0 +1,28 @@
+import type { NoteData } from "@pianoflow/shared-types";
+
+export type GenreCategory =
+  | "Classical"
+  | "Anime & Ghibli"
+  | "K-Pop"
+  | "Modern & Pop"
+  | "Cinematic & Game";
+
+export type SongDifficulty = "Beginner" | "Intermediate" | "Master";
+
+export interface RepertoireSong {
+  id: string;
+  title: string;
+  composer: string;
+  period: string;
+  genre: GenreCategory;
+  difficulty: SongDifficulty;
+  bpm: number;
+  time_signature: string;
+  key: string;
+  duration_sec: number;
+  description: string;
+  coverGradient: string;
+  noteCount: number;
+  tags?: string[];
+  noteData: NoteData;
+}

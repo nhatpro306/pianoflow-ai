@@ -18,6 +18,10 @@ export interface KeyboardProps {
   autoTrack?: boolean;
   onToggleAutoTrack?: () => void;
   className?: string;
+  /** Wait mode target key glowing state */
+  isWaitMode?: boolean;
+  /** Optional hand assignment per pitch: 'R' (treble/violet) or 'L' (bass/cyan) */
+  expectedNotesHandMap?: Map<number, "L" | "R"> | Record<number, "L" | "R">;
 }
 
 const isWhiteKey = (note: number) => {
@@ -46,6 +50,8 @@ export function Keyboard({
   autoTrack = false,
   onToggleAutoTrack,
   className = '',
+  isWaitMode = false,
+  expectedNotesHandMap,
 }: KeyboardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
@@ -73,11 +79,23 @@ export function Keyboard({
     return () => observer.disconnect();
   }, []);
 
+  // Helper to determine hand for a given note pitch
+  const getHandForNote = (pitch: number): "L" | "R" => {
+    if (expectedNotesHandMap) {
+      const val =
+        expectedNotesHandMap instanceof Map
+          ? expectedNotesHandMap.get(pitch)
+          : expectedNotesHandMap[pitch];
+      if (val) return val;
+    }
+    return pitch >= 60 ? "R" : "L";
+  };
+
   // Compute key and virtual strip dimensions
-  // On mobile (<768px), each white key is at least 26px so 15 white keys fit in ~390px
+  // On mobile (<768px), each white key is at least 32px so 12-14 white keys fit cleanly
   const whiteKeyWidth = isFullView
     ? containerWidth / WHITE_KEY_COUNT
-    : Math.max(26, containerWidth / 15);
+    : Math.max(32, containerWidth / 15);
 
   const virtualWidth = isFullView ? containerWidth : WHITE_KEY_COUNT * whiteKeyWidth;
   const maxScrollX = Math.max(0, virtualWidth - containerWidth);
@@ -150,13 +168,13 @@ export function Keyboard({
     >
       {/* Responsive Octave & Camera Control Bar */}
       <div className="flex items-center justify-between w-full px-2.5 py-1.5 mb-2 bg-zinc-900/90 rounded-lg border border-zinc-800 text-xs gap-2">
-        {/* Previous Octave Button */}
+        {/* Previous Octave Button (min 44px touch target) */}
         <button
           type="button"
           disabled={isFullView || windowIndex <= 0}
           onClick={() => jumpToOctave(Math.max(0, windowIndex - 1))}
           aria-label="Previous Octave Range"
-          className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-zinc-800 text-zinc-200 disabled:opacity-30 disabled:pointer-events-none hover:bg-zinc-700 active:bg-zinc-600 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none transition-colors font-medium"
+          className="flex items-center gap-1 min-h-[44px] min-w-[44px] justify-center px-3 py-2 rounded-lg bg-zinc-800 text-zinc-200 disabled:opacity-30 disabled:pointer-events-none hover:bg-zinc-700 active:bg-zinc-600 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none transition-all font-medium"
         >
           <ChevronLeft className="h-4 w-4" />
           <span className="hidden xs:inline">Oct {Math.max(0, windowIndex - 1)}</span>
@@ -174,26 +192,26 @@ export function Keyboard({
               onClick={onToggleAutoTrack}
               aria-pressed={autoTrack}
               title="Auto-track upcoming note centroid camera"
-              className={`hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold transition border ${
+              className={`hidden sm:flex items-center gap-1.5 min-h-[44px] px-3 py-2 rounded-lg text-xs font-semibold transition-all border active:scale-[0.98] ${
                 autoTrack
                   ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
                   : 'bg-zinc-800/80 text-zinc-400 border-zinc-700/60 hover:text-zinc-200'
               }`}
             >
-              <Sparkles className="h-3 w-3" />
+              <Sparkles className="h-3.5 w-3.5" />
               <span>Auto Follow</span>
             </button>
           )}
         </div>
 
-        {/* Next Octave & Viewport Mode Buttons */}
+        {/* Next Octave & Viewport Mode Buttons (min 44px touch target) */}
         <div className="flex items-center gap-1.5">
           <button
             type="button"
             disabled={isFullView || windowIndex >= PREDEFINED_OCTAVE_WINDOWS.length - 1}
             onClick={() => jumpToOctave(Math.min(PREDEFINED_OCTAVE_WINDOWS.length - 1, windowIndex + 1))}
             aria-label="Next Octave Range"
-            className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-zinc-800 text-zinc-200 disabled:opacity-30 disabled:pointer-events-none hover:bg-zinc-700 active:bg-zinc-600 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none transition-colors font-medium"
+            className="flex items-center gap-1 min-h-[44px] min-w-[44px] justify-center px-3 py-2 rounded-lg bg-zinc-800 text-zinc-200 disabled:opacity-30 disabled:pointer-events-none hover:bg-zinc-700 active:bg-zinc-600 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none transition-all font-medium"
           >
             <span className="hidden xs:inline">Oct {Math.min(PREDEFINED_OCTAVE_WINDOWS.length - 1, windowIndex + 1)}</span>
             <ChevronRight className="h-4 w-4" />
@@ -207,7 +225,7 @@ export function Keyboard({
             }}
             aria-label={isFullView ? 'Switch to Zoomed 2-Octave View' : 'Switch to Full 88-Key View'}
             title={isFullView ? 'Switch to Zoomed 2-Octave View' : 'Switch to Full 88-Key View'}
-            className="p-1.5 rounded-md bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none transition-colors"
+            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none transition-all"
           >
             {isFullView ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
@@ -244,13 +262,21 @@ export function Keyboard({
                   'bg-gradient-to-b from-white to-zinc-100 border-zinc-300 text-zinc-600 hover:to-zinc-200';
                 if (isActive && isExpected) {
                   bgClass =
-                    'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.8)]';
+                    'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.9)]';
                 } else if (isActive && !isExpected) {
                   bgClass =
-                    'bg-rose-500 border-rose-400 text-white shadow-[0_0_15px_rgba(244,63,94,0.8)]';
+                    'bg-rose-500 border-rose-400 text-white shadow-[0_0_20px_rgba(244,63,94,0.9)]';
                 } else if (!isActive && isExpected) {
-                  bgClass =
-                    'bg-cyan-200/95 border-cyan-400 text-cyan-950 shadow-[0_0_12px_rgba(34,211,238,0.5)]';
+                  if (isWaitMode) {
+                    const hand = getHandForNote(note);
+                    bgClass =
+                      hand === 'R'
+                        ? 'bg-violet-600/90 border-violet-400 text-white ring-2 ring-violet-500 shadow-[0_0_16px_rgba(139,92,246,0.8)] animate-pulse'
+                        : 'bg-cyan-500/90 border-cyan-300 text-zinc-950 ring-2 ring-cyan-400 shadow-[0_0_16px_rgba(6,182,212,0.8)] animate-pulse';
+                  } else {
+                    bgClass =
+                      'bg-cyan-200/95 border-cyan-400 text-cyan-950 shadow-[0_0_12px_rgba(34,211,238,0.5)]';
+                  }
                 }
 
                 return (
@@ -266,7 +292,7 @@ export function Keyboard({
                     onPointerUp={() => onNoteOff?.(note)}
                     onPointerLeave={() => onNoteOff?.(note)}
                     style={{ width: `${whiteKeyWidth}px` }}
-                    className={`h-36 sm:h-44 border-r border-b first:border-l rounded-b-md flex-shrink-0 transition-colors duration-75 flex flex-col justify-end items-center pb-2 cursor-pointer touch-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none ${bgClass}`}
+                    className={`h-36 sm:h-44 min-h-[44px] border-r border-b first:border-l rounded-b-md flex-shrink-0 transition-colors duration-75 flex flex-col justify-end items-center pb-2 cursor-pointer touch-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none ${bgClass}`}
                   >
                     {isCKey && (
                       <span className="text-[11px] font-bold opacity-80 pointer-events-none text-zinc-900">
@@ -289,13 +315,21 @@ export function Keyboard({
                 'bg-gradient-to-b from-zinc-800 to-zinc-950 border-zinc-950 hover:to-zinc-900';
               if (isActive && isExpected) {
                 bgClass =
-                  'bg-emerald-600 border-emerald-500 shadow-[0_0_15px_rgba(5,150,105,0.9)]';
+                  'bg-emerald-600 border-emerald-500 shadow-[0_0_20px_rgba(5,150,105,0.9)]';
               } else if (isActive && !isExpected) {
                 bgClass =
-                  'bg-rose-600 border-rose-500 shadow-[0_0_15px_rgba(225,29,72,0.9)]';
+                  'bg-rose-600 border-rose-500 shadow-[0_0_20px_rgba(225,29,72,0.9)]';
               } else if (!isActive && isExpected) {
-                bgClass =
-                  'bg-cyan-600 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.6)]';
+                if (isWaitMode) {
+                  const hand = getHandForNote(note);
+                  bgClass =
+                    hand === 'R'
+                      ? 'bg-violet-600 border-violet-400 text-white ring-2 ring-violet-500 shadow-[0_0_16px_rgba(139,92,246,0.8)] animate-pulse'
+                      : 'bg-cyan-600 border-cyan-400 text-white ring-2 ring-cyan-400 shadow-[0_0_16px_rgba(6,182,212,0.8)] animate-pulse';
+                } else {
+                  bgClass =
+                    'bg-cyan-600 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.6)]';
+                }
               }
 
               const rect = keyRect(note, virtualWidth);
@@ -312,7 +346,7 @@ export function Keyboard({
                   }}
                   onPointerUp={() => onNoteOff?.(note)}
                   onPointerLeave={() => onNoteOff?.(note)}
-                  className={`absolute top-0 h-22 sm:h-28 rounded-b-sm z-10 flex-shrink-0 transition-colors duration-75 shadow-lg border-b-2 cursor-pointer touch-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none ${bgClass}`}
+                  className={`absolute top-0 h-22 sm:h-28 min-h-[44px] rounded-b-sm z-10 flex-shrink-0 transition-colors duration-75 shadow-lg border-b-2 cursor-pointer touch-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none ${bgClass}`}
                   style={{
                     left: `${rect.x}px`,
                     width: `${rect.w}px`,

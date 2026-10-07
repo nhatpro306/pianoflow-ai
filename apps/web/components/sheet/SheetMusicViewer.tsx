@@ -5,8 +5,22 @@ import type { NoteData } from "@pianoflow/shared-types";
 import { buildSheetScoreModel } from "@/lib/sheet/sheetModel";
 import { AcousticPianoFeedback } from "@/lib/audio/acousticFeedback";
 import { Button } from "@/components/ui/Button";
+import { SegmentedControl, type SegmentedControlOption } from "@/components/ui/SegmentedControl";
 import { MetronomeControl } from "@/components/practice/MetronomeControl";
 import type { TimeSignature } from "@/lib/audio/metronomeEngine";
+
+const HAND_OPTIONS: SegmentedControlOption[] = [
+  { id: "both", label: "Both 👐", testId: "hand-both" },
+  { id: "right", label: "RH ✋", testId: "hand-rh" },
+  { id: "left", label: "LH 🤚", testId: "hand-lh" },
+];
+
+const SPEED_OPTIONS: SegmentedControlOption[] = [
+  { id: "0.5", label: "0.5x", testId: "speed-0.5" },
+  { id: "0.75", label: "0.75x", testId: "speed-0.75" },
+  { id: "1", label: "1x", testId: "speed-1.0" },
+  { id: "1.25", label: "1.25x", testId: "speed-1.25" },
+];
 
 interface SheetMusicViewerProps {
   noteData: NoteData;
@@ -29,6 +43,7 @@ export function SheetMusicViewer({
   const [speedMultiplier, setSpeedMultiplier] = useState(1.0);
   const [zoomScale, setZoomScale] = useState(1.0);
   const [handFilter, setHandFilter] = useState<"both" | "right" | "left">("both");
+  const [isAudioMuted, setIsAudioMuted] = useState(false);
 
   const currentTimeRef = useRef(0);
   const [currentTimeDisplay, setCurrentTimeDisplay] = useState(0);
@@ -71,9 +86,10 @@ export function SheetMusicViewer({
             for (const n of allNotes) {
               if (n.start >= currentTimeRef.current && n.start < nextTime) {
                 if (
-                  handFilter === "both" ||
-                  (handFilter === "right" && n.hand === "R") ||
-                  (handFilter === "left" && n.hand === "L")
+                  !isAudioMuted &&
+                  (handFilter === "both" ||
+                    (handFilter === "right" && n.hand === "R") ||
+                    (handFilter === "left" && n.hand === "L"))
                 ) {
                   audioRef.current?.noteOn(n.pitch, 80);
                   const dur = Math.max(0.1, n.end - n.start);
@@ -92,7 +108,7 @@ export function SheetMusicViewer({
       lastTimeRef.current = time;
       requestRef.current = requestAnimationFrame(animate);
     },
-    [model, speedMultiplier, totalDuration, handFilter]
+    [model, speedMultiplier, totalDuration, handFilter, isAudioMuted]
   );
 
   useEffect(() => {
@@ -131,6 +147,31 @@ export function SheetMusicViewer({
     setCurrentTimeDisplay(currentTimeRef.current);
   };
 
+  const handleReset = () => {
+    setIsPlaying(false);
+    currentTimeRef.current = 0;
+    setCurrentTimeDisplay(0);
+    lastSystemIndexRef.current = -1;
+  };
+
+  const handleToggleAudioPreview = () => {
+    setIsAudioMuted((prev) => {
+      const next = !prev;
+      if (!next && !isPlaying) {
+        // Quick acoustic piano chord audition (C4, E4, G4)
+        audioRef.current?.noteOn(60, 80);
+        audioRef.current?.noteOn(64, 80);
+        audioRef.current?.noteOn(67, 80);
+        setTimeout(() => {
+          audioRef.current?.noteOff(60);
+          audioRef.current?.noteOff(64);
+          audioRef.current?.noteOff(67);
+        }, 500);
+      }
+      return next;
+    });
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -161,68 +202,118 @@ export function SheetMusicViewer({
   }, []);
 
   return (
-    <div className="flex flex-col h-full min-h-screen bg-zinc-950 text-white select-none print:bg-white print:text-black">
+    <div className="sheet-music-container flex flex-col h-full min-h-screen bg-[#09090b] text-white select-none print:bg-white print:text-black">
+      {/* High-contrast @media print stylesheet */}
+      <style>{`
+        @media print {
+          @page {
+            margin: 1cm;
+            size: auto;
+          }
+          body,
+          .sheet-music-container {
+            background-color: #ffffff !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+          }
+          header,
+          nav,
+          .print\\:hidden,
+          [data-testid="header"],
+          .sheet-music-playhead {
+            display: none !important;
+          }
+          svg {
+            color: #000000 !important;
+          }
+          .sheet-system-card {
+            background-color: #ffffff !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            margin-bottom: 1.5rem !important;
+          }
+        }
+      `}</style>
+
       {/* Controls Bar (Hidden during printing) */}
-      <header className="print:hidden sticky top-0 flex flex-wrap items-center justify-between px-4 py-2.5 bg-zinc-900 border-b border-zinc-800 gap-3 z-30 shadow-md">
+      <header className="print:hidden sticky top-0 flex flex-wrap items-center justify-between px-4 py-2.5 bg-[#09090b]/80 backdrop-blur-xl border-b border-white/10 gap-3 z-30 shadow-lg">
         <div className="flex items-center gap-3">
           {onBackToPractice && (
-            <Button size="sm" variant="outline" onClick={onBackToPractice}>
-              ← Practice Mode
+            <Button size="sm" variant="outline" onClick={onBackToPractice} className="flex items-center gap-1.5">
+              <span>←</span> Practice Mode
             </Button>
           )}
           <h1 className="text-sm sm:text-base font-bold text-zinc-100 flex items-center gap-2">
             <span>🎼</span> {projectName}
           </h1>
-          <span className="text-xs text-zinc-400 hidden sm:inline">
+          <span className="text-xs text-zinc-400 hidden sm:inline font-mono">
             {model.bpm} BPM • {model.timeSignature} • {model.totalMeasures} Measures
           </span>
         </div>
 
         {/* Primary Playback, Speed, Hands & Zoom Controls */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Hands Filter */}
-          <div className="flex items-center rounded-md bg-zinc-800 p-0.5 border border-zinc-700/60 text-xs">
-            {(
-              [
-                { id: "both", label: "Both" },
-                { id: "right", label: "RH" },
-                { id: "left", label: "LH" },
-              ] as const
-            ).map((h) => (
-              <button
-                key={h.id}
-                onClick={() => setHandFilter(h.id)}
-                className={`px-2 py-0.5 rounded font-semibold transition ${
-                  handFilter === h.id ? "bg-zinc-200 text-zinc-950" : "text-zinc-400 hover:text-white"
-                }`}
-              >
-                {h.label}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            options={HAND_OPTIONS}
+            value={handFilter}
+            onChange={(val) => setHandFilter(val as "both" | "right" | "left")}
+            size="sm"
+            ariaLabel="Hand isolation"
+          />
 
           {/* Speed selector */}
-          <div className="flex items-center rounded-md bg-zinc-800 p-0.5 border border-zinc-700/60 text-xs">
-            {[0.5, 0.75, 1.0, 1.25].map((s) => (
-              <button
-                key={s}
-                onClick={() => setSpeedMultiplier(s)}
-                className={`px-2 py-0.5 rounded font-semibold transition ${
-                  speedMultiplier === s ? "bg-cyan-500 text-zinc-950" : "text-zinc-400 hover:text-white"
-                }`}
-              >
-                {s}x
-              </button>
-            ))}
-          </div>
-
-          <Button
+          <SegmentedControl
+            options={SPEED_OPTIONS}
+            value={speedMultiplier === 1 ? "1" : String(speedMultiplier)}
+            onChange={(val) => setSpeedMultiplier(parseFloat(val))}
             size="sm"
-            onClick={() => setIsPlaying((p) => !p)}
-            className={isPlaying ? "bg-amber-600 hover:bg-amber-500 font-bold" : "bg-cyan-500 text-zinc-950 font-bold"}
-          >
-            {isPlaying ? "Pause" : "Play"}
-          </Button>
+            ariaLabel="Playback speed"
+          />
+
+          {/* Playback Controls */}
+          <div className="flex items-center gap-1.5">
+            <Button
+              size="sm"
+              variant={isPlaying ? "secondary" : "gradient"}
+              onClick={() => setIsPlaying((p) => !p)}
+              leftIcon={<span>{isPlaying ? "⏸" : "▶"}</span>}
+              className="font-bold"
+              aria-label={isPlaying ? "Pause score playback" : "Play score playback"}
+              data-testid="sheet-play-pause-btn"
+            >
+              {isPlaying ? "Pause" : "Play"}
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleReset}
+              leftIcon={<span>⏮</span>}
+              className="text-zinc-300 hover:text-white"
+              aria-label="Reset playback"
+              title="Reset to beginning"
+              data-testid="sheet-reset-btn"
+            >
+              Reset
+            </Button>
+
+            <Button
+              size="sm"
+              variant={isAudioMuted ? "outline" : "secondary"}
+              onClick={handleToggleAudioPreview}
+              leftIcon={<span>{isAudioMuted ? "🔇" : "🔊"}</span>}
+              className="text-xs text-zinc-300 hover:text-white"
+              aria-label={isAudioMuted ? "Unmute audio preview" : "Mute audio preview"}
+              title={isAudioMuted ? "Unmute audio preview" : "Mute audio preview"}
+              data-testid="sheet-audio-preview-btn"
+            >
+              {isAudioMuted ? "Muted" : "Audio Preview"}
+            </Button>
+          </div>
 
           {/* Metronome Control (Phase K) */}
           <MetronomeControl
@@ -235,22 +326,31 @@ export function SheetMusicViewer({
             compact
           />
 
-          {/* Zoom controls */}
-          <div className="flex items-center gap-1">
+          {/* Numeric Zoom Steppers */}
+          <div className="flex items-center gap-1 bg-[#121215] border border-white/10 rounded-lg p-0.5 shadow-sm">
             <Button
               size="sm"
-              variant="outline"
-              onClick={() => setZoomScale((z) => Math.max(0.7, Math.round((z - 0.1) * 10) / 10))}
+              variant="secondary"
+              onClick={() => setZoomScale((z) => Math.max(0.5, Math.round((z - 0.1) * 10) / 10))}
+              className="h-7 w-7 p-0 flex items-center justify-center font-bold text-sm"
+              aria-label="Zoom out"
+              data-testid="zoom-out-btn"
             >
               -
             </Button>
-            <span className="text-xs text-zinc-300 w-10 text-center font-mono">
+            <span
+              data-testid="zoom-percentage"
+              className="text-xs text-zinc-300 w-12 text-center font-mono font-semibold select-none"
+            >
               {Math.round(zoomScale * 100)}%
             </span>
             <Button
               size="sm"
-              variant="outline"
-              onClick={() => setZoomScale((z) => Math.min(1.5, Math.round((z + 0.1) * 10) / 10))}
+              variant="secondary"
+              onClick={() => setZoomScale((z) => Math.min(2.0, Math.round((z + 0.1) * 10) / 10))}
+              className="h-7 w-7 p-0 flex items-center justify-center font-bold text-sm"
+              aria-label="Zoom in"
+              data-testid="zoom-in-btn"
             >
               +
             </Button>
@@ -272,9 +372,9 @@ export function SheetMusicViewer({
       </header>
 
       {/* Sheet Music Systems Scrollable Area */}
-      <main className="flex-1 overflow-y-auto px-4 py-8 print:p-0 print:overflow-visible">
+      <main className="flex-1 overflow-y-auto px-4 py-8 print:p-0 print:overflow-visible print:bg-white">
         <div
-          className="max-w-5xl mx-auto space-y-12 print:space-y-6 origin-top transition-transform"
+          className="max-w-5xl mx-auto space-y-12 print:space-y-6 origin-top transition-transform print:transform-none"
           style={{ transform: `scale(${zoomScale})` }}
         >
           {model.systems.map((system, sysIdx) => {
@@ -287,7 +387,7 @@ export function SheetMusicViewer({
                 ref={(el) => {
                   systemRefs.current[sysIdx] = el;
                 }}
-                className="bg-zinc-900/60 print:bg-white rounded-xl p-4 border border-zinc-800/80 print:border-none shadow-xl print:shadow-none break-inside-avoid print:break-inside-avoid"
+                className="sheet-system-card bg-zinc-900/60 print:bg-white rounded-xl p-4 border border-zinc-800/80 print:border-none shadow-xl print:shadow-none break-inside-avoid print:break-inside-avoid"
               >
                 <svg
                   viewBox="0 0 1000 240"
@@ -530,7 +630,7 @@ export function SheetMusicViewer({
                             y2={165}
                             stroke="#06b6d4"
                             strokeWidth="2.5"
-                            className="print:hidden shadow-[0_0_8px_#06b6d4]"
+                            className="sheet-music-playhead print:hidden shadow-[0_0_8px_#06b6d4]"
                           />
                         )}
                       </g>

@@ -8,6 +8,7 @@ export interface SegmentedControlOption {
   icon?: ReactNode;
   badge?: ReactNode;
   disabled?: boolean;
+  testId?: string;
 }
 
 export interface SegmentedControlProps {
@@ -107,6 +108,9 @@ export const SegmentedControl = forwardRef<HTMLDivElement, SegmentedControlProps
               }}
               type="button"
               role="tab"
+              id={option.testId || `tab-${option.id}`}
+              data-testid={option.testId || `tab-${option.id}`}
+              aria-controls={`panel-${option.id}`}
               aria-selected={isSelected}
               tabIndex={isSelected ? 0 : -1}
               disabled={isDisabled}
