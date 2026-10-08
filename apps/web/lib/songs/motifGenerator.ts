@@ -437,6 +437,8 @@ function createCanonicalSong(
     coverGradient: input.coverGradient,
     noteCount: notes.length,
     tags: input.tags,
+    isCanonical: true,
+    qualityTier: "studio_master",
     noteData,
   };
 }
@@ -1388,7 +1390,12 @@ function getLandmarkCanonicalSong(input: MotifSongInput): RepertoireSong | null 
   }
 
   // 9. Merry-Go-Round of Life (Joe Hisaishi)
-  if (normId === "merrygoroundoflife" || normId === "hisaishimerrygoround") {
+  if (
+    normId === "merrygoroundoflife" ||
+    normId === "hisaishimerrygoround" ||
+    normId === "howlsmovingcastle" ||
+    normId.includes("merrygoround")
+  ) {
     const bpm = 140;
     const beatSec = 60 / bpm;
     const notes: Note[] = [];
@@ -1503,6 +1510,1233 @@ function getLandmarkCanonicalSong(input: MotifSongInput): RepertoireSong | null 
       notes,
       "Left Hand (Viennese Waltz Lilt & Chords)",
       "Right Hand (Romantic Cantabile Melody)"
+    );
+  }
+
+  // 10. Chopin — Nocturne in E-flat Major, Op. 9 No. 2
+  if (
+    normId === "chopinnocturneop9no2" ||
+    normId === "chopinnocturne" ||
+    normId === "nocturneop9no2" ||
+    normId.includes("nocturneop9no2") ||
+    normId.includes("nocturneebmajor")
+  ) {
+    const bpm = 44; // dotted quarter tempo in 12/8 (Andante)
+    const beatSec = 60 / bpm; // duration of dotted quarter note (~1.364s)
+    const eighthSec = beatSec / 3; // duration of 1 eighth note (~0.455s)
+    const s16 = eighthSec / 2; // duration of 1 sixteenth note (~0.227s)
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    // 4 Authentic measures in 12/8 + Cadence measure
+    const lhBars = [
+      // Bar 1: Eb - Eb - C - Bb7
+      [
+        { bass: 39, ch: [55, 58, 63] },
+        { bass: 43, ch: [58, 63, 67] },
+        { bass: 36, ch: [56, 60, 63] },
+        { bass: 34, ch: [56, 62, 65] },
+      ],
+      // Bar 2: Eb - Eb - Bb7 - Bb7
+      [
+        { bass: 39, ch: [55, 58, 63] },
+        { bass: 39, ch: [55, 58, 63] },
+        { bass: 34, ch: [56, 62, 65] },
+        { bass: 34, ch: [56, 62, 65] },
+      ],
+      // Bar 3: Eb - Eb7 - Ab - Fm7
+      [
+        { bass: 39, ch: [55, 58, 63] },
+        { bass: 39, ch: [55, 58, 61] },
+        { bass: 32, ch: [56, 60, 63] },
+        { bass: 29, ch: [56, 60, 63] },
+      ],
+      // Bar 4: Bb - Bb7 - Eb - Eb
+      [
+        { bass: 34, ch: [55, 58, 63] },
+        { bass: 34, ch: [53, 56, 62] },
+        { bass: 39, ch: [55, 58, 63] },
+        { bass: 39, ch: [55, 58, 63] },
+      ],
+    ];
+
+    for (let bar = 0; bar < 4; bar++) {
+      const bStart = bar * 4 * beatSec;
+      const bData = lhBars[bar];
+
+      for (let beat = 0; beat < 4; beat++) {
+        const beatStart = bStart + beat * beatSec;
+        const sub = bData[beat];
+
+        // Bass root on 1st eighth
+        notes.push({
+          id: noteId++,
+          pitch: sub.bass,
+          name: pitchToName(sub.bass),
+          velocity: 58,
+          start: Number(beatStart.toFixed(3)),
+          end: Number((beatStart + eighthSec * 2.8).toFixed(3)),
+          duration: Number((eighthSec * 2.8).toFixed(3)),
+          track: 0,
+          hand: "L",
+        });
+
+        // Chords on 2nd and 3rd eighths
+        [1, 2].forEach((eighthIdx) => {
+          const chStart = beatStart + eighthIdx * eighthSec;
+          sub.ch.forEach((cp) => {
+            notes.push({
+              id: noteId++,
+              pitch: cp,
+              name: pitchToName(cp),
+              velocity: eighthIdx === 1 ? 48 : 44,
+              start: Number(chStart.toFixed(3)),
+              end: Number((chStart + eighthSec * 0.9).toFixed(3)),
+              duration: Number((eighthSec * 0.9).toFixed(3)),
+              track: 0,
+              hand: "L",
+            });
+          });
+        });
+      }
+    }
+
+    // RH Cantabile Bel Canto Melody
+    const b0Start = 0;
+    notes.push(
+      { id: noteId++, pitch: 67, name: "G4", velocity: 84, start: Number(b0Start.toFixed(3)), end: Number((b0Start + eighthSec * 2.9).toFixed(3)), duration: Number((eighthSec * 2.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 68, name: "Ab4", velocity: 80, start: Number((b0Start + eighthSec * 3).toFixed(3)), end: Number((b0Start + eighthSec * 3 + s16 * 0.95).toFixed(3)), duration: Number((s16 * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 70, name: "Bb4", velocity: 82, start: Number((b0Start + eighthSec * 3 + s16).toFixed(3)), end: Number((b0Start + eighthSec * 4 * 0.95).toFixed(3)), duration: Number((s16 * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 72, name: "C5", velocity: 86, start: Number((b0Start + eighthSec * 4).toFixed(3)), end: Number((b0Start + eighthSec * 4.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 70, name: "Bb4", velocity: 85, start: Number((b0Start + eighthSec * 5).toFixed(3)), end: Number((b0Start + eighthSec * 7.9).toFixed(3)), duration: Number((eighthSec * 2.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 67, name: "G4", velocity: 80, start: Number((b0Start + eighthSec * 8).toFixed(3)), end: Number((b0Start + eighthSec * 8.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 65, name: "F4", velocity: 78, start: Number((b0Start + eighthSec * 9).toFixed(3)), end: Number((b0Start + eighthSec * 9.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 63, name: "Eb4", velocity: 76, start: Number((b0Start + eighthSec * 10).toFixed(3)), end: Number((b0Start + eighthSec * 11.9).toFixed(3)), duration: Number((eighthSec * 1.9).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const b1Start = 1 * 4 * beatSec;
+    notes.push(
+      { id: noteId++, pitch: 65, name: "F4", velocity: 82, start: Number(b1Start.toFixed(3)), end: Number((b1Start + eighthSec * 2.9).toFixed(3)), duration: Number((eighthSec * 2.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 67, name: "G4", velocity: 80, start: Number((b1Start + eighthSec * 3).toFixed(3)), end: Number((b1Start + eighthSec * 3.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 68, name: "Ab4", velocity: 82, start: Number((b1Start + eighthSec * 4).toFixed(3)), end: Number((b1Start + eighthSec * 4.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 74, name: "D5", velocity: 86, start: Number((b1Start + eighthSec * 5).toFixed(3)), end: Number((b1Start + eighthSec * 5.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 72, name: "C5", velocity: 85, start: Number((b1Start + eighthSec * 6).toFixed(3)), end: Number((b1Start + eighthSec * 8.9).toFixed(3)), duration: Number((eighthSec * 2.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 70, name: "Bb4", velocity: 80, start: Number((b1Start + eighthSec * 9).toFixed(3)), end: Number((b1Start + eighthSec * 9.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 68, name: "Ab4", velocity: 78, start: Number((b1Start + eighthSec * 10).toFixed(3)), end: Number((b1Start + eighthSec * 10.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 65, name: "F4", velocity: 76, start: Number((b1Start + eighthSec * 11).toFixed(3)), end: Number((b1Start + eighthSec * 11.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const b2Start = 2 * 4 * beatSec;
+    notes.push(
+      { id: noteId++, pitch: 67, name: "G4", velocity: 84, start: Number(b2Start.toFixed(3)), end: Number((b2Start + eighthSec * 2.9).toFixed(3)), duration: Number((eighthSec * 2.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 79, name: "G5", velocity: 90, start: Number((b2Start + eighthSec * 3).toFixed(3)), end: Number((b2Start + eighthSec * 5.9).toFixed(3)), duration: Number((eighthSec * 2.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 77, name: "F5", velocity: 84, start: Number((b2Start + eighthSec * 6).toFixed(3)), end: Number((b2Start + eighthSec * 6.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 75, name: "Eb5", velocity: 82, start: Number((b2Start + eighthSec * 7).toFixed(3)), end: Number((b2Start + eighthSec * 7.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 74, name: "D5", velocity: 80, start: Number((b2Start + eighthSec * 8).toFixed(3)), end: Number((b2Start + eighthSec * 8.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 72, name: "C5", velocity: 84, start: Number((b2Start + eighthSec * 9).toFixed(3)), end: Number((b2Start + eighthSec * 11.9).toFixed(3)), duration: Number((eighthSec * 2.9).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const b3Start = 3 * 4 * beatSec;
+    notes.push(
+      { id: noteId++, pitch: 70, name: "Bb4", velocity: 82, start: Number(b3Start.toFixed(3)), end: Number((b3Start + s16 * 0.95).toFixed(3)), duration: Number((s16 * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 72, name: "C5", velocity: 84, start: Number((b3Start + s16).toFixed(3)), end: Number((b3Start + s16 * 2 * 0.95).toFixed(3)), duration: Number((s16 * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 70, name: "Bb4", velocity: 80, start: Number((b3Start + s16 * 2).toFixed(3)), end: Number((b3Start + s16 * 3 * 0.95).toFixed(3)), duration: Number((s16 * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 69, name: "A4", velocity: 78, start: Number((b3Start + s16 * 3).toFixed(3)), end: Number((b3Start + s16 * 4 * 0.95).toFixed(3)), duration: Number((s16 * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 70, name: "Bb4", velocity: 84, start: Number((b3Start + eighthSec * 2).toFixed(3)), end: Number((b3Start + eighthSec * 3.9).toFixed(3)), duration: Number((eighthSec * 1.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 77, name: "F5", velocity: 86, start: Number((b3Start + eighthSec * 4).toFixed(3)), end: Number((b3Start + eighthSec * 5.9).toFixed(3)), duration: Number((eighthSec * 1.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 75, name: "Eb5", velocity: 84, start: Number((b3Start + eighthSec * 6).toFixed(3)), end: Number((b3Start + eighthSec * 11.9).toFixed(3)), duration: Number((eighthSec * 5.9).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const cadStart = 4 * 4 * beatSec;
+    const cadDur = Number((beatSec * 3.9).toFixed(3));
+    [27, 39].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 56,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 0,
+        hand: "L",
+      });
+    });
+    [55, 58, 63, 67, 75].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 78,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 1,
+        hand: "R",
+      });
+    });
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (12/8 Waltz-like Bel Canto Bass & Chords)",
+      "Right Hand (Singing Cantabile Melody with Ornamental Turns)"
+    );
+  }
+
+  // 11. Chopin — Waltz in A Minor, B. 150
+  if (
+    normId === "chopinwaltzaminor" ||
+    normId === "waltzinaminor" ||
+    normId === "chopinwaltzb150" ||
+    normId === "chopinwaltza" ||
+    normId.includes("waltzaminor")
+  ) {
+    const bpm = 120;
+    const beatSec = 60 / bpm; // 0.5s
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    const waltzBars = [
+      { bass: 45, ch: [60, 64], mel: [{ p: 76, d: 2.0, t: 0 }, { p: 75, d: 0.5, t: 2.0 }, { p: 76, d: 0.5, t: 2.5 }] },
+      { bass: 50, ch: [65, 69], mel: [{ p: 71, d: 1.0, t: 0 }, { p: 72, d: 1.0, t: 1.0 }, { p: 69, d: 1.0, t: 2.0 }] },
+      { bass: 43, ch: [59, 65], mel: [{ p: 67, d: 2.0, t: 0 }, { p: 69, d: 1.0, t: 2.0 }] },
+      { bass: 48, ch: [64, 67], mel: [{ p: 64, d: 3.0, t: 0 }] },
+      { bass: 41, ch: [57, 60], mel: [{ p: 69, d: 2.0, t: 0 }, { p: 71, d: 1.0, t: 2.0 }] },
+      { bass: 47, ch: [63, 69], mel: [{ p: 72, d: 2.0, t: 0 }, { p: 74, d: 1.0, t: 2.0 }] },
+      { bass: 40, ch: [56, 62], mel: [{ p: 76, d: 1.0, t: 0 }, { p: 77, d: 0.5, t: 1.0 }, { p: 76, d: 0.5, t: 1.5 }, { p: 75, d: 1.0, t: 2.0 }] },
+      { bass: 45, ch: [60, 64], mel: [{ p: 76, d: 2.0, t: 0 }, { p: 69, d: 1.0, t: 2.0 }] },
+    ];
+
+    for (let bar = 0; bar < 8; bar++) {
+      const bStart = bar * 3 * beatSec;
+      const bData = waltzBars[bar];
+
+      notes.push({
+        id: noteId++,
+        pitch: bData.bass,
+        name: pitchToName(bData.bass),
+        velocity: 60,
+        start: Number(bStart.toFixed(3)),
+        end: Number((bStart + beatSec * 2.8).toFixed(3)),
+        duration: Number((beatSec * 2.8).toFixed(3)),
+        track: 0,
+        hand: "L",
+      });
+
+      [1, 2].forEach((beat) => {
+        bData.ch.forEach((cp) => {
+          notes.push({
+            id: noteId++,
+            pitch: cp,
+            name: pitchToName(cp),
+            velocity: beat === 1 ? 48 : 44,
+            start: Number((bStart + beat * beatSec).toFixed(3)),
+            end: Number((bStart + (beat + 0.9) * beatSec).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 0,
+            hand: "L",
+          });
+        });
+      });
+
+      bData.mel.forEach((mItem) => {
+        const mOffset = (mItem.t ?? 0) * beatSec;
+        const mDur = mItem.d * beatSec * 0.95;
+        notes.push({
+          id: noteId++,
+          pitch: mItem.p,
+          name: pitchToName(mItem.p),
+          velocity: 84,
+          start: Number((bStart + mOffset).toFixed(3)),
+          end: Number((bStart + mOffset + mDur).toFixed(3)),
+          duration: Number(mDur.toFixed(3)),
+          track: 1,
+          hand: "R",
+        });
+      });
+    }
+
+    const cadStart = 8 * 3 * beatSec;
+    const cadDur = Number((beatSec * 2.85).toFixed(3));
+    [33, 45].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 58,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 0,
+        hand: "L",
+      });
+    });
+    [57, 60, 64, 69].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 82,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 1,
+        hand: "R",
+      });
+    });
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Authentic Bass-Chord-Chord Waltz Accompaniment)",
+      "Right Hand (Melancholic Cantabile Chopin Melody with Ornaments)"
+    );
+  }
+
+  // 12. Mozart — Rondo alla Turca / Turkish March
+  if (
+    normId === "rondoallaturca" ||
+    normId === "mozartrondoallaturca" ||
+    normId === "turkishmarch" ||
+    normId === "mozartturkishmarch" ||
+    normId.includes("rondoallaturca")
+  ) {
+    const bpm = 126;
+    const beatSec = 60 / bpm; // ~0.476s
+    const s16 = beatSec / 4; // ~0.119s
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    const pickupNotes = [71, 69, 68, 69];
+    pickupNotes.forEach((p, idx) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 78,
+        start: Number((idx * s16).toFixed(3)),
+        end: Number(((idx + 0.95) * s16).toFixed(3)),
+        duration: Number((0.95 * s16).toFixed(3)),
+        track: 1,
+        hand: "R",
+      });
+    });
+
+    const baseOffset = 4 * s16;
+
+    for (let bar = 0; bar < 8; bar++) {
+      const bStart = baseOffset + bar * 2 * beatSec;
+
+      if (bar < 4) {
+        const bassPitch = bar % 2 === 0 ? 45 : 40;
+        notes.push({
+          id: noteId++,
+          pitch: bassPitch,
+          name: pitchToName(bassPitch),
+          velocity: 64,
+          start: Number(bStart.toFixed(3)),
+          end: Number((bStart + beatSec * 0.45).toFixed(3)),
+          duration: Number((beatSec * 0.45).toFixed(3)),
+          track: 0,
+          hand: "L",
+        });
+        [60, 64].forEach((cp) => {
+          notes.push({
+            id: noteId++,
+            pitch: cp,
+            name: pitchToName(cp),
+            velocity: 52,
+            start: Number((bStart + beatSec * 0.5).toFixed(3)),
+            end: Number((bStart + beatSec * 0.95).toFixed(3)),
+            duration: Number((beatSec * 0.45).toFixed(3)),
+            track: 0,
+            hand: "L",
+          });
+          notes.push({
+            id: noteId++,
+            pitch: cp,
+            name: pitchToName(cp),
+            velocity: 50,
+            start: Number((bStart + beatSec * 1.5).toFixed(3)),
+            end: Number((bStart + beatSec * 1.95).toFixed(3)),
+            duration: Number((beatSec * 0.45).toFixed(3)),
+            track: 0,
+            hand: "L",
+          });
+        });
+      } else {
+        [33, 45].forEach((p) => {
+          notes.push({
+            id: noteId++,
+            pitch: p,
+            name: pitchToName(p),
+            velocity: 70,
+            start: Number(bStart.toFixed(3)),
+            end: Number((bStart + beatSec * 0.45).toFixed(3)),
+            duration: Number((beatSec * 0.45).toFixed(3)),
+            track: 0,
+            hand: "L",
+          });
+          notes.push({
+            id: noteId++,
+            pitch: p,
+            name: pitchToName(p),
+            velocity: 68,
+            start: Number((bStart + beatSec).toFixed(3)),
+            end: Number((bStart + beatSec * 1.45).toFixed(3)),
+            duration: Number((beatSec * 0.45).toFixed(3)),
+            track: 0,
+            hand: "L",
+          });
+        });
+      }
+    }
+
+    const bar0Start = baseOffset;
+    notes.push({ id: noteId++, pitch: 72, name: "C5", velocity: 84, start: Number(bar0Start.toFixed(3)), end: Number((bar0Start + beatSec * 0.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" });
+    [74, 72, 71, 72].forEach((p, idx) => {
+      const st = bar0Start + beatSec + idx * s16;
+      notes.push({ id: noteId++, pitch: p, name: pitchToName(p), velocity: 82, start: Number(st.toFixed(3)), end: Number((st + s16 * 0.95).toFixed(3)), duration: Number((s16 * 0.95).toFixed(3)), track: 1, hand: "R" });
+    });
+
+    const bar1Start = baseOffset + 2 * beatSec;
+    notes.push({ id: noteId++, pitch: 76, name: "E5", velocity: 86, start: Number(bar1Start.toFixed(3)), end: Number((bar1Start + beatSec * 0.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" });
+    [77, 76, 75, 76].forEach((p, idx) => {
+      const st = bar1Start + beatSec + idx * s16;
+      notes.push({ id: noteId++, pitch: p, name: pitchToName(p), velocity: 84, start: Number(st.toFixed(3)), end: Number((st + s16 * 0.95).toFixed(3)), duration: Number((s16 * 0.95).toFixed(3)), track: 1, hand: "R" });
+    });
+
+    const bar2Start = baseOffset + 4 * beatSec;
+    [83, 81, 80, 81, 83, 81, 80, 81].forEach((p, idx) => {
+      const st = bar2Start + idx * s16;
+      notes.push({ id: noteId++, pitch: p, name: pitchToName(p), velocity: 86, start: Number(st.toFixed(3)), end: Number((st + s16 * 0.95).toFixed(3)), duration: Number((s16 * 0.95).toFixed(3)), track: 1, hand: "R" });
+    });
+
+    const bar3Start = baseOffset + 6 * beatSec;
+    notes.push(
+      { id: noteId++, pitch: 84, name: "C6", velocity: 88, start: Number(bar3Start.toFixed(3)), end: Number((bar3Start + beatSec * 0.45).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 83, name: "B5", velocity: 84, start: Number((bar3Start + beatSec * 0.5).toFixed(3)), end: Number((bar3Start + beatSec * 0.95).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 81, name: "A5", velocity: 86, start: Number((bar3Start + beatSec).toFixed(3)), end: Number((bar3Start + beatSec * 1.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const bar4Start = baseOffset + 8 * beatSec;
+    for (let f = 0; f < 4; f++) {
+      const fStart = bar4Start + f * 2 * beatSec;
+      const chords = f === 0 ? [73, 76, 81] : f === 1 ? [74, 78, 81] : f === 2 ? [71, 76, 80] : [73, 76, 81];
+      [0, 1].forEach((hit) => {
+        chords.forEach((cp) => {
+          notes.push({
+            id: noteId++,
+            pitch: cp,
+            name: pitchToName(cp),
+            velocity: 88,
+            start: Number((fStart + hit * beatSec).toFixed(3)),
+            end: Number((fStart + (hit + 0.45) * beatSec).toFixed(3)),
+            duration: Number((beatSec * 0.45).toFixed(3)),
+            track: 1,
+            hand: "R",
+          });
+        });
+      });
+    }
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Authentic Broken Chord Turkish March Accompaniment)",
+      "Right Hand (Iconic 16th Note Runs & A Major Martial Fanfare)"
+    );
+  }
+
+  // 13. Beethoven — Ode to Joy (Symphony No. 9)
+  if (normId === "odetojoy" || normId === "beethovenodetojoy" || normId.includes("odetojoy")) {
+    const bpm = 112;
+    const beatSec = 60 / bpm;
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    const melody = [
+      [66, 66, 67, 69],
+      [69, 67, 66, 64],
+      [62, 62, 64, 66],
+      [66, 64, 64],
+      [66, 66, 67, 69],
+      [69, 67, 66, 64],
+      [62, 62, 64, 66],
+      [64, 62, 62],
+    ];
+
+    const lhProgression = [
+      { bass: 50, ch: [54, 57] },
+      { bass: 45, ch: [52, 57] },
+      { bass: 43, ch: [50, 54] },
+      { bass: 45, ch: [49, 52, 57] },
+      { bass: 50, ch: [54, 57] },
+      { bass: 45, ch: [52, 57] },
+      { bass: 43, ch: [50, 54] },
+      { bass: 50, ch: [54, 57, 62] },
+    ];
+
+    for (let bar = 0; bar < 8; bar++) {
+      const bStart = bar * 4 * beatSec;
+      const lh = lhProgression[bar];
+
+      notes.push({
+        id: noteId++,
+        pitch: lh.bass,
+        name: pitchToName(lh.bass),
+        velocity: 64,
+        start: Number(bStart.toFixed(3)),
+        end: Number((bStart + beatSec * 3.8).toFixed(3)),
+        duration: Number((beatSec * 3.8).toFixed(3)),
+        track: 0,
+        hand: "L",
+      });
+
+      [1, 2].forEach((beat) => {
+        lh.ch.forEach((cp) => {
+          notes.push({
+            id: noteId++,
+            pitch: cp,
+            name: pitchToName(cp),
+            velocity: 52,
+            start: Number((bStart + beat * beatSec).toFixed(3)),
+            end: Number((bStart + (beat + 0.9) * beatSec).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 0,
+            hand: "L",
+          });
+        });
+      });
+
+      const mel = melody[bar];
+      if (bar === 3) {
+        notes.push(
+          { id: noteId++, pitch: mel[0], name: pitchToName(mel[0]), velocity: 84, start: Number(bStart.toFixed(3)), end: Number((bStart + beatSec * 1.45).toFixed(3)), duration: Number((beatSec * 1.45).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: mel[1], name: pitchToName(mel[1]), velocity: 80, start: Number((bStart + beatSec * 1.5).toFixed(3)), end: Number((bStart + beatSec * 1.95).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: mel[2], name: pitchToName(mel[2]), velocity: 82, start: Number((bStart + beatSec * 2).toFixed(3)), end: Number((bStart + beatSec * 3.85).toFixed(3)), duration: Number((beatSec * 1.85).toFixed(3)), track: 1, hand: "R" }
+        );
+      } else if (bar === 7) {
+        notes.push(
+          { id: noteId++, pitch: mel[0], name: pitchToName(mel[0]), velocity: 84, start: Number(bStart.toFixed(3)), end: Number((bStart + beatSec * 1.45).toFixed(3)), duration: Number((beatSec * 1.45).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: mel[1], name: pitchToName(mel[1]), velocity: 80, start: Number((bStart + beatSec * 1.5).toFixed(3)), end: Number((bStart + beatSec * 1.95).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: mel[2], name: pitchToName(mel[2]), velocity: 86, start: Number((bStart + beatSec * 2).toFixed(3)), end: Number((bStart + beatSec * 3.85).toFixed(3)), duration: Number((beatSec * 1.85).toFixed(3)), track: 1, hand: "R" }
+        );
+      } else {
+        mel.forEach((p, idx) => {
+          notes.push({
+            id: noteId++,
+            pitch: p,
+            name: pitchToName(p),
+            velocity: 84,
+            start: Number((bStart + idx * beatSec).toFixed(3)),
+            end: Number((bStart + (idx + 0.95) * beatSec).toFixed(3)),
+            duration: Number((beatSec * 0.95).toFixed(3)),
+            track: 1,
+            hand: "R",
+          });
+        });
+      }
+    }
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Cantabile Polyphonic Bass & Harmony)",
+      "Right Hand (Beethoven's Timeless Hymn to Joy)"
+    );
+  }
+
+  // 14. J.S. Bach — Minuet in G Major, BWV Anh. 114
+  if (
+    normId === "bachminueting" ||
+    normId === "minueting" ||
+    normId === "minuetingmajor" ||
+    normId === "bachminuetingmajor" ||
+    normId.includes("minueting")
+  ) {
+    const bpm = 120;
+    const beatSec = 60 / bpm; // 0.5s
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    const bachBars = [
+      {
+        rh: [{ p: 74, d: 1.0, t: 0 }, { p: 67, d: 0.5, t: 1.0 }, { p: 69, d: 0.5, t: 1.5 }, { p: 71, d: 0.5, t: 2.0 }, { p: 72, d: 0.5, t: 2.5 }],
+        lh: [{ p: 55, d: 2.8, t: 0 }],
+      },
+      {
+        rh: [{ p: 74, d: 1.0, t: 0 }, { p: 67, d: 1.0, t: 1.0 }, { p: 67, d: 1.0, t: 2.0 }],
+        lh: [{ p: 59, d: 0.9, t: 0 }, { p: 57, d: 0.9, t: 1.0 }, { p: 55, d: 0.9, t: 2.0 }],
+      },
+      {
+        rh: [{ p: 76, d: 1.0, t: 0 }, { p: 72, d: 0.5, t: 1.0 }, { p: 74, d: 0.5, t: 1.5 }, { p: 76, d: 0.5, t: 2.0 }, { p: 78, d: 0.5, t: 2.5 }],
+        lh: [{ p: 60, d: 2.8, t: 0 }],
+      },
+      {
+        rh: [{ p: 79, d: 1.0, t: 0 }, { p: 67, d: 1.0, t: 1.0 }, { p: 67, d: 1.0, t: 2.0 }],
+        lh: [{ p: 59, d: 2.8, t: 0 }],
+      },
+      {
+        rh: [{ p: 72, d: 0.5, t: 0 }, { p: 74, d: 0.5, t: 0.5 }, { p: 72, d: 0.5, t: 1.0 }, { p: 71, d: 0.5, t: 1.5 }, { p: 69, d: 1.0, t: 2.0 }],
+        lh: [{ p: 57, d: 2.8, t: 0 }],
+      },
+      {
+        rh: [{ p: 71, d: 0.5, t: 0 }, { p: 72, d: 0.5, t: 0.5 }, { p: 71, d: 0.5, t: 1.0 }, { p: 69, d: 0.5, t: 1.5 }, { p: 67, d: 1.0, t: 2.0 }],
+        lh: [{ p: 55, d: 2.8, t: 0 }],
+      },
+      {
+        rh: [{ p: 66, d: 0.5, t: 0 }, { p: 67, d: 0.5, t: 0.5 }, { p: 69, d: 0.5, t: 1.0 }, { p: 71, d: 0.5, t: 1.5 }, { p: 67, d: 1.0, t: 2.0 }],
+        lh: [{ p: 50, d: 2.8, t: 0 }],
+      },
+      {
+        rh: [{ p: 69, d: 2.0, t: 0 }, { p: 62, d: 1.0, t: 2.0 }],
+        lh: [{ p: 50, d: 1.0, t: 0 }, { p: 48, d: 1.0, t: 1.0 }, { p: 47, d: 0.5, t: 2.0 }, { p: 45, d: 0.5, t: 2.5 }],
+      },
+    ];
+
+    for (let bar = 0; bar < 8; bar++) {
+      const bStart = bar * 3 * beatSec;
+      const bData = bachBars[bar];
+
+      bData.lh.forEach((item) => {
+        const st = bStart + item.t * beatSec;
+        const dur = item.d * beatSec;
+        notes.push({
+          id: noteId++,
+          pitch: item.p,
+          name: pitchToName(item.p),
+          velocity: 64,
+          start: Number(st.toFixed(3)),
+          end: Number((st + dur).toFixed(3)),
+          duration: Number(dur.toFixed(3)),
+          track: 0,
+          hand: "L",
+        });
+      });
+
+      bData.rh.forEach((item) => {
+        const st = bStart + item.t * beatSec;
+        const dur = item.d * beatSec * 0.95;
+        notes.push({
+          id: noteId++,
+          pitch: item.p,
+          name: pitchToName(item.p),
+          velocity: 82,
+          start: Number(st.toFixed(3)),
+          end: Number((st + dur).toFixed(3)),
+          duration: Number(dur.toFixed(3)),
+          track: 1,
+          hand: "R",
+        });
+      });
+    }
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Authentic Baroque Basso Continuo Counterpoint)",
+      "Right Hand (Bach's Iconic Minuet Dialogue Line)"
+    );
+  }
+
+  // 15. Joe Hisaishi — One Summer's Day (Spirited Away)
+  if (
+    normId === "onesummersday" ||
+    normId === "onesummerday" ||
+    normId === "spiritedawayonesummersday" ||
+    normId === "hisaishionesummersday" ||
+    normId.includes("onesummer")
+  ) {
+    const bpm = 80;
+    const beatSec = 60 / bpm; // 0.75s
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    const ghibliBars = [
+      {
+        lh: [36, 43, 52, 55, 60],
+        rh: [{ p: 62, d: 0.5, t: 0 }, { p: 64, d: 0.5, t: 0.5 }, { p: 67, d: 1.0, t: 1.0 }, { p: 69, d: 1.0, t: 2.0 }, { p: 72, d: 1.0, t: 3.0 }],
+      },
+      {
+        lh: [41, 48, 57, 60, 65],
+        rh: [{ p: 71, d: 3.0, t: 0 }, { p: 69, d: 0.5, t: 3.0 }, { p: 67, d: 0.5, t: 3.5 }],
+      },
+      {
+        lh: [43, 50, 59, 62, 67],
+        rh: [{ p: 64, d: 2.0, t: 0 }, { p: 62, d: 1.0, t: 2.0 }, { p: 60, d: 1.0, t: 3.0 }],
+      },
+      {
+        lh: [45, 52, 60, 64],
+        rh: [{ p: 62, d: 3.0, t: 0 }, { p: 64, d: 1.0, t: 3.0 }],
+      },
+      {
+        lh: [41, 48, 57, 60],
+        rh: [{ p: 67, d: 1.0, t: 0 }, { p: 69, d: 1.0, t: 1.0 }, { p: 72, d: 1.0, t: 2.0 }, { p: 74, d: 1.0, t: 3.0 }],
+      },
+      {
+        lh: [43, 50, 59, 62],
+        rh: [{ p: 76, d: 3.0, t: 0 }, { p: 74, d: 1.0, t: 3.0 }],
+      },
+      {
+        lh: [40, 47, 55, 59],
+        rh: [{ p: 72, d: 2.0, t: 0 }, { p: 74, d: 1.0, t: 2.0 }, { p: 76, d: 1.0, t: 3.0 }],
+      },
+      {
+        lh: [36, 43, 48, 52, 55],
+        rh: [{ p: 72, d: 3.8, t: 0 }],
+      },
+    ];
+
+    for (let bar = 0; bar < 8; bar++) {
+      const bStart = bar * 4 * beatSec;
+      const bData = ghibliBars[bar];
+
+      const stepTime = (beatSec * 4) / bData.lh.length;
+      bData.lh.forEach((lp, sIdx) => {
+        const st = bStart + sIdx * stepTime;
+        notes.push({
+          id: noteId++,
+          pitch: lp,
+          name: pitchToName(lp),
+          velocity: sIdx === 0 ? 62 : 52,
+          start: Number(st.toFixed(3)),
+          end: Number((st + stepTime * 1.5).toFixed(3)),
+          duration: Number((stepTime * 1.5).toFixed(3)),
+          track: 0,
+          hand: "L",
+        });
+      });
+
+      bData.rh.forEach((item) => {
+        const st = bStart + item.t * beatSec;
+        const dur = item.d * beatSec * 0.95;
+        notes.push({
+          id: noteId++,
+          pitch: item.p,
+          name: pitchToName(item.p),
+          velocity: 84,
+          start: Number(st.toFixed(3)),
+          end: Number((st + dur).toFixed(3)),
+          duration: Number(dur.toFixed(3)),
+          track: 1,
+          hand: "R",
+        });
+      });
+    }
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Nostalgic Rolling Ghibli Arpeggios)",
+      "Right Hand (Iconic Spirited Away Pentatonic Piano Theme)"
+    );
+  }
+
+  // 16. Yiruma — Kiss the Rain
+  if (
+    normId === "kisstherain" ||
+    normId === "yirumakisstherain" ||
+    normId.includes("kisstherain")
+  ) {
+    const bpm = 68;
+    const beatSec = 60 / bpm; // ~0.882s
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    const yirumaBars = [
+      {
+        lh: [32, 39, 48, 51, 56],
+        rh: [{ p: 72, d: 1.0, t: 0 }, { p: 70, d: 0.5, t: 1.0 }, { p: 68, d: 0.5, t: 1.5 }, { p: 70, d: 1.0, t: 2.0 }, { p: 72, d: 1.0, t: 3.0 }],
+      },
+      {
+        lh: [37, 44, 53, 56, 61],
+        rh: [{ p: 75, d: 1.5, t: 0 }, { p: 73, d: 0.5, t: 1.5 }, { p: 72, d: 2.0, t: 2.0 }],
+      },
+      {
+        lh: [34, 41, 49, 53],
+        rh: [{ p: 70, d: 1.0, t: 0 }, { p: 68, d: 0.5, t: 1.0 }, { p: 67, d: 0.5, t: 1.5 }, { p: 68, d: 1.0, t: 2.0 }, { p: 70, d: 1.0, t: 3.0 }],
+      },
+      {
+        lh: [39, 46, 55, 58],
+        rh: [{ p: 72, d: 1.5, t: 0 }, { p: 70, d: 0.5, t: 1.5 }, { p: 70, d: 2.0, t: 2.0 }],
+      },
+      {
+        lh: [29, 36, 44, 48],
+        rh: [{ p: 72, d: 1.0, t: 0 }, { p: 70, d: 0.5, t: 1.0 }, { p: 68, d: 0.5, t: 1.5 }, { p: 70, d: 1.0, t: 2.0 }, { p: 72, d: 1.0, t: 3.0 }],
+      },
+      {
+        lh: [37, 44, 53, 56],
+        rh: [{ p: 77, d: 1.5, t: 0 }, { p: 75, d: 0.5, t: 1.5 }, { p: 73, d: 1.0, t: 2.0 }, { p: 72, d: 1.0, t: 3.0 }],
+      },
+      {
+        lh: [39, 46, 51, 55],
+        rh: [{ p: 70, d: 2.0, t: 0 }, { p: 72, d: 1.0, t: 2.0 }, { p: 70, d: 1.0, t: 3.0 }],
+      },
+      {
+        lh: [32, 39, 44, 48, 56],
+        rh: [{ p: 68, d: 3.8, t: 0 }],
+      },
+    ];
+
+    for (let bar = 0; bar < 8; bar++) {
+      const bStart = bar * 4 * beatSec;
+      const bData = yirumaBars[bar];
+
+      const stepTime = (beatSec * 4) / bData.lh.length;
+      bData.lh.forEach((lp, sIdx) => {
+        const st = bStart + sIdx * stepTime;
+        notes.push({
+          id: noteId++,
+          pitch: lp,
+          name: pitchToName(lp),
+          velocity: sIdx === 0 ? 60 : 50,
+          start: Number(st.toFixed(3)),
+          end: Number((st + stepTime * 1.5).toFixed(3)),
+          duration: Number((stepTime * 1.5).toFixed(3)),
+          track: 0,
+          hand: "L",
+        });
+      });
+
+      bData.rh.forEach((item) => {
+        const st = bStart + item.t * beatSec;
+        const dur = item.d * beatSec * 0.95;
+        notes.push({
+          id: noteId++,
+          pitch: item.p,
+          name: pitchToName(item.p),
+          velocity: 84,
+          start: Number(st.toFixed(3)),
+          end: Number((st + dur).toFixed(3)),
+          duration: Number(dur.toFixed(3)),
+          track: 1,
+          hand: "R",
+        });
+      });
+    }
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Warm Lyrical 10th Ballad Arpeggios)",
+      "Right Hand (Yiruma's Iconic Raindrop Ballad Melody)"
+    );
+  }
+
+  // 17. Bart Howard / Frank Sinatra — Fly Me to the Moon
+  if (
+    normId === "flymetothemoon" ||
+    normId === "flymetothemoonjazz" ||
+    normId === "flymetothemoonevangelion" ||
+    normId === "sinatraflymetothemoon" ||
+    normId.includes("flymetothemoon")
+  ) {
+    const bpm = 118;
+    const beatSec = 60 / bpm; // 0.5085s
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    const jazzBars = [
+      { bass: 45, ch: [55, 60, 64], rh: [72, 71, 69, 67] },
+      { bass: 50, ch: [53, 60, 64], rh: [{ p: 65, d: 2.0, t: 0 }, { p: 67, d: 1.0, t: 2.0 }, { p: 69, d: 1.0, t: 3.0 }] },
+      { bass: 43, ch: [53, 59, 62], rh: [72, 71, 69, 67] },
+      { bass: 48, ch: [52, 59, 62], rh: [{ p: 65, d: 2.0, t: 0 }, { p: 64, d: 2.0, t: 2.0 }] },
+      { bass: 41, ch: [52, 57, 60], rh: [{ p: 62, d: 2.0, t: 0 }, { p: 64, d: 1.0, t: 2.0 }, { p: 65, d: 1.0, t: 3.0 }] },
+      { bass: 47, ch: [50, 57, 62], rh: [69, 68, 66, 65] },
+      { bass: 40, ch: [50, 56, 62], rh: [{ p: 64, d: 2.0, t: 0 }, { p: 65, d: 1.0, t: 2.0 }, { p: 62, d: 1.0, t: 3.0 }] },
+      { bass: 45, ch: [55, 60, 64], rh: [{ p: 60, d: 3.8, t: 0 }] },
+    ];
+
+    for (let bar = 0; bar < 8; bar++) {
+      const bStart = bar * 4 * beatSec;
+      const bData = jazzBars[bar];
+
+      notes.push({
+        id: noteId++,
+        pitch: bData.bass,
+        name: pitchToName(bData.bass),
+        velocity: 64,
+        start: Number(bStart.toFixed(3)),
+        end: Number((bStart + beatSec * 3.8).toFixed(3)),
+        duration: Number((beatSec * 3.8).toFixed(3)),
+        track: 0,
+        hand: "L",
+      });
+
+      [1, 3].forEach((beat) => {
+        bData.ch.forEach((cp) => {
+          notes.push({
+            id: noteId++,
+            pitch: cp,
+            name: pitchToName(cp),
+            velocity: 52,
+            start: Number((bStart + beat * beatSec).toFixed(3)),
+            end: Number((bStart + (beat + 0.9) * beatSec).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 0,
+            hand: "L",
+          });
+        });
+      });
+
+      if (Array.isArray(bData.rh) && typeof bData.rh[0] === "number") {
+        (bData.rh as number[]).forEach((p, idx) => {
+          notes.push({
+            id: noteId++,
+            pitch: p,
+            name: pitchToName(p),
+            velocity: 84,
+            start: Number((bStart + idx * beatSec).toFixed(3)),
+            end: Number((bStart + (idx + 0.95) * beatSec).toFixed(3)),
+            duration: Number((beatSec * 0.95).toFixed(3)),
+            track: 1,
+            hand: "R",
+          });
+        });
+      } else {
+        (bData.rh as { p: number; d: number; t: number }[]).forEach((item) => {
+          const st = bStart + item.t * beatSec;
+          const dur = item.d * beatSec * 0.95;
+          notes.push({
+            id: noteId++,
+            pitch: item.p,
+            name: pitchToName(item.p),
+            velocity: 84,
+            start: Number(st.toFixed(3)),
+            end: Number((st + dur).toFixed(3)),
+            duration: Number(dur.toFixed(3)),
+            track: 1,
+            hand: "R",
+          });
+        });
+      }
+    }
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Jazz Walking Bass & Guide Tone Voicings)",
+      "Right Hand (Iconic Sinatra Jazz Swing Melody)"
+    );
+  }
+
+  // 18. Taylor Swift — Love Story
+  if (
+    normId === "lovestorytaylorswift" ||
+    normId === "lovestory" ||
+    normId === "taylorswiftlovestory" ||
+    normId.includes("lovestory")
+  ) {
+    const bpm = 119;
+    const beatSec = 60 / bpm; // 0.5042s
+    const eighthSec = beatSec / 2;
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    const popChords = [
+      { bass: 38, ch: [57, 62, 66] },
+      { bass: 45, ch: [57, 61, 64] },
+      { bass: 47, ch: [54, 59, 62] },
+      { bass: 43, ch: [55, 59, 62] },
+      { bass: 38, ch: [57, 62, 66] },
+      { bass: 45, ch: [57, 61, 64] },
+      { bass: 47, ch: [54, 59, 62] },
+      { bass: 43, ch: [55, 59, 62] },
+    ];
+
+    for (let bar = 0; bar < 8; bar++) {
+      const bStart = bar * 4 * beatSec;
+      const pc = popChords[bar];
+
+      [pc.bass, pc.bass + 12].forEach((p) => {
+        notes.push({
+          id: noteId++,
+          pitch: p,
+          name: pitchToName(p),
+          velocity: 64,
+          start: Number(bStart.toFixed(3)),
+          end: Number((bStart + beatSec * 3.8).toFixed(3)),
+          duration: Number((beatSec * 3.8).toFixed(3)),
+          track: 0,
+          hand: "L",
+        });
+      });
+
+      [0, 1, 2, 3].forEach((beat) => {
+        pc.ch.forEach((cp) => {
+          notes.push({
+            id: noteId++,
+            pitch: cp,
+            name: pitchToName(cp),
+            velocity: 48,
+            start: Number((bStart + beat * beatSec).toFixed(3)),
+            end: Number((bStart + (beat + 0.8) * beatSec).toFixed(3)),
+            duration: Number((beatSec * 0.8).toFixed(3)),
+            track: 0,
+            hand: "L",
+          });
+        });
+      });
+    }
+
+    const b0Start = 0;
+    [66, 69, 69, 69, 66, 64].forEach((p, idx) => {
+      const st = b0Start + idx * eighthSec;
+      notes.push({ id: noteId++, pitch: p, name: pitchToName(p), velocity: 84, start: Number(st.toFixed(3)), end: Number((st + eighthSec * 0.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" });
+    });
+    notes.push({ id: noteId++, pitch: 62, name: "D4", velocity: 84, start: Number((b0Start + 6 * eighthSec).toFixed(3)), end: Number((b0Start + 8 * eighthSec * 0.95).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" });
+
+    const b1Start = 4 * beatSec;
+    [64, 66, 66, 64].forEach((p, idx) => {
+      const st = b1Start + idx * eighthSec;
+      notes.push({ id: noteId++, pitch: p, name: pitchToName(p), velocity: 84, start: Number(st.toFixed(3)), end: Number((st + eighthSec * 0.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" });
+    });
+    notes.push({ id: noteId++, pitch: 62, name: "D4", velocity: 82, start: Number((b1Start + 4 * eighthSec).toFixed(3)), end: Number((b1Start + 8 * eighthSec * 0.95).toFixed(3)), duration: Number((beatSec * 1.95).toFixed(3)), track: 1, hand: "R" });
+
+    const b2Start = 8 * beatSec;
+    [66, 69, 69, 69, 66, 64].forEach((p, idx) => {
+      const st = b2Start + idx * eighthSec;
+      notes.push({ id: noteId++, pitch: p, name: pitchToName(p), velocity: 84, start: Number(st.toFixed(3)), end: Number((st + eighthSec * 0.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" });
+    });
+    notes.push({ id: noteId++, pitch: 62, name: "D4", velocity: 84, start: Number((b2Start + 6 * eighthSec).toFixed(3)), end: Number((b2Start + 8 * eighthSec * 0.95).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" });
+
+    const b3Start = 12 * beatSec;
+    notes.push(
+      { id: noteId++, pitch: 62, name: "D4", velocity: 82, start: Number(b3Start.toFixed(3)), end: Number((b3Start + eighthSec * 0.9).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 71, name: "B4", velocity: 86, start: Number((b3Start + eighthSec).toFixed(3)), end: Number((b3Start + eighthSec * 2.9).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 69, name: "A4", velocity: 84, start: Number((b3Start + 3 * eighthSec).toFixed(3)), end: Number((b3Start + 3.9 * eighthSec).toFixed(3)), duration: Number((eighthSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 66, name: "F#4", velocity: 84, start: Number((b3Start + 4 * eighthSec).toFixed(3)), end: Number((b3Start + 8 * eighthSec * 0.95).toFixed(3)), duration: Number((beatSec * 1.95).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const b4Start = 16 * beatSec;
+    [69, 69, 71, 69].forEach((p, idx) => {
+      const st = b4Start + idx * beatSec;
+      notes.push({ id: noteId++, pitch: p, name: pitchToName(p), velocity: 88, start: Number(st.toFixed(3)), end: Number((st + beatSec * 0.95).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" });
+    });
+
+    const b5Start = 20 * beatSec;
+    notes.push(
+      { id: noteId++, pitch: 66, name: "F#4", velocity: 86, start: Number(b5Start.toFixed(3)), end: Number((b5Start + beatSec * 0.95).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 64, name: "E4", velocity: 84, start: Number((b5Start + beatSec).toFixed(3)), end: Number((b5Start + beatSec * 1.95).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 62, name: "D4", velocity: 86, start: Number((b5Start + beatSec * 2).toFixed(3)), end: Number((b5Start + beatSec * 3.85).toFixed(3)), duration: Number((beatSec * 1.85).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const b6Start = 24 * beatSec;
+    [66, 66, 64, 64].forEach((p, idx) => {
+      const st = b6Start + idx * beatSec;
+      notes.push({ id: noteId++, pitch: p, name: pitchToName(p), velocity: 84, start: Number(st.toFixed(3)), end: Number((st + beatSec * 0.95).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" });
+    });
+
+    const b7Start = 28 * beatSec;
+    notes.push({ id: noteId++, pitch: 62, name: "D4", velocity: 86, start: Number(b7Start.toFixed(3)), end: Number((b7Start + beatSec * 3.85).toFixed(3)), duration: Number((beatSec * 3.85).toFixed(3)), track: 1, hand: "R" });
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Pop Ballad Piano Chords & Bass Octaves)",
+      "Right Hand (Taylor Swift's Love Story Hook Melody)"
+    );
+  }
+
+  // 19. Coldplay — The Scientist
+  if (
+    normId === "thescientistcoldplay" ||
+    normId === "thescientist" ||
+    normId === "coldplaythescientist" ||
+    normId.includes("thescientist")
+  ) {
+    const bpm = 73;
+    const beatSec = 60 / bpm; // ~0.822s
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    const coldplayBars = [
+      { bass: 38, ch: [65, 69, 72] },
+      { bass: 34, ch: [65, 70, 74] },
+      { bass: 29, ch: [65, 69, 72] },
+      { bass: 29, ch: [65, 67, 72] },
+      { bass: 38, ch: [65, 69, 72] },
+      { bass: 34, ch: [65, 70, 74] },
+      { bass: 29, ch: [65, 69, 72] },
+      { bass: 29, ch: [65, 67, 72] },
+    ];
+
+    for (let bar = 0; bar < 8; bar++) {
+      const bStart = bar * 4 * beatSec;
+      const cb = coldplayBars[bar];
+
+      [cb.bass, cb.bass + 12].forEach((p) => {
+        notes.push({
+          id: noteId++,
+          pitch: p,
+          name: pitchToName(p),
+          velocity: 64,
+          start: Number(bStart.toFixed(3)),
+          end: Number((bStart + beatSec * 3.85).toFixed(3)),
+          duration: Number((beatSec * 3.85).toFixed(3)),
+          track: 0,
+          hand: "L",
+        });
+      });
+
+      [0, 1, 1.5, 2, 3].forEach((bOffset) => {
+        cb.ch.forEach((cp) => {
+          notes.push({
+            id: noteId++,
+            pitch: cp,
+            name: pitchToName(cp),
+            velocity: bOffset === 1.5 ? 80 : 74,
+            start: Number((bStart + bOffset * beatSec).toFixed(3)),
+            end: Number((bStart + (bOffset + 0.45) * beatSec).toFixed(3)),
+            duration: Number((beatSec * 0.45).toFixed(3)),
+            track: 1,
+            hand: "R",
+          });
+        });
+      });
+    }
+
+    const b4Start = 4 * 4 * beatSec;
+    [69, 69, 69].forEach((p, idx) => {
+      notes.push({ id: noteId++, pitch: p, name: pitchToName(p), velocity: 88, start: Number((b4Start + idx * beatSec).toFixed(3)), end: Number((b4Start + (idx + 0.9) * beatSec).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" });
+    });
+    notes.push(
+      { id: noteId++, pitch: 67, name: "G4", velocity: 84, start: Number((b4Start + 3 * beatSec).toFixed(3)), end: Number((b4Start + 3.45 * beatSec).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 65, name: "F4", velocity: 86, start: Number((b4Start + 3.5 * beatSec).toFixed(3)), end: Number((b4Start + 3.95 * beatSec).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const b5Start = 5 * 4 * beatSec;
+    notes.push(
+      { id: noteId++, pitch: 65, name: "F4", velocity: 84, start: Number(b5Start.toFixed(3)), end: Number((b5Start + beatSec * 0.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 67, name: "G4", velocity: 84, start: Number((b5Start + beatSec).toFixed(3)), end: Number((b5Start + beatSec * 1.45).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 65, name: "F4", velocity: 86, start: Number((b5Start + 1.5 * beatSec).toFixed(3)), end: Number((b5Start + 1.95 * beatSec).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 62, name: "D4", velocity: 84, start: Number((b5Start + 2 * beatSec).toFixed(3)), end: Number((b5Start + 3.85 * beatSec).toFixed(3)), duration: Number((beatSec * 1.85).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const b6Start = 6 * 4 * beatSec;
+    notes.push({ id: noteId++, pitch: 60, name: "C4", velocity: 82, start: Number(b6Start.toFixed(3)), end: Number((b6Start + beatSec * 0.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" });
+    [1, 2, 3].forEach((idx) => {
+      notes.push({ id: noteId++, pitch: 65, name: "F4", velocity: 86, start: Number((b6Start + idx * beatSec).toFixed(3)), end: Number((b6Start + (idx + 0.9) * beatSec).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" });
+    });
+
+    const b7Start = 7 * 4 * beatSec;
+    notes.push(
+      { id: noteId++, pitch: 67, name: "G4", velocity: 86, start: Number(b7Start.toFixed(3)), end: Number((b7Start + beatSec * 0.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 65, name: "F4", velocity: 84, start: Number((b7Start + beatSec).toFixed(3)), end: Number((b7Start + beatSec * 1.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 65, name: "F4", velocity: 86, start: Number((b7Start + 2 * beatSec).toFixed(3)), end: Number((b7Start + 3.85 * beatSec).toFixed(3)), duration: Number((beatSec * 1.85).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Warm Acoustic Piano Bass Octaves)",
+      "Right Hand (Iconic Syncopated Dm7-Bb-F Chords & Vocal Hook)"
+    );
+  }
+
+  // 20. BTS — Spring Day (봄날)
+  if (
+    normId === "springdaybts" ||
+    normId === "springday" ||
+    normId === "btsspringday" ||
+    normId.includes("springday")
+  ) {
+    const bpm = 106;
+    const beatSec = 60 / bpm; // 0.566s
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    const btsChords = [
+      { bass: 39, arpeggio: [39, 46, 55, 58, 63] },
+      { bass: 43, arpeggio: [43, 50, 58, 62] },
+      { bass: 44, arpeggio: [44, 51, 60, 63] },
+      { bass: 46, arpeggio: [46, 53, 62, 65] },
+      { bass: 36, arpeggio: [36, 43, 51, 55] },
+      { bass: 43, arpeggio: [43, 50, 58, 62] },
+      { bass: 44, arpeggio: [44, 51, 60, 63] },
+      { bass: 46, arpeggio: [46, 53, 58, 63] },
+    ];
+
+    for (let bar = 0; bar < 8; bar++) {
+      const bStart = bar * 4 * beatSec;
+      const bc = btsChords[bar];
+
+      const stepTime = (beatSec * 4) / bc.arpeggio.length;
+      bc.arpeggio.forEach((lp, sIdx) => {
+        const st = bStart + sIdx * stepTime;
+        notes.push({
+          id: noteId++,
+          pitch: lp,
+          name: pitchToName(lp),
+          velocity: sIdx === 0 ? 64 : 52,
+          start: Number(st.toFixed(3)),
+          end: Number((st + stepTime * 1.5).toFixed(3)),
+          duration: Number((stepTime * 1.5).toFixed(3)),
+          track: 0,
+          hand: "L",
+        });
+      });
+    }
+
+    const b0Start = 0;
+    notes.push(
+      { id: noteId++, pitch: 75, name: "Eb5", velocity: 84, start: Number(b0Start.toFixed(3)), end: Number((b0Start + beatSec * 0.95).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 74, name: "D5", velocity: 80, start: Number((b0Start + beatSec).toFixed(3)), end: Number((b0Start + beatSec * 1.45).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 72, name: "C5", velocity: 82, start: Number((b0Start + 1.5 * beatSec).toFixed(3)), end: Number((b0Start + 1.95 * beatSec).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 70, name: "Bb4", velocity: 84, start: Number((b0Start + 2 * beatSec).toFixed(3)), end: Number((b0Start + 3.85 * beatSec).toFixed(3)), duration: Number((beatSec * 1.85).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const b1Start = 4 * beatSec;
+    notes.push(
+      { id: noteId++, pitch: 70, name: "Bb4", velocity: 80, start: Number(b1Start.toFixed(3)), end: Number((b1Start + beatSec * 0.45).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 72, name: "C5", velocity: 82, start: Number((b1Start + 0.5 * beatSec).toFixed(3)), end: Number((b1Start + 0.95 * beatSec).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 74, name: "D5", velocity: 84, start: Number((b1Start + beatSec).toFixed(3)), end: Number((b1Start + beatSec * 1.95).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 67, name: "G4", velocity: 82, start: Number((b1Start + 2 * beatSec).toFixed(3)), end: Number((b1Start + 3.85 * beatSec).toFixed(3)), duration: Number((beatSec * 1.85).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const b2Start = 8 * beatSec;
+    [68, 72, 75, 79].forEach((p, idx) => {
+      notes.push({ id: noteId++, pitch: p, name: pitchToName(p), velocity: 84, start: Number((b2Start + idx * beatSec).toFixed(3)), end: Number((b2Start + (idx + 0.95) * beatSec).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" });
+    });
+
+    const b3Start = 12 * beatSec;
+    notes.push(
+      { id: noteId++, pitch: 77, name: "F5", velocity: 84, start: Number(b3Start.toFixed(3)), end: Number((b3Start + 2.85 * beatSec).toFixed(3)), duration: Number((beatSec * 2.85).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 75, name: "Eb5", velocity: 82, start: Number((b3Start + 3 * beatSec).toFixed(3)), end: Number((b3Start + 3.95 * beatSec).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const b4Start = 16 * beatSec;
+    notes.push(
+      { id: noteId++, pitch: 75, name: "Eb5", velocity: 88, start: Number(b4Start.toFixed(3)), end: Number((b4Start + beatSec * 1.95).toFixed(3)), duration: Number((beatSec * 1.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 77, name: "F5", velocity: 84, start: Number((b4Start + 2 * beatSec).toFixed(3)), end: Number((b4Start + 2.95 * beatSec).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 79, name: "G5", velocity: 88, start: Number((b4Start + 3 * beatSec).toFixed(3)), end: Number((b4Start + 3.95 * beatSec).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const b5Start = 20 * beatSec;
+    notes.push(
+      { id: noteId++, pitch: 79, name: "G5", velocity: 88, start: Number(b5Start.toFixed(3)), end: Number((b5Start + 1.45 * beatSec).toFixed(3)), duration: Number((beatSec * 1.45).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 77, name: "F5", velocity: 84, start: Number((b5Start + 1.5 * beatSec).toFixed(3)), end: Number((b5Start + 1.95 * beatSec).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 75, name: "Eb5", velocity: 86, start: Number((b5Start + 2 * beatSec).toFixed(3)), end: Number((b5Start + 3.85 * beatSec).toFixed(3)), duration: Number((beatSec * 1.85).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const b6Start = 24 * beatSec;
+    notes.push(
+      { id: noteId++, pitch: 72, name: "C5", velocity: 84, start: Number(b6Start.toFixed(3)), end: Number((b6Start + beatSec * 0.95).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 75, name: "Eb5", velocity: 86, start: Number((b6Start + beatSec).toFixed(3)), end: Number((b6Start + beatSec * 1.95).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 77, name: "F5", velocity: 86, start: Number((b6Start + 2 * beatSec).toFixed(3)), end: Number((b6Start + 2.95 * beatSec).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" },
+      { id: noteId++, pitch: 75, name: "Eb5", velocity: 86, start: Number((b6Start + 3 * beatSec).toFixed(3)), end: Number((b6Start + 3.95 * beatSec).toFixed(3)), duration: Number((beatSec * 0.95).toFixed(3)), track: 1, hand: "R" }
+    );
+
+    const b7Start = 28 * beatSec;
+    notes.push({ id: noteId++, pitch: 75, name: "Eb5", velocity: 88, start: Number(b7Start.toFixed(3)), end: Number((b7Start + 3.85 * beatSec).toFixed(3)), duration: Number((beatSec * 3.85).toFixed(3)), track: 1, hand: "R" });
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Warm K-Pop Ballad Arpeggios & Deep Bass)",
+      "Right Hand (BTS's Iconic Bell Intro Motif & Singing Hook)"
     );
   }
 
@@ -2466,6 +3700,8 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
     coverGradient: input.coverGradient,
     noteCount: notes.length,
     tags: input.tags,
+    isCanonical: false,
+    qualityTier: "arranged",
     noteData,
   };
 }

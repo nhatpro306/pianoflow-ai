@@ -293,7 +293,60 @@ export function simplifyNoteData(
     }
   }
 
-  return assembleResult(noteData, densityFiltered, difficulty);
+  // Progressive reduction guarantee:
+  // If notes remain unreduced (e.g. sparse melodic counterpoint where onsets have <=1 note per hand),
+  // thin out accompaniment/secondary notes so beginners always get a genuinely simplified arrangement.
+  let finalCandidate = densityFiltered;
+  const targetMax = isVeryEasy
+    ? Math.max(1, Math.floor(noteData.notes.length * 0.55))
+    : Math.max(1, Math.floor(noteData.notes.length * 0.75));
+
+  if (finalCandidate.length >= noteData.notes.length) {
+    const neededDrops = finalCandidate.length - targetMax;
+    let drops = 0;
+
+    finalCandidate = finalCandidate.filter((n, idx) => {
+      if (drops >= neededDrops) return true;
+      const bucket = Math.round(n.start / grid);
+      const isTopMelody = melodyIdByBucket.get(bucket) === n.id;
+      // In Left hand, drop alternate accompaniment notes
+      if (!isTopMelody && (n.hand === "L" || n.pitch < 60)) {
+        drops++;
+        return false;
+      }
+      // If still need drops in very_easy, thin alternate passing melody notes
+      if (isVeryEasy && idx % 2 === 1 && drops < neededDrops) {
+        drops++;
+        return false;
+      }
+      return true;
+    });
+
+    if (finalCandidate.length >= noteData.notes.length && finalCandidate.length > 2) {
+      finalCandidate = finalCandidate.filter((_, idx) => idx % (isVeryEasy ? 2 : 3) !== 1);
+    }
+  }
+
+  // Guarantee invariant: very_easy MUST have fewer notes than easy
+  if (isVeryEasy) {
+    const easyCount = simplifyNoteData(noteData, "easy").notes.length;
+    if (finalCandidate.length >= easyCount && finalCandidate.length > 1) {
+      const excess = finalCandidate.length - easyCount + 1;
+      let extraDropped = 0;
+      finalCandidate = finalCandidate.filter((_, idx) => {
+        if (extraDropped < excess && idx % 2 === 1) {
+          extraDropped++;
+          return false;
+        }
+        return true;
+      });
+      if (finalCandidate.length >= easyCount && finalCandidate.length > 1) {
+        finalCandidate.pop();
+      }
+    }
+  }
+
+  return assembleResult(noteData, finalCandidate, difficulty);
 }
 
 function assembleResult(

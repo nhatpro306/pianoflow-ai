@@ -63,6 +63,9 @@ export function searchRepertoire(
 
 export function getSongById(id: string): RepertoireSong | undefined {
   return ALL_REPERTOIRE_SONGS.find(
-    (s) => s.id === id || (id === "gymnopedie-no-1" && s.id === "gymnopedie-1")
+    (s) =>
+      s.id === id ||
+      (id === "gymnopedie-no-1" && s.id === "gymnopedie-1") ||
+      (id === "prelude-in-c" && s.id === "bach-prelude-c-major")
   );
 }

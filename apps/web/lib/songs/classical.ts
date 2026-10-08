@@ -17,6 +17,8 @@ const FUR_ELISE: RepertoireSong = {
     "Beethoven's timeless Bagatelle No. 25 in A minor. Features the immortal chromatic alternating motif (E5–D#5–E5–D#5–E5–B4–D5–C5–A4) layered over sweeping left-hand arpeggios.",
   coverGradient: "from-amber-600/30 via-zinc-900 to-zinc-950 border-amber-500/40",
   noteCount: 48,
+  isCanonical: true,
+  qualityTier: "studio_master",
   noteData: {
     schema_version: 1,
     bpm: 130,
@@ -94,6 +96,8 @@ const CLAIR_DE_LUNE: RepertoireSong = {
     "The third movement of Suite Bergamasque. Celebrated for ethereal impressionist harmonies, delicate syncopations, and descending Db major pentatonic contours.",
   coverGradient: "from-indigo-600/30 via-zinc-900 to-zinc-950 border-indigo-500/40",
   noteCount: 42,
+  isCanonical: true,
+  qualityTier: "studio_master",
   noteData: {
     schema_version: 1,
     bpm: 50,
@@ -165,6 +169,8 @@ const GYMNOPEDIE_1: RepertoireSong = {
     "Satie's minimalist, meditative masterpiece. Features a hypnotic waltz bass alternating between G and D roots with soft luminous upper chords and a gentle melancholic melody.",
   coverGradient: "from-emerald-600/30 via-zinc-900 to-zinc-950 border-emerald-500/40",
   noteCount: 38,
+  isCanonical: true,
+  qualityTier: "studio_master",
   noteData: {
     schema_version: 1,
     bpm: 65,
@@ -232,6 +238,8 @@ const CANON_IN_D: RepertoireSong = {
     "The legendary Baroque passacaglia built upon an eight-note ground bass progression (D–A–B–F#–G–D–G–A) with accumulating polyphonic variations.",
   coverGradient: "from-cyan-600/30 via-zinc-900 to-zinc-950 border-cyan-500/40",
   noteCount: 44,
+  isCanonical: true,
+  qualityTier: "studio_master",
   noteData: {
     schema_version: 1,
     bpm: 75,

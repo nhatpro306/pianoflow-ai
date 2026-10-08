@@ -12,6 +12,8 @@ export type GenreFilter = GenreCategory | "All";
 
 export type SongDifficulty = "Beginner" | "Intermediate" | "Master";
 
+export type QualityTier = "studio_master" | "arranged";
+
 export interface RepertoireSong {
   id: string;
   title: string;
@@ -27,5 +29,7 @@ export interface RepertoireSong {
   coverGradient: string;
   noteCount: number;
   tags?: string[];
+  isCanonical?: boolean;
+  qualityTier?: QualityTier;
   noteData: NoteData;
 }

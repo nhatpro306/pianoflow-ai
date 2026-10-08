@@ -31,7 +31,7 @@ import { MeasureHeatmap } from "@/components/practice/MeasureHeatmap";
 import { CoachRecommendations } from "@/components/practice/CoachRecommendations";
 import { ExportCenterModal } from "@/components/ExportCenterModal";
 import { QuickStartGuideModal } from "@/components/practice/QuickStartGuideModal";
-import { OpenMidiImporterModal } from "@/components/practice/OpenMidiImporterModal";
+import { MidiRepoModal } from "@/components/practice/OpenMidiImporterModal";
 import {
   MidiEngine,
   type ExpectedNote,
@@ -67,17 +67,19 @@ export type DemoMode = SongMode;
 
 type GenreFilterId =
   | "All"
+  | "Studio Master"
   | "Anime & Ghibli"
+  | "Classical"
   | "K-Pop"
   | "Modern & Pop"
   | "Cinematic & Game"
-  | "Classical"
   | "Jazz & Lo-Fi";
 
 type DifficultyFilter = "All" | "Beginner" | "Intermediate" | "Master";
 
 const GENRE_PILLS = [
   { id: "All" as const, label: "All", badge: "1,000+" },
+  { id: "Studio Master" as const, label: "⭐ Studio Master (Real MIDI)", badge: "25" },
   { id: "Anime & Ghibli" as const, label: "🌸 Anime", badge: "180" },
   { id: "Classical" as const, label: "🏛️ Classical", badge: "180" },
   { id: "K-Pop" as const, label: "✨ K-Pop", badge: "160" },
@@ -333,6 +335,7 @@ function FloatingNowPlayingBar({
 
 export default function SongsPage() {
   // Active song state & dynamic difficulty (Phase J)
+  const [customSongs, setCustomSongs] = useState<DemoSong[]>([]);
   const [activeSong, setActiveSong] = useState<DemoSong>(DEFAULT_DEMO_SONG);
   const [difficulty, setDifficulty] = useState<SimplificationDifficulty>("original");
   const [activeMode, setActiveMode] = useState<SongMode>("visualizer");
@@ -346,6 +349,10 @@ export default function SongsPage() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const allSongs = useMemo(() => {
+    return customSongs.length > 0 ? [...customSongs, ...DEMO_SONGS] : DEMO_SONGS;
+  }, [customSongs]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -369,9 +376,13 @@ export default function SongsPage() {
   }, []);
 
   const filteredSongs = useMemo(() => {
-    let list = DEMO_SONGS;
+    let list = allSongs;
     if (selectedGenre !== "All") {
-      list = list.filter((s) => s.genre === selectedGenre);
+      if (selectedGenre === "Studio Master") {
+        list = list.filter((s) => s.isCanonical || s.qualityTier === "studio_master");
+      } else {
+        list = list.filter((s) => s.genre === selectedGenre);
+      }
     }
     if (selectedDifficulty !== "All") {
       list = list.filter((s) => s.difficulty === selectedDifficulty);
@@ -395,7 +406,7 @@ export default function SongsPage() {
 
       return tokens.every((token) => searchBlob.includes(token));
     });
-  }, [selectedGenre, selectedDifficulty, searchQuery]);
+  }, [selectedGenre, selectedDifficulty, searchQuery, allSongs]);
 
   // Dynamically simplify active demo song on the client
   const activeSongNoteData = useMemo(() => {
@@ -892,6 +903,14 @@ export default function SongsPage() {
                 Now Loaded: &ldquo;<strong className="text-white">{activeSong.title}</strong>&rdquo; by{" "}
                 <span className="text-cyan-200">{activeSong.composer}</span>
               </span>
+              {Boolean(activeSong.isCanonical || activeSong.qualityTier === "studio_master") && (
+                <span
+                  data-testid="studio-master-active-badge"
+                  className="ml-1.5 inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                >
+                  ⭐ Studio Master (Authentic MIDI)
+                </span>
+              )}
             </div>
 
             <span className="text-zinc-400 font-semibold flex items-center gap-1.5">
@@ -1375,8 +1394,13 @@ export default function SongsPage() {
               <span className="text-xs text-zinc-500 font-mono hidden md:inline">
                 Selected: <strong className="text-zinc-200">{activeSong.title}</strong>
               </span>
+              {Boolean(activeSong.isCanonical || activeSong.qualityTier === "studio_master") && (
+                <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  ⭐ Studio Master (Authentic MIDI)
+                </span>
+              )}
               <Badge variant="default" size="sm" className="font-mono text-xs text-cyan-300 border-cyan-500/30">
-                Showing {filteredSongs.length.toLocaleString()} of {DEMO_SONGS.length.toLocaleString()} pieces
+                Showing {filteredSongs.length.toLocaleString()} of {allSongs.length.toLocaleString()} pieces
               </Badge>
               <button
                 type="button"
@@ -1591,6 +1615,16 @@ export default function SongsPage() {
                         <span className="truncate">{song.title}</span>
                       </h3>
                       <p className="text-xs text-zinc-400 mt-0.5 truncate">{song.composer}</p>
+                      {Boolean(song.isCanonical || song.qualityTier === "studio_master") && (
+                        <div className="mt-2 flex items-center">
+                          <span
+                            data-testid={`badge-studio-master-${song.id}`}
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                          >
+                            ⭐ Studio Master (Authentic MIDI)
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-mono text-zinc-400">
@@ -1637,9 +1671,13 @@ export default function SongsPage() {
       />
 
       {/* Open MIDI Importer & Repositories Modal */}
-      <OpenMidiImporterModal
+      <MidiRepoModal
         open={isImporterInfoOpen}
         onClose={() => setIsImporterInfoOpen(false)}
+        onSongLoaded={(newSong) => {
+          setCustomSongs((prev) => [newSong, ...prev.filter((s) => s.id !== newSong.id)]);
+          setActiveSong(newSong);
+        }}
       />
     </div>
   );
