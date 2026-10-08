@@ -127,8 +127,8 @@ export class SampledPiano {
   }
 
   get time(): number {
-    if (this.usingFallback) return this.fallback?.time ?? 0;
-    if (!this.ctx || this.timer === null) return 0;
+    if (this.usingFallback && this.fallback) return this.fallback.time;
+    if (!this.ctx) return 0;
     return this.ctx.currentTime - this.startCtxTime;
   }
 
@@ -285,6 +285,7 @@ export class SampledPiano {
       const note = this.notes[this.nextIndex];
       const start = note.start / this.speed;
       if (start > horizon) break;
+      const scheduleTime = this.startCtxTime + note.start / this.speed;
       const velocity =
         this.config.sound === "felt"
           ? Math.round(30 + (note.velocity / 127) * 50)
@@ -292,7 +293,7 @@ export class SampledPiano {
       instrument.start({
         note: note.pitch,
         velocity,
-        time: this.startCtxTime + start,
+        time: scheduleTime,
         duration: Math.max(0.08, note.duration / this.speed),
       });
       this.nextIndex++;

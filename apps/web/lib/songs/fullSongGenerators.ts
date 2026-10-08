@@ -633,84 +633,31 @@ export function buildGenericFullPieceData(
 ): NoteData {
   const beatsPerBar = time_sig === "3/4" || time_sig === "3/8" ? 3 : time_sig === "2/4" ? 2 : 4;
   const beatSec = 60 / bpm;
-  const s8 = beatSec / 2;
   const notes: Note[] = [];
   let noteId = 1;
 
-  const scale = isMinor ? [0, 2, 3, 5, 7, 8, 10, 12] : [0, 2, 4, 5, 7, 9, 11, 12];
-  const chordRoots = isMinor ? [0, 5, 3, 7, 0, 8, 5, 7] : [0, 7, 9, 5, 0, 7, 5, 0];
-
   for (let bar = 0; bar < totalBars; bar++) {
     const bStart = bar * beatsPerBar * beatSec;
-    const chordDegree = chordRoots[bar % chordRoots.length];
-    const root = keyRoot + chordDegree;
-
-    if (style === "waltz") {
-      noteId = addNote(notes, noteId, root - 12, bStart, beatSec * 2.5, 72, "L");
-      const wChord = [root, root + (isMinor ? 3 : 4), root + 7];
-      for (let beat = 1; beat < 3; beat++) {
-        for (const cp of wChord) {
-          noteId = addNote(notes, noteId, cp, bStart + beat * beatSec, beatSec * 0.8, 62, "L");
-        }
-      }
-      for (let s = 0; s < 3; s++) {
-        const melP = root + 12 + scale[(bar * 2 + s) % scale.length];
-        noteId = addNote(notes, noteId, melP, bStart + s * beatSec, beatSec * 0.9, 82, "R");
-      }
-    } else if (style === "march" || style === "stride") {
-      noteId = addNote(notes, noteId, root - 12, bStart, beatSec * 0.9, 75, "L");
-      const ch = [root, root + 4, root + 7];
-      for (const cp of ch) {
-        noteId = addNote(notes, noteId, cp, bStart + beatSec, beatSec * 0.8, 68, "L");
-      }
-      for (let s = 0; s < 4; s++) {
-        const melP = root + 12 + scale[(bar * 3 + s) % scale.length];
-        noteId = addNote(notes, noteId, melP, bStart + s * s8, s8 * 0.9, 84, "R");
-      }
-    } else if (style === "cinema") {
-      noteId = addNote(notes, noteId, root - 24, bStart, beatsPerBar * beatSec * 0.95, 78, "L");
-      noteId = addNote(notes, noteId, root - 12, bStart, beatsPerBar * beatSec * 0.95, 72, "L");
-      for (let beat = 0; beat < beatsPerBar; beat++) {
-        const arp = [root, root + 7, root + 12];
-        for (let a = 0; a < 3; a++) {
-          noteId = addNote(notes, noteId, arp[a], bStart + beat * beatSec + a * (beatSec / 3), beatSec * 0.3, 62, "L");
-        }
-      }
-      const melP = root + 12 + scale[(bar % 4) * 2];
-      noteId = addNote(notes, noteId, melP, bStart + beatSec, beatSec * 1.8, 86, "R");
-    } else {
-      noteId = addNote(notes, noteId, root - 12, bStart, beatSec * 3.8, 72, "L");
-      noteId = addNote(notes, noteId, root - 5, bStart + beatSec, beatSec * 2.8, 66, "L");
-      noteId = addNote(notes, noteId, root + (isMinor ? 3 : 4), bStart + beatSec * 2, beatSec * 1.8, 64, "L");
-      noteId = addNote(notes, noteId, root + 7, bStart + beatSec * 3, beatSec * 0.9, 64, "L");
-      for (let s = 0; s < 8; s++) {
-        const melP = root + 12 + scale[(bar * 2 + s) % scale.length];
-        noteId = addNote(notes, noteId, melP, bStart + s * s8, s8 * 0.92, 82, "R");
-      }
+    const root = keyRoot;
+    noteId = addNote(notes, noteId, root - 12, bStart, beatsPerBar * beatSec * 0.9, 70, "L");
+    for (let b = 0; b < beatsPerBar; b++) {
+      noteId = addNote(notes, noteId, root + 12, bStart + b * beatSec, beatSec * 0.8, 75, "R");
     }
   }
 
   const duration_sec = Number((totalBars * beatsPerBar * beatSec).toFixed(2));
-  const lhCount = notes.filter((n) => n.hand === "L" || n.track === 0).length;
-  const rhCount = notes.filter((n) => n.hand === "R" || n.track === 1).length;
-
   return {
     schema_version: 1,
     bpm,
     duration_sec,
     time_signature: time_sig,
     tracks: [
-      { index: 0, name: lhName, note_count: lhCount },
-      { index: 1, name: rhName, note_count: rhCount },
+      { index: 0, name: lhName, note_count: notes.filter((n) => n.hand === "L" || n.track === 0).length },
+      { index: 1, name: rhName, note_count: notes.filter((n) => n.hand === "R" || n.track === 1).length },
     ],
     notes,
   };
 }
-
-
-/**
- * PianoFlow AI — Test and build all 25 new full piece generators
- */
 
 export interface ArrangedSongConfig {
   bpm: number;
@@ -1047,88 +994,13 @@ export function buildUnravelData(): NoteData {
   });
 }
 
-// 7. He's a Pirate (Pirates of the Caribbean)
-export function buildHeIsAPirateData(): NoteData {
-  return buildFullArrangedSong({
-    bpm: 140,
-    time_sig: "12/8",
-    keyRoot: 50, // D3
-    isMinor: true,
-    lhName: "Left Hand (Galloping 12/8 Pirate Ostinato & Cannonade Bass)",
-    rhName: "Right Hand (Swashbuckling Theme & Fanfare Chords)",
-    sections: [
-      { name: "intro", bars: 8, chordRoots: [0, 0, 8, 10], lhStyle: "rockPower", rhMelody: [0, 0, 0, 3, 7, 7, 7, 8, 7, 5, 7], rhRhythm: "syncopated16th", dynamics: { lh: 75, rh: 85 } },
-      { name: "verse", bars: 16, chordRoots: [0, 0, 8, 10, 0, 0, 8, 7], lhStyle: "rockPower", rhMelody: [0, 0, 3, 7, 7, 7, 8, 7, 5, 7, 0, 0, 3, 7, 7, 7, 8, 10, 8, 7, 5], rhRhythm: "syncopated16th", dynamics: { lh: 80, rh: 90 } },
-      { name: "chorus", bars: 16, chordRoots: [8, 10, 0, 0, 8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [12, 12, 14, 15, 17, 15, 14, 12, 10, 8, 10, 12], rhRhythm: "climaxOctaves", dynamics: { lh: 88, rh: 96 } },
-      { name: "bridge", bars: 12, chordRoots: [0, 8, 10, 7], lhStyle: "rollingArp", rhMelody: [7, 10, 12, 15, 14, 12], rhRhythm: "cascades", dynamics: { lh: 76, rh: 88 } },
-      { name: "chorus", bars: 20, chordRoots: [8, 10, 0, 0, 8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [0, 0, 3, 7, 7, 7, 8, 7, 5, 7, 0, 0, 3, 7, 7, 7, 8, 10, 8, 7, 5], rhRhythm: "climaxOctaves", dynamics: { lh: 92, rh: 100 } },
-      { name: "coda", bars: 10, chordRoots: [8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [7, 5, 3, 0], rhRhythm: "marchStaccato", dynamics: { lh: 86, rh: 96 } },
-    ],
-  });
-}
 
-// 8. Megalovania (Toby Fox / Undertale)
-export function buildMegalovaniaData(): NoteData {
-  return buildFullArrangedSong({
-    bpm: 120,
-    time_sig: "4/4",
-    keyRoot: 50, // D3
-    isMinor: true,
-    lhName: "Left Hand (Funk Chiptune Bass Staccatos & Octave Slaps)",
-    rhName: "Right Hand (Iconic Sans 4-Bar Ostinato & Fast Solos)",
-    sections: [
-      { name: "intro", bars: 8, chordRoots: [0, 10, 9, 8], lhStyle: "discoFunk", rhMelody: [0, 0, 12, 7, 6, 5, 3, 0, 3, 5], rhRhythm: "syncopated16th", dynamics: { lh: 72, rh: 85 } },
-      { name: "verse", bars: 16, chordRoots: [0, 10, 9, 8, 0, 10, 9, 8], lhStyle: "discoFunk", rhMelody: [0, 0, 12, 7, 6, 5, 3, 0, 3, 5], rhRhythm: "syncopated16th", dynamics: { lh: 78, rh: 88 } },
-      { name: "preChorus", bars: 8, chordRoots: [8, 10, 0, 7], lhStyle: "rockPower", rhMelody: [12, 14, 15, 17, 15, 14, 12, 10], rhRhythm: "syncopated16th", dynamics: { lh: 82, rh: 92 } },
-      { name: "chorus", bars: 16, chordRoots: [0, 10, 9, 8, 0, 10, 9, 8], lhStyle: "rockPower", rhMelody: [12, 12, 24, 19, 18, 17, 15, 12, 15, 17], rhRhythm: "climaxOctaves", dynamics: { lh: 88, rh: 98 } },
-      { name: "verse", bars: 12, chordRoots: [0, 10, 9, 8], lhStyle: "discoFunk", rhMelody: [0, 0, 12, 7, 6, 5, 3, 0], rhRhythm: "syncopated16th", dynamics: { lh: 76, rh: 86 } },
-      { name: "bridge", bars: 8, chordRoots: [3, 5, 7, 8], lhStyle: "continuous16th", rhMelody: [15, 17, 19, 22, 21, 19], rhRhythm: "cascades", dynamics: { lh: 80, rh: 92 } },
-      { name: "chorus", bars: 16, chordRoots: [0, 10, 9, 8, 0, 10, 9, 8], lhStyle: "rockPower", rhMelody: [12, 12, 24, 19, 18, 17, 15, 12, 15, 17], rhRhythm: "climaxOctaves", dynamics: { lh: 92, rh: 100 } },
-      { name: "coda", bars: 6, chordRoots: [8, 10, 0, 0], lhStyle: "discoFunk", rhMelody: [5, 3, 0], rhRhythm: "marchStaccato", dynamics: { lh: 84, rh: 92 } },
-    ],
-  });
-}
 
-// 9. Zelda's Lullaby (Koji Kondo / The Legend of Zelda)
-export function buildZeldasLullabyData(): NoteData {
-  return buildFullArrangedSong({
-    bpm: 84,
-    time_sig: "3/4",
-    keyRoot: 55, // G3
-    isMinor: false,
-    lhName: "Left Hand (Royal Harp Arpeggio Cascades)",
-    rhName: "Right Hand (Triforce Lyrical Melody & Ornaments)",
-    sections: [
-      { name: "intro", bars: 8, chordRoots: [0, 5, 7, 0], lhStyle: "waltz", rhMelody: [11, 14, 9, 7, 9, 11, 14, 9, 7, 4, 7], rhRhythm: "waltzCantabile", dynamics: { lh: 54, rh: 72 } },
-      { name: "verse", bars: 18, chordRoots: [0, 5, 7, 0, 0, 5, 7, 0], lhStyle: "waltz", rhMelody: [11, 14, 9, 7, 9, 11, 14, 9, 7, 4, 7, 9, 11, 14, 16, 14], rhRhythm: "waltzCantabile", dynamics: { lh: 58, rh: 76 } },
-      { name: "chorus", bars: 20, chordRoots: [5, 7, 0, 9, 5, 7, 0, 0], lhStyle: "waltz", rhMelody: [16, 14, 11, 9, 11, 14, 16, 14, 11, 9, 7], rhRhythm: "climaxOctaves", dynamics: { lh: 68, rh: 86 } },
-      { name: "bridge", bars: 12, chordRoots: [9, 5, 7, 0], lhStyle: "rollingArp", rhMelody: [14, 16, 19, 21, 19, 16], rhRhythm: "cascades", dynamics: { lh: 62, rh: 80 } },
-      { name: "chorus", bars: 18, chordRoots: [5, 7, 0, 9, 5, 7, 0, 0], lhStyle: "waltz", rhMelody: [11, 14, 9, 7, 9, 11, 14, 9, 7, 4, 7, 9, 11, 14, 16, 14], rhRhythm: "climaxOctaves", dynamics: { lh: 72, rh: 90 } },
-      { name: "coda", bars: 8, chordRoots: [5, 7, 0, 0], lhStyle: "waltz", rhMelody: [7, 4, 0], rhRhythm: "waltzCantabile", dynamics: { lh: 48, rh: 66 } },
-    ],
-  });
-}
 
-// 10. Super Mario Bros. Theme (Koji Kondo)
-export function buildSuperMarioThemeData(): NoteData {
-  return buildFullArrangedSong({
-    bpm: 100,
-    time_sig: "2/4",
-    keyRoot: 60, // C4
-    isMinor: false,
-    lhName: "Left Hand (Calypso Stride Bass & Underground Walks)",
-    rhName: "Right Hand (Iconic Overworld Ragtime Rhythms)",
-    sections: [
-      { name: "intro", bars: 6, chordRoots: [0, 5, 0, 7], lhStyle: "stride", rhMelody: [16, 16, 16, 12, 16, 19, 7], rhRhythm: "marchStaccato", dynamics: { lh: 72, rh: 85 } },
-      { name: "verse", bars: 24, chordRoots: [0, 5, 0, 7, 0, 5, 0, 7], lhStyle: "stride", rhMelody: [12, 7, 4, 9, 11, 10, 9, 7, 16, 19, 21, 17, 19, 16, 12, 14, 11], rhRhythm: "marchStaccato", dynamics: { lh: 74, rh: 86 } },
-      { name: "preChorus", bars: 12, chordRoots: [5, 0, 7, 0], lhStyle: "discoFunk", rhMelody: [7, 12, 14, 16, 14, 12, 7], rhRhythm: "syncopated16th", dynamics: { lh: 76, rh: 88 } },
-      { name: "chorus", bars: 24, chordRoots: [0, 5, 0, 7, 0, 5, 0, 7], lhStyle: "stride", rhMelody: [12, 7, 4, 9, 11, 10, 9, 7, 16, 19, 21, 17, 19, 16, 12, 14, 11], rhRhythm: "climaxOctaves", dynamics: { lh: 82, rh: 94 } },
-      { name: "bridge", bars: 16, chordRoots: [9, 2, 7, 0], lhStyle: "continuous16th", rhMelody: [16, 17, 19, 21, 19, 17], rhRhythm: "cascades", dynamics: { lh: 78, rh: 90 } },
-      { name: "chorus", bars: 20, chordRoots: [0, 5, 0, 7, 0, 5, 0, 7], lhStyle: "stride", rhMelody: [12, 7, 4, 9, 11, 10, 9, 7, 16, 19, 21, 17, 19, 16, 12, 14, 11], rhRhythm: "climaxOctaves", dynamics: { lh: 86, rh: 96 } },
-      { name: "coda", bars: 8, chordRoots: [5, 7, 0, 0], lhStyle: "stride", rhMelody: [12, 7, 0], rhRhythm: "marchStaccato", dynamics: { lh: 80, rh: 90 } },
-    ],
-  });
-}
+
+
+
+
 
 // 11. Hedwig's Theme (John Williams / Harry Potter)
 export function buildHedwigsThemeData(): NoteData {
@@ -1150,27 +1022,7 @@ export function buildHedwigsThemeData(): NoteData {
   });
 }
 
-// 12. Golden Hour (JVKE)
-export function buildGoldenHourData(): NoteData {
-  return buildFullArrangedSong({
-    bpm: 94,
-    time_sig: "4/4",
-    keyRoot: 55, // G3
-    isMinor: false,
-    lhName: "Left Hand (Shimmering Golden Arpeggio Cascades)",
-    rhName: "Right Hand (Virtuosic 16th Piano Cascades & Melody)",
-    sections: [
-      { name: "intro", bars: 8, chordRoots: [0, 9, 5, 7], lhStyle: "continuous16th", rhMelody: [7, 11, 14, 16, 19, 23, 19, 16, 14, 11, 7, 4, 7, 11, 14, 16], rhRhythm: "cascades", dynamics: { lh: 62, rh: 78 } },
-      { name: "verse", bars: 16, chordRoots: [0, 9, 5, 7, 0, 9, 5, 7], lhStyle: "continuous16th", rhMelody: [4, 7, 9, 11, 14, 12, 11, 9, 7, 4, 2, 4], rhRhythm: "syncopated16th", dynamics: { lh: 65, rh: 82 } },
-      { name: "preChorus", bars: 8, chordRoots: [5, 7, 9, 0], lhStyle: "continuous16th", rhMelody: [11, 12, 14, 16, 19, 16, 14, 12], rhRhythm: "cascades", dynamics: { lh: 70, rh: 86 } },
-      { name: "chorus", bars: 16, chordRoots: [0, 9, 5, 7, 0, 9, 5, 7], lhStyle: "continuous16th", rhMelody: [7, 11, 14, 16, 19, 23, 19, 16, 14, 11, 7, 4, 7, 11, 14, 16], rhRhythm: "climaxOctaves", dynamics: { lh: 80, rh: 95 } },
-      { name: "verse", bars: 12, chordRoots: [0, 9, 5, 7], lhStyle: "continuous16th", rhMelody: [4, 7, 9, 11, 14, 12], rhRhythm: "syncopated16th", dynamics: { lh: 66, rh: 82 } },
-      { name: "bridge", bars: 8, chordRoots: [5, 7, 9, 0], lhStyle: "continuous16th", rhMelody: [14, 16, 19, 23, 21, 19], rhRhythm: "cascades", dynamics: { lh: 72, rh: 88 } },
-      { name: "chorus", bars: 16, chordRoots: [0, 9, 5, 7, 0, 9, 5, 7], lhStyle: "continuous16th", rhMelody: [7, 11, 14, 16, 19, 23, 19, 16, 14, 11, 7, 4, 7, 11, 14, 16], rhRhythm: "climaxOctaves", dynamics: { lh: 84, rh: 98 } },
-      { name: "coda", bars: 6, chordRoots: [5, 7, 0, 0], lhStyle: "continuous16th", rhMelody: [7, 4, 0], rhRhythm: "cascades", dynamics: { lh: 55, rh: 70 } },
-    ],
-  });
-}
+
 
 // 13. Someone Like You (Adele)
 export function buildSomeoneLikeYouData(): NoteData {
@@ -1411,44 +1263,1698 @@ export function buildMoonlightSonata3rdData(): NoteData {
   });
 }
 
-// 24. Mozart Rondo alla Turca
+// 1. MOZART RONDO ALLA TURCA
 export function buildMozartRondoAllaTurcaData(): NoteData {
-  return buildFullArrangedSong({
-    bpm: 126,
-    time_sig: "2/4",
-    keyRoot: 57, // A3
-    isMinor: true,
-    lhName: "Left Hand (Janissary March Broken Chords & Octaves)",
-    rhName: "Right Hand (Virtuosic Turkish Rondo Theme & Coda)",
-    sections: [
-      { name: "intro", bars: 8, chordRoots: [0, 7, 0, 7], lhStyle: "stride", rhMelody: [11, 9, 8, 9, 12, 9, 8, 9, 12, 14, 16, 17], rhRhythm: "marchStaccato", dynamics: { lh: 70, rh: 84 } },
-      { name: "verse", bars: 24, chordRoots: [0, 7, 0, 7, 0, 5, 7, 0], lhStyle: "stride", rhMelody: [11, 9, 8, 9, 12, 9, 8, 9, 12, 14, 16, 17, 16, 14, 12, 11], rhRhythm: "marchStaccato", dynamics: { lh: 74, rh: 86 } },
-      { name: "chorus", bars: 24, chordRoots: [0, 5, 0, 7, 0, 5, 0, 0], lhStyle: "rockPower", rhMelody: [12, 16, 19, 24, 21, 19, 16, 12, 16, 19, 21, 24], rhRhythm: "climaxOctaves", dynamics: { lh: 86, rh: 96 } },
-      { name: "bridge", bars: 16, chordRoots: [9, 2, 7, 0], lhStyle: "rollingArp", rhMelody: [16, 17, 19, 21, 19, 17], rhRhythm: "cascades", dynamics: { lh: 76, rh: 90 } },
-      { name: "verse", bars: 16, chordRoots: [0, 7, 0, 7], lhStyle: "stride", rhMelody: [11, 9, 8, 9, 12, 9, 8, 9, 12, 14, 16, 17], rhRhythm: "marchStaccato", dynamics: { lh: 76, rh: 88 } },
-      { name: "chorus", bars: 24, chordRoots: [0, 5, 0, 7, 0, 5, 0, 0], lhStyle: "rockPower", rhMelody: [12, 16, 19, 24, 21, 19, 16, 12, 16, 19, 21, 24], rhRhythm: "climaxOctaves", dynamics: { lh: 90, rh: 100 } },
-      { name: "coda", bars: 16, chordRoots: [5, 7, 0, 0], lhStyle: "rockPower", rhMelody: [12, 9, 0], rhRhythm: "marchStaccato", dynamics: { lh: 88, rh: 98 } },
+  const bpm = 126;
+  const s16 = 60 / bpm / 4;
+  const s8 = s16 * 2;
+  const s4 = s16 * 4;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  function emitThemeA(repetitions = 2) {
+    for (let r = 0; r < repetitions; r++) {
+      const motifA = [
+        { p: 71, d: s16 }, { p: 69, d: s16 }, { p: 68, d: s16 }, { p: 69, d: s16 },
+        { p: 72, d: s8 },
+        { p: 74, d: s16 }, { p: 72, d: s16 }, { p: 71, d: s16 }, { p: 72, d: s16 },
+        { p: 76, d: s8 },
+        { p: 77, d: s16 }, { p: 76, d: s16 }, { p: 75, d: s16 }, { p: 76, d: s16 },
+        { p: 83, d: s16 }, { p: 81, d: s16 }, { p: 80, d: s16 }, { p: 81, d: s16 }, { p: 83, d: s8 },
+        { p: 84, d: s8 }, { p: 81, d: s8 }, { p: 84, d: s8 }, { p: 83, d: s8 }, { p: 81, d: s4 }
+      ];
+      let t = curTime;
+      for (const m of motifA) {
+        noteId = addNote(notes, noteId, m.p, t, m.d * 0.92, 85, "R");
+        t += m.d;
+      }
+      for (let b = 0; b < 8; b++) {
+        const bt = curTime + b * s4 * 2;
+        const root = b < 4 ? 45 : 40;
+        const ch = b < 4 ? [57, 60, 64] : [56, 59, 64];
+        noteId = addNote(notes, noteId, root, bt, s8 * 0.8, 70, "L");
+        for (const cp of ch) {
+          noteId = addNote(notes, noteId, cp, bt + s8, s8 * 0.8, 65, "L");
+          noteId = addNote(notes, noteId, cp, bt + s4 + s8, s8 * 0.8, 65, "L");
+        }
+      }
+      curTime = t;
+
+      const motifA2 = [
+        { p: 76, d: s16 }, { p: 77, d: s16 }, { p: 79, d: s16 }, { p: 81, d: s16 },
+        { p: 83, d: s8 }, { p: 79, d: s8 },
+        { p: 76, d: s16 }, { p: 77, d: s16 }, { p: 79, d: s16 }, { p: 81, d: s16 },
+        { p: 83, d: s8 }, { p: 79, d: s8 },
+        { p: 77, d: s16 }, { p: 76, d: s16 }, { p: 74, d: s16 }, { p: 72, d: s16 },
+        { p: 71, d: s8 }, { p: 69, d: s4 }
+      ];
+      t = curTime;
+      for (const m of motifA2) {
+        noteId = addNote(notes, noteId, m.p, t, m.d * 0.92, 82, "R");
+        t += m.d;
+      }
+      for (let b = 0; b < 6; b++) {
+        const bt = curTime + b * s4 * 2;
+        noteId = addNote(notes, noteId, 45, bt, s8 * 0.8, 72, "L");
+        noteId = addNote(notes, noteId, 57, bt + s8, s8 * 0.8, 65, "L");
+        noteId = addNote(notes, noteId, 60, bt + s8, s8 * 0.8, 65, "L");
+      }
+      curTime = t;
+    }
+  }
+
+  function emitJanissaryChorus(repetitions = 2) {
+    for (let r = 0; r < repetitions; r++) {
+      const bars = 8;
+      for (let b = 0; b < bars; b++) {
+        const bt = curTime + b * s4 * 2;
+        const roots = [45, 49, 52, 45, 45, 49, 52, 45];
+        const oct = roots[b % roots.length];
+        noteId = addNote(notes, noteId, oct - 12, bt, s8 * 0.85, 90, "L");
+        noteId = addNote(notes, noteId, oct, bt, s8 * 0.85, 85, "L");
+        noteId = addNote(notes, noteId, oct - 12, bt + s8, s8 * 0.85, 88, "L");
+        noteId = addNote(notes, noteId, oct, bt + s8, s8 * 0.85, 84, "L");
+        noteId = addNote(notes, noteId, oct - 12, bt + s4, s8 * 0.85, 90, "L");
+        noteId = addNote(notes, noteId, oct, bt + s4, s8 * 0.85, 85, "L");
+        noteId = addNote(notes, noteId, oct - 12, bt + s4 + s8, s8 * 0.85, 88, "L");
+        noteId = addNote(notes, noteId, oct, bt + s4 + s8, s8 * 0.85, 84, "L");
+
+        const rhChords = [
+          [73, 76, 81], [74, 77, 81], [76, 79, 83], [73, 76, 81],
+          [73, 76, 81], [74, 77, 81], [76, 79, 83], [73, 76, 81]
+        ];
+        const ch = rhChords[b % rhChords.length];
+        for (const cp of ch) {
+          noteId = addNote(notes, noteId, cp, bt, s8 * 0.85, 92, "R");
+          noteId = addNote(notes, noteId, cp, bt + s8, s8 * 0.85, 88, "R");
+          noteId = addNote(notes, noteId, cp + 12, bt + s4, s8 * 0.85, 95, "R");
+          noteId = addNote(notes, noteId, cp + 12, bt + s4 + s8, s8 * 0.85, 90, "R");
+        }
+      }
+      curTime += bars * s4 * 2;
+    }
+  }
+
+  function emitSectionC() {
+    const bars = 8;
+    for (let b = 0; b < bars; b++) {
+      const bt = curTime + b * s4 * 2;
+      noteId = addNote(notes, noteId, 42, bt, s4 * 0.9, 75, "L");
+      noteId = addNote(notes, noteId, 54, bt + s8, s8 * 0.8, 68, "L");
+      noteId = addNote(notes, noteId, 57, bt + s8, s8 * 0.8, 68, "L");
+      noteId = addNote(notes, noteId, 61, bt + s8, s8 * 0.8, 68, "L");
+      noteId = addNote(notes, noteId, 49, bt + s4, s4 * 0.9, 72, "L");
+      noteId = addNote(notes, noteId, 57, bt + s4 + s8, s8 * 0.8, 68, "L");
+      noteId = addNote(notes, noteId, 61, bt + s4 + s8, s8 * 0.8, 68, "L");
+
+      const rhFig = [
+        { p: 78, o: 0 }, { p: 80, o: s16 }, { p: 81, o: s16 * 2 }, { p: 80, o: s16 * 3 },
+        { p: 78, o: s4 }, { p: 77, o: s4 + s16 }, { p: 78, o: s4 + s16 * 2 }, { p: 80, o: s4 + s16 * 3 }
+      ];
+      for (const fig of rhFig) {
+        noteId = addNote(notes, noteId, fig.p, bt + fig.o, s16 * 0.9, 82, "R");
+      }
+    }
+    curTime += bars * s4 * 2;
+  }
+
+  function emitCoda() {
+    const bars = 14;
+    for (let b = 0; b < bars; b++) {
+      const bt = curTime + b * s4 * 2;
+      noteId = addNote(notes, noteId, 33, bt, s8 * 0.85, 96, "L");
+      noteId = addNote(notes, noteId, 45, bt, s8 * 0.85, 94, "L");
+      noteId = addNote(notes, noteId, 33, bt + s8, s8 * 0.85, 92, "L");
+      noteId = addNote(notes, noteId, 45, bt + s8, s8 * 0.85, 90, "L");
+      noteId = addNote(notes, noteId, 40, bt + s4, s8 * 0.85, 94, "L");
+      noteId = addNote(notes, noteId, 52, bt + s4, s8 * 0.85, 92, "L");
+
+      if (b < bars - 3) {
+        const arp = [69, 73, 76, 81, 85, 88, 85, 81];
+        for (let i = 0; i < arp.length; i++) {
+          noteId = addNote(notes, noteId, arp[i], bt + i * s16, s16 * 0.9, 90 + (i % 2 === 0 ? 5 : 0), "R");
+        }
+      } else {
+        const finalA = [57, 61, 64, 69, 73, 76, 81];
+        for (const fp of finalA) {
+          noteId = addNote(notes, noteId, fp, bt, s4 * 1.8, 100, "R");
+        }
+      }
+    }
+    curTime += bars * s4 * 2;
+  }
+
+  // Mozart: Add da capo reprise
+  emitThemeA(2);
+  emitJanissaryChorus(2);
+  emitSectionC();
+  emitThemeA(2);
+  emitJanissaryChorus(2);
+  emitSectionC();
+  emitThemeA(2);
+  emitJanissaryChorus(2);
+  emitCoda();
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "2/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Janissary March Broken Chords & Octaves)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Virtuosic Turkish Rondo Theme & Coda)", note_count: notes.filter(n => n.hand === "R").length },
     ],
-  });
+    notes,
+  };
 }
 
-// 25. Chopin Waltz in A Minor B.150
-export function buildChopinWaltzInAMinorData(): NoteData {
-  return buildFullArrangedSong({
-    bpm: 120,
-    time_sig: "3/4",
-    keyRoot: 57, // A3
-    isMinor: true,
-    lhName: "Left Hand (Authentic Bass-Chord-Chord Chopin Waltz)",
-    rhName: "Right Hand (Melancholy Chopin Lyrical Melody & Ornaments)",
-    sections: [
-      { name: "intro", bars: 8, chordRoots: [0, 5, 7, 0], lhStyle: "waltz", rhMelody: [7, 8, 11, 12, 11, 8, 7, 5, 7, 8, 11, 12], rhRhythm: "waltzCantabile", dynamics: { lh: 56, rh: 74 } },
-      { name: "verse", bars: 24, chordRoots: [0, 5, 7, 0, 0, 5, 7, 0], lhStyle: "waltz", rhMelody: [7, 8, 11, 12, 11, 8, 7, 5, 7, 8, 11, 12, 14, 15, 14, 12], rhRhythm: "waltzCantabile", dynamics: { lh: 60, rh: 78 } },
-      { name: "chorus", bars: 24, chordRoots: [0, 5, 7, 0, 0, 5, 7, 0], lhStyle: "waltz", rhMelody: [12, 14, 16, 19, 16, 14, 12, 9, 12, 14, 16, 19], rhRhythm: "climaxOctaves", dynamics: { lh: 72, rh: 88 } },
-      { name: "bridge", bars: 16, chordRoots: [5, 0, 7, 0], lhStyle: "rollingArp", rhMelody: [15, 17, 19, 22, 19, 17], rhRhythm: "cascades", dynamics: { lh: 66, rh: 84 } },
-      { name: "verse", bars: 20, chordRoots: [0, 5, 7, 0], lhStyle: "waltz", rhMelody: [7, 8, 11, 12, 11, 8, 7, 5, 7, 8, 11, 12], rhRhythm: "waltzCantabile", dynamics: { lh: 62, rh: 80 } },
-      { name: "chorus", bars: 24, chordRoots: [0, 5, 7, 0, 0, 5, 7, 0], lhStyle: "waltz", rhMelody: [12, 14, 16, 19, 16, 14, 12, 9, 12, 14, 16, 19], rhRhythm: "climaxOctaves", dynamics: { lh: 76, rh: 92 } },
-      { name: "coda", bars: 12, chordRoots: [5, 7, 0, 0], lhStyle: "waltz", rhMelody: [7, 3, 0], rhRhythm: "waltzCantabile", dynamics: { lh: 52, rh: 70 } },
+// 2. CHOPIN NOCTURNE OP. 9 NO. 2
+export function buildChopinNocturneOp9No2Data(): NoteData {
+  const bpm = 60;
+  const beatSec = 60 / bpm;
+  const eighthSec = beatSec / 3;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  function emitMeasure(
+    lhProgression: { bass: number; chord: number[] }[],
+    rhNotes: { p: number; d: number }[]
+  ) {
+    const mStart = curTime;
+    for (let beat = 0; beat < 4; beat++) {
+      const bData = lhProgression[beat % lhProgression.length];
+      const bTime = mStart + beat * beatSec;
+      noteId = addNote(notes, noteId, bData.bass, bTime, eighthSec * 2.8, 64, "L");
+      for (let s = 1; s <= 2; s++) {
+        const cTime = bTime + s * eighthSec;
+        for (const cp of bData.chord) {
+          noteId = addNote(notes, noteId, cp, cTime, eighthSec * 0.9, 56, "L");
+        }
+      }
+    }
+    let rt = mStart;
+    for (const r of rhNotes) {
+      noteId = addNote(notes, noteId, r.p, rt, r.d * 0.95, 78, "R");
+      rt += r.d;
+    }
+    curTime += 4 * beatSec;
+  }
+
+  const ebChord = { bass: 39, chord: [55, 58, 63] };
+  const bb7Chord = { bass: 34, chord: [53, 56, 62] };
+  const cmChord = { bass: 36, chord: [55, 60, 63] };
+  const abChord = { bass: 32, chord: [56, 60, 63] };
+  const fmChord = { bass: 41, chord: [53, 56, 60] };
+
+  const bars = 32;
+  for (let bar = 0; bar < bars; bar++) {
+    const phase = bar % 8;
+    if (phase === 0) {
+      emitMeasure([ebChord, ebChord, cmChord, abChord], [
+        { p: 70, d: beatSec }, { p: 79, d: eighthSec * 2 }, { p: 77, d: eighthSec },
+        { p: 75, d: eighthSec * 2 }, { p: 74, d: eighthSec }, { p: 72, d: beatSec }
+      ]);
+    } else if (phase === 1) {
+      emitMeasure([bb7Chord, bb7Chord, ebChord, ebChord], [
+        { p: 70, d: beatSec * 0.75 }, { p: 68, d: beatSec * 0.75 }, { p: 67, d: beatSec * 0.75 },
+        { p: 65, d: beatSec * 0.75 }, { p: 70, d: beatSec }
+      ]);
+    } else if (phase === 2) {
+      emitMeasure([ebChord, ebChord, cmChord, abChord], [
+        { p: 70, d: eighthSec * 2 }, { p: 72, d: eighthSec * 0.5 }, { p: 70, d: eighthSec * 0.5 },
+        { p: 69, d: eighthSec * 0.5 }, { p: 70, d: eighthSec * 0.5 }, { p: 84, d: beatSec * 1.2 },
+        { p: 82, d: eighthSec }, { p: 80, d: beatSec * 0.8 }
+      ]);
+    } else if (phase === 3) {
+      emitMeasure([fmChord, bb7Chord, ebChord, ebChord], [
+        { p: 79, d: beatSec }, { p: 77, d: beatSec }, { p: 75, d: beatSec * 2 }
+      ]);
+    } else if (phase === 4) {
+      emitMeasure([ebChord, ebChord, cmChord, abChord], [
+        { p: 70, d: beatSec }, { p: 79, d: eighthSec }, { p: 80, d: eighthSec * 0.5 },
+        { p: 79, d: eighthSec * 0.5 }, { p: 78, d: eighthSec * 0.5 }, { p: 79, d: eighthSec * 0.5 },
+        { p: 82, d: eighthSec }, { p: 80, d: eighthSec }, { p: 77, d: beatSec }
+      ]);
+    } else if (phase === 5) {
+      emitMeasure([fmChord, bb7Chord, ebChord, ebChord], [
+        { p: 75, d: beatSec }, { p: 79, d: beatSec }, { p: 82, d: beatSec }, { p: 84, d: beatSec }
+      ]);
+    } else if (phase === 6) {
+      emitMeasure([abChord, fmChord, bb7Chord, bb7Chord], [
+        { p: 83, d: eighthSec }, { p: 82, d: eighthSec }, { p: 81, d: eighthSec },
+        { p: 80, d: eighthSec }, { p: 79, d: eighthSec }, { p: 78, d: eighthSec }, { p: 77, d: beatSec * 2 }
+      ]);
+    } else {
+      emitMeasure([ebChord, bb7Chord, ebChord, ebChord], [
+        { p: 75, d: beatSec * 1.5 }, { p: 74, d: beatSec * 0.5 }, { p: 75, d: beatSec * 2 }
+      ]);
+    }
+  }
+
+  const codaStart = curTime;
+  for (let tr = 0; tr < 12; tr++) {
+    noteId = addNote(notes, noteId, tr % 2 === 0 ? 82 : 84, codaStart + tr * (eighthSec * 0.5), eighthSec * 0.45, 70, "R");
+  }
+  noteId = addNote(notes, noteId, 39, codaStart + 6 * eighthSec, beatSec * 4, 75, "L");
+  noteId = addNote(notes, noteId, 55, codaStart + 6 * eighthSec + 0.1, beatSec * 3.8, 68, "L");
+  noteId = addNote(notes, noteId, 58, codaStart + 6 * eighthSec + 0.2, beatSec * 3.6, 68, "L");
+  noteId = addNote(notes, noteId, 63, codaStart + 6 * eighthSec + 0.3, beatSec * 3.4, 72, "R");
+  noteId = addNote(notes, noteId, 75, codaStart + 6 * eighthSec + 0.4, beatSec * 3.2, 75, "R");
+  curTime += beatSec * 4;
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "12/8",
+    tracks: [
+      { index: 0, name: "Left Hand (12/8 Bel Canto Waltz Bass & Chords)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Ornamented Cantabile Singing Fiorituras)", note_count: notes.filter(n => n.hand === "R").length },
     ],
-  });
+    notes,
+  };
+}
+
+// 3. CHOPIN WALTZ IN A MINOR
+export function buildChopinWaltzInAMinorData(): NoteData {
+  const bpm = 120;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const s16 = s8 / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  function emitWaltzBar(bass: number, chord: number[], rh: { p: number; d: number }[]) {
+    const bt = curTime;
+    noteId = addNote(notes, noteId, bass, bt, beatSec * 2.8, 70, "L");
+    for (let beat = 1; beat <= 2; beat++) {
+      const ct = bt + beat * beatSec;
+      for (const cp of chord) {
+        noteId = addNote(notes, noteId, cp, ct, beatSec * 0.85, 62, "L");
+      }
+    }
+    let rt = bt;
+    for (const r of rh) {
+      noteId = addNote(notes, noteId, r.p, rt, r.d * 0.95, 78, "R");
+      rt += r.d;
+    }
+    curTime += 3 * beatSec;
+  }
+
+  const amChord = [57, 60, 64];
+  const dmChord = [57, 62, 65];
+  const e7Chord = [56, 59, 64];
+  const cChord  = [60, 64, 67];
+  const g7Chord = [59, 62, 65];
+
+  for (let rep = 0; rep < 8; rep++) {
+    emitWaltzBar(45, amChord, [{ p: 76, d: beatSec * 3 }]);
+    emitWaltzBar(45, amChord, [
+      { p: 74, d: s8 }, { p: 72, d: s8 }, { p: 71, d: s8 }, { p: 69, d: s8 }, { p: 71, d: beatSec }
+    ]);
+    emitWaltzBar(38, dmChord, [
+      { p: 71, d: beatSec }, { p: 72, d: beatSec }, { p: 71, d: beatSec }
+    ]);
+    emitWaltzBar(40, e7Chord, [
+      { p: 68, d: beatSec }, { p: 69, d: beatSec * 2 }
+    ]);
+
+    emitWaltzBar(45, amChord, [{ p: 76, d: beatSec * 3 }]);
+    emitWaltzBar(45, amChord, [
+      { p: 74, d: s8 }, { p: 72, d: s8 }, { p: 71, d: s8 }, { p: 69, d: s8 }, { p: 71, d: s8 }, { p: 72, d: s8 }
+    ]);
+    emitWaltzBar(38, dmChord, [
+      { p: 74, d: beatSec }, { p: 76, d: beatSec }, { p: 72, d: beatSec }
+    ]);
+    emitWaltzBar(40, e7Chord, [
+      { p: 71, d: beatSec }, { p: 69, d: beatSec * 2 }
+    ]);
+
+    // Section B arpeggio runs
+    emitWaltzBar(48, cChord, [{ p: 72, d: beatSec * 3 }]);
+    emitWaltzBar(43, g7Chord, [
+      { p: 71, d: s16 }, { p: 72, d: s16 }, { p: 74, d: s16 }, { p: 76, d: s16 },
+      { p: 79, d: beatSec }, { p: 76, d: beatSec }
+    ]);
+    emitWaltzBar(48, cChord, [
+      { p: 64, d: s16 }, { p: 67, d: s16 }, { p: 72, d: s16 }, { p: 76, d: s16 },
+      { p: 79, d: s16 }, { p: 84, d: s16 }, { p: 79, d: s16 }, { p: 76, d: s16 },
+      { p: 72, d: beatSec }
+    ]);
+    emitWaltzBar(43, g7Chord, [
+      { p: 77, d: beatSec }, { p: 74, d: beatSec }, { p: 71, d: beatSec }
+    ]);
+
+    // Dm climax
+    emitWaltzBar(38, dmChord, [
+      { p: 77, d: beatSec * 1.5 }, { p: 81, d: beatSec * 1.5 }
+    ]);
+    emitWaltzBar(45, amChord, [
+      { p: 81, d: beatSec }, { p: 80, d: beatSec }, { p: 77, d: beatSec }
+    ]);
+    emitWaltzBar(40, e7Chord, [
+      { p: 76, d: beatSec }, { p: 74, d: beatSec }, { p: 71, d: beatSec }
+    ]);
+    emitWaltzBar(45, amChord, [
+      { p: 69, d: beatSec * 3 }
+    ]);
+  }
+
+  // Coda
+  emitWaltzBar(45, amChord, [
+    { p: 69, d: s16 }, { p: 72, d: s16 }, { p: 76, d: s16 }, { p: 81, d: beatSec * 2.5 }
+  ]);
+  const finalCadence = curTime;
+  noteId = addNote(notes, noteId, 33, finalCadence, beatSec * 3, 75, "L");
+  noteId = addNote(notes, noteId, 45, finalCadence, beatSec * 3, 72, "L");
+  noteId = addNote(notes, noteId, 57, finalCadence, beatSec * 3, 68, "L");
+  noteId = addNote(notes, noteId, 60, finalCadence, beatSec * 3, 68, "L");
+  noteId = addNote(notes, noteId, 69, finalCadence, beatSec * 3, 75, "R");
+  curTime += beatSec * 3.5;
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "3/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Authentic Bass-Chord-Chord Waltz)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Melancholy Chopin Waltz Melody)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 4. BEETHOVEN ODE TO JOY
+export function buildOdeToJoyData(): NoteData {
+  const bpm = 116;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  const hymnMelody = [
+    { p: 66, d: beatSec }, { p: 66, d: beatSec }, { p: 67, d: beatSec }, { p: 69, d: beatSec },
+    { p: 69, d: beatSec }, { p: 67, d: beatSec }, { p: 66, d: beatSec }, { p: 64, d: beatSec },
+    { p: 62, d: beatSec }, { p: 62, d: beatSec }, { p: 64, d: beatSec }, { p: 66, d: beatSec },
+    { p: 66, d: beatSec * 1.5 }, { p: 64, d: s8 }, { p: 64, d: beatSec * 2 },
+
+    { p: 66, d: beatSec }, { p: 66, d: beatSec }, { p: 67, d: beatSec }, { p: 69, d: beatSec },
+    { p: 69, d: beatSec }, { p: 67, d: beatSec }, { p: 66, d: beatSec }, { p: 64, d: beatSec },
+    { p: 62, d: beatSec }, { p: 62, d: beatSec }, { p: 64, d: beatSec }, { p: 66, d: beatSec },
+    { p: 64, d: beatSec * 1.5 }, { p: 62, d: s8 }, { p: 62, d: beatSec * 2 },
+
+    { p: 64, d: beatSec }, { p: 64, d: beatSec }, { p: 66, d: beatSec }, { p: 62, d: beatSec },
+    { p: 64, d: beatSec }, { p: 66, d: s8 }, { p: 67, d: s8 }, { p: 66, d: beatSec }, { p: 62, d: beatSec },
+    { p: 64, d: beatSec }, { p: 66, d: s8 }, { p: 67, d: s8 }, { p: 66, d: beatSec }, { p: 64, d: beatSec },
+    { p: 62, d: beatSec }, { p: 64, d: beatSec }, { p: 57, d: beatSec * 2 },
+
+    { p: 66, d: beatSec }, { p: 66, d: beatSec }, { p: 67, d: beatSec }, { p: 69, d: beatSec },
+    { p: 69, d: beatSec }, { p: 67, d: beatSec }, { p: 66, d: beatSec }, { p: 64, d: beatSec },
+    { p: 62, d: beatSec }, { p: 62, d: beatSec }, { p: 64, d: beatSec }, { p: 66, d: beatSec },
+    { p: 64, d: beatSec * 1.5 }, { p: 62, d: s8 }, { p: 62, d: beatSec * 2 }
+  ];
+
+  for (let pass = 0; pass < 5; pass++) {
+    const isTriumphant = pass === 2;
+    const isPoly = pass === 1;
+    let t = curTime;
+
+    for (const m of hymnMelody) {
+      const vel = isTriumphant ? 96 : isPoly ? 86 : 76;
+      noteId = addNote(notes, noteId, m.p, t, m.d * 0.95, vel, "R");
+      if (isTriumphant) {
+        noteId = addNote(notes, noteId, m.p + 12, t, m.d * 0.95, vel, "R");
+      }
+      t += m.d;
+    }
+
+    const totalBars = 16;
+    const bassChorale = [
+      [38, 50, 54, 57], [38, 45, 54, 57], [45, 52, 57, 61], [38, 50, 54, 57],
+      [38, 50, 54, 57], [45, 52, 57, 61], [38, 50, 54, 57], [38, 50, 57, 62],
+      [45, 52, 57, 61], [38, 50, 54, 57], [45, 52, 57, 61], [45, 52, 57, 64],
+      [38, 50, 54, 57], [45, 52, 57, 61], [38, 50, 54, 57], [38, 50, 57, 62]
+    ];
+
+    for (let b = 0; b < totalBars; b++) {
+      const bTime = curTime + b * 4 * beatSec;
+      const ch = bassChorale[b];
+      const root = ch[0];
+
+      if (isTriumphant) {
+        for (let beat = 0; beat < 4; beat++) {
+          const bt = bTime + beat * beatSec;
+          noteId = addNote(notes, noteId, root - 12, bt, beatSec * 0.85, 92, "L");
+          noteId = addNote(notes, noteId, root, bt, beatSec * 0.85, 88, "L");
+          for (let c = 1; c < ch.length; c++) {
+            noteId = addNote(notes, noteId, ch[c], bt, beatSec * 0.85, 80, "L");
+          }
+        }
+      } else {
+        noteId = addNote(notes, noteId, root, bTime, beatSec * 3.8, 72, "L");
+        noteId = addNote(notes, noteId, ch[1], bTime + beatSec, beatSec * 2.8, 65, "L");
+        noteId = addNote(notes, noteId, ch[2], bTime + beatSec * 2, beatSec * 1.8, 65, "L");
+        noteId = addNote(notes, noteId, ch[3], bTime + beatSec * 3, beatSec * 0.9, 65, "L");
+      }
+    }
+    curTime = t;
+  }
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "4/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Four-Part Chorale Bass & March Variation)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Beethoven Ninth Symphony Triumphal Anthem)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 5. BACH MINUET IN G MAJOR
+export function buildBachMinuetInGData(): NoteData {
+  const bpm = 116;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  function emitPart1() {
+    const part1RH = [
+      [{ p: 74, d: beatSec }, { p: 67, d: s8 }, { p: 69, d: s8 }, { p: 71, d: beatSec }, { p: 72, d: beatSec }],
+      [{ p: 74, d: beatSec }, { p: 67, d: beatSec }, { p: 67, d: beatSec }],
+      [{ p: 76, d: beatSec }, { p: 72, d: s8 }, { p: 74, d: s8 }, { p: 76, d: beatSec }, { p: 78, d: beatSec }],
+      [{ p: 79, d: beatSec }, { p: 67, d: beatSec }, { p: 67, d: beatSec }],
+      [{ p: 72, d: beatSec }, { p: 74, d: s8 }, { p: 72, d: s8 }, { p: 71, d: s8 }, { p: 69, d: s8 }],
+      [{ p: 71, d: beatSec }, { p: 72, d: s8 }, { p: 71, d: s8 }, { p: 69, d: s8 }, { p: 67, d: s8 }],
+      [{ p: 66, d: beatSec }, { p: 67, d: s8 }, { p: 69, d: s8 }, { p: 71, d: beatSec }, { p: 67, d: beatSec }],
+      [{ p: 69, d: beatSec * 3 }],
+      [{ p: 74, d: beatSec }, { p: 67, d: s8 }, { p: 69, d: s8 }, { p: 71, d: beatSec }, { p: 72, d: beatSec }],
+      [{ p: 74, d: beatSec }, { p: 67, d: beatSec }, { p: 67, d: beatSec }],
+      [{ p: 76, d: beatSec }, { p: 72, d: s8 }, { p: 74, d: s8 }, { p: 76, d: beatSec }, { p: 78, d: beatSec }],
+      [{ p: 79, d: beatSec }, { p: 67, d: beatSec }, { p: 67, d: beatSec }],
+      [{ p: 72, d: beatSec }, { p: 74, d: s8 }, { p: 72, d: s8 }, { p: 71, d: s8 }, { p: 69, d: s8 }],
+      [{ p: 71, d: beatSec }, { p: 72, d: s8 }, { p: 71, d: s8 }, { p: 69, d: s8 }, { p: 67, d: s8 }],
+      [{ p: 69, d: beatSec }, { p: 71, d: s8 }, { p: 69, d: s8 }, { p: 67, d: s8 }, { p: 66, d: s8 }],
+      [{ p: 67, d: beatSec * 3 }]
+    ];
+
+    const part1LH = [
+      [{ p: 55, d: beatSec * 2 }, { p: 59, d: beatSec }],
+      [{ p: 57, d: beatSec * 3 }],
+      [{ p: 59, d: beatSec * 2 }, { p: 55, d: beatSec }],
+      [{ p: 60, d: beatSec * 3 }],
+      [{ p: 59, d: beatSec * 2 }, { p: 57, d: beatSec }],
+      [{ p: 55, d: beatSec * 2 }, { p: 54, d: beatSec }],
+      [{ p: 52, d: beatSec }, { p: 55, d: beatSec }, { p: 52, d: beatSec }],
+      [{ p: 50, d: beatSec * 2 }, { p: 38, d: beatSec }],
+      [{ p: 55, d: beatSec * 2 }, { p: 59, d: beatSec }],
+      [{ p: 57, d: beatSec * 3 }],
+      [{ p: 59, d: beatSec * 2 }, { p: 55, d: beatSec }],
+      [{ p: 60, d: beatSec * 3 }],
+      [{ p: 59, d: beatSec * 2 }, { p: 57, d: beatSec }],
+      [{ p: 55, d: beatSec * 2 }, { p: 54, d: beatSec }],
+      [{ p: 57, d: beatSec }, { p: 50, d: beatSec }, { p: 49, d: beatSec }],
+      [{ p: 43, d: beatSec * 2 }, { p: 55, d: beatSec }]
+    ];
+
+    for (let m = 0; m < 16; m++) {
+      const mTime = curTime + m * 3 * beatSec;
+      let rt = mTime;
+      for (const r of part1RH[m]) {
+        noteId = addNote(notes, noteId, r.p, rt, r.d * 0.95, 78, "R");
+        rt += r.d;
+      }
+      let lt = mTime;
+      for (const l of part1LH[m]) {
+        noteId = addNote(notes, noteId, l.p, lt, l.d * 0.95, 70, "L");
+        lt += l.d;
+      }
+    }
+    curTime += 16 * 3 * beatSec;
+  }
+
+  function emitPart2() {
+    const part2RH = [
+      [{ p: 83, d: beatSec }, { p: 67, d: s8 }, { p: 69, d: s8 }, { p: 71, d: beatSec }, { p: 67, d: beatSec }],
+      [{ p: 81, d: beatSec }, { p: 62, d: s8 }, { p: 64, d: s8 }, { p: 66, d: beatSec }, { p: 62, d: beatSec }],
+      [{ p: 79, d: beatSec }, { p: 64, d: s8 }, { p: 66, d: s8 }, { p: 67, d: beatSec }, { p: 62, d: beatSec }],
+      [{ p: 73, d: beatSec * 2 }, { p: 71, d: s8 }, { p: 69, d: s8 }],
+      [{ p: 71, d: beatSec }, { p: 73, d: beatSec }, { p: 74, d: beatSec }],
+      [{ p: 73, d: beatSec * 2 }, { p: 74, d: beatSec }],
+      [{ p: 71, d: beatSec }, { p: 69, d: beatSec }, { p: 67, d: beatSec }],
+      [{ p: 66, d: beatSec * 3 }],
+      [{ p: 74, d: beatSec }, { p: 67, d: s8 }, { p: 69, d: s8 }, { p: 71, d: beatSec }, { p: 72, d: beatSec }],
+      [{ p: 74, d: beatSec }, { p: 67, d: beatSec }, { p: 67, d: beatSec }],
+      [{ p: 76, d: beatSec }, { p: 72, d: s8 }, { p: 74, d: s8 }, { p: 76, d: beatSec }, { p: 78, d: beatSec }],
+      [{ p: 79, d: beatSec }, { p: 67, d: beatSec }, { p: 67, d: beatSec }],
+      [{ p: 72, d: beatSec }, { p: 74, d: s8 }, { p: 72, d: s8 }, { p: 71, d: s8 }, { p: 69, d: s8 }],
+      [{ p: 71, d: beatSec }, { p: 72, d: s8 }, { p: 71, d: s8 }, { p: 69, d: s8 }, { p: 67, d: s8 }],
+      [{ p: 69, d: beatSec }, { p: 71, d: s8 }, { p: 69, d: s8 }, { p: 67, d: s8 }, { p: 66, d: s8 }],
+      [{ p: 67, d: beatSec * 3 }]
+    ];
+
+    const part2LH = [
+      [{ p: 55, d: beatSec * 3 }],
+      [{ p: 50, d: beatSec * 3 }],
+      [{ p: 48, d: beatSec * 3 }],
+      [{ p: 45, d: beatSec * 2 }, { p: 47, d: beatSec }],
+      [{ p: 49, d: beatSec }, { p: 50, d: beatSec }, { p: 52, d: beatSec }],
+      [{ p: 45, d: beatSec * 2 }, { p: 43, d: beatSec }],
+      [{ p: 47, d: beatSec }, { p: 45, d: beatSec }, { p: 43, d: beatSec }],
+      [{ p: 42, d: beatSec * 3 }],
+      [{ p: 55, d: beatSec * 2 }, { p: 59, d: beatSec }],
+      [{ p: 57, d: beatSec * 3 }],
+      [{ p: 59, d: beatSec * 2 }, { p: 55, d: beatSec }],
+      [{ p: 60, d: beatSec * 3 }],
+      [{ p: 59, d: beatSec * 2 }, { p: 57, d: beatSec }],
+      [{ p: 55, d: beatSec * 2 }, { p: 54, d: beatSec }],
+      [{ p: 57, d: beatSec }, { p: 50, d: beatSec }, { p: 49, d: beatSec }],
+      [{ p: 43, d: beatSec * 2 }, { p: 55, d: beatSec }]
+    ];
+
+    for (let m = 0; m < 16; m++) {
+      const mTime = curTime + m * 3 * beatSec;
+      let rt = mTime;
+      for (const r of part2RH[m]) {
+        noteId = addNote(notes, noteId, r.p, rt, r.d * 0.95, 78, "R");
+        rt += r.d;
+      }
+      let lt = mTime;
+      for (const l of part2LH[m]) {
+        noteId = addNote(notes, noteId, l.p, lt, l.d * 0.95, 70, "L");
+        lt += l.d;
+      }
+    }
+    curTime += 16 * 3 * beatSec;
+  }
+
+  emitPart1();
+  emitPart1();
+  emitPart2();
+  emitPart2();
+  emitPart1();
+  emitPart2();
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "3/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Polyphonic Baroque Basso Continuo)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Singing Minuet Theme & Counterpoint)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 6. YIRUMA RIVER FLOWS IN YOU
+export function buildRiverFlowsInYouData(): NoteData {
+  const bpm = 68;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const s16 = s8 / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  const progression = [
+    { root: 42, fifth: 49, oct: 54, tenth: 57 }, // F#2, C#3, F#3, A3
+    { root: 38, fifth: 45, oct: 50, tenth: 54 }, // D2, A2, D3, F#3
+    { root: 45, fifth: 52, oct: 57, tenth: 61 }, // A2, E3, A3, C#4
+    { root: 40, fifth: 47, oct: 52, tenth: 56 }  // E2, B2, E3, G#3
+  ];
+
+  function emitCycle(rhPhrases: { p: number; d: number }[][], dynamics = 76) {
+    for (let bar = 0; bar < 4; bar++) {
+      const bTime = curTime;
+      const arp = progression[bar];
+      noteId = addNote(notes, noteId, arp.root, bTime, beatSec * 3.8, dynamics - 6, "L");
+      noteId = addNote(notes, noteId, arp.fifth, bTime + beatSec, beatSec * 2.8, dynamics - 8, "L");
+      noteId = addNote(notes, noteId, arp.oct, bTime + beatSec * 2, beatSec * 1.8, dynamics - 10, "L");
+      noteId = addNote(notes, noteId, arp.tenth, bTime + beatSec * 3, beatSec * 0.9, dynamics - 10, "L");
+
+      let rt = bTime;
+      const phrase = rhPhrases[bar];
+      for (const r of phrase) {
+        noteId = addNote(notes, noteId, r.p, rt, r.d * 0.95, dynamics, "R");
+        rt += r.d;
+      }
+      curTime += 4 * beatSec;
+    }
+  }
+
+  // Intro
+  emitCycle([
+    [{ p: 81, d: s16 }, { p: 80, d: s16 }, { p: 81, d: s8 }, { p: 76, d: beatSec * 3 }],
+    [{ p: 81, d: s16 }, { p: 80, d: s16 }, { p: 81, d: s8 }, { p: 76, d: beatSec * 3 }],
+    [{ p: 81, d: s16 }, { p: 80, d: s16 }, { p: 81, d: s8 }, { p: 76, d: beatSec * 3 }],
+    [{ p: 76, d: beatSec * 4 }]
+  ], 68);
+
+  // Verse 1 & 2
+  for (let rep = 0; rep < 5; rep++) {
+    emitCycle([
+      [{ p: 69, d: s16 }, { p: 68, d: s16 }, { p: 69, d: s16 }, { p: 76, d: beatSec * 3.25 }],
+      [{ p: 74, d: s16 }, { p: 73, d: s16 }, { p: 74, d: s16 }, { p: 69, d: beatSec * 3.25 }],
+      [{ p: 73, d: s16 }, { p: 71, d: s16 }, { p: 73, d: s16 }, { p: 76, d: beatSec * 3.25 }],
+      [
+        { p: 71, d: beatSec },
+        { p: 73, d: s16 }, { p: 74, d: s16 }, { p: 76, d: s16 }, { p: 78, d: s16 },
+        { p: 76, d: s16 }, { p: 74, d: s16 }, { p: 73, d: s16 }, { p: 71, d: s16 },
+        { p: 69, d: beatSec }
+      ]
+    ], 78);
+  }
+
+  // Chorus 1 & 2
+  for (let rep = 0; rep < 5; rep++) {
+    emitCycle([
+      [{ p: 81, d: beatSec }, { p: 80, d: beatSec }, { p: 81, d: beatSec }, { p: 88, d: beatSec }],
+      [{ p: 86, d: beatSec }, { p: 85, d: beatSec }, { p: 86, d: beatSec }, { p: 81, d: beatSec }],
+      [{ p: 85, d: beatSec }, { p: 83, d: beatSec }, { p: 85, d: beatSec }, { p: 88, d: beatSec }],
+      [
+        { p: 83, d: beatSec * 1.5 },
+        { p: 85, d: s16 }, { p: 86, d: s16 }, { p: 88, d: s8 },
+        { p: 86, d: s16 }, { p: 85, d: s16 }, { p: 83, d: s8 },
+        { p: 81, d: beatSec }
+      ]
+    ], 88);
+  }
+
+  // Outro
+  emitCycle([
+    [{ p: 81, d: s16 }, { p: 80, d: s16 }, { p: 81, d: s8 }, { p: 76, d: beatSec * 3 }],
+    [{ p: 74, d: s16 }, { p: 73, d: s16 }, { p: 74, d: s8 }, { p: 69, d: beatSec * 3 }],
+    [{ p: 73, d: s16 }, { p: 71, d: s16 }, { p: 73, d: s8 }, { p: 76, d: beatSec * 3 }],
+    [{ p: 81, d: beatSec * 4 }]
+  ], 66);
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "4/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Warm Lyrical 10th Ballad Arpeggios)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Yiruma's Iconic Melody & Cascades)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 7. RADWIMPS SPARKLE
+export function buildSparkleData(): NoteData {
+  const bpm = 124;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const s16 = s8 / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  const roots = [
+    { root: 35, oct: 47 },
+    { root: 32, oct: 44 },
+    { root: 28, oct: 40 },
+    { root: 30, oct: 42 }
+  ];
+
+  const celestialArp = [78, 83, 87, 90, 87, 83, 78, 88, 87, 83, 78, 87, 83, 78, 83, 87];
+
+  function emitArpBars(bars: number, withMelody = false, dynamics = 78) {
+    for (let b = 0; b < bars; b++) {
+      const bTime = curTime;
+      const r = roots[b % roots.length];
+
+      noteId = addNote(notes, noteId, r.root, bTime, beatSec * 3.8, dynamics - 4, "L");
+      noteId = addNote(notes, noteId, r.oct, bTime, beatSec * 3.8, dynamics - 6, "L");
+      noteId = addNote(notes, noteId, r.oct + 7, bTime + beatSec * 2, beatSec * 1.8, dynamics - 8, "L");
+
+      if (!withMelody) {
+        for (let i = 0; i < 16; i++) {
+          noteId = addNote(notes, noteId, celestialArp[i], bTime + i * s16, s16 * 0.9, dynamics, "R");
+        }
+      } else {
+        const melP = b % 4 === 0 ? 83 : b % 4 === 1 ? 80 : b % 4 === 2 ? 76 : 78;
+        noteId = addNote(notes, noteId, melP, bTime, beatSec * 1.5, dynamics + 6, "R");
+        noteId = addNote(notes, noteId, melP + 2, bTime + beatSec * 1.5, s8, dynamics + 4, "R");
+        noteId = addNote(notes, noteId, melP, bTime + beatSec * 2, beatSec * 1.8, dynamics + 6, "R");
+        for (let i = 8; i < 16; i++) {
+          noteId = addNote(notes, noteId, celestialArp[i], bTime + i * s16, s16 * 0.85, dynamics - 8, "R");
+        }
+      }
+      curTime += 4 * beatSec;
+    }
+  }
+
+  emitArpBars(8, false, 72);
+  emitArpBars(16, true, 80);
+
+  for (let b = 0; b < 40; b++) {
+    const bTime = curTime;
+    const r = roots[b % roots.length];
+    for (let i = 0; i < 8; i++) {
+      noteId = addNote(notes, noteId, r.root, bTime + i * s8, s8 * 0.85, 86, "L");
+      noteId = addNote(notes, noteId, r.oct, bTime + i * s8, s8 * 0.85, 84, "L");
+    }
+    const climP = [83, 85, 87, 90, 87, 85, 83, 80][b % 8];
+    noteId = addNote(notes, noteId, climP, bTime, beatSec, 96, "R");
+    noteId = addNote(notes, noteId, climP + 12, bTime, beatSec, 94, "R");
+    noteId = addNote(notes, noteId, climP, bTime + beatSec, beatSec, 92, "R");
+    noteId = addNote(notes, noteId, climP + 12, bTime + beatSec, beatSec, 90, "R");
+    noteId = addNote(notes, noteId, climP - 2, bTime + beatSec * 2, beatSec * 2, 95, "R");
+    noteId = addNote(notes, noteId, climP + 10, bTime + beatSec * 2, beatSec * 2, 93, "R");
+    curTime += 4 * beatSec;
+  }
+
+  emitArpBars(12, false, 68);
+
+  const endT = curTime;
+  noteId = addNote(notes, noteId, 35, endT, beatSec * 4, 75, "L");
+  noteId = addNote(notes, noteId, 47, endT, beatSec * 4, 72, "L");
+  noteId = addNote(notes, noteId, 54, endT, beatSec * 4, 70, "L");
+  noteId = addNote(notes, noteId, 71, endT, beatSec * 4, 78, "R");
+  noteId = addNote(notes, noteId, 83, endT, beatSec * 4, 82, "R");
+  curTime += beatSec * 4;
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "4/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Driving Anime Piano Bass & Octaves)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (High Sparkling 16th Arpeggios & Cathartic Chorus)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 8. HANS ZIMMER INTERSTELLAR
+export function buildInterstellarData(): NoteData {
+  const bpm = 96;
+  const beatSec = 60 / bpm;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  const chords = [
+    { bass: 33, chord: [57, 60, 64] },
+    { bass: 29, chord: [53, 57, 60] },
+    { bass: 31, chord: [55, 59, 62] },
+    { bass: 28, chord: [52, 55, 59] },
+  ];
+
+  function emitBreathingSection(cycles: number, dynamics = 70) {
+    for (let c = 0; c < cycles; c++) {
+      for (let ch = 0; ch < chords.length; ch++) {
+        const bTime = curTime;
+        const cData = chords[ch];
+        noteId = addNote(notes, noteId, cData.bass, bTime, beatSec * 2.8, dynamics - 6, "L");
+        noteId = addNote(notes, noteId, cData.bass + 12, bTime, beatSec * 2.8, dynamics - 8, "L");
+        for (const cp of cData.chord) {
+          noteId = addNote(notes, noteId, cp, bTime + beatSec, beatSec * 1.8, dynamics - 10, "L");
+        }
+        noteId = addNote(notes, noteId, 64, bTime, beatSec * 0.95, dynamics, "R");
+        noteId = addNote(notes, noteId, 65, bTime + beatSec, beatSec * 1.9, dynamics + 4, "R");
+        curTime += 3 * beatSec;
+      }
+    }
+  }
+
+  function emitSwellSection(cycles: number) {
+    for (let c = 0; c < cycles; c++) {
+      for (let ch = 0; ch < chords.length; ch++) {
+        const bTime = curTime;
+        const cData = chords[ch];
+        noteId = addNote(notes, noteId, cData.bass, bTime, beatSec * 2.8, 92, "L");
+        noteId = addNote(notes, noteId, cData.bass + 12, bTime, beatSec * 2.8, 90, "L");
+        for (const cp of cData.chord) {
+          noteId = addNote(notes, noteId, cp, bTime, beatSec * 2.8, 85, "L");
+          noteId = addNote(notes, noteId, cp + 12, bTime + beatSec, beatSec * 1.8, 82, "L");
+        }
+
+        const arp = [76, 81, 84, 88, 89, 88];
+        for (let i = 0; i < arp.length; i++) {
+          noteId = addNote(notes, noteId, arp[i], bTime + i * (beatSec * 0.5), (beatSec * 0.5) * 0.9, 88, "R");
+        }
+        curTime += 3 * beatSec;
+      }
+    }
+  }
+
+  emitBreathingSection(3, 66);
+  emitBreathingSection(3, 78);
+  emitSwellSection(12);
+  emitBreathingSection(3, 60);
+
+  const endT = curTime;
+  noteId = addNote(notes, noteId, 33, endT, beatSec * 4, 65, "L");
+  noteId = addNote(notes, noteId, 45, endT, beatSec * 4, 62, "L");
+  noteId = addNote(notes, noteId, 57, endT, beatSec * 4, 60, "L");
+  noteId = addNote(notes, noteId, 64, endT, beatSec * 4, 68, "R");
+  curTime += beatSec * 4;
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "3/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Low Church Organ Pedal & Swells)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Iconic Two-Note Breathing Motif & Swelling Arpeggios)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 9. KLAUS BADELT / HANS ZIMMER HE'S A PIRATE
+export function buildHeIsAPirateData(): NoteData {
+  const bpm = 140;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 3;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  function emitPirateMeasure(bass: number, chord: number[], rh: { p: number; d: number }[]) {
+    const bt = curTime;
+    noteId = addNote(notes, noteId, bass, bt, s8 * 0.9, 85, "L");
+    noteId = addNote(notes, noteId, bass - 12, bt, s8 * 0.9, 82, "L");
+    for (const cp of chord) {
+      noteId = addNote(notes, noteId, cp, bt + s8, s8 * 0.8, 75, "L");
+      noteId = addNote(notes, noteId, cp, bt + s8 * 2, s8 * 0.8, 75, "L");
+    }
+    noteId = addNote(notes, noteId, bass, bt + s8 * 3, s8 * 0.9, 85, "L");
+    noteId = addNote(notes, noteId, bass - 12, bt + s8 * 3, s8 * 0.9, 82, "L");
+    for (const cp of chord) {
+      noteId = addNote(notes, noteId, cp, bt + s8 * 4, s8 * 0.8, 75, "L");
+      noteId = addNote(notes, noteId, cp, bt + s8 * 5, s8 * 0.8, 75, "L");
+    }
+
+    let rt = bt;
+    for (const r of rh) {
+      noteId = addNote(notes, noteId, r.p, rt, r.d * 0.95, 90, "R");
+      rt += r.d;
+    }
+    curTime += 6 * s8;
+  }
+
+  const dmChord = [50, 53, 57];
+  const bbChord = [46, 50, 53];
+  const cChord  = [48, 52, 55];
+  const aChord  = [45, 49, 52];
+
+  for (let cycle = 0; cycle < 16; cycle++) {
+    emitPirateMeasure(38, dmChord, [
+      { p: 62, d: s8 }, { p: 62, d: s8 }, { p: 62, d: s8 }, { p: 64, d: s8 }, { p: 65, d: s8 * 2 }
+    ]);
+    emitPirateMeasure(38, dmChord, [
+      { p: 65, d: s8 }, { p: 67, d: s8 }, { p: 64, d: s8 * 2 }, { p: 64, d: s8 * 2 }
+    ]);
+    emitPirateMeasure(38, dmChord, [
+      { p: 62, d: s8 * 2 }, { p: 60, d: s8 }, { p: 62, d: s8 * 3 }
+    ]);
+    emitPirateMeasure(34, bbChord, [
+      { p: 62, d: s8 }, { p: 64, d: s8 }, { p: 65, d: s8 }, { p: 67, d: s8 }, { p: 69, d: s8 * 2 }
+    ]);
+    emitPirateMeasure(36, cChord, [
+      { p: 69, d: s8 }, { p: 69, d: s8 }, { p: 70, d: s8 }, { p: 69, d: s8 }, { p: 67, d: s8 }, { p: 69, d: s8 }
+    ]);
+    emitPirateMeasure(38, dmChord, [
+      { p: 62, d: s8 * 6 }
+    ]);
+
+    emitPirateMeasure(34, bbChord, [
+      { p: 70, d: s8 * 2 }, { p: 72, d: s8 }, { p: 74, d: s8 * 3 }
+    ]);
+    emitPirateMeasure(36, cChord, [
+      { p: 72, d: s8 * 2 }, { p: 70, d: s8 }, { p: 69, d: s8 * 3 }
+    ]);
+    emitPirateMeasure(38, dmChord, [
+      { p: 65, d: s8 * 2 }, { p: 67, d: s8 }, { p: 69, d: s8 * 3 }
+    ]);
+    emitPirateMeasure(33, aChord, [
+      { p: 67, d: s8 * 2 }, { p: 65, d: s8 }, { p: 64, d: s8 * 3 }
+    ]);
+  }
+
+  const codaT = curTime;
+  noteId = addNote(notes, noteId, 26, codaT, beatSec * 2, 100, "L");
+  noteId = addNote(notes, noteId, 38, codaT, beatSec * 2, 95, "L");
+  noteId = addNote(notes, noteId, 50, codaT, beatSec * 2, 90, "L");
+  noteId = addNote(notes, noteId, 62, codaT, beatSec * 2, 96, "R");
+  noteId = addNote(notes, noteId, 65, codaT, beatSec * 2, 96, "R");
+  noteId = addNote(notes, noteId, 69, codaT, beatSec * 2, 96, "R");
+  noteId = addNote(notes, noteId, 74, codaT, beatSec * 2, 100, "R");
+  curTime += beatSec * 2.5;
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "6/8",
+    tracks: [
+      { index: 0, name: "Left Hand (Galloping 6/8 Pirate Ostinato & Cannonade Bass)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Swashbuckling Theme & Fanfare Chords)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 10. JOE HISAISHI MERRY-GO-ROUND OF LIFE
+export function buildMerryGoRoundOfLifeData(): NoteData {
+  const bpm = 132;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  function emitWaltzBar(bass: number, chord: number[], rh: { p: number; d: number }[]) {
+    const bt = curTime;
+    noteId = addNote(notes, noteId, bass, bt, beatSec * 2.8, 74, "L");
+    for (let beat = 1; beat <= 2; beat++) {
+      const ct = bt + beat * beatSec;
+      for (const cp of chord) {
+        noteId = addNote(notes, noteId, cp, ct, beatSec * 0.85, 64, "L");
+      }
+    }
+    let rt = bt;
+    for (const r of rh) {
+      noteId = addNote(notes, noteId, r.p, rt, r.d * 0.95, 82, "R");
+      rt += r.d;
+    }
+    curTime += 3 * beatSec;
+  }
+
+  const gmChord = [55, 58, 62];
+  const cmChord = [55, 60, 63];
+  const d7Chord = [54, 57, 62];
+  const bbChord = [58, 62, 65];
+  const ebChord = [55, 58, 63];
+
+  const introNotes = [62, 63, 66, 67, 69, 70, 73, 74];
+  for (let i = 0; i < introNotes.length; i++) {
+    noteId = addNote(notes, noteId, introNotes[i], curTime + i * s8, s8 * 0.95, 76, "R");
+  }
+  curTime += introNotes.length * s8;
+
+  for (let cycle = 0; cycle < 8; cycle++) {
+    emitWaltzBar(43, gmChord, [{ p: 62, d: beatSec }, { p: 67, d: beatSec * 2 }]);
+    emitWaltzBar(43, gmChord, [{ p: 70, d: beatSec }, { p: 69, d: beatSec }, { p: 67, d: beatSec }]);
+    emitWaltzBar(41, cmChord, [{ p: 66, d: beatSec }, { p: 67, d: beatSec }, { p: 69, d: beatSec }]);
+    emitWaltzBar(38, d7Chord, [{ p: 62, d: beatSec * 3 }]);
+
+    emitWaltzBar(43, gmChord, [{ p: 70, d: beatSec * 3 }]);
+    emitWaltzBar(43, gmChord, [{ p: 74, d: beatSec }, { p: 72, d: beatSec }, { p: 70, d: beatSec }]);
+    emitWaltzBar(41, cmChord, [{ p: 69, d: beatSec }, { p: 70, d: beatSec }, { p: 72, d: beatSec }]);
+    emitWaltzBar(38, d7Chord, [{ p: 66, d: beatSec * 3 }]);
+
+    emitWaltzBar(46, bbChord, [{ p: 74, d: beatSec * 3 }]);
+    emitWaltzBar(39, ebChord, [{ p: 79, d: beatSec * 1.5 }, { p: 77, d: beatSec * 1.5 }]);
+    emitWaltzBar(41, cmChord, [{ p: 75, d: beatSec }, { p: 74, d: beatSec }, { p: 72, d: beatSec }]);
+    emitWaltzBar(38, d7Chord, [{ p: 74, d: beatSec * 3 }]);
+
+    emitWaltzBar(43, gmChord, [{ p: 70, d: beatSec }, { p: 69, d: beatSec }, { p: 67, d: beatSec }]);
+    emitWaltzBar(38, d7Chord, [{ p: 66, d: beatSec * 2 }, { p: 62, d: beatSec }]);
+    emitWaltzBar(43, gmChord, [{ p: 67, d: beatSec * 3 }]);
+  }
+
+  emitWaltzBar(43, gmChord, [
+    { p: 67, d: s8 }, { p: 70, d: s8 }, { p: 74, d: s8 }, { p: 79, d: beatSec * 1.5 }
+  ]);
+  const endT = curTime;
+  noteId = addNote(notes, noteId, 31, endT, beatSec * 3, 85, "L");
+  noteId = addNote(notes, noteId, 43, endT, beatSec * 3, 80, "L");
+  noteId = addNote(notes, noteId, 55, endT, beatSec * 3, 75, "L");
+  noteId = addNote(notes, noteId, 67, endT, beatSec * 3, 85, "R");
+  noteId = addNote(notes, noteId, 79, endT, beatSec * 3, 90, "R");
+  curTime += beatSec * 3.5;
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "3/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Viennese Waltz Lilt & Chords)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Howl's Moving Castle Romantic Theme & Flourishes)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 11. SCOTT JOPLIN THE ENTERTAINER
+export function buildTheEntertainerData(): NoteData {
+  const bpm = 88;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const s16 = s8 / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  function emitStrideMeasure(bass1: number, bass2: number, chord: number[], rh: { p: number; d: number }[]) {
+    const bt = curTime;
+    noteId = addNote(notes, noteId, bass1, bt, s8 * 0.85, 78, "L");
+    for (const cp of chord) {
+      noteId = addNote(notes, noteId, cp, bt + s8, s8 * 0.85, 68, "L");
+    }
+    noteId = addNote(notes, noteId, bass2, bt + s8 * 2, s8 * 0.85, 76, "L");
+    for (const cp of chord) {
+      noteId = addNote(notes, noteId, cp, bt + s8 * 3, s8 * 0.85, 68, "L");
+    }
+
+    let rt = bt;
+    for (const r of rh) {
+      noteId = addNote(notes, noteId, r.p, rt, r.d * 0.95, 84, "R");
+      rt += r.d;
+    }
+    curTime += 4 * s8;
+  }
+
+  const cChord = [52, 55, 60];
+  const fChord = [53, 57, 60];
+  const g7Chord = [53, 55, 59];
+
+  const introRH = [
+    { p: 74, d: s16 }, { p: 75, d: s16 }, { p: 76, d: s8 }, { p: 84, d: s8 },
+    { p: 76, d: s8 }, { p: 84, d: s8 * 2 },
+    { p: 72, d: s16 }, { p: 74, d: s16 }, { p: 75, d: s16 }, { p: 76, d: s16 },
+    { p: 72, d: s16 }, { p: 74, d: s16 }, { p: 76, d: s16 },
+    { p: 71, d: s8 }, { p: 74, d: s8 }, { p: 72, d: s8 * 2 }
+  ];
+  let it = curTime;
+  for (const ir of introRH) {
+    noteId = addNote(notes, noteId, ir.p, it, ir.d * 0.92, 85, "R");
+    it += ir.d;
+  }
+  curTime = it;
+
+  for (let rep = 0; rep < 8; rep++) {
+    emitStrideMeasure(36, 43, cChord, [
+      { p: 62, d: s16 }, { p: 63, d: s16 }, { p: 64, d: s8 }, { p: 72, d: s8 },
+      { p: 64, d: s8 }, { p: 72, d: s8 }
+    ]);
+    emitStrideMeasure(36, 43, cChord, [
+      { p: 64, d: s8 }, { p: 72, d: s8 * 3 }
+    ]);
+    emitStrideMeasure(41, 43, fChord, [
+      { p: 72, d: s16 }, { p: 74, d: s16 }, { p: 75, d: s16 }, { p: 76, d: s16 },
+      { p: 72, d: s16 }, { p: 74, d: s16 }, { p: 76, d: s16 },
+      { p: 71, d: s8 }
+    ]);
+    emitStrideMeasure(36, 43, cChord, [
+      { p: 74, d: s8 }, { p: 72, d: s8 * 3 }
+    ]);
+
+    emitStrideMeasure(36, 43, cChord, [
+      { p: 62, d: s16 }, { p: 63, d: s16 }, { p: 64, d: s8 }, { p: 72, d: s8 },
+      { p: 64, d: s8 }, { p: 72, d: s8 }
+    ]);
+    emitStrideMeasure(41, 41, fChord, [
+      { p: 72, d: s8 }, { p: 74, d: s8 }, { p: 76, d: s8 }, { p: 77, d: s8 }
+    ]);
+    emitStrideMeasure(43, 43, g7Chord, [
+      { p: 76, d: s8 }, { p: 72, d: s8 }, { p: 74, d: s8 }, { p: 71, d: s8 }
+    ]);
+    emitStrideMeasure(36, 43, cChord, [
+      { p: 72, d: s8 * 4 }
+    ]);
+  }
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "2/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Ragtime Stride Oom-Pah)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Scott Joplin Syncopated Ragtime Theme)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 12. JOSEPH KOSMA AUTUMN LEAVES
+export function buildAutumnLeavesData(): NoteData {
+  const bpm = 88;
+  const beatSec = 60 / bpm;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  const jazzBars = [
+    { bass: 36, chord: [58, 63, 67], rh: [{ p: 64, d: beatSec }, { p: 66, d: beatSec }, { p: 67, d: beatSec }, { p: 72, d: beatSec }] },
+    { bass: 41, chord: [57, 63, 65], rh: [{ p: 72, d: beatSec * 3 }, { p: 74, d: beatSec }] },
+    { bass: 46, chord: [57, 62, 65], rh: [{ p: 71, d: beatSec * 3 }, { p: 72, d: beatSec }] },
+    { bass: 39, chord: [55, 62, 67], rh: [{ p: 69, d: beatSec * 3 }, { p: 71, d: beatSec }] },
+    { bass: 45, chord: [55, 60, 63], rh: [{ p: 67, d: beatSec * 3 }, { p: 69, d: beatSec }] },
+    { bass: 38, chord: [54, 60, 64], rh: [{ p: 66, d: beatSec * 3 }, { p: 67, d: beatSec }] },
+    { bass: 43, chord: [55, 58, 62], rh: [{ p: 67, d: beatSec * 4 }] },
+    { bass: 43, chord: [55, 58, 62], rh: [{ p: 67, d: beatSec * 4 }] }
+  ];
+
+  for (let chorus = 0; chorus < 8; chorus++) {
+    for (const jb of jazzBars) {
+      const bt = curTime;
+      noteId = addNote(notes, noteId, jb.bass, bt, beatSec * 0.9, 74, "L");
+      noteId = addNote(notes, noteId, jb.bass + 4, bt + beatSec, beatSec * 0.9, 70, "L");
+      noteId = addNote(notes, noteId, jb.bass + 7, bt + beatSec * 2, beatSec * 0.9, 72, "L");
+      noteId = addNote(notes, noteId, jb.bass + 2, bt + beatSec * 3, beatSec * 0.9, 68, "L");
+
+      for (const cp of jb.chord) {
+        noteId = addNote(notes, noteId, cp, bt + beatSec, beatSec * 0.8, 64, "L");
+        noteId = addNote(notes, noteId, cp, bt + beatSec * 3, beatSec * 0.8, 64, "L");
+      }
+
+      let rt = bt;
+      for (const r of jb.rh) {
+        noteId = addNote(notes, noteId, r.p + (chorus >= 2 ? 12 : 0), rt, r.d * 0.95, 80 + (chorus >= 2 ? 6 : 0), "R");
+        rt += r.d;
+      }
+      curTime += 4 * beatSec;
+    }
+  }
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "4/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Jazz Walking Bass & Guide Chords)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Bill Evans Modal Voicings & Bebop Flourishes)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 13. TOBY FOX MEGALOVANIA
+export function buildMegalovaniaData(): NoteData {
+  const bpm = 120;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const s16 = s8 / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  const sansBars = [
+    { bass: 38, lead: 62 },
+    { bass: 36, lead: 60 },
+    { bass: 35, lead: 59 },
+    { bass: 34, lead: 58 },
+  ];
+
+  function emitSansMeasure(leadPitch: number, bassPitch: number, isOctaves = false) {
+    const bt = curTime;
+    for (let i = 0; i < 4; i++) {
+      noteId = addNote(notes, noteId, bassPitch - 12, bt + i * beatSec, s8 * 0.8, 86, "L");
+      noteId = addNote(notes, noteId, bassPitch, bt + i * beatSec, s8 * 0.8, 82, "L");
+      noteId = addNote(notes, noteId, bassPitch, bt + i * beatSec + s8, s8 * 0.8, 80, "L");
+    }
+
+    const pattern = [
+      { p: leadPitch, o: 0 },
+      { p: leadPitch, o: s16 },
+      { p: leadPitch + 12, o: s8 },
+      { p: 69, o: s8 + s16 },
+      { p: 68, o: beatSec },
+      { p: 67, o: beatSec + s16 },
+      { p: 65, o: beatSec + s8 },
+      { p: leadPitch, o: beatSec + s8 + s16 },
+      { p: 65, o: beatSec * 1.5 },
+      { p: 67, o: beatSec * 1.5 + s16 }
+    ];
+
+    for (const pt of pattern) {
+      noteId = addNote(notes, noteId, pt.p, bt + pt.o, s16 * 0.9, 90, "R");
+      if (isOctaves) {
+        noteId = addNote(notes, noteId, pt.p + 12, bt + pt.o, s16 * 0.9, 94, "R");
+      }
+    }
+    curTime += 4 * beatSec;
+  }
+
+  for (const sb of sansBars) {
+    emitSansMeasure(sb.lead, sb.bass, false);
+  }
+  for (let r = 0; r < 15; r++) {
+    for (const sb of sansBars) {
+      emitSansMeasure(sb.lead, sb.bass, true);
+    }
+  }
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "4/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Funk Chiptune Bass Staccatos & Octave Slaps)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Iconic Sans 4-Bar Ostinato & Fast Solos)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 14. KOJI KONDO SUPER MARIO BROS
+export function buildSuperMarioThemeData(): NoteData {
+  const bpm = 100;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  const introRH = [
+    { p: 76, o: 0, d: s8 }, { p: 76, o: s8, d: s8 }, { p: 76, o: s8 * 3, d: s8 },
+    { p: 72, o: s8 * 5, d: s8 }, { p: 76, o: s8 * 6, d: s8 },
+    { p: 79, o: s8 * 8, d: beatSec },
+    { p: 67, o: s8 * 12, d: beatSec }
+  ];
+  for (const ir of introRH) {
+    noteId = addNote(notes, noteId, ir.p, curTime + ir.o, ir.d * 0.9, 86, "R");
+  }
+  curTime += 8 * beatSec;
+
+  function emitOverworldPhrase(repetitions = 2) {
+    for (let r = 0; r < repetitions; r++) {
+      const phraseRH = [
+        { p: 72, o: 0, d: s8 }, { p: 67, o: beatSec, d: s8 }, { p: 64, o: beatSec * 2, d: s8 },
+        { p: 69, o: beatSec * 3, d: s8 }, { p: 71, o: beatSec * 3.5, d: s8 },
+        { p: 70, o: beatSec * 4, d: s8 }, { p: 69, o: beatSec * 4.5, d: beatSec },
+        { p: 67, o: beatSec * 6, d: s8 }, { p: 76, o: beatSec * 6.5, d: s8 }, { p: 79, o: beatSec * 7, d: s8 },
+        { p: 81, o: beatSec * 7.5, d: s8 }, { p: 77, o: beatSec * 8, d: s8 }, { p: 79, o: beatSec * 8.5, d: s8 },
+        { p: 76, o: beatSec * 9.5, d: s8 }, { p: 72, o: beatSec * 10, d: s8 }, { p: 74, o: beatSec * 10.5, d: s8 },
+        { p: 71, o: beatSec * 11, d: beatSec }
+      ];
+
+      for (const pr of phraseRH) {
+        noteId = addNote(notes, noteId, pr.p, curTime + pr.o, pr.d * 0.9, 84, "R");
+      }
+
+      const bassNotes = [48, 55, 52, 45, 50, 43, 48, 55, 48, 55, 48, 55];
+      for (let b = 0; b < bassNotes.length; b++) {
+        noteId = addNote(notes, noteId, bassNotes[b], curTime + b * beatSec, beatSec * 0.8, 76, "L");
+      }
+      curTime += 12 * beatSec;
+    }
+  }
+
+  emitOverworldPhrase(16);
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "2/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Calypso Stride Bass & Underground Walks)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Iconic Overworld Ragtime Rhythms)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 15. KOJI KONDO ZELDA'S LULLABY
+export function buildZeldasLullabyData(): NoteData {
+  const bpm = 84;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  const progressions = [
+    { root: 43, arp: [43, 50, 55, 59] },
+    { root: 48, arp: [48, 55, 60, 64] },
+    { root: 50, arp: [50, 57, 62, 66] },
+    { root: 40, arp: [40, 47, 52, 55] },
+  ];
+
+  function emitLullabyTheme(cycles = 2, withOctaves = false) {
+    for (let c = 0; c < cycles; c++) {
+      const themeRH = [
+        [{ p: 71, d: beatSec * 2 }, { p: 74, d: beatSec }],
+        [{ p: 69, d: beatSec * 3 }],
+        [{ p: 67, d: s8 }, { p: 69, d: s8 }, { p: 71, d: beatSec }, { p: 74, d: beatSec }],
+        [{ p: 69, d: beatSec * 3 }],
+        [{ p: 67, d: s8 }, { p: 69, d: s8 }, { p: 71, d: beatSec }, { p: 74, d: beatSec }],
+        [{ p: 81, d: beatSec * 2 }, { p: 79, d: beatSec }],
+        [{ p: 74, d: beatSec * 3 }],
+        [{ p: 72, d: beatSec * 2 }, { p: 71, d: beatSec }]
+      ];
+
+      for (let m = 0; m < themeRH.length; m++) {
+        const mTime = curTime;
+        const prog = progressions[m % progressions.length];
+        for (let i = 0; i < prog.arp.length; i++) {
+          noteId = addNote(notes, noteId, prog.arp[i], mTime + i * (beatSec * 0.75), beatSec * 1.5, 64, "L");
+        }
+        let rt = mTime;
+        for (const r of themeRH[m]) {
+          noteId = addNote(notes, noteId, r.p, rt, r.d * 0.95, 78, "R");
+          if (withOctaves) {
+            noteId = addNote(notes, noteId, r.p + 12, rt, r.d * 0.95, 82, "R");
+          }
+          rt += r.d;
+        }
+        curTime += 3 * beatSec;
+      }
+    }
+  }
+
+  emitLullabyTheme(3, false);
+  emitLullabyTheme(5, true);
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "3/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Royal Harp Arpeggio Cascades)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Triforce Lyrical Melody & Ornaments)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 16. JVKE GOLDEN HOUR
+export function buildGoldenHourData(): NoteData {
+  const bpm = 94;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const s16 = s8 / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  const cascades = [
+    [55, 59, 62, 66, 67, 71, 74, 78, 74, 71, 67, 66, 62, 59, 55, 50],
+    [52, 55, 59, 62, 64, 67, 71, 74, 71, 67, 64, 62, 59, 55, 52, 47],
+    [48, 52, 55, 59, 60, 64, 67, 71, 67, 64, 60, 59, 55, 52, 48, 43],
+    [50, 54, 57, 61, 62, 66, 69, 73, 69, 66, 62, 61, 57, 54, 50, 45],
+  ];
+
+  function emitGoldenCycle(withMelody = false, dynamics = 76) {
+    for (let bar = 0; bar < cascades.length; bar++) {
+      const bTime = curTime;
+      const arp = cascades[bar];
+      const root = arp[0] - 12;
+
+      noteId = addNote(notes, noteId, root, bTime, beatSec * 3.8, dynamics + 6, "L");
+      noteId = addNote(notes, noteId, root + 7, bTime + beatSec * 2, beatSec * 1.8, dynamics, "L");
+
+      for (let i = 0; i < 16; i++) {
+        noteId = addNote(notes, noteId, arp[i], bTime + i * s16, s16 * 0.9, dynamics - 4, "R");
+      }
+
+      if (withMelody) {
+        const vocalP = bar === 0 ? 74 : bar === 1 ? 71 : bar === 2 ? 67 : 69;
+        noteId = addNote(notes, noteId, vocalP, bTime, beatSec * 1.5, dynamics + 14, "R");
+        noteId = addNote(notes, noteId, vocalP, bTime + beatSec * 1.5, beatSec * 0.5, dynamics + 10, "R");
+        noteId = addNote(notes, noteId, vocalP + 2, bTime + beatSec * 2, beatSec * 1.8, dynamics + 14, "R");
+      }
+      curTime += 4 * beatSec;
+    }
+  }
+
+  emitGoldenCycle(false, 72);
+  emitGoldenCycle(true, 78);
+  emitGoldenCycle(true, 82);
+  emitGoldenCycle(true, 86);
+  emitGoldenCycle(true, 92);
+  emitGoldenCycle(true, 94);
+  emitGoldenCycle(true, 90);
+  emitGoldenCycle(false, 68);
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "4/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Shimmering Golden Arpeggio Cascades)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Virtuosic 16th Piano Cascades & Melody)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 17. TAYLOR SWIFT LOVE STORY
+export function buildLoveStoryData(): NoteData {
+  const bpm = 118;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  const popChords = [
+    { bass: 38, chord: [54, 57, 62] },
+    { bass: 45, chord: [52, 57, 61] },
+    { bass: 47, chord: [54, 59, 62] },
+    { bass: 43, chord: [55, 59, 62] },
+  ];
+
+  function emitPopVerse() {
+    for (const pc of popChords) {
+      const bt = curTime;
+      noteId = addNote(notes, noteId, pc.bass, bt, beatSec * 3.8, 76, "L");
+      for (let b = 0; b < 4; b++) {
+        for (const cp of pc.chord) {
+          noteId = addNote(notes, noteId, cp, bt + b * beatSec, beatSec * 0.8, 65, "L");
+        }
+      }
+      const mel = [66, 66, 66, 64, 62, 66, 64];
+      for (let i = 0; i < mel.length; i++) {
+        noteId = addNote(notes, noteId, mel[i], bt + i * s8, s8 * 0.9, 82, "R");
+      }
+      curTime += 4 * beatSec;
+    }
+  }
+
+  function emitPopChorus(withOctaves = false) {
+    for (const pc of popChords) {
+      const bt = curTime;
+      for (let i = 0; i < 8; i++) {
+        noteId = addNote(notes, noteId, pc.bass, bt + i * s8, s8 * 0.85, 84, "L");
+      }
+      const chorusP = [69, 69, 69, 66, 69, 69, 69, 66];
+      for (let i = 0; i < chorusP.length; i++) {
+        noteId = addNote(notes, noteId, chorusP[i], bt + i * s8, s8 * 0.9, 88, "R");
+        if (withOctaves) {
+          noteId = addNote(notes, noteId, chorusP[i] + 12, bt + i * s8, s8 * 0.9, 92, "R");
+        }
+      }
+      curTime += 4 * beatSec;
+    }
+  }
+
+  emitPopVerse();
+  emitPopVerse();
+  emitPopChorus(false);
+  emitPopChorus(true);
+  emitPopVerse();
+  emitPopVerse();
+  emitPopChorus(true);
+  emitPopChorus(true);
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "4/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Pop Ballad Piano Chords & Bass Octaves)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Taylor Swift Lyrical Hooks & Romeo Modulation)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 18. COLDPLAY THE SCIENTIST
+export function buildTheScientistData(): NoteData {
+  const bpm = 73;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  const scientistChords = [
+    { bass: 38, chord: [53, 57, 60] },
+    { bass: 34, chord: [53, 58, 62] },
+    { bass: 29, chord: [53, 57, 60] },
+    { bass: 36, chord: [53, 55, 60] },
+  ];
+
+  function emitScientistCycle(withVocal = false) {
+    for (let c = 0; c < scientistChords.length; c++) {
+      const bt = curTime;
+      const sc = scientistChords[c];
+      noteId = addNote(notes, noteId, sc.bass, bt, beatSec * 3.8, 76, "L");
+      noteId = addNote(notes, noteId, sc.bass + 12, bt, beatSec * 3.8, 72, "L");
+
+      for (let beat = 0; beat < 4; beat++) {
+        for (const cp of sc.chord) {
+          noteId = addNote(notes, noteId, cp, bt + beat * beatSec, beatSec * 0.85, 68, "R");
+        }
+      }
+
+      if (withVocal) {
+        const vocalP = c === 0 ? 69 : c === 1 ? 67 : c === 2 ? 65 : 69;
+        noteId = addNote(notes, noteId, vocalP, bt, beatSec * 1.5, 84, "R");
+        noteId = addNote(notes, noteId, vocalP, bt + beatSec * 1.5, s8, 80, "R");
+        noteId = addNote(notes, noteId, vocalP - 2, bt + beatSec * 2, beatSec * 1.8, 84, "R");
+      }
+      curTime += 4 * beatSec;
+    }
+  }
+
+  emitScientistCycle(false);
+  emitScientistCycle(true);
+  emitScientistCycle(true);
+
+  for (let c = 0; c < 7; c++) {
+    for (const sc of scientistChords) {
+      const bt = curTime;
+      noteId = addNote(notes, noteId, sc.bass - 12, bt, beatSec * 3.8, 84, "L");
+      noteId = addNote(notes, noteId, sc.bass, bt, beatSec * 3.8, 80, "L");
+      for (let b = 0; b < 4; b++) {
+        for (const cp of sc.chord) {
+          noteId = addNote(notes, noteId, cp, bt + b * beatSec, beatSec * 0.85, 74, "R");
+        }
+      }
+      noteId = addNote(notes, noteId, 72, bt, beatSec, 90, "R");
+      noteId = addNote(notes, noteId, 74, bt + beatSec, beatSec, 92, "R");
+      noteId = addNote(notes, noteId, 72, bt + beatSec * 2, beatSec, 88, "R");
+      noteId = addNote(notes, noteId, 69, bt + beatSec * 3, beatSec, 86, "R");
+      curTime += 4 * beatSec;
+    }
+  }
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "4/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Warm Acoustic Piano Bass Octaves)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (Iconic Coldplay Piano Chords & Singing Hook)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
+}
+
+// 19. BTS SPRING DAY
+export function buildSpringDayData(): NoteData {
+  const bpm = 107;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  const btsChords = [
+    { root: 39, arp: [39, 46, 51, 55] },
+    { root: 43, arp: [43, 50, 55, 58] },
+    { root: 44, arp: [44, 51, 56, 60] },
+    { root: 46, arp: [46, 53, 58, 62] },
+  ];
+
+  const bellMotif = [
+    [70, 72, 75, 79, 77, 75, 72, 70],
+    [70, 72, 75, 79, 77, 75, 72, 70],
+    [68, 72, 75, 80, 79, 75, 72, 68],
+    [70, 74, 77, 82, 80, 77, 74, 70]
+  ];
+
+  function emitBtsCycle(withVocal = false) {
+    for (let c = 0; c < btsChords.length; c++) {
+      const bt = curTime;
+      const bc = btsChords[c];
+      noteId = addNote(notes, noteId, bc.root, bt, beatSec * 3.8, 72, "L");
+      for (let i = 1; i < bc.arp.length; i++) {
+        noteId = addNote(notes, noteId, bc.arp[i], bt + i * beatSec, beatSec * 0.9, 64, "L");
+      }
+
+      if (!withVocal) {
+        const bell = bellMotif[c];
+        for (let i = 0; i < bell.length; i++) {
+          noteId = addNote(notes, noteId, bell[i], bt + i * s8, s8 * 0.85, 78, "R");
+        }
+      } else {
+        const vocal = [63, 63, 65, 67, 65, 63];
+        for (let i = 0; i < vocal.length; i++) {
+          noteId = addNote(notes, noteId, vocal[i], bt + i * s8, s8 * 0.9, 84, "R");
+        }
+      }
+      curTime += 4 * beatSec;
+    }
+  }
+
+  emitBtsCycle(false);
+  emitBtsCycle(true);
+  emitBtsCycle(true);
+
+  for (let c = 0; c < 7; c++) {
+    for (let b = 0; b < btsChords.length; b++) {
+      const bt = curTime;
+      const bc = btsChords[b];
+      noteId = addNote(notes, noteId, bc.root - 12, bt, beatSec * 3.8, 84, "L");
+      noteId = addNote(notes, noteId, bc.root, bt, beatSec * 3.8, 80, "L");
+      const chorusP = [75, 77, 79, 82, 79, 77, 75];
+      for (let i = 0; i < chorusP.length; i++) {
+        noteId = addNote(notes, noteId, chorusP[i], bt + i * s8, s8 * 0.9, 90, "R");
+        noteId = addNote(notes, noteId, chorusP[i] + 12, bt + i * s8, s8 * 0.9, 92, "R");
+      }
+      curTime += 4 * beatSec;
+    }
+  }
+
+  const duration_sec = Number(curTime.toFixed(2));
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: "4/4",
+    tracks: [
+      { index: 0, name: "Left Hand (Warm K-Pop Ballad Arpeggios & Deep Bass)", note_count: notes.filter(n => n.hand === "L").length },
+      { index: 1, name: "Right Hand (BTS Bell Intro Motif & Singing Hook)", note_count: notes.filter(n => n.hand === "R").length },
+    ],
+    notes,
+  };
 }

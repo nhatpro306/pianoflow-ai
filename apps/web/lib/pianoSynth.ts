@@ -30,8 +30,8 @@ export interface PartialConfig {
  * incorporating piano string inharmonicity: f_n = n * f0 * sqrt(1 + B * n^2).
  */
 export function calculatePianoPartials(f0: number, velocity: number): PartialConfig[] {
-  // String inharmonicity coefficient B increases with fundamental frequency
-  const inharmonicityB = 0.00015 * (1 + Math.pow(f0 / 1100, 2));
+  // Physical string inharmonicity: f_n = n * f0 * sqrt(1 + 0.0002 * n^2)
+  const inharmonicityFactor = 0.0002;
 
   // Natural grand piano harmonic energy distribution
   const baseWeights = [
@@ -51,7 +51,7 @@ export function calculatePianoPartials(f0: number, velocity: number): PartialCon
 
   const partials: PartialConfig[] = [];
   for (let n = 1; n <= 8; n++) {
-    const fn = n * f0 * Math.sqrt(1 + inharmonicityB * n * n);
+    const fn = n * f0 * Math.sqrt(1 + inharmonicityFactor * n * n);
     if (fn > 18500) break; // Nyquist headroom
     partials.push({
       n,
@@ -229,7 +229,8 @@ export class PianoSynth {
       const note = this.notes[this.nextIndex];
       const start = note.start / this.speed;
       if (start > horizon) break;
-      this.scheduleNote(note, this.startCtxTime + start);
+      const scheduleTime = this.startCtxTime + note.start / this.speed;
+      this.scheduleNote(note, scheduleTime);
       this.nextIndex++;
     }
   }
@@ -316,7 +317,7 @@ export class PianoSynth {
     const naturalDecay = Math.max(0.35, (duration + 1.2) * pitchDamping);
     const peakVelocityGain = (0.075 + velocity * 0.22) / 2.2;
     const releaseTime = t0 + duration;
-    const damperDecaySec = 0.15; // 150ms damper felt contact decay
+    const damperDecaySec = 0.12; // 120ms damper felt contact decay
 
     for (const partial of partials) {
       const osc = this.ctx.createOscillator();

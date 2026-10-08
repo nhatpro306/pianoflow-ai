@@ -8,6 +8,26 @@ import {
   buildMoonlightSonataData,
   buildBachPreludeCMajorData,
   buildGenericFullPieceData,
+  buildMozartRondoAllaTurcaData,
+  buildChopinNocturneOp9No2Data,
+  buildChopinWaltzInAMinorData,
+  buildOdeToJoyData,
+  buildBachMinuetInGData,
+  buildRiverFlowsInYouData,
+  buildSparkleData,
+  buildInterstellarData,
+  buildHeIsAPirateData,
+  buildMerryGoRoundOfLifeData,
+  buildTheEntertainerData,
+  buildAutumnLeavesData,
+  buildMegalovaniaData,
+  buildSuperMarioThemeData,
+  buildZeldasLullabyData,
+  buildGoldenHourData,
+  buildLoveStoryData,
+  buildTheScientistData,
+  buildSpringDayData,
+  buildMoonlightSonata3rdData,
 } from "./fullSongGenerators";
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -599,29 +619,39 @@ function getLandmarkCanonicalSong(input: MotifSongInput): RepertoireSong | null 
   if (normId === "moonlightsonata" || normId === "beethovenmoonlight") {
     noteData = buildMoonlightSonataData();
   } else if (normId === "moonlightsonata3rd" || normId === "prestoagitato") {
-    noteData = buildGenericFullPieceData(158, "4/4", 124, 49, true, "ballad", "Left Hand (Thunderous Alberti Bass & Octaves)", "Right Hand (Fiery Ascending Arpeggios & Sforzando Accents)");
+    noteData = buildMoonlightSonata3rdData();
   } else if (normId === "odetojoy" || normId === "beethovenodetojoy") {
-    noteData = buildGenericFullPieceData(120, "4/4", 80, 62, false, "ballad", "Left Hand (Four-Part Chorale Bass & March Variation)", "Right Hand (Beethoven Ninth Symphony Triumphal Anthem)");
+    noteData = buildOdeToJoyData();
   } else if (normId === "bachpreludecmajor" || normId === "preludecmajorbwv846" || normId === "preludeinc") {
     noteData = buildBachPreludeCMajorData();
   } else if (normId === "interstellarmaintheme" || normId === "firststepinterstellar" || normId === "interstellar") {
-    noteData = buildGenericFullPieceData(96, "3/4", 120, 57, true, "cinema", "Left Hand (Low Church Organ Pedal & Swells)", "Right Hand (Iconic Two-Note Breathing Motif & Swelling Arpeggios)");
+    noteData = buildInterstellarData();
   } else if (normId === "sparkleyourname" || normId === "radwimpssparkle" || normId === "sparkle") {
-    noteData = buildGenericFullPieceData(124, "4/4", 116, 59, false, "ballad", "Left Hand (Driving Anime Piano Bass & Octaves)", "Right Hand (High Sparkling 16th Arpeggios & Cathartic Chorus)");
+    noteData = buildSparkleData();
   } else if (normId === "autumnleaves" || normId === "billevansautumnleaves") {
-    noteData = buildGenericFullPieceData(88, "4/4", 76, 55, true, "ballad", "Left Hand (Jazz Walking Bass & Guide Chords)", "Right Hand (Bill Evans Modal Voicings & Bebop Flourishes)");
+    noteData = buildAutumnLeavesData();
   } else if (normId === "theentertainerjoplin" || normId === "theentertainer") {
-    noteData = buildGenericFullPieceData(88, "2/4", 144, 60, false, "stride", "Left Hand (Ragtime Stride Oom-Pah)", "Right Hand (Scott Joplin Syncopated Ragtime Theme)");
+    noteData = buildTheEntertainerData();
   } else if (normId === "merrygoroundoflife" || normId === "howlsmovingcastle") {
-    noteData = buildGenericFullPieceData(132, "3/4", 136, 55, true, "waltz", "Left Hand (Viennese Waltz Lilt & Chords)", "Right Hand (Howl's Moving Castle Romantic Theme & Flourishes)");
+    noteData = buildMerryGoRoundOfLifeData();
   } else if (normId === "chopinnocturneop9no2" || normId === "chopinebmajornocturne") {
-    noteData = buildGenericFullPieceData(54, "4/4", 56, 51, false, "ballad", "Left Hand (12/8 Bel Canto Waltz Bass & Chords)", "Right Hand (Ornamented Cantabile Singing Fiorituras)");
+    noteData = buildChopinNocturneOp9No2Data();
   } else if (normId === "chopinwaltzaminor" || normId === "chopinwaltzinaminor") {
-    noteData = buildGenericFullPieceData(116, "3/4", 108, 57, true, "waltz", "Left Hand (Authentic Bass-Chord-Chord Waltz)", "Right Hand (Melancholy Chopin Waltz Melody)");
+    noteData = buildChopinWaltzInAMinorData();
   } else if (normId === "rondoallaturca" || normId === "mozartrondoallaturca") {
-    noteData = buildGenericFullPieceData(124, "2/4", 190, 57, true, "march", "Left Hand (Janissary March Broken Chords)", "Right Hand (Virtuosic Turkish Rondo Theme & Coda)");
+    noteData = buildMozartRondoAllaTurcaData();
   } else if (normId === "bachminueting" || normId === "minuetingmajor") {
-    noteData = buildGenericFullPieceData(116, "3/4", 96, 55, false, "waltz", "Left Hand (Polyphonic Baroque Basso Continuo)", "Right Hand (Singing Minuet Theme & Minor Trio)");
+    noteData = buildBachMinuetInGData();
+  } else if (normId === "heisapirate" || normId === "hesapirate" || normId === "piratesofthecaribbean") {
+    noteData = buildHeIsAPirateData();
+  } else if (normId === "megalovania" || normId === "megalovaniaundertale") {
+    noteData = buildMegalovaniaData();
+  } else if (normId === "supermariotheme" || normId === "supermariobros" || normId === "supermariobrostheme") {
+    noteData = buildSuperMarioThemeData();
+  } else if (normId === "zeldaslullaby" || normId === "zeldalullaby" || normId === "zeldalullabykondo") {
+    noteData = buildZeldasLullabyData();
+  } else if (normId === "goldenhour" || normId === "goldenhourjvke") {
+    noteData = buildGoldenHourData();
   } else if (normId === "onesummersday" || normId === "spiritedawayonesummersday") {
     noteData = buildGenericFullPieceData(80, "4/4", 68, 60, false, "ballad", "Left Hand (Nostalgic Rolling Ghibli Arpeggios)", "Right Hand (Spirited Away Theme & Emotional Bridge)");
   } else if (normId === "kisstherain" || normId === "yirumakisstherain") {
@@ -629,13 +659,13 @@ function getLandmarkCanonicalSong(input: MotifSongInput): RepertoireSong | null 
   } else if (normId === "flymetothemoon" || normId === "flymetothemoonjazz") {
     noteData = buildGenericFullPieceData(120, "4/4", 84, 60, false, "ballad", "Left Hand (Bossa & Medium Swing Bass)", "Right Hand (Classic Sinatra Melody & Jazz Improvisation)");
   } else if (normId === "lovestorytaylorswift" || normId === "lovestory") {
-    noteData = buildGenericFullPieceData(120, "4/4", 104, 62, false, "ballad", "Left Hand (Pop Ballad Piano Chords & Bass Octaves)", "Right Hand (Taylor Swift Lyrical Hooks & Romeo Modulation)");
+    noteData = buildLoveStoryData();
   } else if (normId === "thescientistcoldplay" || normId === "thescientist") {
-    noteData = buildGenericFullPieceData(73, "4/4", 72, 53, false, "ballad", "Left Hand (Warm Acoustic Piano Bass Octaves)", "Right Hand (Iconic Coldplay Piano Chords & Singing Hook)");
+    noteData = buildTheScientistData();
   } else if (normId === "springdaybts" || normId === "springday") {
-    noteData = buildGenericFullPieceData(107, "4/4", 96, 51, false, "ballad", "Left Hand (Warm K-Pop Ballad Arpeggios & Deep Bass)", "Right Hand (BTS Bell Intro Motif & Singing Hook)");
+    noteData = buildSpringDayData();
   } else if (normId === "riverflowsinyou" || normId === "riverflows" || normId === "yirumariverflowsinyou") {
-    noteData = buildGenericFullPieceData(72, "4/4", 62, 57, false, "ballad", "Left Hand (Warm Lyrical 10th Ballad Arpeggios)", "Right Hand (Yiruma's Iconic Melody & Cascades)");
+    noteData = buildRiverFlowsInYouData();
   }
 
   if (noteData) {
