@@ -447,31 +447,31 @@ test.describe('PianoFlow AI — Comprehensive Live Browser Inspection', () => {
     await expect(gymnopedieCard).toBeVisible();
     await expect(canonCard).toBeVisible();
 
-    // Initial default: Für Elise (48 notes)
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('48 notes');
+    // Initial default: Für Elise (797 notes)
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('797 notes');
 
     // 2. Click each song in the song picker strip and verify active song metadata and note count
     // Clair de Lune
     await clairDeLuneCard.click();
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('42 notes');
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('963 notes');
     await expect(page.locator('text=Claude Debussy').first()).toBeVisible();
-    await expect(page.locator('text=50 BPM').first()).toBeVisible();
+    await expect(page.locator('text=46 BPM').first()).toBeVisible();
 
     // Gymnopédie No. 1
     await gymnopedieCard.click();
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('38 notes');
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('518 notes');
     await expect(page.locator('text=Erik Satie').first()).toBeVisible();
     await expect(page.locator('text=65 BPM').first()).toBeVisible();
 
     // Canon in D
     await canonCard.click();
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('44 notes');
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('1088 notes');
     await expect(page.locator('text=Johann Pachelbel').first()).toBeVisible();
-    await expect(page.locator('text=75 BPM').first()).toBeVisible();
+    await expect(page.locator('text=72 BPM').first()).toBeVisible();
 
     // Switch back to Für Elise for detailed feature verification
     await furEliseCard.click();
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('48 notes');
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('797 notes');
 
     // 3. Test Dynamic Difficulty Selector (Original -> Easy -> Very Easy -> Original)
     const easyOption = page.locator('[data-testid="difficulty-option-easy"]');
@@ -480,8 +480,8 @@ test.describe('PianoFlow AI — Comprehensive Live Browser Inspection', () => {
 
     await easyOption.click();
     await expect(easyOption).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('28 notes');
-    await expect(page.locator('[data-testid="active-song-voicing-status"]')).toHaveText('Easy (-42%)');
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('754 notes');
+    await expect(page.locator('[data-testid="active-song-voicing-status"]')).toHaveText('Easy (-5%)');
 
     // Capture screenshot: 03_demo_difficulty_beginner.png
     await page.screenshot({
@@ -491,13 +491,13 @@ test.describe('PianoFlow AI — Comprehensive Live Browser Inspection', () => {
 
     await veryEasyOption.click();
     await expect(veryEasyOption).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('18 notes');
-    await expect(page.locator('[data-testid="active-song-voicing-status"]')).toHaveText('Very Easy (-63%)');
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('687 notes');
+    await expect(page.locator('[data-testid="active-song-voicing-status"]')).toHaveText('Very Easy (-14%)');
 
     // Revert to Original
     await originalOption.click();
     await expect(originalOption).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('48 notes');
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('797 notes');
 
     // 4. Test Mode 1: Falling Notes Visualizer
     await page.locator('[data-testid="tab-visualizer"]').click();

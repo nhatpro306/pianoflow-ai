@@ -8,6 +8,11 @@ import {
   searchRepertoire,
   GENRE_CATEGORIES,
   type GenreFilter,
+  isSongFullLength,
+  loadSongNoteData,
+  fetchFullSongJson,
+  getCachedSongNoteData,
+  FULL_SONG_IDS,
 } from "./songs";
 
 export type { SongDifficulty, GenreCategory, RepertoireSong, GenreFilter };
@@ -32,4 +37,10 @@ export {
   getSongsByGenre,
   searchRepertoire,
   GENRE_CATEGORIES,
+  isSongFullLength,
+  loadSongNoteData,
+  fetchFullSongJson,
+  getCachedSongNoteData,
+  FULL_SONG_IDS,
 };
+

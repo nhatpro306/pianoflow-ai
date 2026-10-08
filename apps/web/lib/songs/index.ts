@@ -7,6 +7,7 @@ import { CINEMATIC_GAME_SONGS } from "./cinematicGame";
 import { JAZZ_LOFI_SONGS } from "./jazzLofi";
 
 export * from "./types";
+export * from "./songLoader";
 export { CLASSICAL_SONGS } from "./classical";
 export { ANIME_SONGS } from "./anime";
 export { KPOP_SONGS } from "./kpop";

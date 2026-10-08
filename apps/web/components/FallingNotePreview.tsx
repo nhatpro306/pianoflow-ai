@@ -18,6 +18,24 @@ const CANVAS_H = 480;
 const BASE_FALL_PX_PER_SEC = 140;
 const PREVIEW_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
 
+function findFirstNoteIndexGE(notes: NoteData["notes"], targetStart: number): number {
+  let low = 0;
+  let high = notes.length - 1;
+  let result = notes.length;
+
+  while (low <= high) {
+    const mid = (low + high) >> 1;
+    if (notes[mid].start >= targetStart) {
+      result = mid;
+      high = mid - 1;
+    } else {
+      low = mid + 1;
+    }
+  }
+
+  return result;
+}
+
 export function FallingNotePreview({
   data,
   settings,
@@ -45,6 +63,9 @@ export function FallingNotePreview({
   const sortedNotes = useMemo(() => {
     return [...data.notes].sort((a, b) => a.start - b.start || a.pitch - b.pitch);
   }, [data.notes]);
+  const maxNoteDuration = useMemo(() => {
+    return sortedNotes.reduce((max, n) => Math.max(max, n.duration || (n.end - n.start)), 0);
+  }, [sortedNotes]);
   const speed = previewSpeed;
   const scaledDuration = data.duration_sec / speed;
   const fallSpeed = BASE_FALL_PX_PER_SEC * settings.note_fall_speed;
@@ -116,7 +137,13 @@ export function FallingNotePreview({
       ctx.save();
       ctx.shadowColor = colors.glow;
       ctx.shadowBlur = 24 * settings.glow_intensity;
-      for (const note of sortedNotes) {
+
+      // Binary search optimization: jump to the first note that could potentially be visible or active
+      const minStartSec = Math.max(0, (t - maxNoteDuration) * speed);
+      const noteStartIndex = findFirstNoteIndexGE(sortedNotes, minStartSec);
+
+      for (let i = noteStartIndex; i < sortedNotes.length; i++) {
+        const note = sortedNotes[i];
         const start = note.start / speed;
         const end = note.end / speed;
         if (end < t) continue;
@@ -164,7 +191,8 @@ export function FallingNotePreview({
       if (!settings.show_keyboard) return;
 
       const active = new Map<number, string>();
-      for (const note of sortedNotes) {
+      for (let i = noteStartIndex; i < sortedNotes.length; i++) {
+        const note = sortedNotes[i];
         const start = note.start / speed;
         if (start > t) break;
         if (note.end / speed >= t) active.set(note.pitch, note.hand);
@@ -185,7 +213,7 @@ export function FallingNotePreview({
         ctx.fillRect(x, hitY, w, keyboardH * 0.62);
       }
     },
-    [settings, width, canvasH, speed, fallSpeed, sortedNotes],
+    [settings, width, canvasH, speed, fallSpeed, sortedNotes, maxNoteDuration],
   );
 
   const startPlayback = useCallback(

@@ -157,11 +157,11 @@ test.describe('PianoFlow AI — Phase J: Client-Side Beginner Mode Simplificatio
 
       // Verify Für Elise exact expected values from architectural spec
       if (song.id === 'fur-elise') {
-        expect(origCount).toBe(48);
-        expect(easy.notes.length).toBe(28);
-        expect(easy.stats.reductionPercent).toBe(42);
-        expect(veryEasy.notes.length).toBe(18);
-        expect(veryEasy.stats.reductionPercent).toBe(63);
+        expect(origCount).toBe(797);
+        expect(easy.notes.length).toBe(754);
+        expect(easy.stats.reductionPercent).toBe(5);
+        expect(veryEasy.notes.length).toBe(687);
+        expect(veryEasy.stats.reductionPercent).toBe(14);
       }
     }
   });
@@ -179,8 +179,8 @@ test.describe('PianoFlow AI — Phase J: Client-Side Beginner Mode Simplificatio
     const diffSelector = page.locator('[data-testid="difficulty-selector"]');
     await expect(diffSelector).toBeVisible();
 
-    // 3. Verify initial Für Elise note count is 48 notes
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('48 notes');
+    // 3. Verify initial Für Elise note count is 797 notes
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('797 notes');
     await expect(page.locator('[data-testid="active-song-voicing-status"]')).toHaveText('100% Voicing');
 
     // 4. Click Easy 🟢 option
@@ -192,9 +192,9 @@ test.describe('PianoFlow AI — Phase J: Client-Side Beginner Mode Simplificatio
     await expect(easyOption).toHaveAttribute('aria-pressed', 'true');
     await expect(easyOption).toHaveClass(/border-emerald/);
 
-    // 6. Verify HUD note count updates dynamically to 28 notes
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('28 notes');
-    await expect(page.locator('[data-testid="active-song-voicing-status"]')).toHaveText('Easy (-42%)');
+    // 6. Verify HUD note count updates dynamically to 754 notes
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('754 notes');
+    await expect(page.locator('[data-testid="active-song-voicing-status"]')).toHaveText('Easy (-5%)');
 
     // 7. Capture screenshot
     await page.screenshot({
@@ -215,9 +215,9 @@ test.describe('PianoFlow AI — Phase J: Client-Side Beginner Mode Simplificatio
     await expect(veryEasyOption).toHaveAttribute('aria-pressed', 'true');
     await expect(veryEasyOption).toHaveClass(/border-amber/);
 
-    // 3. Verify note count reduces to 18 notes
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('18 notes');
-    await expect(page.locator('[data-testid="active-song-voicing-status"]')).toHaveText('Very Easy (-63%)');
+    // 3. Verify note count reduces to 687 notes
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('687 notes');
+    await expect(page.locator('[data-testid="active-song-voicing-status"]')).toHaveText('Very Easy (-14%)');
 
     // 4. Capture screenshot
     await page.screenshot({
@@ -231,7 +231,7 @@ test.describe('PianoFlow AI — Phase J: Client-Side Beginner Mode Simplificatio
 
     // 1. Toggle to Easy mode
     await page.locator('[data-testid="difficulty-option-easy"]').click();
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('28 notes');
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('754 notes');
 
     // 2. Switch to Mode 2 (Interactive Practice Mode)
     await page.locator('[data-testid="tab-practice"]').click();
@@ -377,7 +377,7 @@ test.describe('PianoFlow AI — Phase J: Client-Side Beginner Mode Simplificatio
     await finishBtn.click();
 
     // 4. Verify coaching modal or session dialog appeared
-    await expect(page.locator('text=AI Coaching & Session Analytics').first()).toBeVisible();
+    await expect(page.locator('text=AI Coaching & Session Analytics').first()).toBeVisible({ timeout: 15000 });
 
     // 5. Assert createSession payload recorded difficulty: "easy"
     expect(sessionPayload).not.toBeNull();

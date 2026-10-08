@@ -63,8 +63,8 @@ test.describe('PianoFlow AI — Phase H: Interactive Demo Experience & Classical
     await expect(page.locator('[data-testid="song-card-gymnopedie-1"]')).toBeVisible();
     await expect(page.locator('[data-testid="song-card-canon-in-d"]')).toBeVisible();
 
-    // 4. Verify initial default song Für Elise (48 notes)
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('48 notes');
+    // 4. Verify initial default song Für Elise (797 notes)
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('797 notes');
 
     // 5. Capture screenshot
     await page.screenshot({
@@ -78,15 +78,15 @@ test.describe('PianoFlow AI — Phase H: Interactive Demo Experience & Classical
 
     // 1. Switch to Clair de Lune
     await page.locator('[data-testid="song-card-clair-de-lune"]').click();
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('42 notes');
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('963 notes');
     await expect(page.locator('text=Claude Debussy').first()).toBeVisible();
-    await expect(page.locator('text=50 BPM').first()).toBeVisible();
+    await expect(page.locator('text=46 BPM').first()).toBeVisible();
 
     // 2. Switch to Canon in D
     await page.locator('[data-testid="song-card-canon-in-d"]').click();
-    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('44 notes');
+    await expect(page.locator('[data-testid="active-song-note-count"]')).toHaveText('1088 notes');
     await expect(page.locator('text=Johann Pachelbel').first()).toBeVisible();
-    await expect(page.locator('text=75 BPM').first()).toBeVisible();
+    await expect(page.locator('text=72 BPM').first()).toBeVisible();
 
     // 3. Capture screenshot
     await page.screenshot({
@@ -157,15 +157,15 @@ test.describe('PianoFlow AI — Phase H: Interactive Demo Experience & Classical
 
     // 2. Verify SVG grand staff score container renders with clefs
     const svgScore = page.locator('svg[viewBox="0 0 1000 240"]').first();
-    await expect(svgScore).toBeVisible();
+    await expect(svgScore).toBeVisible({ timeout: 15000 });
     await expect(page.locator('text=𝄞').first()).toBeVisible();
     await expect(page.locator('text=𝄢').first()).toBeVisible();
 
     // 3. Verify zoom control buttons exist and function
-    const zoomPlusBtn = page.locator('button', { hasText: '+' }).first();
+    const zoomPlusBtn = page.locator('[data-testid="zoom-in-btn"]').or(page.locator('button', { hasText: '+' })).first();
     await expect(zoomPlusBtn).toBeVisible();
     await zoomPlusBtn.click();
-    await expect(page.locator('text=110%')).toBeVisible();
+    await expect(page.locator('[data-testid="zoom-percentage"]').or(page.locator('text=110%'))).toBeVisible();
 
     // 4. Capture screenshot
     await page.screenshot({

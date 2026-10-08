@@ -21,7 +21,8 @@ out/
 !.env.example
 
 # Local data
-data/
+/data/
+!apps/web/public/songs/data/
 tmp/
 
 # IDE / OS

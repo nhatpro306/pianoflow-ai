@@ -52,6 +52,8 @@ import {
   DEMO_SONGS,
   DEFAULT_DEMO_SONG,
   type DemoSong,
+  loadSongNoteData,
+  isSongFullLength,
 } from "@/lib/demoSongs";
 import { DifficultySelector } from "@/components/practice/DifficultySelector";
 import {
@@ -265,8 +267,13 @@ function FloatingNowPlayingBar({
               <span className="text-xs sm:text-sm font-bold text-white truncate max-w-[140px] sm:max-w-[220px] md:max-w-[320px]">
                 {song.title}
               </span>
-              <div className="hidden sm:inline-flex">
+              <div className="hidden sm:inline-flex items-center gap-1.5">
                 {getSongDifficultyBadge(song.difficulty)}
+                {Boolean(song.isFullLength || isSongFullLength(song)) && (
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    ✨ Full
+                  </span>
+                )}
               </div>
             </div>
             <p className="text-[11px] text-zinc-400 truncate max-w-[120px] sm:max-w-[200px]">
@@ -353,6 +360,31 @@ export default function SongsPage() {
   const allSongs = useMemo(() => {
     return customSongs.length > 0 ? [...customSongs, ...DEMO_SONGS] : DEMO_SONGS;
   }, [customSongs]);
+
+  // Ensure default active song note data is fully loaded and cached from static repository
+  useEffect(() => {
+    let isCancelled = false;
+    void loadSongNoteData(activeSong).then((fullData) => {
+      if (!isCancelled && fullData && fullData.notes.length > activeSong.noteData.notes.length) {
+        setActiveSong((prev) => {
+          if (prev.id === activeSong.id) {
+            return {
+              ...prev,
+              noteData: fullData,
+              noteCount: fullData.notes.length,
+              duration_sec: fullData.duration_sec ?? prev.duration_sec,
+              isFullLength: true,
+            };
+          }
+          return prev;
+        });
+      }
+    });
+    return () => {
+      isCancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -573,6 +605,25 @@ export default function SongsPage() {
       });
       setFeedbackToast(`🎵 Loaded "${song.title}"`);
       setTimeout(() => setFeedbackToast(null), 2500);
+
+      // Asynchronously upgrade to full-length version if available from static catalog
+      void loadSongNoteData(song).then((fullData) => {
+        if (fullData && fullData.notes.length > song.noteData.notes.length) {
+          setActiveSong((prev) => {
+            if (prev.id === song.id) {
+              return {
+                ...prev,
+                noteData: fullData,
+                noteCount: fullData.notes.length,
+                duration_sec: fullData.duration_sec ?? prev.duration_sec,
+                isFullLength: true,
+              };
+            }
+            return prev;
+          });
+        }
+      });
+
       const deck = document.getElementById("studio-deck");
       if (deck) {
         deck.scrollIntoView({ behavior: "smooth" });
@@ -909,6 +960,14 @@ export default function SongsPage() {
                   className="ml-1.5 inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40"
                 >
                   ⭐ Studio Master (Authentic MIDI)
+                </span>
+              )}
+              {Boolean(activeSong.isFullLength || isSongFullLength(activeSong)) && (
+                <span
+                  data-testid="full-song-active-badge"
+                  className="ml-1.5 inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                >
+                  ✨ Full Song (Trọn vẹn)
                 </span>
               )}
             </div>
@@ -1399,6 +1458,14 @@ export default function SongsPage() {
                   ⭐ Studio Master (Authentic MIDI)
                 </span>
               )}
+              {Boolean(activeSong.isFullLength || isSongFullLength(activeSong)) && (
+                <span
+                  data-testid="repertoire-header-full-song-badge"
+                  className="hidden md:inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                >
+                  ✨ Full Song (Trọn vẹn)
+                </span>
+              )}
               <Badge variant="default" size="sm" className="font-mono text-xs text-cyan-300 border-cyan-500/30">
                 Showing {filteredSongs.length.toLocaleString()} of {allSongs.length.toLocaleString()} pieces
               </Badge>
@@ -1615,16 +1682,24 @@ export default function SongsPage() {
                         <span className="truncate">{song.title}</span>
                       </h3>
                       <p className="text-xs text-zinc-400 mt-0.5 truncate">{song.composer}</p>
-                      {Boolean(song.isCanonical || song.qualityTier === "studio_master") && (
-                        <div className="mt-2 flex items-center">
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        {Boolean(song.isCanonical || song.qualityTier === "studio_master") && (
                           <span
                             data-testid={`badge-studio-master-${song.id}`}
                             className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30"
                           >
                             ⭐ Studio Master (Authentic MIDI)
                           </span>
-                        </div>
-                      )}
+                        )}
+                        {Boolean(song.isFullLength || isSongFullLength(song)) && (
+                          <span
+                            data-testid={`badge-full-song-${song.id}`}
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                          >
+                            ✨ Full Song (Trọn vẹn)
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-mono text-zinc-400">

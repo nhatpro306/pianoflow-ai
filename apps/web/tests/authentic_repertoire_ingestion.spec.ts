@@ -4,6 +4,9 @@ import * as path from 'node:path';
 import {
   ALL_REPERTOIRE_SONGS,
   getSongById,
+  isSongFullLength,
+  loadSongNoteData,
+  fetchFullSongJson,
 } from '../lib/songs';
 import { parseMidiBytes } from '../lib/midi/midiParser';
 
@@ -64,14 +67,16 @@ test.describe('PianoFlow AI — Authentic Landmark Repertoire & MIDI Ingestion E
       expect(lhNotes.length, `${songId} must have left hand notes`).toBeGreaterThan(0);
       expect(rhNotes.length, `${songId} must have right hand notes`).toBeGreaterThan(0);
 
-      // Verify musical dynamics & velocity
-      for (const note of song.noteData.notes) {
-        expect(note.velocity).toBeGreaterThanOrEqual(20);
-        expect(note.velocity).toBeLessThanOrEqual(127);
-        expect(note.duration).toBeGreaterThan(0);
-        expect(note.pitch).toBeGreaterThanOrEqual(21);
-        expect(note.pitch).toBeLessThanOrEqual(108);
-      }
+      // Verify musical dynamics & velocity bounds
+      const invalidNote = song.noteData.notes.find(
+        (n) =>
+          n.velocity < 20 ||
+          n.velocity > 127 ||
+          n.duration <= 0 ||
+          n.pitch < 21 ||
+          n.pitch > 108
+      );
+      expect(invalidNote, `All notes in ${songId} must satisfy MIDI bounds`).toBeUndefined();
     }
   });
 
@@ -121,7 +126,7 @@ test.describe('PianoFlow AI — Authentic Landmark Repertoire & MIDI Ingestion E
     await expect(activeMasterBadge).toBeVisible();
 
     // 5. Open MIDI Importer Modal
-    const importBtn = page.getByRole('button', { name: /Import MIDI/i });
+    const importBtn = page.getByRole('button', { name: /Import MIDI/i }).first();
     if (await importBtn.isVisible()) {
       await importBtn.click();
       await expect(page.locator('text=Authentic MIDI Repertoire Importer')).toBeVisible();
@@ -133,5 +138,66 @@ test.describe('PianoFlow AI — Authentic Landmark Repertoire & MIDI Ingestion E
     await page.screenshot({
       path: path.join(SCREENSHOTS_DIR, '07_studio_master_repertoire.png'),
     });
+  });
+
+  test('REP-04: Full-Length Complete Masterworks (Zero Truncation, duration >= 120s, noteCount >= 300)', async ({
+    page,
+  }) => {
+    // 1. In-memory and static loader validation for landmark masterworks
+    const LANDMARK_FULL_PIECES = [
+      'fur-elise',
+      'moonlight-sonata',
+      'canon-in-d',
+      'clair-de-lune',
+      'gymnopedie-1',
+      'river-flows-in-you',
+      'interstellar-main-theme',
+      'sparkle-your-name',
+      'chopin-nocturne-op9-no2',
+      'rondo-alla-turca',
+    ];
+
+    for (const songId of LANDMARK_FULL_PIECES) {
+      const song = getSongById(songId);
+      expect(song, `Landmark piece ${songId} must exist`).toBeDefined();
+      if (!song) continue;
+
+      expect(isSongFullLength(song)).toBe(true);
+      expect(song.duration_sec, `${songId} duration must be >= 120s`).toBeGreaterThanOrEqual(120);
+      expect(song.noteCount, `${songId} note count must be >= 300`).toBeGreaterThanOrEqual(300);
+
+      // Verify async loader / static distribution
+      const fullNoteData = await loadSongNoteData(song);
+      expect(fullNoteData.notes.length).toBeGreaterThanOrEqual(300);
+      expect(fullNoteData.duration_sec ?? song.duration_sec).toBeGreaterThanOrEqual(120);
+
+      const staticJson = await fetchFullSongJson(songId);
+      expect(staticJson).toBeDefined();
+      expect(staticJson!.notes.length).toBeGreaterThanOrEqual(300);
+    }
+
+    // 2. Browser Verification of Full Song Badges and UI Indicators
+    await page.goto('/songs');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Default song Für Elise active badge
+    const fullSongBadge = page.locator('[data-testid="full-song-active-badge"]');
+    await expect(fullSongBadge).toBeVisible();
+    await expect(fullSongBadge).toContainText('Full Song (Trọn vẹn)');
+
+    // Repertoire header badge
+    const headerFullBadge = page.locator('[data-testid="repertoire-header-full-song-badge"]');
+    await expect(headerFullBadge).toBeVisible();
+
+    // Song card badge on Für Elise
+    const furEliseCardBadge = page.locator('[data-testid="badge-full-song-fur-elise"]');
+    await expect(furEliseCardBadge).toBeVisible();
+    await expect(furEliseCardBadge).toContainText('Full Song (Trọn vẹn)');
+
+    // Active note count should reflect full masterwork
+    const noteCountEl = page.locator('[data-testid="active-song-note-count"]');
+    const noteCountText = await noteCountEl.innerText();
+    const parsedNotes = parseInt(noteCountText, 10);
+    expect(parsedNotes).toBeGreaterThanOrEqual(300);
   });
 });

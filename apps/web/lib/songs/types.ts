@@ -31,5 +31,7 @@ export interface RepertoireSong {
   tags?: string[];
   isCanonical?: boolean;
   qualityTier?: QualityTier;
+  isFullLength?: boolean;
   noteData: NoteData;
 }
+
