@@ -706,3 +706,749 @@ export function buildGenericFullPieceData(
     notes,
   };
 }
+
+
+/**
+ * PianoFlow AI — Test and build all 25 new full piece generators
+ */
+
+export interface ArrangedSongConfig {
+  bpm: number;
+  time_sig: "4/4" | "3/4" | "2/4" | "12/8";
+  keyRoot: number; // MIDI pitch, e.g. 64 for E4
+  isMinor: boolean;
+  lhName: string;
+  rhName: string;
+  sections: {
+    name: "intro" | "verse" | "preChorus" | "chorus" | "bridge" | "coda";
+    bars: number;
+    chordRoots: number[]; // offsets relative to keyRoot
+    lhStyle:
+      | "ballad10th"
+      | "rockPower"
+      | "waltz"
+      | "stride"
+      | "discoFunk"
+      | "alberti"
+      | "rollingArp"
+      | "staccatoPluck"
+      | "continuous16th";
+    rhMelody: number[]; // offsets relative to keyRoot + 12
+    rhRhythm:
+      | "lyrical8th"
+      | "syncopated16th"
+      | "cascades"
+      | "waltzCantabile"
+      | "marchStaccato"
+      | "climaxOctaves";
+    dynamics: { lh: number; rh: number };
+  }[];
+}
+
+export function buildFullArrangedSong(config: ArrangedSongConfig): NoteData {
+  const { bpm, time_sig, keyRoot, isMinor, lhName, rhName, sections } = config;
+  const beatsPerBar = time_sig === "3/4" ? 3 : time_sig === "2/4" ? 2 : 4;
+  const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
+  const s16 = beatSec / 4;
+  const notes: Note[] = [];
+  let noteId = 1;
+  let curTime = 0;
+
+  const thirdInterval = isMinor ? 3 : 4;
+  const fifthInterval = 7;
+
+  for (const sec of sections) {
+    for (let bar = 0; bar < sec.bars; bar++) {
+      const bStart = curTime;
+      const chordOffset = sec.chordRoots[bar % sec.chordRoots.length] ?? 0;
+      const root = keyRoot + chordOffset;
+      const bassPitch = root - 24;
+
+      // 1. LEFT HAND ACCOMPANIMENT
+      if (sec.lhStyle === "waltz") {
+        noteId = addNote(notes, noteId, bassPitch, bStart, beatSec * 2.5, sec.dynamics.lh, "L");
+        const wChord = [root - 12 + thirdInterval, root - 12 + fifthInterval];
+        for (let b = 1; b < 3; b++) {
+          for (const cp of wChord) {
+            noteId = addNote(notes, noteId, cp, bStart + b * beatSec, beatSec * 0.85, sec.dynamics.lh - 4, "L");
+          }
+        }
+      } else if (sec.lhStyle === "ballad10th") {
+        noteId = addNote(notes, noteId, bassPitch, bStart, beatSec * 3.5, sec.dynamics.lh, "L");
+        noteId = addNote(notes, noteId, root - 17, bStart + beatSec, beatSec * 2.5, sec.dynamics.lh - 3, "L");
+        noteId = addNote(notes, noteId, root - 12 + thirdInterval, bStart + beatSec * 2, beatSec * 1.8, sec.dynamics.lh - 2, "L");
+        noteId = addNote(notes, noteId, root - 12, bStart + beatSec * 3, beatSec * 0.9, sec.dynamics.lh - 4, "L");
+      } else if (sec.lhStyle === "rockPower") {
+        for (let i = 0; i < beatsPerBar * 2; i++) {
+          const t = bStart + i * s8;
+          const isDownbeat = i % 2 === 0;
+          const vel = isDownbeat ? sec.dynamics.lh : sec.dynamics.lh - 6;
+          noteId = addNote(notes, noteId, bassPitch, t, s8 * 0.85, vel, "L");
+          noteId = addNote(notes, noteId, root - 17, t, s8 * 0.85, vel - 2, "L");
+        }
+      } else if (sec.lhStyle === "discoFunk") {
+        noteId = addNote(notes, noteId, bassPitch, bStart, s8 * 0.9, sec.dynamics.lh + 4, "L");
+        noteId = addNote(notes, noteId, root - 12, bStart + s8, s8 * 0.8, sec.dynamics.lh - 2, "L");
+        noteId = addNote(notes, noteId, root - 12 + thirdInterval, bStart + beatSec * 1.5, s8 * 0.8, sec.dynamics.lh, "L");
+        noteId = addNote(notes, noteId, bassPitch, bStart + beatSec * 2, s8 * 0.9, sec.dynamics.lh + 2, "L");
+        noteId = addNote(notes, noteId, root - 17, bStart + beatSec * 3, s8 * 0.85, sec.dynamics.lh - 2, "L");
+      } else if (sec.lhStyle === "stride") {
+        noteId = addNote(notes, noteId, bassPitch, bStart, beatSec * 0.9, sec.dynamics.lh + 2, "L");
+        const ch = [root - 12, root - 12 + thirdInterval, root - 12 + fifthInterval];
+        for (const cp of ch) {
+          noteId = addNote(notes, noteId, cp, bStart + beatSec, beatSec * 0.8, sec.dynamics.lh - 4, "L");
+        }
+        noteId = addNote(notes, noteId, root - 17, bStart + beatSec * 2, beatSec * 0.9, sec.dynamics.lh, "L");
+        for (const cp of ch) {
+          noteId = addNote(notes, noteId, cp, bStart + beatSec * 3, beatSec * 0.8, sec.dynamics.lh - 4, "L");
+        }
+      } else if (sec.lhStyle === "alberti") {
+        const albP = [bassPitch, root - 17, root - 24 + thirdInterval, root - 17];
+        for (let i = 0; i < beatsPerBar * 2; i++) {
+          const p = albP[i % albP.length];
+          noteId = addNote(notes, noteId, p, bStart + i * s8, s8 * 0.9, sec.dynamics.lh - (i % 2 === 0 ? 0 : 4), "L");
+        }
+      } else if (sec.lhStyle === "rollingArp") {
+        const arpP = [
+          bassPitch,
+          root - 17,
+          root - 12,
+          root - 12 + thirdInterval,
+          root - 12 + fifthInterval,
+          root - 12 + thirdInterval,
+          root - 12,
+          root - 17,
+        ];
+        for (let i = 0; i < beatsPerBar * 4; i++) {
+          const p = arpP[i % arpP.length];
+          noteId = addNote(notes, noteId, p, bStart + i * s16, s16 * 0.9, sec.dynamics.lh - 4, "L");
+        }
+      } else if (sec.lhStyle === "continuous16th") {
+        const cascP = [
+          bassPitch,
+          root - 17,
+          root - 12,
+          root - 12 + thirdInterval,
+          root - 12 + fifthInterval,
+          root - 5,
+          root,
+          root + thirdInterval,
+        ];
+        for (let i = 0; i < beatsPerBar * 4; i++) {
+          const p = cascP[i % cascP.length];
+          noteId = addNote(notes, noteId, p, bStart + i * s16, s16 * 0.92, sec.dynamics.lh - 2, "L");
+        }
+      } else {
+        for (let b = 0; b < beatsPerBar; b++) {
+          noteId = addNote(notes, noteId, bassPitch, bStart + b * beatSec, beatSec * 0.45, sec.dynamics.lh, "L");
+        }
+      }
+
+      // 2. RIGHT HAND MELODY & PHRASING
+      const mel = sec.rhMelody;
+      const melBase = root + 12;
+
+      if (sec.rhRhythm === "waltzCantabile") {
+        for (let s = 0; s < 3; s++) {
+          const p = melBase + mel[(bar * 3 + s) % mel.length];
+          noteId = addNote(notes, noteId, p, bStart + s * beatSec, beatSec * 0.92, sec.dynamics.rh, "R");
+        }
+      } else if (sec.rhRhythm === "climaxOctaves") {
+        for (let s = 0; s < beatsPerBar * 2; s++) {
+          const p = melBase + mel[(bar * 2 + s) % mel.length];
+          noteId = addNote(notes, noteId, p, bStart + s * s8, s8 * 0.9, sec.dynamics.rh + 6, "R");
+          noteId = addNote(notes, noteId, p + 12, bStart + s * s8, s8 * 0.9, sec.dynamics.rh + 4, "R");
+        }
+      } else if (sec.rhRhythm === "cascades") {
+        for (let s = 0; s < beatsPerBar * 4; s++) {
+          const p = melBase + mel[(bar * 4 + s) % mel.length];
+          const isAccent = s % 4 === 0;
+          noteId = addNote(notes, noteId, p + 12, bStart + s * s16, s16 * 0.9, isAccent ? sec.dynamics.rh + 4 : sec.dynamics.rh - 3, "R");
+        }
+      } else if (sec.rhRhythm === "syncopated16th") {
+        const syncBeats = [0, 0.75, 1.5, 2.0, 2.75, 3.25];
+        for (let i = 0; i < syncBeats.length; i++) {
+          const offsetBeat = syncBeats[i];
+          if (offsetBeat >= beatsPerBar) continue;
+          const p = melBase + mel[(bar * syncBeats.length + i) % mel.length];
+          noteId = addNote(notes, noteId, p, bStart + offsetBeat * beatSec, beatSec * 0.6, sec.dynamics.rh + (i === 0 ? 3 : 0), "R");
+        }
+      } else if (sec.rhRhythm === "marchStaccato") {
+        for (let s = 0; s < beatsPerBar * 2; s++) {
+          const p = melBase + mel[(bar * 2 + s) % mel.length];
+          noteId = addNote(notes, noteId, p, bStart + s * s8, s8 * 0.7, sec.dynamics.rh, "R");
+        }
+      } else {
+        for (let s = 0; s < beatsPerBar * 2; s++) {
+          if (s === beatsPerBar * 2 - 1 && bar % 2 === 1) continue;
+          const p = melBase + mel[(bar * 2 + s) % mel.length];
+          noteId = addNote(notes, noteId, p, bStart + s * s8, s8 * 0.92, sec.dynamics.rh - (s % 2 === 0 ? 0 : 3), "R");
+        }
+      }
+
+      curTime += beatsPerBar * beatSec;
+    }
+  }
+
+  // Final cadential chord
+  const finalDur = beatsPerBar * beatSec * 1.5;
+  noteId = addNote(notes, noteId, keyRoot - 24, curTime, finalDur, 65, "L");
+  noteId = addNote(notes, noteId, keyRoot - 12, curTime, finalDur, 62, "L");
+  noteId = addNote(notes, noteId, keyRoot - 12 + thirdInterval, curTime, finalDur, 60, "L");
+  noteId = addNote(notes, noteId, keyRoot, curTime, finalDur, 68, "R");
+  noteId = addNote(notes, noteId, keyRoot + 12, curTime, finalDur, 72, "R");
+  curTime += finalDur;
+
+  const duration_sec = Number(curTime.toFixed(2));
+  const lhCount = notes.filter((n) => n.hand === "L" || n.track === 0).length;
+  const rhCount = notes.filter((n) => n.hand === "R" || n.track === 1).length;
+
+  return {
+    schema_version: 1,
+    bpm,
+    duration_sec,
+    time_signature: time_sig,
+    tracks: [
+      { index: 0, name: lhName, note_count: lhCount },
+      { index: 1, name: rhName, note_count: rhCount },
+    ],
+    notes,
+  };
+}
+
+// 1. Gurenge (LiSA / Demon Slayer)
+export function buildGurengeData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 135,
+    time_sig: "4/4",
+    keyRoot: 52, // E3
+    isMinor: true,
+    lhName: "Left Hand (Driving Heavy Rock Bass & Octaves)",
+    rhName: "Right Hand (Fiery Anime OP Melody & Riffs)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 8, 10, 3], lhStyle: "rockPower", rhMelody: [11, 14, 16, 14, 11, 9, 11], rhRhythm: "syncopated16th", dynamics: { lh: 68, rh: 80 } },
+      { name: "verse", bars: 16, chordRoots: [0, 8, 10, 0, 0, 8, 10, 3], lhStyle: "rockPower", rhMelody: [7, 9, 11, 14, 12, 11, 9, 7], rhRhythm: "syncopated16th", dynamics: { lh: 72, rh: 82 } },
+      { name: "preChorus", bars: 8, chordRoots: [8, 10, 0, 7], lhStyle: "rockPower", rhMelody: [12, 14, 16, 17, 16, 14, 12, 11], rhRhythm: "syncopated16th", dynamics: { lh: 76, rh: 86 } },
+      { name: "chorus", bars: 16, chordRoots: [8, 10, 0, 3, 8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [16, 18, 19, 21, 19, 18, 16, 14, 16, 18, 19], rhRhythm: "climaxOctaves", dynamics: { lh: 84, rh: 94 } },
+      { name: "verse", bars: 12, chordRoots: [0, 8, 10, 0], lhStyle: "rockPower", rhMelody: [7, 9, 11, 14, 12, 11], rhRhythm: "syncopated16th", dynamics: { lh: 70, rh: 82 } },
+      { name: "bridge", bars: 8, chordRoots: [8, 10, 0, 7], lhStyle: "rollingArp", rhMelody: [14, 16, 19, 21, 19, 16], rhRhythm: "cascades", dynamics: { lh: 66, rh: 84 } },
+      { name: "chorus", bars: 16, chordRoots: [8, 10, 0, 3, 8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [16, 18, 19, 21, 19, 18, 16, 14, 16, 18, 19], rhRhythm: "climaxOctaves", dynamics: { lh: 88, rh: 98 } },
+      { name: "coda", bars: 6, chordRoots: [8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [16, 14, 11, 9, 7, 0], rhRhythm: "marchStaccato", dynamics: { lh: 82, rh: 90 } },
+    ],
+  });
+}
+
+// 2. Blue Bird (Ikimono Gakari / Naruto)
+export function buildBlueBirdData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 152,
+    time_sig: "4/4",
+    keyRoot: 50, // D3
+    isMinor: true,
+    lhName: "Left Hand (Driving 8th Bass & Offbeat Chords)",
+    rhName: "Right Hand (Soaring Habataitara Hook & Solos)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 8, 3, 10], lhStyle: "rockPower", rhMelody: [9, 14, 16, 17, 16, 14, 13], rhRhythm: "syncopated16th", dynamics: { lh: 70, rh: 82 } },
+      { name: "verse", bars: 16, chordRoots: [0, 8, 3, 10, 0, 8, 3, 10], lhStyle: "discoFunk", rhMelody: [12, 10, 8, 7, 8, 10, 12, 15], rhRhythm: "syncopated16th", dynamics: { lh: 72, rh: 84 } },
+      { name: "preChorus", bars: 8, chordRoots: [8, 10, 0, 7], lhStyle: "rockPower", rhMelody: [14, 15, 17, 19, 17, 15, 14, 12], rhRhythm: "syncopated16th", dynamics: { lh: 76, rh: 86 } },
+      { name: "chorus", bars: 16, chordRoots: [8, 10, 0, 3, 8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [17, 16, 14, 12, 14, 16, 17, 21, 19, 17, 16, 14], rhRhythm: "climaxOctaves", dynamics: { lh: 84, rh: 94 } },
+      { name: "verse", bars: 12, chordRoots: [0, 8, 3, 10], lhStyle: "discoFunk", rhMelody: [12, 10, 8, 7, 8, 10], rhRhythm: "syncopated16th", dynamics: { lh: 72, rh: 82 } },
+      { name: "bridge", bars: 8, chordRoots: [5, 7, 8, 10], lhStyle: "rollingArp", rhMelody: [15, 17, 19, 22, 21, 19], rhRhythm: "cascades", dynamics: { lh: 68, rh: 86 } },
+      { name: "chorus", bars: 16, chordRoots: [8, 10, 0, 3, 8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [17, 16, 14, 12, 14, 16, 17, 21, 19, 17, 16, 14], rhRhythm: "climaxOctaves", dynamics: { lh: 88, rh: 96 } },
+      { name: "coda", bars: 8, chordRoots: [8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [14, 12, 9, 7, 5, 0], rhRhythm: "marchStaccato", dynamics: { lh: 80, rh: 90 } },
+    ],
+  });
+}
+
+// 3. Hikaru Nara (Goose house / Your Lie in April)
+export function buildHikaruNaraData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 155,
+    time_sig: "4/4",
+    keyRoot: 55, // G3
+    isMinor: false,
+    lhName: "Left Hand (Joyful Bouncy Pop Groove & Octaves)",
+    rhName: "Right Hand (Kimi da yo Soaring Lyrical Violin Riffs)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 7, 9, 5], lhStyle: "discoFunk", rhMelody: [7, 9, 11, 12, 14, 12, 11, 9, 7, 4, 7], rhRhythm: "syncopated16th", dynamics: { lh: 70, rh: 82 } },
+      { name: "verse", bars: 16, chordRoots: [0, 7, 9, 5, 0, 7, 9, 5], lhStyle: "discoFunk", rhMelody: [4, 7, 9, 11, 9, 7, 4, 2], rhRhythm: "syncopated16th", dynamics: { lh: 72, rh: 84 } },
+      { name: "preChorus", bars: 8, chordRoots: [5, 7, 4, 9], lhStyle: "rockPower", rhMelody: [11, 12, 14, 16, 14, 12, 11, 9], rhRhythm: "syncopated16th", dynamics: { lh: 76, rh: 88 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 7, 9, 5, 0, 7, 5, 0], lhStyle: "rockPower", rhMelody: [7, 9, 11, 12, 14, 16, 14, 12, 11, 9, 7, 11, 14, 12], rhRhythm: "climaxOctaves", dynamics: { lh: 84, rh: 95 } },
+      { name: "verse", bars: 12, chordRoots: [0, 7, 9, 5], lhStyle: "discoFunk", rhMelody: [4, 7, 9, 11, 9, 7], rhRhythm: "syncopated16th", dynamics: { lh: 70, rh: 82 } },
+      { name: "bridge", bars: 8, chordRoots: [5, 7, 9, 0], lhStyle: "rollingArp", rhMelody: [12, 14, 16, 19, 16, 14], rhRhythm: "cascades", dynamics: { lh: 68, rh: 86 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 7, 9, 5, 0, 7, 5, 0], lhStyle: "rockPower", rhMelody: [7, 9, 11, 12, 14, 16, 14, 12, 11, 9, 7, 11, 14, 12], rhRhythm: "climaxOctaves", dynamics: { lh: 88, rh: 98 } },
+      { name: "coda", bars: 8, chordRoots: [5, 7, 0, 0], lhStyle: "discoFunk", rhMelody: [12, 11, 9, 7, 4, 0], rhRhythm: "syncopated16th", dynamics: { lh: 75, rh: 88 } },
+    ],
+  });
+}
+
+// 4. Nandemonaiya (Radwimps / Your Name)
+export function buildNandemonaiyaData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 74,
+    time_sig: "4/4",
+    keyRoot: 57, // A3
+    isMinor: false,
+    lhName: "Left Hand (Warm Rolling Tenth Ballad Arpeggios)",
+    rhName: "Right Hand (Tender Singing Vocal Line & Cascades)",
+    sections: [
+      { name: "intro", bars: 6, chordRoots: [0, 7, 9, 5], lhStyle: "ballad10th", rhMelody: [0, 4, 7, 9, 7, 4, 2, 4, 7, 9], rhRhythm: "lyrical8th", dynamics: { lh: 55, rh: 72 } },
+      { name: "verse", bars: 14, chordRoots: [0, 7, 9, 5, 0, 7, 5, 0], lhStyle: "ballad10th", rhMelody: [4, 7, 9, 11, 12, 11, 9, 7, 4, 2, 4, 7], rhRhythm: "lyrical8th", dynamics: { lh: 58, rh: 75 } },
+      { name: "preChorus", bars: 8, chordRoots: [5, 7, 4, 9], lhStyle: "rollingArp", rhMelody: [7, 9, 11, 12, 14, 12, 11, 9], rhRhythm: "lyrical8th", dynamics: { lh: 62, rh: 80 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 7, 9, 5, 0, 7, 5, 0], lhStyle: "ballad10th", rhMelody: [9, 11, 12, 14, 12, 11, 9, 7, 4, 2, 4, 7, 9, 11, 12], rhRhythm: "climaxOctaves", dynamics: { lh: 72, rh: 88 } },
+      { name: "verse", bars: 10, chordRoots: [0, 7, 9, 5], lhStyle: "ballad10th", rhMelody: [4, 7, 9, 11, 9, 7], rhRhythm: "lyrical8th", dynamics: { lh: 56, rh: 74 } },
+      { name: "bridge", bars: 8, chordRoots: [5, 7, 9, 0], lhStyle: "rollingArp", rhMelody: [12, 14, 16, 19, 16, 14], rhRhythm: "cascades", dynamics: { lh: 65, rh: 84 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 7, 9, 5, 0, 7, 5, 0], lhStyle: "ballad10th", rhMelody: [9, 11, 12, 14, 12, 11, 9, 7, 4, 2, 4, 7, 9, 11, 12], rhRhythm: "climaxOctaves", dynamics: { lh: 76, rh: 92 } },
+      { name: "coda", bars: 6, chordRoots: [5, 7, 0, 0], lhStyle: "ballad10th", rhMelody: [4, 2, 0, 0], rhRhythm: "lyrical8th", dynamics: { lh: 50, rh: 68 } },
+    ],
+  });
+}
+
+// 5. Katawaredoki (Radwimps / Your Name)
+export function buildKatawaredokiData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 70,
+    time_sig: "3/4",
+    keyRoot: 52, // E3
+    isMinor: false,
+    lhName: "Left Hand (Twilight 3/4 Harp Arpeggio Lilts)",
+    rhName: "Right Hand (High Mountain Bell Melody & Swells)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 7, 9, 5], lhStyle: "waltz", rhMelody: [11, 12, 14, 16, 14, 12, 11, 9, 7, 9, 11, 12, 11], rhRhythm: "waltzCantabile", dynamics: { lh: 52, rh: 70 } },
+      { name: "verse", bars: 20, chordRoots: [0, 7, 9, 5, 0, 7, 5, 0], lhStyle: "waltz", rhMelody: [4, 7, 9, 11, 12, 11, 9, 7, 4, 7, 11, 12], rhRhythm: "waltzCantabile", dynamics: { lh: 56, rh: 74 } },
+      { name: "chorus", bars: 24, chordRoots: [0, 7, 9, 5, 0, 7, 5, 0], lhStyle: "waltz", rhMelody: [11, 12, 14, 16, 14, 12, 11, 9, 7, 9, 11, 12, 11], rhRhythm: "climaxOctaves", dynamics: { lh: 70, rh: 88 } },
+      { name: "bridge", bars: 14, chordRoots: [9, 5, 7, 0], lhStyle: "rollingArp", rhMelody: [12, 14, 16, 19, 16, 14], rhRhythm: "cascades", dynamics: { lh: 60, rh: 80 } },
+      { name: "chorus", bars: 20, chordRoots: [0, 7, 9, 5, 0, 7, 5, 0], lhStyle: "waltz", rhMelody: [11, 12, 14, 16, 14, 12, 11, 9, 7, 9, 11, 12, 11], rhRhythm: "climaxOctaves", dynamics: { lh: 74, rh: 92 } },
+      { name: "coda", bars: 10, chordRoots: [5, 7, 0, 0], lhStyle: "waltz", rhMelody: [7, 4, 0], rhRhythm: "waltzCantabile", dynamics: { lh: 48, rh: 65 } },
+    ],
+  });
+}
+
+// 6. Unravel (TK from Ling Tosite Sigure / Tokyo Ghoul)
+export function buildUnravelData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 135,
+    time_sig: "4/4",
+    keyRoot: 56, // G#3
+    isMinor: true,
+    lhName: "Left Hand (Tragic Staccato Bass & Thunderous Octaves)",
+    rhName: "Right Hand (Glassy Melancholy Whispers & Virtuoso Cascades)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 8, 3, 10], lhStyle: "rollingArp", rhMelody: [7, 10, 12, 15, 14, 12, 10, 7, 3, 7], rhRhythm: "lyrical8th", dynamics: { lh: 55, rh: 72 } },
+      { name: "verse", bars: 16, chordRoots: [0, 8, 3, 10, 0, 8, 5, 7], lhStyle: "rockPower", rhMelody: [3, 7, 10, 12, 10, 7, 3, 2], rhRhythm: "syncopated16th", dynamics: { lh: 72, rh: 82 } },
+      { name: "preChorus", bars: 8, chordRoots: [8, 10, 0, 7], lhStyle: "rockPower", rhMelody: [10, 12, 14, 15, 17, 15, 14, 12], rhRhythm: "syncopated16th", dynamics: { lh: 78, rh: 88 } },
+      { name: "chorus", bars: 16, chordRoots: [8, 10, 0, 3, 8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [15, 14, 12, 10, 12, 15, 17, 19, 17, 15, 14, 12, 10, 7], rhRhythm: "climaxOctaves", dynamics: { lh: 88, rh: 98 } },
+      { name: "verse", bars: 12, chordRoots: [0, 8, 3, 10], lhStyle: "rockPower", rhMelody: [3, 7, 10, 12, 10, 7], rhRhythm: "syncopated16th", dynamics: { lh: 70, rh: 82 } },
+      { name: "bridge", bars: 8, chordRoots: [0, 8, 5, 7], lhStyle: "continuous16th", rhMelody: [12, 15, 17, 20, 19, 17], rhRhythm: "cascades", dynamics: { lh: 74, rh: 90 } },
+      { name: "chorus", bars: 16, chordRoots: [8, 10, 0, 3, 8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [15, 14, 12, 10, 12, 15, 17, 19, 17, 15, 14, 12, 10, 7], rhRhythm: "climaxOctaves", dynamics: { lh: 90, rh: 100 } },
+      { name: "coda", bars: 8, chordRoots: [8, 10, 0, 0], lhStyle: "rollingArp", rhMelody: [7, 3, 0], rhRhythm: "lyrical8th", dynamics: { lh: 50, rh: 68 } },
+    ],
+  });
+}
+
+// 7. He's a Pirate (Pirates of the Caribbean)
+export function buildHeIsAPirateData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 140,
+    time_sig: "12/8",
+    keyRoot: 50, // D3
+    isMinor: true,
+    lhName: "Left Hand (Galloping 12/8 Pirate Ostinato & Cannonade Bass)",
+    rhName: "Right Hand (Swashbuckling Theme & Fanfare Chords)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 0, 8, 10], lhStyle: "rockPower", rhMelody: [0, 0, 0, 3, 7, 7, 7, 8, 7, 5, 7], rhRhythm: "syncopated16th", dynamics: { lh: 75, rh: 85 } },
+      { name: "verse", bars: 16, chordRoots: [0, 0, 8, 10, 0, 0, 8, 7], lhStyle: "rockPower", rhMelody: [0, 0, 3, 7, 7, 7, 8, 7, 5, 7, 0, 0, 3, 7, 7, 7, 8, 10, 8, 7, 5], rhRhythm: "syncopated16th", dynamics: { lh: 80, rh: 90 } },
+      { name: "chorus", bars: 16, chordRoots: [8, 10, 0, 0, 8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [12, 12, 14, 15, 17, 15, 14, 12, 10, 8, 10, 12], rhRhythm: "climaxOctaves", dynamics: { lh: 88, rh: 96 } },
+      { name: "bridge", bars: 12, chordRoots: [0, 8, 10, 7], lhStyle: "rollingArp", rhMelody: [7, 10, 12, 15, 14, 12], rhRhythm: "cascades", dynamics: { lh: 76, rh: 88 } },
+      { name: "chorus", bars: 20, chordRoots: [8, 10, 0, 0, 8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [0, 0, 3, 7, 7, 7, 8, 7, 5, 7, 0, 0, 3, 7, 7, 7, 8, 10, 8, 7, 5], rhRhythm: "climaxOctaves", dynamics: { lh: 92, rh: 100 } },
+      { name: "coda", bars: 10, chordRoots: [8, 10, 0, 0], lhStyle: "rockPower", rhMelody: [7, 5, 3, 0], rhRhythm: "marchStaccato", dynamics: { lh: 86, rh: 96 } },
+    ],
+  });
+}
+
+// 8. Megalovania (Toby Fox / Undertale)
+export function buildMegalovaniaData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 120,
+    time_sig: "4/4",
+    keyRoot: 50, // D3
+    isMinor: true,
+    lhName: "Left Hand (Funk Chiptune Bass Staccatos & Octave Slaps)",
+    rhName: "Right Hand (Iconic Sans 4-Bar Ostinato & Fast Solos)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 10, 9, 8], lhStyle: "discoFunk", rhMelody: [0, 0, 12, 7, 6, 5, 3, 0, 3, 5], rhRhythm: "syncopated16th", dynamics: { lh: 72, rh: 85 } },
+      { name: "verse", bars: 16, chordRoots: [0, 10, 9, 8, 0, 10, 9, 8], lhStyle: "discoFunk", rhMelody: [0, 0, 12, 7, 6, 5, 3, 0, 3, 5], rhRhythm: "syncopated16th", dynamics: { lh: 78, rh: 88 } },
+      { name: "preChorus", bars: 8, chordRoots: [8, 10, 0, 7], lhStyle: "rockPower", rhMelody: [12, 14, 15, 17, 15, 14, 12, 10], rhRhythm: "syncopated16th", dynamics: { lh: 82, rh: 92 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 10, 9, 8, 0, 10, 9, 8], lhStyle: "rockPower", rhMelody: [12, 12, 24, 19, 18, 17, 15, 12, 15, 17], rhRhythm: "climaxOctaves", dynamics: { lh: 88, rh: 98 } },
+      { name: "verse", bars: 12, chordRoots: [0, 10, 9, 8], lhStyle: "discoFunk", rhMelody: [0, 0, 12, 7, 6, 5, 3, 0], rhRhythm: "syncopated16th", dynamics: { lh: 76, rh: 86 } },
+      { name: "bridge", bars: 8, chordRoots: [3, 5, 7, 8], lhStyle: "continuous16th", rhMelody: [15, 17, 19, 22, 21, 19], rhRhythm: "cascades", dynamics: { lh: 80, rh: 92 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 10, 9, 8, 0, 10, 9, 8], lhStyle: "rockPower", rhMelody: [12, 12, 24, 19, 18, 17, 15, 12, 15, 17], rhRhythm: "climaxOctaves", dynamics: { lh: 92, rh: 100 } },
+      { name: "coda", bars: 6, chordRoots: [8, 10, 0, 0], lhStyle: "discoFunk", rhMelody: [5, 3, 0], rhRhythm: "marchStaccato", dynamics: { lh: 84, rh: 92 } },
+    ],
+  });
+}
+
+// 9. Zelda's Lullaby (Koji Kondo / The Legend of Zelda)
+export function buildZeldasLullabyData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 84,
+    time_sig: "3/4",
+    keyRoot: 55, // G3
+    isMinor: false,
+    lhName: "Left Hand (Royal Harp Arpeggio Cascades)",
+    rhName: "Right Hand (Triforce Lyrical Melody & Ornaments)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 5, 7, 0], lhStyle: "waltz", rhMelody: [11, 14, 9, 7, 9, 11, 14, 9, 7, 4, 7], rhRhythm: "waltzCantabile", dynamics: { lh: 54, rh: 72 } },
+      { name: "verse", bars: 18, chordRoots: [0, 5, 7, 0, 0, 5, 7, 0], lhStyle: "waltz", rhMelody: [11, 14, 9, 7, 9, 11, 14, 9, 7, 4, 7, 9, 11, 14, 16, 14], rhRhythm: "waltzCantabile", dynamics: { lh: 58, rh: 76 } },
+      { name: "chorus", bars: 20, chordRoots: [5, 7, 0, 9, 5, 7, 0, 0], lhStyle: "waltz", rhMelody: [16, 14, 11, 9, 11, 14, 16, 14, 11, 9, 7], rhRhythm: "climaxOctaves", dynamics: { lh: 68, rh: 86 } },
+      { name: "bridge", bars: 12, chordRoots: [9, 5, 7, 0], lhStyle: "rollingArp", rhMelody: [14, 16, 19, 21, 19, 16], rhRhythm: "cascades", dynamics: { lh: 62, rh: 80 } },
+      { name: "chorus", bars: 18, chordRoots: [5, 7, 0, 9, 5, 7, 0, 0], lhStyle: "waltz", rhMelody: [11, 14, 9, 7, 9, 11, 14, 9, 7, 4, 7, 9, 11, 14, 16, 14], rhRhythm: "climaxOctaves", dynamics: { lh: 72, rh: 90 } },
+      { name: "coda", bars: 8, chordRoots: [5, 7, 0, 0], lhStyle: "waltz", rhMelody: [7, 4, 0], rhRhythm: "waltzCantabile", dynamics: { lh: 48, rh: 66 } },
+    ],
+  });
+}
+
+// 10. Super Mario Bros. Theme (Koji Kondo)
+export function buildSuperMarioThemeData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 100,
+    time_sig: "2/4",
+    keyRoot: 60, // C4
+    isMinor: false,
+    lhName: "Left Hand (Calypso Stride Bass & Underground Walks)",
+    rhName: "Right Hand (Iconic Overworld Ragtime Rhythms)",
+    sections: [
+      { name: "intro", bars: 6, chordRoots: [0, 5, 0, 7], lhStyle: "stride", rhMelody: [16, 16, 16, 12, 16, 19, 7], rhRhythm: "marchStaccato", dynamics: { lh: 72, rh: 85 } },
+      { name: "verse", bars: 24, chordRoots: [0, 5, 0, 7, 0, 5, 0, 7], lhStyle: "stride", rhMelody: [12, 7, 4, 9, 11, 10, 9, 7, 16, 19, 21, 17, 19, 16, 12, 14, 11], rhRhythm: "marchStaccato", dynamics: { lh: 74, rh: 86 } },
+      { name: "preChorus", bars: 12, chordRoots: [5, 0, 7, 0], lhStyle: "discoFunk", rhMelody: [7, 12, 14, 16, 14, 12, 7], rhRhythm: "syncopated16th", dynamics: { lh: 76, rh: 88 } },
+      { name: "chorus", bars: 24, chordRoots: [0, 5, 0, 7, 0, 5, 0, 7], lhStyle: "stride", rhMelody: [12, 7, 4, 9, 11, 10, 9, 7, 16, 19, 21, 17, 19, 16, 12, 14, 11], rhRhythm: "climaxOctaves", dynamics: { lh: 82, rh: 94 } },
+      { name: "bridge", bars: 16, chordRoots: [9, 2, 7, 0], lhStyle: "continuous16th", rhMelody: [16, 17, 19, 21, 19, 17], rhRhythm: "cascades", dynamics: { lh: 78, rh: 90 } },
+      { name: "chorus", bars: 20, chordRoots: [0, 5, 0, 7, 0, 5, 0, 7], lhStyle: "stride", rhMelody: [12, 7, 4, 9, 11, 10, 9, 7, 16, 19, 21, 17, 19, 16, 12, 14, 11], rhRhythm: "climaxOctaves", dynamics: { lh: 86, rh: 96 } },
+      { name: "coda", bars: 8, chordRoots: [5, 7, 0, 0], lhStyle: "stride", rhMelody: [12, 7, 0], rhRhythm: "marchStaccato", dynamics: { lh: 80, rh: 90 } },
+    ],
+  });
+}
+
+// 11. Hedwig's Theme (John Williams / Harry Potter)
+export function buildHedwigsThemeData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 138,
+    time_sig: "3/4",
+    keyRoot: 52, // E3
+    isMinor: true,
+    lhName: "Left Hand (Mysterious Chromatic Waltz Arpeggios)",
+    rhName: "Right Hand (Magical Celesta Flights & Ornaments)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 3, 7, 0], lhStyle: "waltz", rhMelody: [7, 12, 15, 14, 12, 19, 17, 14, 12, 15, 14, 11, 13, 7], rhRhythm: "waltzCantabile", dynamics: { lh: 54, rh: 72 } },
+      { name: "verse", bars: 20, chordRoots: [0, 3, 7, 0, 0, 3, 8, 7], lhStyle: "waltz", rhMelody: [7, 12, 15, 14, 12, 19, 17, 14, 12, 15, 14, 11, 13, 7, 12], rhRhythm: "waltzCantabile", dynamics: { lh: 60, rh: 78 } },
+      { name: "chorus", bars: 24, chordRoots: [8, 10, 0, 7, 8, 10, 0, 0], lhStyle: "waltz", rhMelody: [15, 17, 19, 22, 20, 17, 15, 19, 17, 14, 15, 12], rhRhythm: "climaxOctaves", dynamics: { lh: 72, rh: 88 } },
+      { name: "bridge", bars: 14, chordRoots: [0, 8, 3, 7], lhStyle: "rollingArp", rhMelody: [12, 15, 17, 20, 19, 17], rhRhythm: "cascades", dynamics: { lh: 65, rh: 84 } },
+      { name: "chorus", bars: 20, chordRoots: [8, 10, 0, 7, 8, 10, 0, 0], lhStyle: "waltz", rhMelody: [7, 12, 15, 14, 12, 19, 17, 14, 12, 15, 14, 11, 13, 7, 12], rhRhythm: "climaxOctaves", dynamics: { lh: 76, rh: 92 } },
+      { name: "coda", bars: 10, chordRoots: [8, 7, 0, 0], lhStyle: "waltz", rhMelody: [7, 3, 0], rhRhythm: "waltzCantabile", dynamics: { lh: 50, rh: 68 } },
+    ],
+  });
+}
+
+// 12. Golden Hour (JVKE)
+export function buildGoldenHourData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 94,
+    time_sig: "4/4",
+    keyRoot: 55, // G3
+    isMinor: false,
+    lhName: "Left Hand (Shimmering Golden Arpeggio Cascades)",
+    rhName: "Right Hand (Virtuosic 16th Piano Cascades & Melody)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 9, 5, 7], lhStyle: "continuous16th", rhMelody: [7, 11, 14, 16, 19, 23, 19, 16, 14, 11, 7, 4, 7, 11, 14, 16], rhRhythm: "cascades", dynamics: { lh: 62, rh: 78 } },
+      { name: "verse", bars: 16, chordRoots: [0, 9, 5, 7, 0, 9, 5, 7], lhStyle: "continuous16th", rhMelody: [4, 7, 9, 11, 14, 12, 11, 9, 7, 4, 2, 4], rhRhythm: "syncopated16th", dynamics: { lh: 65, rh: 82 } },
+      { name: "preChorus", bars: 8, chordRoots: [5, 7, 9, 0], lhStyle: "continuous16th", rhMelody: [11, 12, 14, 16, 19, 16, 14, 12], rhRhythm: "cascades", dynamics: { lh: 70, rh: 86 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 9, 5, 7, 0, 9, 5, 7], lhStyle: "continuous16th", rhMelody: [7, 11, 14, 16, 19, 23, 19, 16, 14, 11, 7, 4, 7, 11, 14, 16], rhRhythm: "climaxOctaves", dynamics: { lh: 80, rh: 95 } },
+      { name: "verse", bars: 12, chordRoots: [0, 9, 5, 7], lhStyle: "continuous16th", rhMelody: [4, 7, 9, 11, 14, 12], rhRhythm: "syncopated16th", dynamics: { lh: 66, rh: 82 } },
+      { name: "bridge", bars: 8, chordRoots: [5, 7, 9, 0], lhStyle: "continuous16th", rhMelody: [14, 16, 19, 23, 21, 19], rhRhythm: "cascades", dynamics: { lh: 72, rh: 88 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 9, 5, 7, 0, 9, 5, 7], lhStyle: "continuous16th", rhMelody: [7, 11, 14, 16, 19, 23, 19, 16, 14, 11, 7, 4, 7, 11, 14, 16], rhRhythm: "climaxOctaves", dynamics: { lh: 84, rh: 98 } },
+      { name: "coda", bars: 6, chordRoots: [5, 7, 0, 0], lhStyle: "continuous16th", rhMelody: [7, 4, 0], rhRhythm: "cascades", dynamics: { lh: 55, rh: 70 } },
+    ],
+  });
+}
+
+// 13. Someone Like You (Adele)
+export function buildSomeoneLikeYouData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 68,
+    time_sig: "4/4",
+    keyRoot: 57, // A3
+    isMinor: false,
+    lhName: "Left Hand (Iconic Adele 4-Note Broken Chord Ostinato)",
+    rhName: "Right Hand (Soulful Lyrical Belt & Vocal Flourishes)",
+    sections: [
+      { name: "intro", bars: 6, chordRoots: [0, 4, 9, 5], lhStyle: "ballad10th", rhMelody: [4, 7, 11, 7, 4, 7, 11, 7, 12, 11, 9, 7, 4, 2, 0, 2], rhRhythm: "lyrical8th", dynamics: { lh: 55, rh: 72 } },
+      { name: "verse", bars: 14, chordRoots: [0, 4, 9, 5, 0, 4, 9, 5], lhStyle: "ballad10th", rhMelody: [4, 7, 9, 11, 9, 7, 4, 2, 4, 7, 9, 7], rhRhythm: "lyrical8th", dynamics: { lh: 58, rh: 75 } },
+      { name: "preChorus", bars: 8, chordRoots: [7, 9, 5, 7], lhStyle: "rollingArp", rhMelody: [9, 11, 12, 14, 12, 11, 9, 7], rhRhythm: "lyrical8th", dynamics: { lh: 62, rh: 80 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 7, 9, 5, 0, 7, 5, 0], lhStyle: "ballad10th", rhMelody: [4, 7, 11, 7, 4, 7, 11, 7, 12, 11, 9, 7, 4, 2, 0, 2], rhRhythm: "climaxOctaves", dynamics: { lh: 74, rh: 90 } },
+      { name: "verse", bars: 10, chordRoots: [0, 4, 9, 5], lhStyle: "ballad10th", rhMelody: [4, 7, 9, 11, 9, 7], rhRhythm: "lyrical8th", dynamics: { lh: 56, rh: 74 } },
+      { name: "bridge", bars: 8, chordRoots: [9, 5, 0, 7], lhStyle: "rollingArp", rhMelody: [12, 14, 16, 19, 16, 14], rhRhythm: "cascades", dynamics: { lh: 66, rh: 84 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 7, 9, 5, 0, 7, 5, 0], lhStyle: "ballad10th", rhMelody: [4, 7, 11, 7, 4, 7, 11, 7, 12, 11, 9, 7, 4, 2, 0, 2], rhRhythm: "climaxOctaves", dynamics: { lh: 78, rh: 94 } },
+      { name: "coda", bars: 6, chordRoots: [5, 7, 0, 0], lhStyle: "ballad10th", rhMelody: [4, 2, 0, 0], rhRhythm: "lyrical8th", dynamics: { lh: 50, rh: 68 } },
+    ],
+  });
+}
+
+// 14. Shape of You (Ed Sheeran)
+export function buildShapeOfYouData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 96,
+    time_sig: "4/4",
+    keyRoot: 49, // C#3
+    isMinor: true,
+    lhName: "Left Hand (Percussive Staccato Pizzicato Bassline)",
+    rhName: "Right Hand (Catchy Marimba Pluck & Pop Hooks)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 5, 8, 10], lhStyle: "staccatoPluck", rhMelody: [7, 7, 7, 7, 10, 7, 5, 3, 5, 5, 5, 7, 5, 3, 0, 3], rhRhythm: "syncopated16th", dynamics: { lh: 65, rh: 78 } },
+      { name: "verse", bars: 16, chordRoots: [0, 5, 8, 10, 0, 5, 8, 10], lhStyle: "staccatoPluck", rhMelody: [0, 3, 5, 7, 5, 3, 0, -2, 0, 3, 5, 3], rhRhythm: "syncopated16th", dynamics: { lh: 68, rh: 82 } },
+      { name: "preChorus", bars: 8, chordRoots: [8, 10, 0, 7], lhStyle: "discoFunk", rhMelody: [7, 8, 10, 12, 10, 8, 7, 5], rhRhythm: "syncopated16th", dynamics: { lh: 74, rh: 86 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 5, 8, 10, 0, 5, 8, 10], lhStyle: "discoFunk", rhMelody: [7, 7, 7, 7, 10, 7, 5, 3, 5, 5, 5, 7, 5, 3, 0, 3], rhRhythm: "climaxOctaves", dynamics: { lh: 82, rh: 94 } },
+      { name: "verse", bars: 12, chordRoots: [0, 5, 8, 10], lhStyle: "staccatoPluck", rhMelody: [0, 3, 5, 7, 5, 3], rhRhythm: "syncopated16th", dynamics: { lh: 70, rh: 82 } },
+      { name: "bridge", bars: 8, chordRoots: [8, 10, 0, 5], lhStyle: "rollingArp", rhMelody: [10, 12, 15, 17, 15, 12], rhRhythm: "cascades", dynamics: { lh: 72, rh: 88 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 5, 8, 10, 0, 5, 8, 10], lhStyle: "discoFunk", rhMelody: [7, 7, 7, 7, 10, 7, 5, 3, 5, 5, 5, 7, 5, 3, 0, 3], rhRhythm: "climaxOctaves", dynamics: { lh: 86, rh: 96 } },
+      { name: "coda", bars: 6, chordRoots: [8, 10, 0, 0], lhStyle: "staccatoPluck", rhMelody: [7, 3, 0], rhRhythm: "syncopated16th", dynamics: { lh: 68, rh: 80 } },
+    ],
+  });
+}
+
+// 15. Shallow (Lady Gaga & Bradley Cooper)
+export function buildShallowData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 96,
+    time_sig: "4/4",
+    keyRoot: 52, // E3
+    isMinor: true,
+    lhName: "Left Hand (Acoustic Folk Picking to Rock Power Chords)",
+    rhName: "Right Hand (Intimate Duet Vocals & Soaring Belts)",
+    sections: [
+      { name: "intro", bars: 6, chordRoots: [0, 10, 3, 8], lhStyle: "ballad10th", rhMelody: [0, 3, 7, 10, 12, 10, 7, 5, 3, 0, 3, 5, 7, 10, 12, 15], rhRhythm: "lyrical8th", dynamics: { lh: 56, rh: 72 } },
+      { name: "verse", bars: 14, chordRoots: [0, 10, 3, 8, 0, 10, 3, 8], lhStyle: "ballad10th", rhMelody: [3, 7, 10, 12, 10, 7, 5, 3, 5, 7, 10, 7], rhRhythm: "lyrical8th", dynamics: { lh: 60, rh: 76 } },
+      { name: "preChorus", bars: 8, chordRoots: [8, 10, 0, 7], lhStyle: "rollingArp", rhMelody: [10, 12, 14, 15, 17, 15, 14, 12], rhRhythm: "lyrical8th", dynamics: { lh: 66, rh: 82 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 10, 3, 8, 0, 10, 8, 0], lhStyle: "rockPower", rhMelody: [7, 10, 12, 10, 7, 5, 3, 0, 3, 5, 7, 10, 12, 15, 14, 12], rhRhythm: "climaxOctaves", dynamics: { lh: 80, rh: 94 } },
+      { name: "verse", bars: 10, chordRoots: [0, 10, 3, 8], lhStyle: "ballad10th", rhMelody: [3, 7, 10, 12, 10, 7], rhRhythm: "lyrical8th", dynamics: { lh: 62, rh: 78 } },
+      { name: "bridge", bars: 8, chordRoots: [8, 10, 0, 7], lhStyle: "rollingArp", rhMelody: [15, 17, 19, 22, 19, 17], rhRhythm: "cascades", dynamics: { lh: 72, rh: 90 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 10, 3, 8, 0, 10, 8, 0], lhStyle: "rockPower", rhMelody: [7, 10, 12, 10, 7, 5, 3, 0, 3, 5, 7, 10, 12, 15, 14, 12], rhRhythm: "climaxOctaves", dynamics: { lh: 86, rh: 98 } },
+      { name: "coda", bars: 6, chordRoots: [8, 10, 0, 0], lhStyle: "ballad10th", rhMelody: [7, 3, 0], rhRhythm: "lyrical8th", dynamics: { lh: 52, rh: 70 } },
+    ],
+  });
+}
+
+// 16. Bohemian Rhapsody (Queen)
+export function buildBohemianRhapsodyData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 72,
+    time_sig: "4/4",
+    keyRoot: 58, // Bb3
+    isMinor: false,
+    lhName: "Left Hand (Freddie's Iconic Walking Bass & Rock Chords)",
+    rhName: "Right Hand (Ballad Mama Theme & Operatic Dialogue)",
+    sections: [
+      { name: "intro", bars: 6, chordRoots: [0, 2, 5, 7], lhStyle: "ballad10th", rhMelody: [7, 9, 11, 12, 11, 9, 7, 4, 2, 4, 5, 7, 9, 11, 12, 14], rhRhythm: "lyrical8th", dynamics: { lh: 58, rh: 75 } },
+      { name: "verse", bars: 16, chordRoots: [0, 2, 5, 7, 0, 9, 5, 7], lhStyle: "ballad10th", rhMelody: [7, 9, 11, 12, 11, 9, 7, 4, 2, 4, 5, 7], rhRhythm: "lyrical8th", dynamics: { lh: 62, rh: 78 } },
+      { name: "preChorus", bars: 8, chordRoots: [5, 7, 0, 9], lhStyle: "stride", rhMelody: [11, 12, 14, 16, 14, 12, 11, 9], rhRhythm: "marchStaccato", dynamics: { lh: 70, rh: 84 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 5, 7, 0, 0, 5, 7, 0], lhStyle: "rockPower", rhMelody: [14, 14, 14, 16, 14, 12, 11, 12, 14, 16, 17, 19], rhRhythm: "climaxOctaves", dynamics: { lh: 84, rh: 96 } },
+      { name: "bridge", bars: 12, chordRoots: [5, 7, 9, 2], lhStyle: "continuous16th", rhMelody: [16, 17, 19, 21, 19, 17], rhRhythm: "cascades", dynamics: { lh: 76, rh: 90 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 5, 7, 0, 0, 5, 7, 0], lhStyle: "rockPower", rhMelody: [7, 9, 11, 12, 11, 9, 7, 4, 2, 4, 5, 7, 9, 11, 12, 14], rhRhythm: "climaxOctaves", dynamics: { lh: 88, rh: 98 } },
+      { name: "coda", bars: 8, chordRoots: [5, 7, 0, 0], lhStyle: "ballad10th", rhMelody: [4, 2, 0], rhRhythm: "lyrical8th", dynamics: { lh: 50, rh: 68 } },
+    ],
+  });
+}
+
+// 17. All of Me (John Legend)
+export function buildAllOfMeData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 63,
+    time_sig: "4/4",
+    keyRoot: 53, // F3
+    isMinor: true,
+    lhName: "Left Hand (Tender 4-Chord Ballad Tenths & Bass Octaves)",
+    rhName: "Right Hand (Lyrical Singing Soul Vocals & Embellishments)",
+    sections: [
+      { name: "intro", bars: 6, chordRoots: [0, 8, 3, 10], lhStyle: "ballad10th", rhMelody: [7, 5, 3, 0, 3, 5, 7, 10, 8, 7, 5, 3, 0, 2, 3, 5], rhRhythm: "lyrical8th", dynamics: { lh: 55, rh: 72 } },
+      { name: "verse", bars: 14, chordRoots: [0, 8, 3, 10, 0, 8, 3, 10], lhStyle: "ballad10th", rhMelody: [3, 5, 7, 8, 7, 5, 3, 2, 3, 5, 7, 5], rhRhythm: "lyrical8th", dynamics: { lh: 58, rh: 75 } },
+      { name: "preChorus", bars: 8, chordRoots: [5, 7, 8, 10], lhStyle: "rollingArp", rhMelody: [8, 10, 12, 14, 12, 10, 8, 7], rhRhythm: "lyrical8th", dynamics: { lh: 64, rh: 80 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 8, 3, 10, 0, 8, 3, 10], lhStyle: "ballad10th", rhMelody: [7, 5, 3, 0, 3, 5, 7, 10, 8, 7, 5, 3, 0, 2, 3, 5], rhRhythm: "climaxOctaves", dynamics: { lh: 75, rh: 92 } },
+      { name: "verse", bars: 10, chordRoots: [0, 8, 3, 10], lhStyle: "ballad10th", rhMelody: [3, 5, 7, 8, 7, 5], rhRhythm: "lyrical8th", dynamics: { lh: 56, rh: 74 } },
+      { name: "bridge", bars: 8, chordRoots: [8, 10, 0, 7], lhStyle: "rollingArp", rhMelody: [10, 12, 15, 17, 15, 12], rhRhythm: "cascades", dynamics: { lh: 66, rh: 85 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 8, 3, 10, 0, 8, 3, 10], lhStyle: "ballad10th", rhMelody: [7, 5, 3, 0, 3, 5, 7, 10, 8, 7, 5, 3, 0, 2, 3, 5], rhRhythm: "climaxOctaves", dynamics: { lh: 80, rh: 95 } },
+      { name: "coda", bars: 6, chordRoots: [8, 10, 0, 0], lhStyle: "ballad10th", rhMelody: [3, 2, 0], rhRhythm: "lyrical8th", dynamics: { lh: 50, rh: 68 } },
+    ],
+  });
+}
+
+// 18. Dynamite (BTS)
+export function buildDynamiteData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 114,
+    time_sig: "4/4",
+    keyRoot: 59, // B3
+    isMinor: true,
+    lhName: "Left Hand (Infectious Disco Funk Bass & Octave Pops)",
+    rhName: "Right Hand (Brass Stabs & Sparkling Pop Harmonies)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 5, 8, 10], lhStyle: "discoFunk", rhMelody: [7, 7, 10, 12, 10, 7, 5, 7, 10, 12, 15, 12, 10, 7, 5, 3], rhRhythm: "syncopated16th", dynamics: { lh: 72, rh: 84 } },
+      { name: "verse", bars: 16, chordRoots: [0, 5, 8, 10, 0, 5, 8, 10], lhStyle: "discoFunk", rhMelody: [3, 5, 7, 10, 7, 5, 3, 2, 3, 5, 7, 5], rhRhythm: "syncopated16th", dynamics: { lh: 74, rh: 86 } },
+      { name: "preChorus", bars: 8, chordRoots: [8, 10, 0, 7], lhStyle: "rockPower", rhMelody: [10, 12, 14, 15, 17, 15, 14, 12], rhRhythm: "syncopated16th", dynamics: { lh: 78, rh: 90 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 5, 8, 10, 0, 5, 8, 10], lhStyle: "discoFunk", rhMelody: [7, 7, 10, 12, 10, 7, 5, 7, 10, 12, 15, 12, 10, 7, 5, 3], rhRhythm: "climaxOctaves", dynamics: { lh: 85, rh: 96 } },
+      { name: "verse", bars: 12, chordRoots: [0, 5, 8, 10], lhStyle: "discoFunk", rhMelody: [3, 5, 7, 10, 7, 5], rhRhythm: "syncopated16th", dynamics: { lh: 72, rh: 84 } },
+      { name: "bridge", bars: 8, chordRoots: [8, 10, 0, 5], lhStyle: "rollingArp", rhMelody: [12, 15, 17, 20, 17, 15], rhRhythm: "cascades", dynamics: { lh: 76, rh: 90 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 5, 8, 10, 0, 5, 8, 10], lhStyle: "discoFunk", rhMelody: [7, 7, 10, 12, 10, 7, 5, 7, 10, 12, 15, 12, 10, 7, 5, 3], rhRhythm: "climaxOctaves", dynamics: { lh: 88, rh: 98 } },
+      { name: "coda", bars: 6, chordRoots: [8, 10, 0, 0], lhStyle: "discoFunk", rhMelody: [7, 3, 0], rhRhythm: "marchStaccato", dynamics: { lh: 80, rh: 92 } },
+    ],
+  });
+}
+
+// 19. Butter (BTS)
+export function buildButterData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 110,
+    time_sig: "4/4",
+    keyRoot: 56, // Ab3
+    isMinor: false,
+    lhName: "Left Hand (Smooth Dance Synth-Bass & Funk Chords)",
+    rhName: "Right Hand (Crisp Vocal Syncopations & Harmonies)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 5, 7, 0], lhStyle: "discoFunk", rhMelody: [4, 7, 9, 12, 9, 7, 4, 2, 4, 7, 9, 12, 14, 12, 9, 7], rhRhythm: "syncopated16th", dynamics: { lh: 72, rh: 84 } },
+      { name: "verse", bars: 16, chordRoots: [0, 5, 7, 0, 0, 5, 7, 0], lhStyle: "discoFunk", rhMelody: [0, 4, 7, 9, 7, 4, 2, 0, 2, 4, 7, 4], rhRhythm: "syncopated16th", dynamics: { lh: 74, rh: 86 } },
+      { name: "preChorus", bars: 8, chordRoots: [5, 7, 9, 0], lhStyle: "rockPower", rhMelody: [9, 11, 12, 14, 16, 14, 12, 9], rhRhythm: "syncopated16th", dynamics: { lh: 78, rh: 90 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 5, 7, 0, 0, 5, 7, 0], lhStyle: "discoFunk", rhMelody: [4, 7, 9, 12, 9, 7, 4, 2, 4, 7, 9, 12, 14, 12, 9, 7], rhRhythm: "climaxOctaves", dynamics: { lh: 85, rh: 96 } },
+      { name: "verse", bars: 12, chordRoots: [0, 5, 7, 0], lhStyle: "discoFunk", rhMelody: [0, 4, 7, 9, 7, 4], rhRhythm: "syncopated16th", dynamics: { lh: 72, rh: 84 } },
+      { name: "bridge", bars: 8, chordRoots: [5, 7, 9, 0], lhStyle: "rollingArp", rhMelody: [12, 14, 16, 19, 16, 14], rhRhythm: "cascades", dynamics: { lh: 76, rh: 90 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 5, 7, 0, 0, 5, 7, 0], lhStyle: "discoFunk", rhMelody: [4, 7, 9, 12, 9, 7, 4, 2, 4, 7, 9, 12, 14, 12, 9, 7], rhRhythm: "climaxOctaves", dynamics: { lh: 88, rh: 98 } },
+      { name: "coda", bars: 6, chordRoots: [5, 7, 0, 0], lhStyle: "discoFunk", rhMelody: [4, 2, 0], rhRhythm: "marchStaccato", dynamics: { lh: 80, rh: 92 } },
+    ],
+  });
+}
+
+// 20. Love Scenario (iKON)
+export function buildLoveScenarioData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 118,
+    time_sig: "4/4",
+    keyRoot: 60, // C4
+    isMinor: false,
+    lhName: "Left Hand (Playful Bouncy Marimba Bass & Accents)",
+    rhName: "Right Hand (Addictive Sing-Along Hook & Bell Chords)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 7, 9, 5], lhStyle: "staccatoPluck", rhMelody: [0, 4, 7, 9, 7, 4, 2, 0, 2, 4, 7, 9, 7, 4, 2, 0], rhRhythm: "syncopated16th", dynamics: { lh: 68, rh: 82 } },
+      { name: "verse", bars: 16, chordRoots: [0, 7, 9, 5, 0, 7, 9, 5], lhStyle: "staccatoPluck", rhMelody: [4, 7, 9, 11, 9, 7, 4, 2, 4, 7, 9, 7], rhRhythm: "syncopated16th", dynamics: { lh: 70, rh: 84 } },
+      { name: "preChorus", bars: 8, chordRoots: [9, 5, 7, 0], lhStyle: "discoFunk", rhMelody: [9, 11, 12, 14, 12, 11, 9, 7], rhRhythm: "syncopated16th", dynamics: { lh: 74, rh: 88 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 7, 9, 5, 0, 7, 5, 0], lhStyle: "discoFunk", rhMelody: [0, 4, 7, 9, 7, 4, 2, 0, 2, 4, 7, 9, 7, 4, 2, 0], rhRhythm: "climaxOctaves", dynamics: { lh: 82, rh: 95 } },
+      { name: "verse", bars: 12, chordRoots: [0, 7, 9, 5], lhStyle: "staccatoPluck", rhMelody: [4, 7, 9, 11, 9, 7], rhRhythm: "syncopated16th", dynamics: { lh: 70, rh: 82 } },
+      { name: "bridge", bars: 8, chordRoots: [5, 7, 9, 0], lhStyle: "rollingArp", rhMelody: [12, 14, 16, 19, 16, 14], rhRhythm: "cascades", dynamics: { lh: 72, rh: 88 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 7, 9, 5, 0, 7, 5, 0], lhStyle: "discoFunk", rhMelody: [0, 4, 7, 9, 7, 4, 2, 0, 2, 4, 7, 9, 7, 4, 2, 0], rhRhythm: "climaxOctaves", dynamics: { lh: 86, rh: 98 } },
+      { name: "coda", bars: 6, chordRoots: [5, 7, 0, 0], lhStyle: "staccatoPluck", rhMelody: [4, 2, 0], rhRhythm: "syncopated16th", dynamics: { lh: 72, rh: 84 } },
+    ],
+  });
+}
+
+// 21. Stay With Me (Chanyeol & Punch / Goblin OST)
+export function buildStayWithMeData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 88,
+    time_sig: "4/4",
+    keyRoot: 50, // D3
+    isMinor: true,
+    lhName: "Left Hand (Ethereal Descending Cello Arpeggio & Bass)",
+    rhName: "Right Hand (Romantic Whisper Vocals & Sweeping Octaves)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 8, 10, 7], lhStyle: "ballad10th", rhMelody: [7, 5, 3, 2, 3, 5, 7, 8, 7, 5, 3, 2, 0, 2, 3, 5], rhRhythm: "lyrical8th", dynamics: { lh: 58, rh: 74 } },
+      { name: "verse", bars: 16, chordRoots: [0, 8, 10, 7, 0, 8, 10, 7], lhStyle: "ballad10th", rhMelody: [2, 3, 5, 7, 5, 3, 2, 0, 2, 3, 5, 3], rhRhythm: "lyrical8th", dynamics: { lh: 62, rh: 78 } },
+      { name: "preChorus", bars: 8, chordRoots: [8, 10, 0, 7], lhStyle: "rollingArp", rhMelody: [7, 8, 10, 12, 10, 8, 7, 5], rhRhythm: "lyrical8th", dynamics: { lh: 68, rh: 84 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 8, 10, 7, 0, 8, 7, 0], lhStyle: "ballad10th", rhMelody: [7, 5, 3, 2, 3, 5, 7, 8, 7, 5, 3, 2, 0, 2, 3, 5], rhRhythm: "climaxOctaves", dynamics: { lh: 78, rh: 92 } },
+      { name: "verse", bars: 12, chordRoots: [0, 8, 10, 7], lhStyle: "ballad10th", rhMelody: [2, 3, 5, 7, 5, 3], rhRhythm: "lyrical8th", dynamics: { lh: 60, rh: 76 } },
+      { name: "bridge", bars: 8, chordRoots: [8, 10, 0, 5], lhStyle: "rollingArp", rhMelody: [10, 12, 15, 17, 15, 12], rhRhythm: "cascades", dynamics: { lh: 70, rh: 86 } },
+      { name: "chorus", bars: 16, chordRoots: [0, 8, 10, 7, 0, 8, 7, 0], lhStyle: "ballad10th", rhMelody: [7, 5, 3, 2, 3, 5, 7, 8, 7, 5, 3, 2, 0, 2, 3, 5], rhRhythm: "climaxOctaves", dynamics: { lh: 82, rh: 96 } },
+      { name: "coda", bars: 6, chordRoots: [8, 10, 0, 0], lhStyle: "ballad10th", rhMelody: [3, 2, 0], rhRhythm: "lyrical8th", dynamics: { lh: 52, rh: 70 } },
+    ],
+  });
+}
+
+// 22. Debussy Première Arabesque
+export function buildDebussyArabesque1Data(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 76,
+    time_sig: "4/4",
+    keyRoot: 52, // E3
+    isMinor: false,
+    lhName: "Left Hand (Impressionist Flowing Duplet Arpeggios)",
+    rhName: "Right Hand (Cascading 3-Against-2 Arabesque Waves)",
+    sections: [
+      { name: "intro", bars: 6, chordRoots: [0, 5, 0, 7], lhStyle: "continuous16th", rhMelody: [4, 7, 11, 14, 16, 19, 16, 14, 11, 7, 4, 0, 4, 7, 11, 12], rhRhythm: "cascades", dynamics: { lh: 55, rh: 72 } },
+      { name: "verse", bars: 18, chordRoots: [0, 5, 0, 7, 0, 5, 7, 0], lhStyle: "continuous16th", rhMelody: [4, 7, 11, 14, 16, 19, 16, 14, 11, 7, 4, 0, 4, 7, 11, 12], rhRhythm: "cascades", dynamics: { lh: 58, rh: 76 } },
+      { name: "preChorus", bars: 10, chordRoots: [5, 7, 0, 9], lhStyle: "rollingArp", rhMelody: [11, 12, 14, 16, 14, 12, 11, 9], rhRhythm: "lyrical8th", dynamics: { lh: 62, rh: 80 } },
+      { name: "chorus", bars: 18, chordRoots: [5, 0, 7, 0, 5, 0, 7, 0], lhStyle: "continuous16th", rhMelody: [16, 19, 23, 21, 19, 16, 14, 11, 14, 16, 19, 16], rhRhythm: "climaxOctaves", dynamics: { lh: 72, rh: 88 } },
+      { name: "bridge", bars: 12, chordRoots: [9, 2, 7, 0], lhStyle: "rollingArp", rhMelody: [14, 16, 19, 21, 19, 16], rhRhythm: "cascades", dynamics: { lh: 64, rh: 82 } },
+      { name: "chorus", bars: 18, chordRoots: [0, 5, 0, 7, 0, 5, 7, 0], lhStyle: "continuous16th", rhMelody: [4, 7, 11, 14, 16, 19, 16, 14, 11, 7, 4, 0, 4, 7, 11, 12], rhRhythm: "climaxOctaves", dynamics: { lh: 76, rh: 92 } },
+      { name: "coda", bars: 8, chordRoots: [5, 7, 0, 0], lhStyle: "continuous16th", rhMelody: [4, 0], rhRhythm: "cascades", dynamics: { lh: 50, rh: 68 } },
+    ],
+  });
+}
+
+// 23. Beethoven Moonlight Sonata 3rd Movement (Presto Agitato)
+export function buildMoonlightSonata3rdData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 165,
+    time_sig: "4/4",
+    keyRoot: 49, // C#3
+    isMinor: true,
+    lhName: "Left Hand (Thunderous Alberti Bass & Pounding Octaves)",
+    rhName: "Right Hand (Ascending Arpeggio Lightning & Sforzandos)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 0, 7, 0], lhStyle: "rockPower", rhMelody: [0, 3, 7, 12, 15, 19, 24, 27, 31, 24, 19, 15], rhRhythm: "syncopated16th", dynamics: { lh: 82, rh: 94 } },
+      { name: "verse", bars: 24, chordRoots: [0, 0, 5, 7, 0, 0, 5, 7], lhStyle: "alberti", rhMelody: [0, 3, 7, 12, 15, 19, 24, 27, 31, 24, 19, 15], rhRhythm: "syncopated16th", dynamics: { lh: 85, rh: 96 } },
+      { name: "preChorus", bars: 16, chordRoots: [7, 7, 0, 7], lhStyle: "rockPower", rhMelody: [12, 15, 19, 24, 22, 19, 15, 12], rhRhythm: "climaxOctaves", dynamics: { lh: 88, rh: 98 } },
+      { name: "chorus", bars: 24, chordRoots: [0, 8, 5, 7, 0, 8, 5, 7], lhStyle: "rockPower", rhMelody: [15, 19, 24, 27, 24, 19, 15, 12, 15, 19, 24, 27], rhRhythm: "climaxOctaves", dynamics: { lh: 92, rh: 102 } },
+      { name: "bridge", bars: 16, chordRoots: [5, 0, 8, 7], lhStyle: "rollingArp", rhMelody: [19, 22, 24, 27, 24, 22], rhRhythm: "cascades", dynamics: { lh: 84, rh: 96 } },
+      { name: "chorus", bars: 24, chordRoots: [0, 0, 5, 7, 0, 0, 5, 7], lhStyle: "rockPower", rhMelody: [0, 3, 7, 12, 15, 19, 24, 27, 31, 24, 19, 15], rhRhythm: "climaxOctaves", dynamics: { lh: 95, rh: 105 } },
+      { name: "coda", bars: 12, chordRoots: [8, 7, 0, 0], lhStyle: "rockPower", rhMelody: [12, 7, 3, 0], rhRhythm: "marchStaccato", dynamics: { lh: 90, rh: 100 } },
+    ],
+  });
+}
+
+// 24. Mozart Rondo alla Turca
+export function buildMozartRondoAllaTurcaData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 126,
+    time_sig: "2/4",
+    keyRoot: 57, // A3
+    isMinor: true,
+    lhName: "Left Hand (Janissary March Broken Chords & Octaves)",
+    rhName: "Right Hand (Virtuosic Turkish Rondo Theme & Coda)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 7, 0, 7], lhStyle: "stride", rhMelody: [11, 9, 8, 9, 12, 9, 8, 9, 12, 14, 16, 17], rhRhythm: "marchStaccato", dynamics: { lh: 70, rh: 84 } },
+      { name: "verse", bars: 24, chordRoots: [0, 7, 0, 7, 0, 5, 7, 0], lhStyle: "stride", rhMelody: [11, 9, 8, 9, 12, 9, 8, 9, 12, 14, 16, 17, 16, 14, 12, 11], rhRhythm: "marchStaccato", dynamics: { lh: 74, rh: 86 } },
+      { name: "chorus", bars: 24, chordRoots: [0, 5, 0, 7, 0, 5, 0, 0], lhStyle: "rockPower", rhMelody: [12, 16, 19, 24, 21, 19, 16, 12, 16, 19, 21, 24], rhRhythm: "climaxOctaves", dynamics: { lh: 86, rh: 96 } },
+      { name: "bridge", bars: 16, chordRoots: [9, 2, 7, 0], lhStyle: "rollingArp", rhMelody: [16, 17, 19, 21, 19, 17], rhRhythm: "cascades", dynamics: { lh: 76, rh: 90 } },
+      { name: "verse", bars: 16, chordRoots: [0, 7, 0, 7], lhStyle: "stride", rhMelody: [11, 9, 8, 9, 12, 9, 8, 9, 12, 14, 16, 17], rhRhythm: "marchStaccato", dynamics: { lh: 76, rh: 88 } },
+      { name: "chorus", bars: 24, chordRoots: [0, 5, 0, 7, 0, 5, 0, 0], lhStyle: "rockPower", rhMelody: [12, 16, 19, 24, 21, 19, 16, 12, 16, 19, 21, 24], rhRhythm: "climaxOctaves", dynamics: { lh: 90, rh: 100 } },
+      { name: "coda", bars: 16, chordRoots: [5, 7, 0, 0], lhStyle: "rockPower", rhMelody: [12, 9, 0], rhRhythm: "marchStaccato", dynamics: { lh: 88, rh: 98 } },
+    ],
+  });
+}
+
+// 25. Chopin Waltz in A Minor B.150
+export function buildChopinWaltzInAMinorData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 120,
+    time_sig: "3/4",
+    keyRoot: 57, // A3
+    isMinor: true,
+    lhName: "Left Hand (Authentic Bass-Chord-Chord Chopin Waltz)",
+    rhName: "Right Hand (Melancholy Chopin Lyrical Melody & Ornaments)",
+    sections: [
+      { name: "intro", bars: 8, chordRoots: [0, 5, 7, 0], lhStyle: "waltz", rhMelody: [7, 8, 11, 12, 11, 8, 7, 5, 7, 8, 11, 12], rhRhythm: "waltzCantabile", dynamics: { lh: 56, rh: 74 } },
+      { name: "verse", bars: 24, chordRoots: [0, 5, 7, 0, 0, 5, 7, 0], lhStyle: "waltz", rhMelody: [7, 8, 11, 12, 11, 8, 7, 5, 7, 8, 11, 12, 14, 15, 14, 12], rhRhythm: "waltzCantabile", dynamics: { lh: 60, rh: 78 } },
+      { name: "chorus", bars: 24, chordRoots: [0, 5, 7, 0, 0, 5, 7, 0], lhStyle: "waltz", rhMelody: [12, 14, 16, 19, 16, 14, 12, 9, 12, 14, 16, 19], rhRhythm: "climaxOctaves", dynamics: { lh: 72, rh: 88 } },
+      { name: "bridge", bars: 16, chordRoots: [5, 0, 7, 0], lhStyle: "rollingArp", rhMelody: [15, 17, 19, 22, 19, 17], rhRhythm: "cascades", dynamics: { lh: 66, rh: 84 } },
+      { name: "verse", bars: 20, chordRoots: [0, 5, 7, 0], lhStyle: "waltz", rhMelody: [7, 8, 11, 12, 11, 8, 7, 5, 7, 8, 11, 12], rhRhythm: "waltzCantabile", dynamics: { lh: 62, rh: 80 } },
+      { name: "chorus", bars: 24, chordRoots: [0, 5, 7, 0, 0, 5, 7, 0], lhStyle: "waltz", rhMelody: [12, 14, 16, 19, 16, 14, 12, 9, 12, 14, 16, 19], rhRhythm: "climaxOctaves", dynamics: { lh: 76, rh: 92 } },
+      { name: "coda", bars: 12, chordRoots: [5, 7, 0, 0], lhStyle: "waltz", rhMelody: [7, 3, 0], rhRhythm: "waltzCantabile", dynamics: { lh: 52, rh: 70 } },
+    ],
+  });
+}

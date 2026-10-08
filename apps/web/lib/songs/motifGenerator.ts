@@ -250,6 +250,149 @@ export const ICONIC_THEME_REGISTRY: IconicTheme[] = [
     melodyContour: [7, 3, 0, -1, 0, 3, 7, 12, 11, 12, 15, 14],
     pattern: "waltz",
   },
+  {
+    keywords: ["gurenge", "demon-slayer", "lisa-gurenge"],
+    scale: "minor",
+    chordRoots: [0, 8, 10, 3, 0, 8, 10, 0],
+    melodyContour: [11, 14, 16, 14, 11, 9, 11, 16, 18, 19, 21, 19, 18, 16],
+    pattern: "anime_run",
+  },
+  {
+    keywords: ["blue-bird", "bluebird", "naruto"],
+    scale: "minor",
+    chordRoots: [0, 8, 3, 10, 0, 8, 3, 10],
+    melodyContour: [9, 14, 16, 17, 16, 14, 13, 17, 16, 14, 12, 14, 16, 17],
+    pattern: "anime_run",
+  },
+  {
+    keywords: ["hikaru-nara", "your-lie-in-april", "goose-house"],
+    chordRoots: [0, 7, 9, 5, 0, 7, 9, 5],
+    melodyContour: [7, 9, 11, 12, 14, 12, 11, 9, 7, 4, 7, 11, 14, 16],
+    pattern: "pop_groove",
+  },
+  {
+    keywords: ["nandemonaiya", "radwimps-nandemonaiya"],
+    chordRoots: [0, 7, 9, 5, 0, 7, 5, 0],
+    melodyContour: [4, 7, 9, 11, 12, 11, 9, 7, 4, 2, 4, 7, 9, 11, 12],
+    pattern: "ballad_arpeggio",
+  },
+  {
+    keywords: ["katawaredoki", "twilight-your-name"],
+    chordRoots: [0, 7, 9, 5, 0, 7, 5, 0],
+    melodyContour: [11, 12, 14, 16, 14, 12, 11, 9, 7, 9, 11, 12, 11],
+    pattern: "waltz",
+  },
+  {
+    keywords: ["unravel", "tokyo-ghoul", "ling-tosite-sigure"],
+    scale: "minor",
+    chordRoots: [0, 8, 3, 10, 0, 8, 5, 7],
+    melodyContour: [7, 10, 12, 15, 14, 12, 10, 7, 3, 7, 15, 14, 12, 10, 12, 15, 17],
+    pattern: "anime_run",
+  },
+  {
+    keywords: ["pirate", "hes-a-pirate", "caribbean", "jack-sparrow"],
+    scale: "minor",
+    chordRoots: [0, 0, 8, 10, 0, 0, 8, 7],
+    melodyContour: [0, 0, 0, 3, 7, 7, 7, 8, 7, 5, 7, 0, 0, 3, 7, 8, 10, 8, 7],
+    pattern: "anime_run",
+  },
+  {
+    keywords: ["megalovania", "undertale", "sans"],
+    scale: "minor",
+    chordRoots: [0, 10, 9, 8, 0, 10, 9, 8],
+    melodyContour: [0, 0, 12, 7, 6, 5, 3, 0, 3, 5, 12, 12, 24, 19, 18, 17, 15],
+    pattern: "pop_groove",
+  },
+  {
+    keywords: ["zelda-lullaby", "zeldas-lullaby"],
+    chordRoots: [0, 5, 7, 0, 0, 5, 7, 0],
+    melodyContour: [11, 14, 9, 7, 9, 11, 14, 9, 7, 4, 7, 9, 11, 14, 16, 14],
+    pattern: "waltz",
+  },
+  {
+    keywords: ["mario", "super-mario", "overworld"],
+    chordRoots: [0, 5, 0, 7, 0, 5, 0, 7],
+    melodyContour: [16, 16, 16, 12, 16, 19, 7, 12, 7, 4, 9, 11, 10, 9, 7],
+    pattern: "pop_groove",
+  },
+  {
+    keywords: ["hedwig", "harry-potter"],
+    scale: "minor",
+    chordRoots: [0, 3, 7, 0, 0, 3, 8, 7],
+    melodyContour: [7, 12, 15, 14, 12, 19, 17, 14, 12, 15, 14, 11, 13, 7, 12],
+    pattern: "waltz",
+  },
+  {
+    keywords: ["golden-hour", "jvke"],
+    chordRoots: [0, 9, 5, 7, 0, 9, 5, 7],
+    melodyContour: [7, 11, 14, 16, 19, 23, 19, 16, 14, 11, 7, 4, 7, 11, 14, 16],
+    pattern: "ballad_arpeggio",
+  },
+  {
+    keywords: ["someone-like-you", "adele"],
+    chordRoots: [0, 4, 9, 5, 0, 4, 9, 5],
+    melodyContour: [4, 7, 11, 7, 4, 7, 11, 7, 12, 11, 9, 7, 4, 2, 0, 2],
+    pattern: "ballad_arpeggio",
+  },
+  {
+    keywords: ["shape-of-you", "ed-sheeran"],
+    scale: "minor",
+    chordRoots: [0, 5, 8, 10, 0, 5, 8, 10],
+    melodyContour: [7, 7, 7, 7, 10, 7, 5, 3, 5, 5, 5, 7, 5, 3, 0, 3],
+    pattern: "pop_groove",
+  },
+  {
+    keywords: ["shallow", "lady-gaga"],
+    scale: "minor",
+    chordRoots: [0, 10, 3, 8, 0, 10, 3, 8],
+    melodyContour: [0, 3, 7, 10, 12, 10, 7, 5, 3, 0, 3, 5, 7, 10, 12, 15],
+    pattern: "ballad_arpeggio",
+  },
+  {
+    keywords: ["bohemian-rhapsody", "queen", "freddie-mercury"],
+    chordRoots: [0, 2, 5, 7, 0, 9, 5, 7],
+    melodyContour: [7, 9, 11, 12, 11, 9, 7, 4, 2, 4, 5, 7, 9, 11, 12, 14],
+    pattern: "ballad_arpeggio",
+  },
+  {
+    keywords: ["all-of-me", "john-legend"],
+    scale: "minor",
+    chordRoots: [0, 8, 3, 10, 0, 8, 3, 10],
+    melodyContour: [7, 5, 3, 0, 3, 5, 7, 10, 8, 7, 5, 3, 0, 2, 3, 5],
+    pattern: "ballad_arpeggio",
+  },
+  {
+    keywords: ["dynamite", "dynamite-bts"],
+    scale: "minor",
+    chordRoots: [0, 5, 8, 10, 0, 5, 8, 10],
+    melodyContour: [7, 7, 10, 12, 10, 7, 5, 7, 10, 12, 15, 12, 10, 7, 5, 3],
+    pattern: "pop_groove",
+  },
+  {
+    keywords: ["butter", "butter-bts"],
+    chordRoots: [0, 5, 7, 0, 0, 5, 7, 0],
+    melodyContour: [4, 7, 9, 12, 9, 7, 4, 2, 4, 7, 9, 12, 14, 12, 9, 7],
+    pattern: "pop_groove",
+  },
+  {
+    keywords: ["love-scenario", "ikon"],
+    chordRoots: [0, 7, 9, 5, 0, 7, 9, 5],
+    melodyContour: [0, 4, 7, 9, 7, 4, 2, 0, 2, 4, 7, 9, 7, 4, 2, 0],
+    pattern: "pop_groove",
+  },
+  {
+    keywords: ["stay-with-me", "goblin", "chanyeol", "punch"],
+    scale: "minor",
+    chordRoots: [0, 8, 10, 7, 0, 8, 10, 7],
+    melodyContour: [7, 5, 3, 2, 3, 5, 7, 8, 7, 5, 3, 2, 0, 2, 3, 5],
+    pattern: "ballad_arpeggio",
+  },
+  {
+    keywords: ["arabesque", "premiere-arabesque", "debussy-arabesque-1"],
+    chordRoots: [0, 5, 0, 7, 0, 5, 7, 0],
+    melodyContour: [4, 7, 11, 14, 16, 19, 16, 14, 11, 7, 4, 0, 4, 7, 11, 12],
+    pattern: "ballad_arpeggio",
+  },
 ];
 
 export function findIconicTheme(id: string, title: string): IconicTheme | undefined {
@@ -553,25 +696,25 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
   // Match against Iconic Theme Registry
   const matchedTheme = findIconicTheme(input.id, input.title);
 
-  // Dynamic bar count based on difficulty, meter, and hash
+  // Dynamic bar count based on difficulty, meter, and hash — guaranteed full-length (2-4+ min)
   let totalBars: number;
   if (input.bars) {
     totalBars = input.bars;
   } else if (isWaltz) {
     if (difficulty === "Beginner") {
-      totalBars = 22 + (hash % 5) * 2;
+      totalBars = 54 + (hash % 5) * 2;
     } else if (difficulty === "Intermediate") {
-      totalBars = 34 + (hash % 7) * 2;
+      totalBars = 72 + (hash % 7) * 2;
     } else {
-      totalBars = 52 + (hash % 11) * 2;
+      totalBars = 96 + (hash % 11) * 2;
     }
   } else {
     if (difficulty === "Beginner") {
-      totalBars = 16 + (hash % 5) * 2;
+      totalBars = 52 + (hash % 5) * 2;
     } else if (difficulty === "Intermediate") {
-      totalBars = 30 + (hash % 7) * 2;
+      totalBars = 68 + (hash % 7) * 2;
     } else {
-      totalBars = 46 + (hash % 11) * 2;
+      totalBars = 88 + (hash % 11) * 2;
     }
   }
 
@@ -647,17 +790,20 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
   const notes: Note[] = [];
   let noteId = 1;
 
-  // Section division points
-  const introBars = Math.max(2, Math.min(4, Math.floor(totalBars * 0.12)));
-  const outroBars = Math.max(2, Math.min(4, Math.floor(totalBars * 0.12)));
-  const middleBars = totalBars - introBars - outroBars;
-  const verseBars = Math.floor(middleBars * 0.45);
-  const chorusBars = Math.floor(middleBars * 0.35);
+  // Section division points: 6-part full song architecture (Intro - Verse - Chorus - Bridge - Chorus - Outro)
+  const introBars = Math.max(4, Math.floor(totalBars * 0.10));
+  const outroBars = Math.max(4, Math.floor(totalBars * 0.10));
+  const coreBars = totalBars - introBars - outroBars;
+  const verseBars = Math.floor(coreBars * 0.28);
+  const chorus1Bars = Math.floor(coreBars * 0.24);
+  const bridgeBars = Math.floor(coreBars * 0.20);
+  const chorus2Bars = coreBars - verseBars - chorus1Bars - bridgeBars;
 
   const introEnd = introBars;
   const verseEnd = introEnd + verseBars;
-  const chorusEnd = verseEnd + chorusBars;
-  const bridgeEnd = totalBars - outroBars;
+  const chorus1End = verseEnd + chorus1Bars;
+  const bridgeEnd = chorus1End + bridgeBars;
+  const chorus2End = bridgeEnd + chorus2Bars;
 
   for (let bar = 0; bar < totalBars; bar++) {
     const barStart = bar * beatsPerBar * beatSec;
@@ -665,21 +811,27 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
     // Determine musical section
     let section: "intro" | "verse" | "chorus" | "bridge" | "outro";
     let sectionBar: number;
+    let isClimax = false;
+
     if (bar < introEnd) {
       section = "intro";
       sectionBar = bar;
     } else if (bar < verseEnd) {
       section = "verse";
       sectionBar = bar - introEnd;
-    } else if (bar < chorusEnd) {
+    } else if (bar < chorus1End) {
       section = "chorus";
       sectionBar = bar - verseEnd;
     } else if (bar < bridgeEnd) {
       section = "bridge";
-      sectionBar = bar - chorusEnd;
+      sectionBar = bar - chorus1End;
+    } else if (bar < chorus2End) {
+      section = "chorus";
+      sectionBar = bar - bridgeEnd;
+      isClimax = true;
     } else {
       section = "outro";
-      sectionBar = bar - bridgeEnd;
+      sectionBar = bar - chorus2End;
     }
 
     // Chord progression root offset
@@ -688,15 +840,15 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
 
     const currentRoot = root + chordOffset;
     const bassPitch = currentRoot - 24;
-    const registerShift = section === "chorus" ? 12 : 0;
+    const registerShift = section === "chorus" ? (isClimax ? 12 : 0) : 0;
 
-    // ── Dynamic Hierarchy: Singing RH Melody (76-92) vs Warm Subtle LH Accompaniment (48-62) ──
+    // ── Dynamic Hierarchy: Singing RH Melody vs Warm Subtle LH Accompaniment ──
     const dynamics = {
       intro: { lh: 48, rh: 76 },
       verse: { lh: 52, rh: 82 },
-      chorus: { lh: 60, rh: 92 },
-      bridge: { lh: 54, rh: 84 },
-      outro: { lh: 48, rh: 76 },
+      chorus: { lh: isClimax ? 64 : 60, rh: isClimax ? 96 : 90 },
+      bridge: { lh: 56, rh: 86 },
+      outro: { lh: 48, rh: 74 },
     }[section];
 
     // ── FINAL BAR: Grand Cadence ──
