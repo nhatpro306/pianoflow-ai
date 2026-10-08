@@ -170,177 +170,80 @@ export const ICONIC_THEME_REGISTRY: IconicTheme[] = [
   {
     keywords: ["riverflows", "river-flows-in-you", "yiruma"],
     chordRoots: [9, 5, 0, 7, 9, 5, 0, 7],
-    melodyContour: [11, 12, 11, 12, 7, 0, 4, 7, 11, 12, 11, 12, 16, 12, 9, 7, 11, 12, 11, 12, 7, 4, 0, 7],
+    melodyContour: [11, 12, 11, 12, 7, 0, 4, 7, 11, 12, 11, 12, 16, 12, 9, 7],
     pattern: "ballad_arpeggio",
   },
   {
     keywords: ["interstellar", "first-step", "hans-zimmer-interstellar"],
     scale: "minor",
     chordRoots: [0, 8, 3, 10, 0, 8, 3, 10],
-    melodyContour: [0, 2, 3, 2, 0, -5, 0, 2, 3, 5, 3, 2, 0, 2, 3, 2, 0, -5, 0, 2, 3, 7, 5, 3],
+    melodyContour: [0, 2, 3, 2, 0, -5, 0, 2, 3, 5, 3, 2],
     pattern: "ballad_arpeggio",
   },
   {
     keywords: ["sparkle", "your-name", "radwimps-sparkle"],
     chordRoots: [5, 7, 4, 9, 5, 7, 0, 0],
-    melodyContour: [16, 14, 11, 9, 11, 14, 16, 19, 16, 14, 11, 9, 7, 9, 11, 14, 16, 14, 11, 9, 11, 14, 16, 21],
+    melodyContour: [16, 14, 11, 9, 11, 14, 16, 19, 16, 14, 11, 9],
     pattern: "ballad_arpeggio",
   },
   {
     keywords: ["moonlight-sonata-3rd", "presto-agitato"],
     scale: "minor",
     chordRoots: [0, 0, 5, 7, 0, 0, 5, 7],
-    melodyContour: [0, 3, 7, 12, 15, 19, 24, 27, 31, 24, 19, 15, 12, 7, 3, 0, 0, 3, 7, 12, 15, 19, 24, 27],
+    melodyContour: [0, 3, 7, 12, 15, 19, 24, 27, 31, 24, 19, 15],
     pattern: "anime_run",
   },
   {
     keywords: ["moonlight-sonata", "beethoven-moonlight"],
     scale: "minor",
     chordRoots: [0, 8, 5, 7, 0, 8, 5, 7],
-    melodyContour: [7, 7, 7, 8, 7, 5, 7, 8, 10, 12, 10, 8, 7, 5, 3, 2, 0, 3, 7, 8, 7, 5, 3, 2],
+    melodyContour: [7, 7, 7, 8, 7, 5, 7, 8, 10, 12, 10, 8],
     pattern: "ballad_arpeggio",
   },
   {
     keywords: ["canon-in-d", "pachelbel-canon"],
     chordRoots: [0, 7, 9, 4, 5, 0, 5, 7],
-    melodyContour: [16, 14, 12, 11, 9, 7, 9, 11, 12, 14, 16, 14, 12, 11, 9, 7, 9, 11, 12, 14, 16, 17, 19, 16],
+    melodyContour: [16, 14, 12, 11, 9, 7, 9, 11, 12, 14, 16, 14],
     pattern: "ballad_arpeggio",
   },
   {
     keywords: ["fur-elise", "beethoven-fur-elise"],
     scale: "minor",
     chordRoots: [0, 7, 0, 7, 0, 7, 0, 7],
-    melodyContour: [19, 18, 19, 18, 19, 14, 17, 15, 12, 7, 12, 15, 19, 18, 19, 18, 19, 14, 17, 15, 12, 7, 12, 15],
+    melodyContour: [19, 18, 19, 18, 19, 14, 17, 15, 12, 7, 12, 15],
     pattern: "waltz",
   },
   {
     keywords: ["clair-de-lune", "debussy-clair-de-lune"],
     chordRoots: [0, 5, 0, 7, 0, 5, 0, 7],
-    melodyContour: [16, 14, 12, 11, 9, 7, 4, 0, 4, 7, 11, 12, 14, 16, 12, 7, 4, 7, 11, 12, 14, 16, 19, 16],
+    melodyContour: [16, 14, 12, 11, 9, 7, 4, 0, 4, 7, 11, 12],
     pattern: "ballad_arpeggio",
   },
   {
     keywords: ["gymnopedie-1", "gymnopedie-no-1", "satie-gymnopedie"],
     chordRoots: [5, 0, 5, 0, 5, 0, 5, 0],
-    melodyContour: [16, 14, 12, 9, 11, 12, 14, 16, 14, 12, 9, 7, 9, 11, 12, 14, 16, 14, 12, 9, 11, 12, 14, 16],
+    melodyContour: [16, 14, 12, 9, 11, 12, 14, 16, 14, 12, 9, 7],
     pattern: "waltz",
-  },
-  {
-    keywords: ["gurenge", "demon-slayer", "lisa-gurenge"],
-    scale: "minor",
-    chordRoots: [0, 8, 10, 0, 0, 8, 10, 0],
-    melodyContour: [15, 17, 19, 22, 19, 17, 15, 12, 15, 17, 19, 17, 15, 12, 10, 12, 15, 17, 19, 22, 24, 22, 19, 17],
-    pattern: "anime_run",
-  },
-  {
-    keywords: ["spring-day", "bts-spring-day"],
-    chordRoots: [0, 7, 9, 5, 0, 7, 9, 5],
-    melodyContour: [7, 12, 16, 14, 12, 11, 7, 9, 11, 12, 14, 12, 7, 9, 11, 12, 14, 16, 14, 12, 11, 9, 7, 12],
-    pattern: "ballad_arpeggio",
   },
   {
     keywords: ["autumn-leaves", "kosma-autumn-leaves"],
     scale: "minor",
     chordRoots: [5, 10, 3, 8, 2, 7, 0, 0],
-    melodyContour: [5, 7, 8, 15, 14, 15, 17, 10, 3, 5, 7, 14, 12, 14, 15, 8, 2, 3, 5, 12, 10, 12, 14, 7],
+    melodyContour: [5, 7, 8, 15, 14, 15, 17, 10, 3, 5, 7, 14],
     pattern: "walking_bass",
   },
   {
-    keywords: ["fly-me-to-the-moon", "sinatra-fly-me-to-the-moon"],
-    chordRoots: [0, 5, 10, 3, 8, 2, 7, 0],
-    melodyContour: [15, 14, 12, 10, 8, 10, 12, 15, 14, 12, 10, 8, 7, 8, 10, 12, 14, 12, 10, 8, 7, 8, 10, 12],
-    pattern: "walking_bass",
-  },
-  {
-    keywords: ["megalovania", "sans-undertale", "toby-fox-megalovania"],
-    scale: "minor",
-    chordRoots: [0, 10, 9, 8, 0, 10, 9, 8],
-    melodyContour: [0, 0, 12, 7, 6, 5, 3, 0, 3, 5, -2, -2, 12, 7, 6, 5, 3, 0, 3, 5, -3, -3, 12, 7],
-    pattern: "anime_run",
-  },
-  {
-    keywords: ["hes-a-pirate", "pirates-of-the-caribbean", "zimmer-pirates"],
-    scale: "minor",
-    chordRoots: [0, 8, 10, 0, 0, 8, 10, 0],
-    melodyContour: [0, 0, 0, 2, 3, 3, 3, 5, 2, 2, 0, -2, 0, 0, 0, 2, 3, 3, 3, 5, 7, 7, 5, 3],
-    pattern: "anime_run",
-  },
-  {
-    keywords: ["golden-hour", "jvke-golden-hour"],
-    chordRoots: [5, 0, 7, 9, 5, 0, 7, 9],
-    melodyContour: [12, 16, 19, 24, 19, 16, 12, 16, 19, 24, 19, 16, 14, 17, 21, 26, 21, 17, 14, 17, 21, 26, 21, 17],
-    pattern: "ballad_arpeggio",
-  },
-  {
-    keywords: ["super-mario", "mario-theme", "koji-kondo-mario"],
-    chordRoots: [0, 5, 7, 0, 0, 5, 7, 0],
-    melodyContour: [16, 16, 16, 12, 16, 19, 7, 12, 7, 4, 9, 11, 10, 9, 7, 16, 19, 21, 17, 19, 16, 12, 14, 11],
+    keywords: ["the-entertainer", "joplin-entertainer"],
+    chordRoots: [0, 7, 0, 7, 0, 7, 0, 7],
+    melodyContour: [2, 3, 4, 12, 4, 12, 4, 12, 11, 12, 14, 15],
     pattern: "pop_groove",
-  },
-  {
-    keywords: ["tetris", "korobeiniki", "tetris-theme"],
-    scale: "minor",
-    chordRoots: [0, 7, 0, 5, 0, 7, 0, 0],
-    melodyContour: [19, 14, 15, 17, 15, 14, 12, 12, 15, 19, 17, 15, 14, 15, 17, 19, 15, 12, 12, 14, 15, 17, 15, 14],
-    pattern: "anime_run",
   },
   {
     keywords: ["merry-go-round", "howls-moving-castle", "hisaishi-merry-go-round"],
     scale: "minor",
     chordRoots: [0, 5, 7, 0, 0, 5, 7, 0],
-    melodyContour: [7, 3, 0, -1, 0, 3, 7, 12, 11, 12, 15, 14, 12, 10, 8, 7, 5, 3, 2, 3, 5, 7, 3, 0],
+    melodyContour: [7, 3, 0, -1, 0, 3, 7, 12, 11, 12, 15, 14],
     pattern: "waltz",
-  },
-  {
-    keywords: ["one-summers-day", "spirited-away", "hisaishi-one-summers-day"],
-    chordRoots: [5, 7, 4, 9, 5, 7, 0, 0],
-    melodyContour: [12, 14, 16, 19, 21, 19, 16, 14, 12, 16, 14, 12, 9, 12, 14, 16, 19, 21, 23, 24, 21, 19, 16, 14],
-    pattern: "ballad_arpeggio",
-  },
-  {
-    keywords: ["cruel-angels-thesis", "evangelion-thesis", "zankoku-na-tenshi"],
-    scale: "minor",
-    chordRoots: [0, 8, 10, 0, 0, 8, 10, 0],
-    melodyContour: [12, 14, 15, 17, 19, 20, 19, 17, 15, 14, 12, 15, 14, 12, 10, 12, 14, 15, 17, 19, 20, 19, 17, 15],
-    pattern: "anime_run",
-  },
-  {
-    keywords: ["ode-to-joy", "symphony-no-9"],
-    chordRoots: [0, 7, 0, 7, 0, 7, 0, 7],
-    melodyContour: [16, 16, 17, 19, 19, 17, 16, 14, 12, 12, 14, 16, 16, 14, 14, 16, 16, 17, 19, 19, 17, 16, 14, 12],
-    pattern: "alberti",
-  },
-  {
-    keywords: ["turkish-march", "rondo-alla-turca", "mozart-turkish-march"],
-    scale: "minor",
-    chordRoots: [0, 7, 0, 7, 0, 7, 0, 7],
-    melodyContour: [14, 12, 11, 12, 15, 14, 12, 11, 12, 17, 15, 14, 12, 11, 12, 14, 12, 11, 12, 15, 14, 12, 11, 12],
-    pattern: "alberti",
-  },
-  {
-    keywords: ["chopin-nocturne-op9-no2", "nocturne-op-9-no-2"],
-    chordRoots: [0, 9, 5, 7, 0, 9, 5, 7],
-    melodyContour: [19, 19, 19, 21, 19, 16, 14, 12, 7, 12, 14, 16, 19, 17, 16, 14, 12, 14, 16, 19, 21, 19, 16, 14],
-    pattern: "ballad_arpeggio",
-  },
-  {
-    keywords: ["someone-like-you", "adele-someone-like-you"],
-    chordRoots: [0, 4, 9, 5, 0, 4, 9, 5],
-    melodyContour: [0, 4, 7, 12, 11, 9, 7, 4, 0, 4, 7, 12, 14, 12, 11, 9, 7, 4, 0, 4, 7, 11, 12, 14],
-    pattern: "ballad_arpeggio",
-  },
-  {
-    keywords: ["the-entertainer", "joplin-entertainer"],
-    chordRoots: [0, 7, 0, 7, 0, 7, 0, 7],
-    melodyContour: [2, 3, 4, 12, 4, 12, 4, 12, 11, 12, 14, 15, 14, 12, 11, 12, 2, 3, 4, 12, 4, 12, 4, 12],
-    pattern: "pop_groove",
-  },
-  {
-    keywords: ["take-five", "brubeck-take-five"],
-    scale: "minor",
-    chordRoots: [0, 7, 0, 7, 0, 7, 0, 7],
-    melodyContour: [0, 3, 7, 10, 8, 7, 3, 0, 3, 7, 10, 8, 7, 5, 3, 0, 0, 3, 7, 10, 12, 10, 7, 3],
-    pattern: "walking_bass",
   },
 ];
 
@@ -371,55 +274,36 @@ export const GENRE_PROGRESSIONS: Record<
     major: [
       { name: "Royal Road (Oudou)", roots: [5, 7, 4, 9, 5, 7, 0, 0] },
       { name: "Komuro Progression", roots: [9, 5, 7, 0, 9, 5, 7, 9] },
-      { name: "Shibuya-kei JTTU", roots: [5, 4, 9, 0, 5, 4, 9, 0] },
       { name: "Ghibli Lyrical", roots: [0, 4, 5, 7, 0, 4, 5, 0] },
       { name: "Cathartic Ascending", roots: [5, 7, 9, 0, 5, 7, 0, 0] },
-      { name: "Nostalgic Romance", roots: [9, 7, 5, 0, 9, 7, 5, 7] },
-      { name: "Canon Anime Lilt", roots: [0, 7, 9, 4, 5, 0, 5, 7] },
-      { name: "Hopeful Adventure", roots: [0, 5, 9, 7, 0, 5, 7, 0] },
     ],
     minor: [
       { name: "Shonen Battle", roots: [0, 8, 3, 10, 0, 8, 5, 7] },
       { name: "Dark Fantasy", roots: [0, 5, 8, 7, 0, 5, 7, 0] },
-      { name: "Melancholic Regret", roots: [0, 10, 8, 7, 0, 10, 8, 7] },
       { name: "Tragic Hero", roots: [0, 8, 5, 10, 0, 8, 7, 0] },
-      { name: "Battle Climax", roots: [8, 10, 0, 3, 8, 10, 7, 0] },
-      { name: "Mystic Lore", roots: [0, 3, 8, 7, 0, 3, 5, 7] },
     ],
   },
   "Classical": {
     major: [
       { name: "Pachelbel Cycle", roots: [0, 7, 9, 4, 5, 0, 5, 7] },
       { name: "Alberti Sonatina", roots: [0, 5, 0, 7, 0, 5, 7, 0] },
-      { name: "Mozart Galant", roots: [0, 2, 7, 0, 0, 5, 7, 0] },
       { name: "Romantic Cantabile", roots: [0, 9, 5, 7, 0, 9, 5, 7] },
-      { name: "Pastoral Hymn", roots: [0, 5, 0, 7, 5, 0, 7, 0] },
-      { name: "Brahmsian Warmth", roots: [0, 7, 5, 7, 9, 5, 7, 0] },
     ],
     minor: [
       { name: "Andalusian Cadence", roots: [0, 10, 8, 7, 0, 10, 8, 7] },
       { name: "Circle of Fifths", roots: [0, 5, 10, 3, 8, 2, 7, 0] },
-      { name: "Baroque Chaconne", roots: [0, 7, 0, 5, 0, 7, 0, 0] },
       { name: "Sturm und Drang", roots: [0, 8, 5, 7, 0, 8, 7, 0] },
-      { name: "Mournful Elegy", roots: [0, 3, 5, 7, 8, 7, 5, 7] },
-      { name: "Passacaglia Drama", roots: [0, 5, 8, 7, 0, 5, 7, 0] },
     ],
   },
   "Jazz & Lo-Fi": {
     major: [
       { name: "Classic ii-V-I-VI", roots: [2, 7, 0, 9, 2, 7, 0, 9] },
-      { name: "12-Bar Blues", roots: [0, 0, 0, 0, 5, 5, 0, 0, 7, 5, 0, 7] },
       { name: "Lo-Fi Chillhop", roots: [5, 4, 9, 7, 5, 4, 9, 0] },
-      { name: "Bossa Nova Clave", roots: [0, 9, 2, 7, 0, 9, 2, 7] },
       { name: "Autumn Cadence", roots: [2, 7, 0, 5, 11, 4, 9, 0] },
-      { name: "Neo-Soul Vamp", roots: [5, 7, 4, 9, 2, 7, 0, 0] },
     ],
     minor: [
-      { name: "Minor Blues", roots: [0, 0, 0, 0, 5, 5, 0, 0, 8, 7, 0, 7] },
       { name: "Modal Dorian Vamp", roots: [0, 5, 0, 5, 0, 5, 0, 5] },
       { name: "Lo-Fi Midnight", roots: [0, 8, 5, 7, 0, 8, 2, 7] },
-      { name: "Jazz Noir", roots: [0, 10, 8, 7, 0, 5, 7, 0] },
-      { name: "Rainy Cafe", roots: [2, 7, 0, 9, 2, 7, 0, 0] },
       { name: "Smoky Lounge", roots: [0, 5, 10, 3, 8, 7, 0, 0] },
     ],
   },
@@ -428,53 +312,30 @@ export const GENRE_PROGRESSIONS: Record<
       { name: "4 Chords of Pop", roots: [0, 7, 9, 5, 0, 7, 9, 5] },
       { name: "Sensitive Pop", roots: [9, 5, 0, 7, 9, 5, 0, 7] },
       { name: "Uplifting Anthem", roots: [5, 0, 7, 9, 5, 0, 7, 0] },
-      { name: "50s Doo-Wop", roots: [0, 9, 5, 7, 0, 9, 5, 7] },
-      { name: "Acoustic Ballad", roots: [0, 5, 9, 7, 0, 5, 7, 0] },
-      { name: "Driving Pop Rock", roots: [0, 5, 7, 5, 0, 5, 7, 0] },
     ],
     minor: [
       { name: "Modern Minor Hit", roots: [0, 8, 3, 10, 0, 8, 3, 10] },
       { name: "Emotional Dark Pop", roots: [0, 5, 8, 7, 0, 5, 8, 7] },
-      { name: "Billie Bass Drop", roots: [0, 8, 5, 7, 0, 8, 7, 0] },
-      { name: "Melancholy Pop Ballad", roots: [0, 10, 8, 7, 0, 10, 8, 7] },
-      { name: "Hypnotic Groove", roots: [0, 3, 8, 7, 0, 3, 7, 0] },
-      { name: "Dance Pop Minor", roots: [8, 10, 0, 3, 8, 10, 0, 0] },
     ],
   },
   "K-Pop": {
     major: [
       { name: "High-Energy Synth Pop", roots: [9, 5, 7, 0, 9, 5, 7, 0] },
       { name: "R&B Hook Cadence", roots: [5, 7, 4, 9, 5, 7, 0, 0] },
-      { name: "Emotional K-Drama Ballad", roots: [0, 4, 9, 5, 0, 4, 5, 7] },
-      { name: "Bubblegum Pop", roots: [0, 7, 9, 5, 0, 7, 5, 0] },
-      { name: "Neo-Soul Groove", roots: [2, 7, 0, 9, 2, 7, 0, 0] },
-      { name: "Dynamic Build", roots: [5, 0, 7, 9, 5, 7, 0, 0] },
     ],
     minor: [
       { name: "K-Pop Minor Drop", roots: [0, 5, 8, 7, 0, 5, 8, 7] },
       { name: "Epic Idol Beat", roots: [0, 8, 3, 10, 0, 8, 3, 10] },
-      { name: "Dark Trap K-Pop", roots: [0, 8, 5, 7, 0, 8, 7, 0] },
-      { name: "K-Drama Tears", roots: [0, 10, 8, 7, 0, 8, 7, 0] },
-      { name: "Girl Crush Bass", roots: [8, 10, 0, 3, 8, 10, 7, 0] },
-      { name: "Haunting Mystery", roots: [0, 3, 8, 7, 0, 5, 7, 0] },
     ],
   },
   "Cinematic & Game": {
     major: [
       { name: "Hero's Triumph", roots: [0, 10, 5, 0, 0, 10, 5, 0] },
-      { name: "Fantasy Lore", roots: [0, 5, 9, 7, 0, 5, 7, 0] },
       { name: "Zelda Lullaby Arc", roots: [5, 7, 0, 9, 5, 7, 0, 0] },
-      { name: "Sci-Fi Space Wonder", roots: [0, 7, 10, 5, 0, 7, 5, 0] },
-      { name: "Gentle Nostalgia", roots: [0, 4, 5, 7, 9, 5, 7, 0] },
-      { name: "Adventure Journey", roots: [5, 0, 7, 9, 5, 7, 0, 0] },
     ],
     minor: [
       { name: "Epic Journey", roots: [0, 8, 3, 10, 0, 8, 3, 10] },
       { name: "Hans Zimmer Power", roots: [0, 8, 5, 7, 0, 8, 7, 0] },
-      { name: "Mystery RPG", roots: [0, 3, 8, 5, 0, 3, 7, 0] },
-      { name: "Sci-Fi Orbit", roots: [0, 7, 8, 10, 0, 7, 8, 0] },
-      { name: "Dark Souls Battle", roots: [0, 1, 0, 7, 0, 1, 7, 0] },
-      { name: "Memorial Requiem", roots: [9, 5, 0, 7, 9, 5, 7, 0] },
     ],
   },
 };
@@ -493,7 +354,6 @@ export function generateProceduralMelody(
     ? [0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 20, 22, 24]
     : [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21, 23, 24];
 
-  const archetype = Math.abs((hash >>> 2) ^ (hash & 0x7)) % 8;
   const melody: number[] = [];
 
   for (let bar = 0; bar < totalBars; bar++) {
@@ -501,48 +361,18 @@ export function generateProceduralMelody(
     const phrasePos = bar % 4; // 0: statement, 1: response, 2: climax, 3: resolution
     const barSeed = (hash ^ (bar * 7919) ^ 0x5bd1e995) >>> 0;
 
-    // Chord tones for this bar
     const cRoot = chordRoot + 12;
     const cThird = chordRoot + 12 + thirdInterval;
     const cFifth = chordRoot + 12 + 7;
     const cOctave = chordRoot + 24;
-    const cNinth = chordRoot + 24 + 2;
 
     for (let beat = 0; beat < beatsPerBar; beat++) {
       let pitch: number;
       const beatSeed = (barSeed ^ (beat * 1013)) >>> 0;
 
       if (beat === 0) {
-        // Downbeat lands on anchor chord tone
-        switch (archetype) {
-          case 0: // Arch
-            pitch = phrasePos === 2 ? cOctave : phrasePos === 0 ? cThird : cFifth;
-            break;
-          case 1: // Cascade
-            pitch = phrasePos === 0 ? cOctave : phrasePos === 1 ? cFifth : cThird;
-            break;
-          case 2: // Undulating Wave
-            pitch = phrasePos % 2 === 0 ? cThird : cFifth;
-            break;
-          case 3: // Syncopated Hook
-            pitch = cFifth;
-            break;
-          case 4: // Pentatonic Swirl
-            pitch = phrasePos === 2 ? cNinth : cFifth;
-            break;
-          case 5: // Stepwise Lyric
-            pitch = phrasePos === 3 ? cRoot : cThird;
-            break;
-          case 6: // Ascending Heroic
-            pitch = cRoot + phrasePos * 2;
-            break;
-          case 7: // Call & Response
-          default:
-            pitch = phrasePos < 2 ? cThird : cFifth;
-            break;
-        }
+        pitch = phrasePos === 2 ? cOctave : phrasePos === 0 ? cThird : cFifth;
       } else {
-        // Subdivisions / passing tones
         const stepOffset = (beatSeed % 5) - 2;
         const scaleIdx = Math.max(
           0,
@@ -560,7 +390,1136 @@ export function generateProceduralMelody(
   return melody;
 }
 
+// ─────────────────────────────────────────────────────────────
+// AUTHENTIC CANONICAL TRANSCRIPTION REGISTRY FOR LANDMARK PIECES
+// ─────────────────────────────────────────────────────────────
+
+function createCanonicalSong(
+  input: MotifSongInput,
+  notes: Note[],
+  lhName: string,
+  rhName: string
+): RepertoireSong {
+  notes.sort((a, b) => a.start - b.start || a.pitch - b.pitch);
+  notes.forEach((n, idx) => {
+    n.id = idx + 1;
+  });
+
+  const lhCount = notes.filter((n) => n.hand === "L").length;
+  const rhCount = notes.filter((n) => n.hand === "R").length;
+  const maxEnd = notes.reduce((max, n) => Math.max(max, n.end), 0);
+  const durationSec = Number(maxEnd.toFixed(1));
+
+  const noteData: NoteData = {
+    schema_version: 1,
+    bpm: input.bpm,
+    duration_sec: durationSec,
+    time_signature: input.time_signature ?? "4/4",
+    tracks: [
+      { index: 0, name: lhName, note_count: lhCount },
+      { index: 1, name: rhName, note_count: rhCount },
+    ],
+    notes,
+  };
+
+  return {
+    id: input.id,
+    title: input.title,
+    composer: input.composer,
+    period: input.period,
+    genre: input.genre,
+    difficulty: input.difficulty,
+    bpm: input.bpm,
+    time_signature: input.time_signature ?? "4/4",
+    key: input.key,
+    duration_sec: durationSec,
+    description: input.description,
+    coverGradient: input.coverGradient,
+    noteCount: notes.length,
+    tags: input.tags,
+    noteData,
+  };
+}
+
+function getLandmarkCanonicalSong(input: MotifSongInput): RepertoireSong | null {
+  const normId = input.id.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  // 1. Moonlight Sonata 1st Mvt (Beethoven)
+  if (normId === "moonlightsonata" || normId === "beethovenmoonlight") {
+    const bpm = 54;
+    const beatSec = 60 / bpm;
+    const tripletSec = beatSec / 3;
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    // Bass Octaves (LH): 7 bars + Cadence Bar
+    const bassPitches = [
+      { p1: 37, p2: 49 }, // C#2, C#3 (Bar 1)
+      { p1: 35, p2: 47 }, // B1, B2   (Bar 2)
+      { p1: 33, p2: 45 }, // A1, A2   (Bar 3)
+      { p1: 32, p2: 44 }, // G#1, G#2 (Bar 4)
+      { p1: 37, p2: 49 }, // C#2, C#3 (Bar 5)
+      { p1: 35, p2: 47 }, // B1, B2   (Bar 6)
+      { p1: 33, p2: 45 }, // A1, A2   (Bar 7)
+    ];
+
+    for (let bar = 0; bar < 7; bar++) {
+      const bStart = bar * 4 * beatSec;
+      const bDur = Number((beatSec * 3.9).toFixed(3));
+      notes.push(
+        {
+          id: noteId++,
+          pitch: bassPitches[bar].p1,
+          name: pitchToName(bassPitches[bar].p1),
+          velocity: 56,
+          start: Number(bStart.toFixed(3)),
+          end: Number((bStart + bDur).toFixed(3)),
+          duration: bDur,
+          track: 0,
+          hand: "L",
+        },
+        {
+          id: noteId++,
+          pitch: bassPitches[bar].p2,
+          name: pitchToName(bassPitches[bar].p2),
+          velocity: 52,
+          start: Number(bStart.toFixed(3)),
+          end: Number((bStart + bDur).toFixed(3)),
+          duration: bDur,
+          track: 0,
+          hand: "L",
+        }
+      );
+
+      // Triplet arpeggios
+      for (let beat = 0; beat < 4; beat++) {
+        let tripPitches = [56, 61, 64]; // G#3, C#4, E4
+        if (bar === 2) {
+          tripPitches = beat < 2 ? [57, 61, 64] : [54, 57, 62]; // A3-C#4-E4 then F#3-A3-D4
+        } else if (bar === 3) {
+          tripPitches = beat < 2 ? [56, 61, 64] : [56, 60, 63]; // G#3-C#4-E4 then G#3-C4-D#4
+        }
+
+        for (let t = 0; t < 3; t++) {
+          const tStart = bStart + beat * beatSec + t * tripletSec;
+          notes.push({
+            id: noteId++,
+            pitch: tripPitches[t],
+            name: pitchToName(tripPitches[t]),
+            velocity: 48,
+            start: Number(tStart.toFixed(3)),
+            end: Number((tStart + tripletSec * 0.95).toFixed(3)),
+            duration: Number((tripletSec * 0.95).toFixed(3)),
+            track: 1,
+            hand: "R",
+          });
+        }
+      }
+    }
+
+    // Singing cantabile melody (enters on bar 4 & 5, vel 84)
+    // Bar 4 (5th bar): Dotted G#4 melody
+    const bar4Start = 4 * 4 * beatSec;
+    notes.push(
+      {
+        id: noteId++,
+        pitch: 68, // G#4
+        name: "G#4",
+        velocity: 84,
+        start: Number((bar4Start + beatSec * 2).toFixed(3)),
+        end: Number((bar4Start + beatSec * 2.75).toFixed(3)),
+        duration: Number((beatSec * 0.75).toFixed(3)),
+        track: 1,
+        hand: "R",
+      },
+      {
+        id: noteId++,
+        pitch: 68,
+        name: "G#4",
+        velocity: 80,
+        start: Number((bar4Start + beatSec * 2.75).toFixed(3)),
+        end: Number((bar4Start + beatSec * 3).toFixed(3)),
+        duration: Number((beatSec * 0.25).toFixed(3)),
+        track: 1,
+        hand: "R",
+      },
+      {
+        id: noteId++,
+        pitch: 68,
+        name: "G#4",
+        velocity: 84,
+        start: Number((bar4Start + beatSec * 3).toFixed(3)),
+        end: Number((bar4Start + beatSec * 3.75).toFixed(3)),
+        duration: Number((beatSec * 0.75).toFixed(3)),
+        track: 1,
+        hand: "R",
+      },
+      {
+        id: noteId++,
+        pitch: 69, // A4
+        name: "A4",
+        velocity: 86,
+        start: Number((bar4Start + beatSec * 3.75).toFixed(3)),
+        end: Number((bar4Start + beatSec * 4).toFixed(3)),
+        duration: Number((beatSec * 0.25).toFixed(3)),
+        track: 1,
+        hand: "R",
+      }
+    );
+
+    // Bar 5: G#4 -> F#4 -> E4 -> D#4
+    const bar5Start = 5 * 4 * beatSec;
+    const bar5Mel = [68, 66, 64, 63];
+    for (let m = 0; m < 4; m++) {
+      notes.push({
+        id: noteId++,
+        pitch: bar5Mel[m],
+        name: pitchToName(bar5Mel[m]),
+        velocity: 84 - m * 2,
+        start: Number((bar5Start + beatSec * m).toFixed(3)),
+        end: Number((bar5Start + beatSec * (m + 0.95)).toFixed(3)),
+        duration: Number((beatSec * 0.95).toFixed(3)),
+        track: 1,
+        hand: "R",
+      });
+    }
+
+    // Bar 7: Grand Final Resolution Cadence
+    const cadStart = 7 * 4 * beatSec;
+    const cadDur = Number((beatSec * 3.9).toFixed(3));
+    // LH: 3 notes
+    notes.push(
+      {
+        id: noteId++,
+        pitch: 25, // C#1
+        name: "C#1",
+        velocity: 64,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 0,
+        hand: "L",
+      },
+      {
+        id: noteId++,
+        pitch: 32, // G#1
+        name: "G#1",
+        velocity: 60,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 0,
+        hand: "L",
+      },
+      {
+        id: noteId++,
+        pitch: 37, // C#2
+        name: "C#2",
+        velocity: 62,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 0,
+        hand: "L",
+      }
+    );
+
+    // RH: 4 notes
+    [61, 64, 68, 73].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 78,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 1,
+        hand: "R",
+      });
+    });
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Low Bass Octaves)",
+      "Right Hand (Arpeggiated Triplets & Cantabile Melody)"
+    );
+  }
+
+  // 2. Moonlight Sonata 3rd Mvt - Presto Agitato (Beethoven)
+  if (normId === "moonlightsonata3rd" || normId === "prestoagitato") {
+    const bpm = 160;
+    const beatSec = 60 / bpm;
+    const s16 = beatSec / 4;
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    // Bar 1: Ascending C# minor arpeggio + two staccato chords
+    notes.push({
+      id: noteId++,
+      pitch: 49, // C#3 bass
+      name: "C#3",
+      velocity: 65,
+      start: 0,
+      end: Number((beatSec * 0.4).toFixed(3)),
+      duration: Number((beatSec * 0.4).toFixed(3)),
+      track: 0,
+      hand: "L",
+    });
+
+    const arp1 = [49, 52, 56, 61, 64, 68, 73, 76, 80, 85, 88, 92]; // C#3 to G#6
+    for (let i = 0; i < arp1.length; i++) {
+      const st = i * s16;
+      notes.push({
+        id: noteId++,
+        pitch: arp1[i],
+        name: pitchToName(arp1[i]),
+        velocity: 75 + Math.floor(i * 1.4),
+        start: Number(st.toFixed(3)),
+        end: Number((st + s16 * 0.9).toFixed(3)),
+        duration: Number((s16 * 0.9).toFixed(3)),
+        track: 1,
+        hand: "R",
+      });
+    }
+
+    // Two explosive staccato chords on beat 3 and beat 3.5
+    [3.0, 3.5].forEach((b) => {
+      const chordStart = b * beatSec;
+      [68, 80, 85].forEach((cp) => {
+        notes.push({
+          id: noteId++,
+          pitch: cp,
+          name: pitchToName(cp),
+          velocity: 95,
+          start: Number(chordStart.toFixed(3)),
+          end: Number((chordStart + beatSec * 0.35).toFixed(3)),
+          duration: Number((beatSec * 0.35).toFixed(3)),
+          track: 1,
+          hand: "R",
+        });
+      });
+    });
+
+    // Bar 2: D# dim arpeggio + two staccato chords
+    const b1Start = 4 * beatSec;
+    notes.push({
+      id: noteId++,
+      pitch: 51, // D#3 bass
+      name: "D#3",
+      velocity: 65,
+      start: Number(b1Start.toFixed(3)),
+      end: Number((b1Start + beatSec * 0.4).toFixed(3)),
+      duration: Number((beatSec * 0.4).toFixed(3)),
+      track: 0,
+      hand: "L",
+    });
+
+    const arp2 = [51, 54, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84];
+    for (let i = 0; i < arp2.length; i++) {
+      const st = b1Start + i * s16;
+      notes.push({
+        id: noteId++,
+        pitch: arp2[i],
+        name: pitchToName(arp2[i]),
+        velocity: 75 + Math.floor(i * 1.4),
+        start: Number(st.toFixed(3)),
+        end: Number((st + s16 * 0.9).toFixed(3)),
+        duration: Number((s16 * 0.9).toFixed(3)),
+        track: 1,
+        hand: "R",
+      });
+    }
+
+    [3.0, 3.5].forEach((b) => {
+      const chordStart = b1Start + b * beatSec;
+      [78, 84, 87].forEach((cp) => {
+        notes.push({
+          id: noteId++,
+          pitch: cp,
+          name: pitchToName(cp),
+          velocity: 95,
+          start: Number(chordStart.toFixed(3)),
+          end: Number((chordStart + beatSec * 0.35).toFixed(3)),
+          duration: Number((beatSec * 0.35).toFixed(3)),
+          track: 1,
+          hand: "R",
+        });
+      });
+    });
+
+    // Bar 3: Grand Cadence
+    const b2Start = 8 * beatSec;
+    const cadDur = Number((beatSec * 3.8).toFixed(3));
+    // LH 3 notes
+    [32, 39, 44].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 90,
+        start: Number(b2Start.toFixed(3)),
+        end: Number((b2Start + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 0,
+        hand: "L",
+      });
+    });
+    // RH 4 notes
+    [73, 76, 80, 85].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 95,
+        start: Number(b2Start.toFixed(3)),
+        end: Number((b2Start + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 1,
+        hand: "R",
+      });
+    });
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Staccato Bass & Octaves)",
+      "Right Hand (Presto Agitato Arpeggios & Sforzando Chords)"
+    );
+  }
+
+  // 3. River Flows in You (Yiruma)
+  if (normId === "riverflowsinyou" || normId === "yirumariverflowsinyou") {
+    const bpm = 68;
+    const beatSec = 60 / bpm;
+    const s16 = beatSec / 4;
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    // 4 Bars of authentic 1-5-8-10 flowing arpeggios + 1 Cadence bar
+    const chords = [
+      { root: 42, f5: 49, oct: 54, t10: 57, top: 61 }, // F#m: F#2, C#3, F#3, A3, C#4
+      { root: 38, f5: 45, oct: 50, t10: 54, top: 57 }, // D:   D2,  A2,  D3,  F#3, A3
+      { root: 45, f5: 52, oct: 57, t10: 61, top: 64 }, // A:   A2,  E3,  A3,  C#4, E4
+      { root: 40, f5: 47, oct: 52, t10: 56, top: 59 }, // E:   E2,  B2,  E3,  G#3, B3
+    ];
+
+    for (let bar = 0; bar < 4; bar++) {
+      const bStart = bar * 4 * beatSec;
+      const ch = chords[bar];
+
+      // LH 1-5-8-10 arpeggio
+      const lhSteps = [ch.root, ch.f5, ch.oct, ch.t10, ch.top, ch.t10, ch.oct, ch.f5];
+      for (let s = 0; s < 8; s++) {
+        const st = bStart + s * (beatSec * 0.5);
+        notes.push({
+          id: noteId++,
+          pitch: lhSteps[s],
+          name: pitchToName(lhSteps[s]),
+          velocity: s === 0 ? 56 : 50,
+          start: Number(st.toFixed(3)),
+          end: Number((st + beatSec * 0.45).toFixed(3)),
+          duration: Number((beatSec * 0.45).toFixed(3)),
+          track: 0,
+          hand: "L",
+        });
+      }
+
+      // RH Singing Melody with authentic phrasing & gentle breathing
+      if (bar === 0) {
+        // A4 (quarter), G#4-A4 (16ths), A4 (8th), E5 (quarter)
+        notes.push(
+          { id: noteId++, pitch: 69, name: "A4", velocity: 84, start: Number(bStart.toFixed(3)), end: Number((bStart + beatSec * 0.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: 68, name: "G#4", velocity: 80, start: Number((bStart + beatSec).toFixed(3)), end: Number((bStart + beatSec + s16 * 0.9).toFixed(3)), duration: Number((s16 * 0.9).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: 69, name: "A4", velocity: 82, start: Number((bStart + beatSec + s16).toFixed(3)), end: Number((bStart + beatSec + s16 * 2 * 0.95).toFixed(3)), duration: Number((s16 * 0.95).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: 69, name: "A4", velocity: 84, start: Number((bStart + beatSec * 1.5).toFixed(3)), end: Number((bStart + beatSec * 1.95).toFixed(3)), duration: Number((beatSec * 0.45).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: 76, name: "E5", velocity: 88, start: Number((bStart + beatSec * 2).toFixed(3)), end: Number((bStart + beatSec * 3.8).toFixed(3)), duration: Number((beatSec * 1.8).toFixed(3)), track: 1, hand: "R" }
+        );
+      } else if (bar === 1) {
+        notes.push(
+          { id: noteId++, pitch: 69, name: "A4", velocity: 84, start: Number(bStart.toFixed(3)), end: Number((bStart + beatSec * 0.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: 68, name: "G#4", velocity: 80, start: Number((bStart + beatSec).toFixed(3)), end: Number((bStart + beatSec + s16 * 0.9).toFixed(3)), duration: Number((s16 * 0.9).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: 69, name: "A4", velocity: 82, start: Number((bStart + beatSec + s16).toFixed(3)), end: Number((bStart + beatSec + s16 * 2 * 0.95).toFixed(3)), duration: Number((s16 * 0.95).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: 74, name: "D5", velocity: 86, start: Number((bStart + beatSec * 2).toFixed(3)), end: Number((bStart + beatSec * 2.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: 73, name: "C#5", velocity: 84, start: Number((bStart + beatSec * 3).toFixed(3)), end: Number((bStart + beatSec * 3.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" }
+        );
+      } else if (bar === 2) {
+        notes.push(
+          { id: noteId++, pitch: 73, name: "C#5", velocity: 84, start: Number(bStart.toFixed(3)), end: Number((bStart + beatSec * 0.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: 71, name: "B4", velocity: 82, start: Number((bStart + beatSec).toFixed(3)), end: Number((bStart + beatSec * 1.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: 69, name: "A4", velocity: 84, start: Number((bStart + beatSec * 2).toFixed(3)), end: Number((bStart + beatSec * 2.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: 68, name: "G#4", velocity: 80, start: Number((bStart + beatSec * 3).toFixed(3)), end: Number((bStart + beatSec * 3.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" }
+        );
+      } else {
+        notes.push(
+          { id: noteId++, pitch: 69, name: "A4", velocity: 86, start: Number(bStart.toFixed(3)), end: Number((bStart + beatSec * 1.9).toFixed(3)), duration: Number((beatSec * 1.9).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: 71, name: "B4", velocity: 82, start: Number((bStart + beatSec * 2).toFixed(3)), end: Number((bStart + beatSec * 2.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" },
+          { id: noteId++, pitch: 73, name: "C#5", velocity: 84, start: Number((bStart + beatSec * 3).toFixed(3)), end: Number((bStart + beatSec * 3.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 1, hand: "R" }
+        );
+      }
+    }
+
+    // Final Bar: Lyrical Cadence (3-note LH and 3-note RH)
+    const cadStart = 4 * 4 * beatSec;
+    const cadDur = Number((beatSec * 3.8).toFixed(3));
+    [45, 52, 57].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 58,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 0,
+        hand: "L",
+      });
+    });
+    [69, 73, 76].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 84,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 1,
+        hand: "R",
+      });
+    });
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Flowing 1-5-8-10 Arpeggios)",
+      "Right Hand (Cantabile Melody & Phrasing)"
+    );
+  }
+
+  // 4. Prelude in C Major, BWV 846 (Bach)
+  if (normId === "bachpreludecmajor" || normId === "preludecmajorbwv846") {
+    const bpm = 112;
+    const beatSec = 60 / bpm;
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    // 4 Iconic measures from Well-Tempered Clavier + Final Cadence
+    const patterns = [
+      [48, 52, 55, 60, 64], // C maj:  C3, E3, G3, C4, E4
+      [48, 50, 57, 62, 65], // Dm7/C:  C3, D3, A3, D4, F4
+      [47, 50, 55, 62, 65], // G7/B:   B2, D3, G3, D4, F4
+      [48, 52, 55, 60, 64], // C maj:  C3, E3, G3, C4, E4
+    ];
+
+    for (let bar = 0; bar < 4; bar++) {
+      const bStart = bar * 4 * beatSec;
+      const p = patterns[bar];
+
+      // Each bar plays two identical 8-note arpeggio waves
+      for (let wave = 0; wave < 2; wave++) {
+        const wStart = bStart + wave * (beatSec * 2);
+        const waveNotes = [p[0], p[1], p[2], p[3], p[4], p[2], p[3], p[4]];
+        for (let i = 0; i < 8; i++) {
+          const st = wStart + i * (beatSec * 0.25);
+          const hand = i < 2 ? "L" : "R";
+          const track = i < 2 ? 0 : 1;
+          notes.push({
+            id: noteId++,
+            pitch: waveNotes[i],
+            name: pitchToName(waveNotes[i]),
+            velocity: i === 0 ? 60 : 54,
+            start: Number(st.toFixed(3)),
+            end: Number((st + beatSec * 0.24).toFixed(3)),
+            duration: Number((beatSec * 0.24).toFixed(3)),
+            track,
+            hand,
+          });
+        }
+      }
+    }
+
+    // Final Cadence Bar: 3 notes LH, 4 notes RH
+    const cadStart = 4 * 4 * beatSec;
+    const cadDur = Number((beatSec * 3.8).toFixed(3));
+    [36, 43, 48].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 64,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 0,
+        hand: "L",
+      });
+    });
+    [52, 55, 60, 64].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 78,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 1,
+        hand: "R",
+      });
+    });
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Ground Bass Arpeggio)",
+      "Right Hand (Flowing 16th Arpeggios)"
+    );
+  }
+
+  // 5. Interstellar Main Theme / First Step (Hans Zimmer)
+  if (normId === "interstellarmaintheme" || normId === "firststepinterstellar") {
+    const bpm = 96;
+    const beatSec = 60 / bpm;
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    // 6 Bars in 3/4 + Cadence
+    const chords = [
+      { bass1: 33, bass2: 45, p1: 76, p2: 74 }, // Am: A1+A2, E5-D5
+      { bass1: 33, bass2: 45, p1: 76, p2: 74 }, // Am
+      { bass1: 29, bass2: 41, p1: 77, p2: 76 }, // F:  F1+F2, F5-E5
+      { bass1: 29, bass2: 41, p1: 77, p2: 76 }, // F
+      { bass1: 36, bass2: 48, p1: 79, p2: 77 }, // C:  C2+C3, G5-F5
+      { bass1: 31, bass2: 43, p1: 74, p2: 72 }, // G:  G1+G2, D5-C5
+    ];
+
+    for (let bar = 0; bar < 6; bar++) {
+      const bStart = bar * 3 * beatSec;
+      const bDur = Number((beatSec * 2.9).toFixed(3));
+      const ch = chords[bar];
+
+      // LH Bass Octave
+      notes.push(
+        {
+          id: noteId++,
+          pitch: ch.bass1,
+          name: pitchToName(ch.bass1),
+          velocity: 56,
+          start: Number(bStart.toFixed(3)),
+          end: Number((bStart + bDur).toFixed(3)),
+          duration: bDur,
+          track: 0,
+          hand: "L",
+        },
+        {
+          id: noteId++,
+          pitch: ch.bass2,
+          name: pitchToName(ch.bass2),
+          velocity: 52,
+          start: Number(bStart.toFixed(3)),
+          end: Number((bStart + bDur).toFixed(3)),
+          duration: bDur,
+          track: 0,
+          hand: "L",
+        }
+      );
+
+      // RH Pulsing 8th notes
+      for (let beat = 0; beat < 3; beat++) {
+        const t1 = bStart + beat * beatSec;
+        const t2 = t1 + beatSec * 0.5;
+        notes.push(
+          {
+            id: noteId++,
+            pitch: ch.p1,
+            name: pitchToName(ch.p1),
+            velocity: 78,
+            start: Number(t1.toFixed(3)),
+            end: Number((t1 + beatSec * 0.45).toFixed(3)),
+            duration: Number((beatSec * 0.45).toFixed(3)),
+            track: 1,
+            hand: "R",
+          },
+          {
+            id: noteId++,
+            pitch: ch.p2,
+            name: pitchToName(ch.p2),
+            velocity: 75,
+            start: Number(t2.toFixed(3)),
+            end: Number((t2 + beatSec * 0.45).toFixed(3)),
+            duration: Number((beatSec * 0.45).toFixed(3)),
+            track: 1,
+            hand: "R",
+          }
+        );
+      }
+    }
+
+    // Dynamic Cadence Bar: 3-note LH and 4-note RH
+    const cadStart = 6 * 3 * beatSec;
+    const cadDur = Number((beatSec * 2.9).toFixed(3));
+    [33, 40, 45].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 68,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 0,
+        hand: "L",
+      });
+    });
+    [72, 76, 81, 88].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 90,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 1,
+        hand: "R",
+      });
+    });
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Deep Space Organ Octaves)",
+      "Right Hand (Pulsing OST Ostinato)"
+    );
+  }
+
+  // 6. Sparkle (RADWIMPS - Your Name)
+  if (normId === "sparkleyourname" || normId === "radwimpssparkle") {
+    const bpm = 124;
+    const beatSec = 60 / bpm;
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    // 4 Bars of Sparkling Pentatonic Bells + Uplifting Ballad Progression + Cadence
+    const chords = [
+      { bass: 40, f5: 47, t10: 56, bell: [78, 80, 83, 85, 87, 85, 83, 80] }, // Emaj7
+      { bass: 42, f5: 49, t10: 58, bell: [78, 80, 83, 85, 87, 90, 87, 85] }, // F#
+      { bass: 44, f5: 51, t10: 59, bell: [83, 87, 90, 92, 90, 87, 85, 83] }, // G#m7
+      { bass: 39, f5: 46, t10: 54, bell: [80, 83, 85, 87, 83, 83, 83, 83] }, // B/D#
+    ];
+
+    for (let bar = 0; bar < 4; bar++) {
+      const bStart = bar * 4 * beatSec;
+      const ch = chords[bar];
+
+      // LH Arpeggios (Root -> 5th -> 10th)
+      notes.push(
+        { id: noteId++, pitch: ch.bass, name: pitchToName(ch.bass), velocity: 58, start: Number(bStart.toFixed(3)), end: Number((bStart + beatSec * 1.8).toFixed(3)), duration: Number((beatSec * 1.8).toFixed(3)), track: 0, hand: "L" },
+        { id: noteId++, pitch: ch.f5, name: pitchToName(ch.f5), velocity: 52, start: Number((bStart + beatSec).toFixed(3)), end: Number((bStart + beatSec * 1.9).toFixed(3)), duration: Number((beatSec * 0.9).toFixed(3)), track: 0, hand: "L" },
+        { id: noteId++, pitch: ch.t10, name: pitchToName(ch.t10), velocity: 50, start: Number((bStart + beatSec * 2).toFixed(3)), end: Number((bStart + beatSec * 3.8).toFixed(3)), duration: Number((beatSec * 1.8).toFixed(3)), track: 0, hand: "L" }
+      );
+
+      // RH Sparkling Pentatonic Bells (8th notes)
+      for (let i = 0; i < 8; i++) {
+        const st = bStart + i * (beatSec * 0.5);
+        notes.push({
+          id: noteId++,
+          pitch: ch.bell[i],
+          name: pitchToName(ch.bell[i]),
+          velocity: 82,
+          start: Number(st.toFixed(3)),
+          end: Number((st + beatSec * 0.45).toFixed(3)),
+          duration: Number((beatSec * 0.45).toFixed(3)),
+          track: 1,
+          hand: "R",
+        });
+      }
+    }
+
+    // Cadence: 3 notes LH, 3 notes RH
+    const cadStart = 4 * 4 * beatSec;
+    const cadDur = Number((beatSec * 3.8).toFixed(3));
+    [35, 42, 47].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 60,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 0,
+        hand: "L",
+      });
+    });
+    [75, 78, 83].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 86,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 1,
+        hand: "R",
+      });
+    });
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Ballad Arpeggios)",
+      "Right Hand (Sparkling Pentatonic Bells)"
+    );
+  }
+
+  // 7. Autumn Leaves (Joseph Kosma)
+  if (normId === "autumnleaves" || normId === "kosmaautumnleaves") {
+    const bpm = 116;
+    const beatSec = 60 / bpm;
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    // Jazz ii-V-I progression: Cm7 -> F7 -> Bbmaj7 -> Ebmaj7
+    const bars = [
+      { bass: 36, chord: [51, 58, 62], mel: [60, 62, 63] }, // Cm7: C2, Eb3+Bb3+D4, C4-D4-Eb4
+      { bass: 41, chord: [51, 57, 60], mel: [70] },          // F7:  F2,  Eb3+A3+C4,  Bb4
+      { bass: 34, chord: [50, 57, 60], mel: [58, 60, 62, 63] }, // Bbmaj7: Bb1, D3+A3+C4
+      { bass: 39, chord: [55, 62, 65], mel: [69] },          // Ebmaj7: Eb2, G3+D4+F4, A4
+    ];
+
+    for (let bar = 0; bar < 4; bar++) {
+      const bStart = bar * 4 * beatSec;
+      const bData = bars[bar];
+
+      // LH Bass
+      notes.push({
+        id: noteId++,
+        pitch: bData.bass,
+        name: pitchToName(bData.bass),
+        velocity: 58,
+        start: Number(bStart.toFixed(3)),
+        end: Number((bStart + beatSec * 1.8).toFixed(3)),
+        duration: Number((beatSec * 1.8).toFixed(3)),
+        track: 0,
+        hand: "L",
+      });
+
+      // LH 3-note jazz guide-tone comping chord on beat 1.5
+      bData.chord.forEach((cp) => {
+        notes.push({
+          id: noteId++,
+          pitch: cp,
+          name: pitchToName(cp),
+          velocity: 48,
+          start: Number((bStart + beatSec * 1.5).toFixed(3)),
+          end: Number((bStart + beatSec * 2.8).toFixed(3)),
+          duration: Number((beatSec * 1.3).toFixed(3)),
+          track: 0,
+          hand: "L",
+        });
+      });
+
+      // RH Swing Melody
+      if (bData.mel.length === 1) {
+        notes.push({
+          id: noteId++,
+          pitch: bData.mel[0],
+          name: pitchToName(bData.mel[0]),
+          velocity: 85,
+          start: Number(bStart.toFixed(3)),
+          end: Number((bStart + beatSec * 3.8).toFixed(3)),
+          duration: Number((beatSec * 3.8).toFixed(3)),
+          track: 1,
+          hand: "R",
+        });
+      } else {
+        bData.mel.forEach((mp, idx) => {
+          notes.push({
+            id: noteId++,
+            pitch: mp,
+            name: pitchToName(mp),
+            velocity: 82 + idx * 2,
+            start: Number((bStart + beatSec * idx).toFixed(3)),
+            end: Number((bStart + beatSec * (idx + 0.9)).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 1,
+            hand: "R",
+          });
+        });
+      }
+    }
+
+    // Final Jazz Cadence: 3 notes LH, 4 notes RH
+    const cadStart = 4 * 4 * beatSec;
+    const cadDur = Number((beatSec * 3.8).toFixed(3));
+    [31, 38, 46].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 60,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 0,
+        hand: "L",
+      });
+    });
+    [55, 58, 62, 67].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 84,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 1,
+        hand: "R",
+      });
+    });
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Jazz Walking Bass & Guide Chords)",
+      "Right Hand (Swing Cantabile Melody)"
+    );
+  }
+
+  // 8. The Entertainer (Scott Joplin)
+  if (normId === "theentertainerjoplin" || normId === "theentertainerscottjoplinrag") {
+    const bpm = 92;
+    const beatSec = 60 / bpm;
+    const s16 = beatSec / 4;
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    // Iconic syncopated ragtime intro: D4, D#4, E4, C5, E4, C5, E4, C5
+    const introPitches = [62, 63, 64, 72, 64, 72, 64, 72];
+    const introRhythms = [s16, s16, s16, beatSec * 0.5, s16, beatSec * 0.5, s16, beatSec];
+    let curT = 0;
+    for (let i = 0; i < introPitches.length; i++) {
+      notes.push({
+        id: noteId++,
+        pitch: introPitches[i],
+        name: pitchToName(introPitches[i]),
+        velocity: 86,
+        start: Number(curT.toFixed(3)),
+        end: Number((curT + introRhythms[i] * 0.9).toFixed(3)),
+        duration: Number((introRhythms[i] * 0.9).toFixed(3)),
+        track: 1,
+        hand: "R",
+      });
+      curT += introRhythms[i];
+    }
+
+    // Stride Bass Section (Oom-Pah)
+    const strideStart = 4 * beatSec;
+    // LH: Beat 0 Root C2 (oom), Beat 1 Chord E3+G3+C4 (pah), Beat 2 Fifth G2 (oom), Beat 3 Chord (pah)
+    notes.push(
+      { id: noteId++, pitch: 36, name: "C2", velocity: 62, start: Number(strideStart.toFixed(3)), end: Number((strideStart + beatSec * 0.8).toFixed(3)), duration: Number((beatSec * 0.8).toFixed(3)), track: 0, hand: "L" },
+      { id: noteId++, pitch: 52, name: "E3", velocity: 52, start: Number((strideStart + beatSec).toFixed(3)), end: Number((strideStart + beatSec * 1.8).toFixed(3)), duration: Number((beatSec * 0.8).toFixed(3)), track: 0, hand: "L" },
+      { id: noteId++, pitch: 55, name: "G3", velocity: 52, start: Number((strideStart + beatSec).toFixed(3)), end: Number((strideStart + beatSec * 1.8).toFixed(3)), duration: Number((beatSec * 0.8).toFixed(3)), track: 0, hand: "L" },
+      { id: noteId++, pitch: 60, name: "C4", velocity: 52, start: Number((strideStart + beatSec).toFixed(3)), end: Number((strideStart + beatSec * 1.8).toFixed(3)), duration: Number((beatSec * 0.8).toFixed(3)), track: 0, hand: "L" },
+      { id: noteId++, pitch: 43, name: "G2", velocity: 60, start: Number((strideStart + beatSec * 2).toFixed(3)), end: Number((strideStart + beatSec * 2.8).toFixed(3)), duration: Number((beatSec * 0.8).toFixed(3)), track: 0, hand: "L" },
+      { id: noteId++, pitch: 52, name: "E3", velocity: 52, start: Number((strideStart + beatSec * 3).toFixed(3)), end: Number((strideStart + beatSec * 3.8).toFixed(3)), duration: Number((beatSec * 0.8).toFixed(3)), track: 0, hand: "L" },
+      { id: noteId++, pitch: 55, name: "G3", velocity: 52, start: Number((strideStart + beatSec * 3).toFixed(3)), end: Number((strideStart + beatSec * 3.8).toFixed(3)), duration: Number((beatSec * 0.8).toFixed(3)), track: 0, hand: "L" },
+      { id: noteId++, pitch: 60, name: "C4", velocity: 52, start: Number((strideStart + beatSec * 3).toFixed(3)), end: Number((strideStart + beatSec * 3.8).toFixed(3)), duration: Number((beatSec * 0.8).toFixed(3)), track: 0, hand: "L" }
+    );
+
+    // RH Syncopated Theme
+    const ragMel = [62, 63, 64, 72, 64, 72, 74, 75, 76];
+    for (let r = 0; r < ragMel.length; r++) {
+      const st = strideStart + r * (beatSec * 0.4);
+      notes.push({
+        id: noteId++,
+        pitch: ragMel[r],
+        name: pitchToName(ragMel[r]),
+        velocity: 86,
+        start: Number(st.toFixed(3)),
+        end: Number((st + beatSec * 0.35).toFixed(3)),
+        duration: Number((beatSec * 0.35).toFixed(3)),
+        track: 1,
+        hand: "R",
+      });
+    }
+
+    // Cadence Bar: 3 notes LH, 3 notes RH
+    const cadStart = strideStart + 4 * beatSec;
+    const cadDur = Number((beatSec * 3.8).toFixed(3));
+    [36, 43, 48].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 64,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 0,
+        hand: "L",
+      });
+    });
+    [64, 67, 72].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 88,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 1,
+        hand: "R",
+      });
+    });
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Ragtime Stride Oom-Pah)",
+      "Right Hand (Syncopated Ragtime Melody)"
+    );
+  }
+
+  // 9. Merry-Go-Round of Life (Joe Hisaishi)
+  if (normId === "merrygoroundoflife" || normId === "hisaishimerrygoround") {
+    const bpm = 140;
+    const beatSec = 60 / bpm;
+    const notes: Note[] = [];
+    let noteId = 1;
+
+    // 6 Bars in 3/4 Viennese Waltz + Cadence
+    const waltzBars = [
+      { bass: 43, ch: [58, 62], mel: [67] },             // Gm:   G2, Bb3+D4, G4
+      { bass: 43, ch: [58, 62], mel: [70, 74, 79] },     // Gm:   G2, Bb3+D4, Bb4-D5-G5
+      { bass: 38, ch: [57, 60, 66], mel: [78, 79] },     // D7:   D2, A3+C4+F#4, F#5-G5
+      { bass: 43, ch: [58, 62], mel: [74] },             // Gm:   G2, Bb3+D4, D5
+      { bass: 39, ch: [55, 58, 63], mel: [75, 74, 72] }, // Eb:   Eb2, G3+Bb3+Eb4, Eb5-D5-C5
+      { bass: 36, ch: [55, 58, 60], mel: [72, 70, 69] }, // Cm:   C2, G3+Bb3+C4, C5-Bb4-A4
+    ];
+
+    for (let bar = 0; bar < 6; bar++) {
+      const bStart = bar * 3 * beatSec;
+      const wData = waltzBars[bar];
+
+      // LH Bass on Beat 0
+      notes.push({
+        id: noteId++,
+        pitch: wData.bass,
+        name: pitchToName(wData.bass),
+        velocity: 60,
+        start: Number(bStart.toFixed(3)),
+        end: Number((bStart + beatSec * 2.8).toFixed(3)),
+        duration: Number((beatSec * 2.8).toFixed(3)),
+        track: 0,
+        hand: "L",
+      });
+
+      // LH Chords on Beats 1 and 2
+      [1, 2].forEach((beat) => {
+        wData.ch.forEach((cp) => {
+          notes.push({
+            id: noteId++,
+            pitch: cp,
+            name: pitchToName(cp),
+            velocity: 50,
+            start: Number((bStart + beat * beatSec).toFixed(3)),
+            end: Number((bStart + (beat + 0.9) * beatSec).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 0,
+            hand: "L",
+          });
+        });
+      });
+
+      // RH Singing Melody
+      if (wData.mel.length === 1) {
+        notes.push({
+          id: noteId++,
+          pitch: wData.mel[0],
+          name: pitchToName(wData.mel[0]),
+          velocity: 86,
+          start: Number(bStart.toFixed(3)),
+          end: Number((bStart + beatSec * 2.85).toFixed(3)),
+          duration: Number((beatSec * 2.85).toFixed(3)),
+          track: 1,
+          hand: "R",
+        });
+      } else {
+        wData.mel.forEach((mp, idx) => {
+          notes.push({
+            id: noteId++,
+            pitch: mp,
+            name: pitchToName(mp),
+            velocity: 84,
+            start: Number((bStart + idx * beatSec).toFixed(3)),
+            end: Number((bStart + (idx + 0.9) * beatSec).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 1,
+            hand: "R",
+          });
+        });
+      }
+    }
+
+    // Final Cadence Bar: 3 notes LH, 3 notes RH
+    const cadStart = 6 * 3 * beatSec;
+    const cadDur = Number((beatSec * 2.85).toFixed(3));
+    [31, 38, 43].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 62,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 0,
+        hand: "L",
+      });
+    });
+    [58, 62, 67].forEach((p) => {
+      notes.push({
+        id: noteId++,
+        pitch: p,
+        name: pitchToName(p),
+        velocity: 86,
+        start: Number(cadStart.toFixed(3)),
+        end: Number((cadStart + cadDur).toFixed(3)),
+        duration: cadDur,
+        track: 1,
+        hand: "R",
+      });
+    });
+
+    return createCanonicalSong(
+      input,
+      notes,
+      "Left Hand (Viennese Waltz Lilt & Chords)",
+      "Right Hand (Romantic Cantabile Melody)"
+    );
+  }
+
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────
+// PROCEDURAL PIANO REPERTOIRE ENGINE
+// ─────────────────────────────────────────────────────────────
+
 export function createMotifSong(input: MotifSongInput): RepertoireSong {
+  // Check if piece has an authentic canonical transcription
+  const canonical = getLandmarkCanonicalSong(input);
+  if (canonical) {
+    return canonical;
+  }
+
   const { rootPitch: defaultRoot, isMinor } = getKeyRootPitch(input.key);
   const root = input.rootPitch ?? defaultRoot;
   const scaleType = input.scale ?? (isMinor ? "minor" : "major");
@@ -588,22 +1547,19 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
     totalBars = input.bars;
   } else if (isWaltz) {
     if (difficulty === "Beginner") {
-      totalBars = 22 + (hash % 5) * 2; // 22 to 30 bars (~66-90 beats)
+      totalBars = 22 + (hash % 5) * 2;
     } else if (difficulty === "Intermediate") {
-      totalBars = 34 + (hash % 7) * 2; // 34 to 46 bars (~102-138 beats)
+      totalBars = 34 + (hash % 7) * 2;
     } else {
-      // Master
-      totalBars = 52 + (hash % 11) * 2; // 52 to 72 bars (~156-216 beats)
+      totalBars = 52 + (hash % 11) * 2;
     }
   } else {
-    // 4/4 Meter
     if (difficulty === "Beginner") {
-      totalBars = 16 + (hash % 5) * 2; // 16 to 24 bars (~64-96 beats)
+      totalBars = 16 + (hash % 5) * 2;
     } else if (difficulty === "Intermediate") {
-      totalBars = 30 + (hash % 7) * 2; // 30 to 42 bars (~120-168 beats)
+      totalBars = 30 + (hash % 7) * 2;
     } else {
-      // Master
-      totalBars = 46 + (hash % 11) * 2; // 46 to 66 bars (~184-264 beats)
+      totalBars = 46 + (hash % 11) * 2;
     }
   }
 
@@ -642,7 +1598,6 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
       outro: matchedTheme.chordRoots,
     };
   } else {
-    // Diverse genre-tailored musical grammar
     const genreTable = GENRE_PROGRESSIONS[input.genre] ?? GENRE_PROGRESSIONS["Classical"];
     const palette =
       scaleType === "minor" || scaleType === "dorian" ? genreTable.minor : genreTable.major;
@@ -662,13 +1617,11 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
 
   // Resolve melody contour
   let defaultMelody: number[];
-
   if (input.melodyContour && input.melodyContour.length > 0) {
     defaultMelody = input.melodyContour;
   } else if (matchedTheme) {
     defaultMelody = matchedTheme.melodyContour;
   } else {
-    // Generate genre-tailored procedural melody tailored to the chords & scale
     defaultMelody = generateProceduralMelody(
       hash,
       input.genre,
@@ -725,17 +1678,17 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
     const bassPitch = currentRoot - 24;
     const registerShift = section === "chorus" ? 12 : 0;
 
-    // Velocity levels according to section dynamics
+    // ── Dynamic Hierarchy: Singing RH Melody (76-92) vs Warm Subtle LH Accompaniment (48-62) ──
     const dynamics = {
-      intro: { lh: 64, rh: 68 },
-      verse: { lh: 76, rh: 80 },
-      chorus: { lh: 88, rh: 92 },
-      bridge: { lh: 76, rh: 82 },
-      outro: { lh: 68, rh: 72 },
+      intro: { lh: 48, rh: 76 },
+      verse: { lh: 52, rh: 82 },
+      chorus: { lh: 60, rh: 92 },
+      bridge: { lh: 54, rh: 84 },
+      outro: { lh: 48, rh: 76 },
     }[section];
 
     // ── FINAL BAR: Grand Cadence ──
-    // Guarantees N_very_easy < N_easy < N_original via multi-voice tonic resolution
+    // Guarantees NoteCount(Very Easy) < NoteCount(Easy) < NoteCount(Original)
     if (bar === totalBars - 1) {
       const finalChordDur = Number((beatSec * (isWaltz ? 2.85 : 3.85)).toFixed(3));
       // LH Grand Cadence: 3 notes (root, 5th, octave)
@@ -744,7 +1697,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
           id: noteId++,
           pitch: root - 24,
           name: pitchToName(root - 24),
-          velocity: 75,
+          velocity: dynamics.lh + 8,
           start: Number(barStart.toFixed(3)),
           end: Number((barStart + finalChordDur).toFixed(3)),
           duration: finalChordDur,
@@ -755,7 +1708,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
           id: noteId++,
           pitch: root - 17,
           name: pitchToName(root - 17),
-          velocity: 70,
+          velocity: dynamics.lh + 4,
           start: Number(barStart.toFixed(3)),
           end: Number((barStart + finalChordDur).toFixed(3)),
           duration: finalChordDur,
@@ -766,7 +1719,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
           id: noteId++,
           pitch: root - 12,
           name: pitchToName(root - 12),
-          velocity: 72,
+          velocity: dynamics.lh + 6,
           start: Number(barStart.toFixed(3)),
           end: Number((barStart + finalChordDur).toFixed(3)),
           duration: finalChordDur,
@@ -775,13 +1728,13 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         }
       );
 
-      // RH Grand Cadence: 4 notes (tonic, 3rd, 5th, octave)
+      // RH Grand Cadence: 3 notes (tonic triad root, 3rd, 5th)
       notes.push(
         {
           id: noteId++,
           pitch: root,
           name: pitchToName(root),
-          velocity: 70,
+          velocity: dynamics.rh - 4,
           start: Number(barStart.toFixed(3)),
           end: Number((barStart + finalChordDur).toFixed(3)),
           duration: finalChordDur,
@@ -792,7 +1745,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
           id: noteId++,
           pitch: root + thirdInterval,
           name: pitchToName(root + thirdInterval),
-          velocity: 72,
+          velocity: dynamics.rh - 2,
           start: Number(barStart.toFixed(3)),
           end: Number((barStart + finalChordDur).toFixed(3)),
           duration: finalChordDur,
@@ -803,18 +1756,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
           id: noteId++,
           pitch: root + fifthInterval,
           name: pitchToName(root + fifthInterval),
-          velocity: 74,
-          start: Number(barStart.toFixed(3)),
-          end: Number((barStart + finalChordDur).toFixed(3)),
-          duration: finalChordDur,
-          track: 1,
-          hand: "R",
-        },
-        {
-          id: noteId++,
-          pitch: root + 12,
-          name: pitchToName(root + 12),
-          velocity: 78,
+          velocity: dynamics.rh,
           start: Number(barStart.toFixed(3)),
           end: Number((barStart + finalChordDur).toFixed(3)),
           duration: finalChordDur,
@@ -827,7 +1769,10 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
 
     // ─────────────────────────────────────────────────────────────
     // LEFT HAND ACCOMPANIMENT GENERATION
+    // Authentic piano voice leading: Alberti bass, slow ballad tenths, waltz lilt, broken arpeggios
     // ─────────────────────────────────────────────────────────────
+    const isPhraseStart = bar % 4 === 0;
+
     if (accompStyle === "waltz") {
       // ── WALTZ LILTS (3/4 or 3/8) ──
       // Beat 0: Deep bass root
@@ -843,90 +1788,105 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         hand: "L",
       });
 
-      // Beat 1: Mid-register harmony chord (3rd + 5th)
+      // On phrase start: rich 3-note harmonic sonority on Beat 0
+      if (isPhraseStart) {
+        notes.push(
+          {
+            id: noteId++,
+            pitch: currentRoot - 17,
+            name: pitchToName(currentRoot - 17),
+            velocity: dynamics.lh - 6,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 2.8).toFixed(3)),
+            duration: Number((beatSec * 2.8).toFixed(3)),
+            track: 0,
+            hand: "L",
+          },
+          {
+            id: noteId++,
+            pitch: currentRoot - 12 + thirdInterval,
+            name: pitchToName(currentRoot - 12 + thirdInterval),
+            velocity: dynamics.lh - 8,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 2.8).toFixed(3)),
+            duration: Number((beatSec * 2.8).toFixed(3)),
+            track: 0,
+            hand: "L",
+          }
+        );
+      }
+
+      // Beats 1 & 2: 2-note harmony chords (strictly 3rd and 5th of chord)
       const chordPitch1 = currentRoot - 12 + thirdInterval;
       const chordPitch2 = currentRoot - 12 + fifthInterval;
-      notes.push(
-        {
-          id: noteId++,
-          pitch: chordPitch1,
-          name: pitchToName(chordPitch1),
-          velocity: dynamics.lh - 8,
-          start: Number((barStart + beatSec).toFixed(3)),
-          end: Number((barStart + beatSec * 1.85).toFixed(3)),
-          duration: Number((beatSec * 0.85).toFixed(3)),
-          track: 0,
-          hand: "L",
-        },
-        {
-          id: noteId++,
-          pitch: chordPitch2,
-          name: pitchToName(chordPitch2),
-          velocity: dynamics.lh - 8,
-          start: Number((barStart + beatSec).toFixed(3)),
-          end: Number((barStart + beatSec * 1.85).toFixed(3)),
-          duration: Number((beatSec * 0.85).toFixed(3)),
-          track: 0,
-          hand: "L",
-        }
-      );
-
-      // Beat 2: Mid-register harmony chord
-      notes.push(
-        {
-          id: noteId++,
-          pitch: chordPitch1,
-          name: pitchToName(chordPitch1),
-          velocity: dynamics.lh - 10,
-          start: Number((barStart + beatSec * 2).toFixed(3)),
-          end: Number((barStart + beatSec * 2.85).toFixed(3)),
-          duration: Number((beatSec * 0.85).toFixed(3)),
-          track: 0,
-          hand: "L",
-        },
-        {
-          id: noteId++,
-          pitch: chordPitch2,
-          name: pitchToName(chordPitch2),
-          velocity: dynamics.lh - 10,
-          start: Number((barStart + beatSec * 2).toFixed(3)),
-          end: Number((barStart + beatSec * 2.85).toFixed(3)),
-          duration: Number((beatSec * 0.85).toFixed(3)),
-          track: 0,
-          hand: "L",
-        }
-      );
-
-      // In Master waltz bridge/chorus: add chromatic passing bass note on beat 2.5
-      if (difficulty === "Master" && (section === "chorus" || section === "bridge")) {
-        const passingPitch = bassPitch + (bar % 2 === 0 ? 2 : -1);
-        notes.push({
-          id: noteId++,
-          pitch: passingPitch,
-          name: pitchToName(passingPitch),
-          velocity: dynamics.lh - 6,
-          start: Number((barStart + beatSec * 2.5).toFixed(3)),
-          end: Number((barStart + beatSec * 2.95).toFixed(3)),
-          duration: Number((beatSec * 0.45).toFixed(3)),
-          track: 0,
-          hand: "L",
-        });
-      }
+      [1, 2].forEach((beat) => {
+        notes.push(
+          {
+            id: noteId++,
+            pitch: chordPitch1,
+            name: pitchToName(chordPitch1),
+            velocity: dynamics.lh - 6,
+            start: Number((barStart + beatSec * beat).toFixed(3)),
+            end: Number((barStart + beatSec * (beat + 0.85)).toFixed(3)),
+            duration: Number((beatSec * 0.85).toFixed(3)),
+            track: 0,
+            hand: "L",
+          },
+          {
+            id: noteId++,
+            pitch: chordPitch2,
+            name: pitchToName(chordPitch2),
+            velocity: dynamics.lh - 6,
+            start: Number((barStart + beatSec * beat).toFixed(3)),
+            end: Number((barStart + beatSec * (beat + 0.85)).toFixed(3)),
+            duration: Number((beatSec * 0.85).toFixed(3)),
+            track: 0,
+            hand: "L",
+          }
+        );
+      });
     } else if (accompStyle === "alberti") {
-      // ── ALBERTI BASS (Classical low-high-middle-high figure) ──
+      // ── ALBERTI BASS (Classical Root -> 5th -> 3rd -> 5th) ──
       const rootP = bassPitch;
       const fifthP = currentRoot - 17;
       const thirdP = currentRoot - 24 + thirdInterval;
 
+      // On phrase downbeat: 3-note harmonic sonority on Beat 0
+      if (isPhraseStart) {
+        notes.push(
+          {
+            id: noteId++,
+            pitch: fifthP,
+            name: pitchToName(fifthP),
+            velocity: dynamics.lh - 4,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 0.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 0,
+            hand: "L",
+          },
+          {
+            id: noteId++,
+            pitch: thirdP,
+            name: pitchToName(thirdP),
+            velocity: dynamics.lh - 6,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 0.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 0,
+            hand: "L",
+          }
+        );
+      }
+
       if (difficulty === "Beginner") {
-        // 4 Quarter notes in 4/4
         const albertiPitches = [rootP, fifthP, thirdP, fifthP];
         for (let b = 0; b < 4; b++) {
           notes.push({
             id: noteId++,
             pitch: albertiPitches[b],
             name: pitchToName(albertiPitches[b]),
-            velocity: dynamics.lh - (b % 2 === 0 ? 0 : 8),
+            velocity: dynamics.lh - (b === 0 ? 0 : 6),
             start: Number((barStart + beatSec * b).toFixed(3)),
             end: Number((barStart + beatSec * (b + 0.9)).toFixed(3)),
             duration: Number((beatSec * 0.9).toFixed(3)),
@@ -935,16 +1895,14 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
           });
         }
       } else {
-        // Intermediate & Master: 8 Eighth-note Alberti pattern
         const pattern = [rootP, fifthP, thirdP, fifthP, rootP, fifthP, thirdP, fifthP];
         for (let step = 0; step < 8; step++) {
           const t = barStart + beatSec * (step * 0.5);
-          const p = step === 4 && difficulty === "Master" ? rootP + 12 : pattern[step];
           notes.push({
             id: noteId++,
-            pitch: p,
-            name: pitchToName(p),
-            velocity: dynamics.lh - (step % 2 === 0 ? 4 : 10),
+            pitch: pattern[step],
+            name: pitchToName(pattern[step]),
+            velocity: dynamics.lh - (step % 2 === 0 ? 2 : 8),
             start: Number(t.toFixed(3)),
             end: Number((t + beatSec * 0.45).toFixed(3)),
             duration: Number((beatSec * 0.45).toFixed(3)),
@@ -954,11 +1912,39 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         }
       }
     } else if (accompStyle === "walking_bass") {
-      // ── JAZZ WALKING BASS (Quarter-note walk with chromatic approaches) ──
+      // ── JAZZ WALKING BASS (Quarter-note walk with guide chords) ──
       const rootP = bassPitch;
       const thirdP = currentRoot - 24 + thirdInterval;
       const fifthP = currentRoot - 17;
       const approachP = bar % 2 === 0 ? currentRoot - 13 : currentRoot - 25;
+
+      // On phrase downbeat: 3-note guide tone voicing on beat 0
+      if (isPhraseStart) {
+        notes.push(
+          {
+            id: noteId++,
+            pitch: currentRoot - 12 + thirdInterval,
+            name: pitchToName(currentRoot - 12 + thirdInterval),
+            velocity: dynamics.lh - 6,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 0.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 0,
+            hand: "L",
+          },
+          {
+            id: noteId++,
+            pitch: currentRoot - 12 + (scaleType === "minor" ? 10 : 11),
+            name: pitchToName(currentRoot - 12 + (scaleType === "minor" ? 10 : 11)),
+            velocity: dynamics.lh - 6,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 0.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 0,
+            hand: "L",
+          }
+        );
+      }
 
       const walkPitches = [rootP, thirdP, fifthP, approachP];
       for (let b = 0; b < 4; b++) {
@@ -966,7 +1952,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
           id: noteId++,
           pitch: walkPitches[b],
           name: pitchToName(walkPitches[b]),
-          velocity: dynamics.lh - (b === 0 ? 0 : 6),
+          velocity: dynamics.lh - (b === 0 ? 0 : 4),
           start: Number((barStart + beatSec * b).toFixed(3)),
           end: Number((barStart + beatSec * (b + 0.9)).toFixed(3)),
           duration: Number((beatSec * 0.9).toFixed(3)),
@@ -975,38 +1961,36 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         });
       }
 
-      // Add syncopated jazz guide tone comp chord in LH on beat 1.5 or 2.5
-      if (difficulty !== "Beginner" && (bar % 2 === 0 || section === "chorus")) {
-        const guide3 = currentRoot - 12 + thirdInterval;
-        const guide7 = currentRoot - 12 + (scaleType === "minor" ? 10 : 11);
-        notes.push(
-          {
-            id: noteId++,
-            pitch: guide3,
-            name: pitchToName(guide3),
-            velocity: dynamics.lh - 12,
-            start: Number((barStart + beatSec * 1.5).toFixed(3)),
-            end: Number((barStart + beatSec * 2.1).toFixed(3)),
-            duration: Number((beatSec * 0.6).toFixed(3)),
-            track: 0,
-            hand: "L",
-          },
-          {
-            id: noteId++,
-            pitch: guide7,
-            name: pitchToName(guide7),
-            velocity: dynamics.lh - 12,
-            start: Number((barStart + beatSec * 1.5).toFixed(3)),
-            end: Number((barStart + beatSec * 2.1).toFixed(3)),
-            duration: Number((beatSec * 0.6).toFixed(3)),
-            track: 0,
-            hand: "L",
-          }
-        );
-      }
+      // Syncopated guide chord on beat 1.5
+      const guide3 = currentRoot - 12 + thirdInterval;
+      const guide7 = currentRoot - 12 + (scaleType === "minor" ? 10 : 11);
+      notes.push(
+        {
+          id: noteId++,
+          pitch: guide3,
+          name: pitchToName(guide3),
+          velocity: dynamics.lh - 8,
+          start: Number((barStart + beatSec * 1.5).toFixed(3)),
+          end: Number((barStart + beatSec * 2.1).toFixed(3)),
+          duration: Number((beatSec * 0.6).toFixed(3)),
+          track: 0,
+          hand: "L",
+        },
+        {
+          id: noteId++,
+          pitch: guide7,
+          name: pitchToName(guide7),
+          velocity: dynamics.lh - 8,
+          start: Number((barStart + beatSec * 1.5).toFixed(3)),
+          end: Number((barStart + beatSec * 2.1).toFixed(3)),
+          duration: Number((beatSec * 0.6).toFixed(3)),
+          track: 0,
+          hand: "L",
+        }
+      );
     } else if (accompStyle === "pop_groove") {
-      // ── POP GROOVE (Punchy syncopated bass + mid octave bump) ──
-      // Beat 0: Deep root
+      // ── POP GROOVE (Bass root + 5th + 10th syncopation) ──
+      // Beat 0: Bass root
       notes.push({
         id: noteId++,
         pitch: bassPitch,
@@ -1019,7 +2003,35 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         hand: "L",
       });
 
-      // Beat 1.5: 8th-note bounce
+      // On phrase downbeat: 3-note sonority on Beat 0
+      if (isPhraseStart) {
+        notes.push(
+          {
+            id: noteId++,
+            pitch: currentRoot - 17,
+            name: pitchToName(currentRoot - 17),
+            velocity: dynamics.lh - 6,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 1.4).toFixed(3)),
+            duration: Number((beatSec * 1.4).toFixed(3)),
+            track: 0,
+            hand: "L",
+          },
+          {
+            id: noteId++,
+            pitch: currentRoot - 12,
+            name: pitchToName(currentRoot - 12),
+            velocity: dynamics.lh - 6,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 1.4).toFixed(3)),
+            duration: Number((beatSec * 1.4).toFixed(3)),
+            track: 0,
+            hand: "L",
+          }
+        );
+      }
+
+      // Beat 1.5: 8th bounce
       notes.push({
         id: noteId++,
         pitch: currentRoot - 12,
@@ -1032,269 +2044,285 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         hand: "L",
       });
 
-      // Beat 2: Fifth
-      notes.push({
-        id: noteId++,
-        pitch: currentRoot - 17,
-        name: pitchToName(currentRoot - 17),
-        velocity: dynamics.lh - 4,
-        start: Number((barStart + beatSec * 2).toFixed(3)),
-        end: Number((barStart + beatSec * 2.9).toFixed(3)),
-        duration: Number((beatSec * 0.9).toFixed(3)),
-        track: 0,
-        hand: "L",
-      });
-
-      // Beat 2.5: Mid harmonic accent
-      if (difficulty !== "Beginner") {
-        notes.push({
-          id: noteId++,
-          pitch: currentRoot - 12 + thirdInterval,
-          name: pitchToName(currentRoot - 12 + thirdInterval),
-          velocity: dynamics.lh - 8,
-          start: Number((barStart + beatSec * 2.5).toFixed(3)),
-          end: Number((barStart + beatSec * 2.95).toFixed(3)),
-          duration: Number((beatSec * 0.45).toFixed(3)),
-          track: 0,
-          hand: "L",
-        });
-      }
-
-      // Beat 3.5: Anticipatory root
-      notes.push({
-        id: noteId++,
-        pitch: bassPitch,
-        name: pitchToName(bassPitch),
-        velocity: dynamics.lh - 6,
-        start: Number((barStart + beatSec * 3.5).toFixed(3)),
-        end: Number((barStart + beatSec * 3.95).toFixed(3)),
-        duration: Number((beatSec * 0.45).toFixed(3)),
-        track: 0,
-        hand: "L",
-      });
-    } else if (accompStyle === "anime_run") {
-      // ── ANIME RUN (Dramatic bass octaves + sweeping upward motion) ──
-      // Beat 0: Bass Octave
+      // Beat 2: Fifth + Third (2-note chord)
       notes.push(
         {
           id: noteId++,
-          pitch: bassPitch,
-          name: pitchToName(bassPitch),
-          velocity: dynamics.lh + 4,
-          start: Number(barStart.toFixed(3)),
-          end: Number((barStart + beatSec * 1.8).toFixed(3)),
-          duration: Number((beatSec * 1.8).toFixed(3)),
+          pitch: currentRoot - 17,
+          name: pitchToName(currentRoot - 17),
+          velocity: dynamics.lh - 4,
+          start: Number((barStart + beatSec * 2).toFixed(3)),
+          end: Number((barStart + beatSec * 2.9).toFixed(3)),
+          duration: Number((beatSec * 0.9).toFixed(3)),
           track: 0,
           hand: "L",
         },
         {
           id: noteId++,
-          pitch: currentRoot - 12,
-          name: pitchToName(currentRoot - 12),
-          velocity: dynamics.lh - 4,
-          start: Number(barStart.toFixed(3)),
-          end: Number((barStart + beatSec * 1.8).toFixed(3)),
-          duration: Number((beatSec * 1.8).toFixed(3)),
+          pitch: currentRoot - 12 + thirdInterval,
+          name: pitchToName(currentRoot - 12 + thirdInterval),
+          velocity: dynamics.lh - 6,
+          start: Number((barStart + beatSec * 2).toFixed(3)),
+          end: Number((barStart + beatSec * 2.9).toFixed(3)),
+          duration: Number((beatSec * 0.9).toFixed(3)),
           track: 0,
           hand: "L",
         }
       );
-
-      // Beat 1: Fifth
+    } else {
+      // ── BALLAD ARPEGGIO & BROKEN TENTHS (Default flowing texture) ──
+      // Beat 0: Deep root
       notes.push({
         id: noteId++,
-        pitch: currentRoot - 17,
-        name: pitchToName(currentRoot - 17),
-        velocity: dynamics.lh - 2,
-        start: Number((barStart + beatSec).toFixed(3)),
-        end: Number((barStart + beatSec * 1.9).toFixed(3)),
-        duration: Number((beatSec * 0.9).toFixed(3)),
-        track: 0,
-        hand: "L",
-      });
-
-      // Beat 2: Octave
-      notes.push({
-        id: noteId++,
-        pitch: currentRoot - 12,
-        name: pitchToName(currentRoot - 12),
+        pitch: bassPitch,
+        name: pitchToName(bassPitch),
         velocity: dynamics.lh,
-        start: Number((barStart + beatSec * 2).toFixed(3)),
-        end: Number((barStart + beatSec * 2.9).toFixed(3)),
-        duration: Number((beatSec * 0.9).toFixed(3)),
+        start: Number(barStart.toFixed(3)),
+        end: Number((barStart + beatSec * (isWaltz ? 2.8 : 3.8)).toFixed(3)),
+        duration: Number((beatSec * (isWaltz ? 2.8 : 3.8)).toFixed(3)),
         track: 0,
         hand: "L",
       });
 
-      // Beat 3: Ascending run leading to next bar
-      if (difficulty === "Master") {
-        const runPitches = [
-          currentRoot - 12 + thirdInterval,
-          currentRoot - 5,
-          currentRoot,
-          currentRoot + thirdInterval,
-        ];
-        for (let r = 0; r < 4; r++) {
-          notes.push({
+      // On phrase downbeat: rich 3-note harmonic sonority on Beat 0 (Root + 5th + 10th)
+      if (isPhraseStart) {
+        notes.push(
+          {
             id: noteId++,
-            pitch: runPitches[r],
-            name: pitchToName(runPitches[r]),
-            velocity: dynamics.lh - 4 + r * 2,
-            start: Number((barStart + beatSec * (3 + r * 0.25)).toFixed(3)),
-            end: Number((barStart + beatSec * (3 + (r + 1) * 0.25 - 0.05)).toFixed(3)),
-            duration: Number((beatSec * 0.2).toFixed(3)),
+            pitch: currentRoot - 17,
+            name: pitchToName(currentRoot - 17),
+            velocity: dynamics.lh - 6,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 1.8).toFixed(3)),
+            duration: Number((beatSec * 1.8).toFixed(3)),
             track: 0,
             hand: "L",
-          });
-        }
-      } else {
+          },
+          {
+            id: noteId++,
+            pitch: currentRoot - 12 + thirdInterval,
+            name: pitchToName(currentRoot - 12 + thirdInterval),
+            velocity: dynamics.lh - 8,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 1.8).toFixed(3)),
+            duration: Number((beatSec * 1.8).toFixed(3)),
+            track: 0,
+            hand: "L",
+          }
+        );
+      }
+
+      // Gentle broken arpeggio steps: 5th -> Octave -> 10th
+      const pitches = [
+        currentRoot - 17,
+        currentRoot - 12,
+        currentRoot - 12 + thirdInterval,
+      ];
+      for (let b = 1; b < beatsPerBar; b++) {
+        const p = pitches[(b - 1) % pitches.length];
         notes.push({
           id: noteId++,
-          pitch: currentRoot - 12 + thirdInterval,
-          name: pitchToName(currentRoot - 12 + thirdInterval),
-          velocity: dynamics.lh - 4,
-          start: Number((barStart + beatSec * 3).toFixed(3)),
-          end: Number((barStart + beatSec * 3.9).toFixed(3)),
+          pitch: p,
+          name: pitchToName(p),
+          velocity: dynamics.lh - 6,
+          start: Number((barStart + beatSec * b).toFixed(3)),
+          end: Number((barStart + beatSec * (b + 0.9)).toFixed(3)),
           duration: Number((beatSec * 0.9).toFixed(3)),
           track: 0,
           hand: "L",
         });
       }
-    } else {
-      // ── BALLAD ARPEGGIO (Default flowing broken chords) ──
-      if (difficulty === "Beginner") {
-        // 4 gentle quarter-note arpeggio steps: Root -> 5th -> Octave -> 10th
-        const pitches = [
-          bassPitch,
-          currentRoot - 17,
-          currentRoot - 12,
-          currentRoot - 12 + thirdInterval,
-        ];
-        for (let b = 0; b < 4; b++) {
-          notes.push({
-            id: noteId++,
-            pitch: pitches[b],
-            name: pitchToName(pitches[b]),
-            velocity: dynamics.lh - (b === 0 ? 0 : 8),
-            start: Number((barStart + beatSec * b).toFixed(3)),
-            end: Number((barStart + beatSec * (b + 0.9)).toFixed(3)),
-            duration: Number((beatSec * 0.9).toFixed(3)),
-            track: 0,
-            hand: "L",
-          });
-        }
-      } else {
-        // Intermediate & Master: 8 eighth-note flowing arpeggio
-        const pitches = [
-          bassPitch,
-          currentRoot - 17,
-          currentRoot - 12,
-          currentRoot - 12 + thirdInterval,
-          currentRoot - 5,
-          currentRoot - 12 + thirdInterval,
-          currentRoot - 12,
-          currentRoot - 17,
-        ];
-        for (let step = 0; step < 8; step++) {
-          const t = barStart + beatSec * (step * 0.5);
-          notes.push({
-            id: noteId++,
-            pitch: pitches[step],
-            name: pitchToName(pitches[step]),
-            velocity: dynamics.lh - (step === 0 ? 0 : 6),
-            start: Number(t.toFixed(3)),
-            end: Number((t + beatSec * 0.45).toFixed(3)),
-            duration: Number((beatSec * 0.45).toFixed(3)),
-            track: 0,
-            hand: "L",
-          });
-        }
-      }
     }
 
     // ─────────────────────────────────────────────────────────────
-    // RIGHT HAND MELODY, HARMONY & VIRTUOSITY
+    // RIGHT HAND MELODY PHRASING & RHYTHMIC VARIETY
+    // Pure singing voice (RH velocity 76-92) with lyrical variety & natural rests!
+    // NO jarring Beat 0 triad!
     // ─────────────────────────────────────────────────────────────
-    // Beat 0: 3-note melodic triad chord
-    // This strictly ensures NoteCount_very_easy < NoteCount_easy < NoteCount_original
     const melodyStep = isWaltz ? 3 : 4;
     const melodyIdx = (bar * melodyStep + (section === "bridge" ? 2 : 0)) % defaultMelody.length;
     const melPitch = root + registerShift + defaultMelody[melodyIdx];
-    const harmPitch1 = melPitch - thirdInterval;
-    const harmPitch2 = melPitch - fifthInterval;
 
-    notes.push(
-      {
-        id: noteId++,
-        pitch: harmPitch2,
-        name: pitchToName(harmPitch2),
-        velocity: dynamics.rh - 8,
-        start: Number(barStart.toFixed(3)),
-        end: Number((barStart + beatSec * 0.9).toFixed(3)),
-        duration: Number((beatSec * 0.9).toFixed(3)),
-        track: 1,
-        hand: "R",
-      },
-      {
-        id: noteId++,
-        pitch: harmPitch1,
-        name: pitchToName(harmPitch1),
-        velocity: dynamics.rh - 4,
-        start: Number(barStart.toFixed(3)),
-        end: Number((barStart + beatSec * 0.9).toFixed(3)),
-        duration: Number((beatSec * 0.9).toFixed(3)),
-        track: 1,
-        hand: "R",
-      },
-      {
-        id: noteId++,
-        pitch: melPitch,
-        name: pitchToName(melPitch),
-        velocity: dynamics.rh,
-        start: Number(barStart.toFixed(3)),
-        end: Number((barStart + beatSec * 0.9).toFixed(3)),
-        duration: Number((beatSec * 0.9).toFixed(3)),
-        track: 1,
-        hand: "R",
-      }
-    );
+    const phrasePattern = bar % 4; // 0: statement, 1: response, 2: climax, 3: resolution
 
     if (isWaltz) {
-      // ── WALTZ RH SUBDIVISIONS ──
-      // Beat 1: Cantabile singing melody note
-      const m1 = root + registerShift + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
-      notes.push({
-        id: noteId++,
-        pitch: m1,
-        name: pitchToName(m1),
-        velocity: dynamics.rh - 2,
-        start: Number((barStart + beatSec).toFixed(3)),
-        end: Number((barStart + beatSec * 1.9).toFixed(3)),
-        duration: Number((beatSec * 0.9).toFixed(3)),
-        track: 1,
-        hand: "R",
-      });
-
-      // Beat 2:
-      if (difficulty === "Beginner") {
-        // Quarter note
-        const m2 = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
+      // ── WALTZ RIGHT HAND PHRASING ──
+      if (phrasePattern === 0) {
+        // Half note on beat 0, quarter on beat 2
+        const m1 = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
+        notes.push(
+          {
+            id: noteId++,
+            pitch: melPitch,
+            name: pitchToName(melPitch),
+            velocity: dynamics.rh,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 1.9).toFixed(3)),
+            duration: Number((beatSec * 1.9).toFixed(3)),
+            track: 1,
+            hand: "R",
+          },
+          {
+            id: noteId++,
+            pitch: m1,
+            name: pitchToName(m1),
+            velocity: dynamics.rh - 4,
+            start: Number((barStart + beatSec * 2).toFixed(3)),
+            end: Number((barStart + beatSec * 2.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 1,
+            hand: "R",
+          }
+        );
+      } else if (phrasePattern === 1) {
+        // Flowing quarter notes on beats 0 & 1, gentle breath rest on beat 2
+        const m1 = root + registerShift + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
+        notes.push(
+          {
+            id: noteId++,
+            pitch: melPitch,
+            name: pitchToName(melPitch),
+            velocity: dynamics.rh,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 0.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 1,
+            hand: "R",
+          },
+          {
+            id: noteId++,
+            pitch: m1,
+            name: pitchToName(m1),
+            velocity: dynamics.rh - 2,
+            start: Number((barStart + beatSec).toFixed(3)),
+            end: Number((barStart + beatSec * 1.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 1,
+            hand: "R",
+          }
+        );
+      } else if (phrasePattern === 2) {
+        // Climax: Quarter note on beat 0 + two 8th notes on beat 1 + quarter on beat 2
+        const m1a = root + registerShift + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
+        const m1b = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
+        const m2 = root + registerShift + defaultMelody[(melodyIdx + 3) % defaultMelody.length];
+        notes.push(
+          {
+            id: noteId++,
+            pitch: melPitch,
+            name: pitchToName(melPitch),
+            velocity: dynamics.rh + 2,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 0.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 1,
+            hand: "R",
+          },
+          {
+            id: noteId++,
+            pitch: m1a,
+            name: pitchToName(m1a),
+            velocity: dynamics.rh - 2,
+            start: Number((barStart + beatSec).toFixed(3)),
+            end: Number((barStart + beatSec * 1.45).toFixed(3)),
+            duration: Number((beatSec * 0.45).toFixed(3)),
+            track: 1,
+            hand: "R",
+          },
+          {
+            id: noteId++,
+            pitch: m1b,
+            name: pitchToName(m1b),
+            velocity: dynamics.rh,
+            start: Number((barStart + beatSec * 1.5).toFixed(3)),
+            end: Number((barStart + beatSec * 1.95).toFixed(3)),
+            duration: Number((beatSec * 0.45).toFixed(3)),
+            track: 1,
+            hand: "R",
+          },
+          {
+            id: noteId++,
+            pitch: m2,
+            name: pitchToName(m2),
+            velocity: dynamics.rh - 2,
+            start: Number((barStart + beatSec * 2).toFixed(3)),
+            end: Number((barStart + beatSec * 2.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 1,
+            hand: "R",
+          }
+        );
+      } else {
+        // Resolution: Long dotted half note singing for the whole bar
         notes.push({
           id: noteId++,
-          pitch: m2,
-          name: pitchToName(m2),
-          velocity: dynamics.rh - 4,
-          start: Number((barStart + beatSec * 2).toFixed(3)),
-          end: Number((barStart + beatSec * 2.9).toFixed(3)),
-          duration: Number((beatSec * 0.9).toFixed(3)),
+          pitch: melPitch,
+          name: pitchToName(melPitch),
+          velocity: dynamics.rh,
+          start: Number(barStart.toFixed(3)),
+          end: Number((barStart + beatSec * 2.85).toFixed(3)),
+          duration: Number((beatSec * 2.85).toFixed(3)),
           track: 1,
           hand: "R",
         });
-      } else {
-        // Intermediate & Master: Two 8th notes
+      }
+    } else {
+      // ── 4/4 METER RIGHT HAND PHRASING ──
+      if (phrasePattern === 0) {
+        // Lyrical Statement: Dotted half note on beat 0 + quarter note on beat 3
+        const m3 = root + registerShift + defaultMelody[(melodyIdx + 3) % defaultMelody.length];
+        notes.push(
+          {
+            id: noteId++,
+            pitch: melPitch,
+            name: pitchToName(melPitch),
+            velocity: dynamics.rh,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 2.85).toFixed(3)),
+            duration: Number((beatSec * 2.85).toFixed(3)),
+            track: 1,
+            hand: "R",
+          },
+          {
+            id: noteId++,
+            pitch: m3,
+            name: pitchToName(m3),
+            velocity: dynamics.rh - 2,
+            start: Number((barStart + beatSec * 3).toFixed(3)),
+            end: Number((barStart + beatSec * 3.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 1,
+            hand: "R",
+          }
+        );
+      } else if (phrasePattern === 1) {
+        // Flowing Response: Quarter on beat 0, quarter on beat 1, two 8th notes on beat 2, breath rest on beat 3
+        const m1 = root + registerShift + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
         const m2a = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
         const m2b = root + registerShift + defaultMelody[(melodyIdx + 3) % defaultMelody.length];
         notes.push(
+          {
+            id: noteId++,
+            pitch: melPitch,
+            name: pitchToName(melPitch),
+            velocity: dynamics.rh,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 0.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 1,
+            hand: "R",
+          },
+          {
+            id: noteId++,
+            pitch: m1,
+            name: pitchToName(m1),
+            velocity: dynamics.rh - 2,
+            start: Number((barStart + beatSec).toFixed(3)),
+            end: Number((barStart + beatSec * 1.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 1,
+            hand: "R",
+          },
           {
             id: noteId++,
             pitch: m2a,
@@ -1318,21 +2346,28 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
             hand: "R",
           }
         );
-      }
-    } else {
-      // ── 4/4 METER RH SUBDIVISIONS ──
-      if (difficulty === "Beginner") {
-        // Beginner texture: cantabile quarter notes
+      } else if (phrasePattern === 2) {
+        // Climax: Quarter notes across beats 0, 1, 2, 3
         const m1 = root + registerShift + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
         const m2 = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
         const m3 = root + registerShift + defaultMelody[(melodyIdx + 3) % defaultMelody.length];
-
         notes.push(
+          {
+            id: noteId++,
+            pitch: melPitch,
+            name: pitchToName(melPitch),
+            velocity: dynamics.rh + 2,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 0.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 1,
+            hand: "R",
+          },
           {
             id: noteId++,
             pitch: m1,
             name: pitchToName(m1),
-            velocity: dynamics.rh - 2,
+            velocity: dynamics.rh,
             start: Number((barStart + beatSec).toFixed(3)),
             end: Number((barStart + beatSec * 1.9).toFixed(3)),
             duration: Number((beatSec * 0.9).toFixed(3)),
@@ -1343,7 +2378,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
             id: noteId++,
             pitch: m2,
             name: pitchToName(m2),
-            velocity: dynamics.rh - 4,
+            velocity: dynamics.rh - 2,
             start: Number((barStart + beatSec * 2).toFixed(3)),
             end: Number((barStart + beatSec * 2.9).toFixed(3)),
             duration: Number((beatSec * 0.9).toFixed(3)),
@@ -1362,118 +2397,18 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
             hand: "R",
           }
         );
-      } else if (difficulty === "Intermediate") {
-        // Intermediate texture: 8th notes and 2-note harmonic intervals
-        const m1a = root + registerShift + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
-        const m1b = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
-        const m2 = root + registerShift + defaultMelody[(melodyIdx + 3) % defaultMelody.length];
-        const h2 = m2 - 5;
-        const m3a = root + registerShift + defaultMelody[(melodyIdx + 4) % defaultMelody.length];
-        const m3b = root + registerShift + defaultMelody[(melodyIdx + 5) % defaultMelody.length];
-
-        notes.push(
-          // Beat 1: Two 8th notes
-          {
-            id: noteId++,
-            pitch: m1a,
-            name: pitchToName(m1a),
-            velocity: dynamics.rh - 2,
-            start: Number((barStart + beatSec).toFixed(3)),
-            end: Number((barStart + beatSec * 1.45).toFixed(3)),
-            duration: Number((beatSec * 0.45).toFixed(3)),
-            track: 1,
-            hand: "R",
-          },
-          {
-            id: noteId++,
-            pitch: m1b,
-            name: pitchToName(m1b),
-            velocity: dynamics.rh,
-            start: Number((barStart + beatSec * 1.5).toFixed(3)),
-            end: Number((barStart + beatSec * 1.95).toFixed(3)),
-            duration: Number((beatSec * 0.45).toFixed(3)),
-            track: 1,
-            hand: "R",
-          },
-          // Beat 2: Harmonic interval
-          {
-            id: noteId++,
-            pitch: h2,
-            name: pitchToName(h2),
-            velocity: dynamics.rh - 8,
-            start: Number((barStart + beatSec * 2).toFixed(3)),
-            end: Number((barStart + beatSec * 2.9).toFixed(3)),
-            duration: Number((beatSec * 0.9).toFixed(3)),
-            track: 1,
-            hand: "R",
-          },
-          {
-            id: noteId++,
-            pitch: m2,
-            name: pitchToName(m2),
-            velocity: dynamics.rh,
-            start: Number((barStart + beatSec * 2).toFixed(3)),
-            end: Number((barStart + beatSec * 2.9).toFixed(3)),
-            duration: Number((beatSec * 0.9).toFixed(3)),
-            track: 1,
-            hand: "R",
-          },
-          // Beat 3: Two 8th notes
-          {
-            id: noteId++,
-            pitch: m3a,
-            name: pitchToName(m3a),
-            velocity: dynamics.rh - 4,
-            start: Number((barStart + beatSec * 3).toFixed(3)),
-            end: Number((barStart + beatSec * 3.45).toFixed(3)),
-            duration: Number((beatSec * 0.45).toFixed(3)),
-            track: 1,
-            hand: "R",
-          },
-          {
-            id: noteId++,
-            pitch: m3b,
-            name: pitchToName(m3b),
-            velocity: dynamics.rh - 2,
-            start: Number((barStart + beatSec * 3.5).toFixed(3)),
-            end: Number((barStart + beatSec * 3.95).toFixed(3)),
-            duration: Number((beatSec * 0.45).toFixed(3)),
-            track: 1,
-            hand: "R",
-          }
-        );
       } else {
-        // Master texture: High virtuosic density, 16th-note anime/classical runs on Beat 1 or Beat 3
-        const m1 = root + registerShift + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
+        // Resolution: Half note on beat 0, half note on beat 2
         const m2 = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
-        const h2 = m2 - 5;
-
-        // Beat 1: 16th-note flourish
-        const flourish = [m1, m1 + 2, m1 + 4, m1 + 2];
-        for (let f = 0; f < 4; f++) {
-          notes.push({
-            id: noteId++,
-            pitch: flourish[f],
-            name: pitchToName(flourish[f]),
-            velocity: dynamics.rh - 4 + f,
-            start: Number((barStart + beatSec * (1 + f * 0.25)).toFixed(3)),
-            end: Number((barStart + beatSec * (1 + (f + 1) * 0.25 - 0.05)).toFixed(3)),
-            duration: Number((beatSec * 0.2).toFixed(3)),
-            track: 1,
-            hand: "R",
-          });
-        }
-
-        // Beat 2: Harmonic interval with melody octave
         notes.push(
           {
             id: noteId++,
-            pitch: h2,
-            name: pitchToName(h2),
-            velocity: dynamics.rh - 6,
-            start: Number((barStart + beatSec * 2).toFixed(3)),
-            end: Number((barStart + beatSec * 2.9).toFixed(3)),
-            duration: Number((beatSec * 0.9).toFixed(3)),
+            pitch: melPitch,
+            name: pitchToName(melPitch),
+            velocity: dynamics.rh,
+            start: Number(barStart.toFixed(3)),
+            end: Number((barStart + beatSec * 1.9).toFixed(3)),
+            duration: Number((beatSec * 1.9).toFixed(3)),
             track: 1,
             hand: "R",
           },
@@ -1481,35 +2416,14 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
             id: noteId++,
             pitch: m2,
             name: pitchToName(m2),
-            velocity: dynamics.rh + 2,
+            velocity: dynamics.rh - 4,
             start: Number((barStart + beatSec * 2).toFixed(3)),
-            end: Number((barStart + beatSec * 2.9).toFixed(3)),
-            duration: Number((beatSec * 0.9).toFixed(3)),
+            end: Number((barStart + beatSec * 3.85).toFixed(3)),
+            duration: Number((beatSec * 1.85).toFixed(3)),
             track: 1,
             hand: "R",
           }
         );
-
-        // Beat 3: Four 16th notes rushing into next bar
-        const rush = [
-          m2,
-          m2 + (scaleType === "minor" ? 3 : 4),
-          m2 + 7,
-          m2 + 12,
-        ];
-        for (let r = 0; r < 4; r++) {
-          notes.push({
-            id: noteId++,
-            pitch: rush[r],
-            name: pitchToName(rush[r]),
-            velocity: dynamics.rh - 4 + r * 2,
-            start: Number((barStart + beatSec * (3 + r * 0.25)).toFixed(3)),
-            end: Number((barStart + beatSec * (3 + (r + 1) * 0.25 - 0.05)).toFixed(3)),
-            duration: Number((beatSec * 0.2).toFixed(3)),
-            track: 1,
-            hand: "R",
-          });
-        }
       }
     }
   }
@@ -1531,8 +2445,8 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
     duration_sec: durationSec,
     time_signature: timeSig,
     tracks: [
-      { index: 0, name: "Left Hand (Bass & Arpeggios)", note_count: lhCount },
-      { index: 1, name: "Right Hand (Melody & Harmony)", note_count: rhCount },
+      { index: 0, name: "Left Hand (Bass & Accompaniment)", note_count: lhCount },
+      { index: 1, name: "Right Hand (Cantabile Melody)", note_count: rhCount },
     ],
     notes,
   };

@@ -14,7 +14,7 @@ import { PianoSynth } from "./pianoSynth";
 
 const LOOKAHEAD_SEC = 0.5;
 const TICK_MS = 120;
-const SAMPLE_LOAD_TIMEOUT_MS = 4000;
+const SAMPLE_LOAD_TIMEOUT_MS = 20000;
 
 interface SoundConfig {
   sound: PianoSoundId;
@@ -139,9 +139,19 @@ export class SampledPiano {
       this.usingFallback = false;
       return instrument;
     } catch {
-      this.instruments.delete(key);
-      this.usingFallback = true;
-      return null;
+      // Clean retry once before falling back to physical synth simulation
+      try {
+        const retryInstrument = createInstrument(this.ctx, this.config.sound);
+        await withTimeout(retryInstrument.load, SAMPLE_LOAD_TIMEOUT_MS);
+        this.instruments.set(key, retryInstrument);
+        this.applyOutputSettings(retryInstrument);
+        this.usingFallback = false;
+        return retryInstrument;
+      } catch {
+        this.instruments.delete(key);
+        this.usingFallback = true;
+        return null;
+      }
     }
   }
 

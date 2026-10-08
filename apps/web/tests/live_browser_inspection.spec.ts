@@ -263,6 +263,14 @@ async function setupGlobalMocks(page: any, customProjects?: any[]) {
         };
       }
 
+      createStereoPanner() {
+        return {
+          pan: { value: 0 },
+          connect: () => {},
+          disconnect: () => {},
+        };
+      }
+
       async resume() {
         this.state = 'running';
       }

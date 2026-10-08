@@ -696,8 +696,34 @@ export default function PracticePage() {
           </div>
         </div>
 
-        {/* Center: Hardware Status Pill & Practice Mode Segmented Toggle */}
+        {/* Center: Hardware Status Pill, Input Toggle & Practice Mode Segmented Toggle */}
         <div className="flex items-center gap-2.5 flex-shrink-0">
+          {/* Input Mode Selector: MIDI vs Acoustic Mic */}
+          <div className="flex items-center rounded-xl bg-zinc-900/90 p-1 border border-white/10 select-none">
+            <button
+              type="button"
+              onClick={() => setInputMode("midi")}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition ${
+                inputMode === "midi"
+                  ? "bg-cyan-500 text-zinc-950 font-bold shadow-sm"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+              }`}
+            >
+              MIDI
+            </button>
+            <button
+              type="button"
+              onClick={() => setInputMode("mic")}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition ${
+                inputMode === "mic"
+                  ? "bg-cyan-500 text-zinc-950 font-bold shadow-sm"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+              }`}
+            >
+              Mic
+            </button>
+          </div>
+
           {/* Hardware Status Pill */}
           <div
             role="button"
@@ -708,7 +734,7 @@ export default function PracticePage() {
           >
             {inputMode === "mic" ? (
               <Badge variant="hand-lh" size="md" className="hover:border-cyan-400/50 transition">
-                ● Acoustic Mic Listening{mic.currentResult ? ` (${mic.currentResult.noteName})` : ""}
+                ● Acoustic Mic Active{mic.currentResult ? ` (${mic.currentResult.noteName})` : ""}
               </Badge>
             ) : midiAccess ? (
               <Badge variant="success" size="md" className="hover:border-emerald-400/50 transition">

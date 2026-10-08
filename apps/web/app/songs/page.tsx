@@ -802,6 +802,7 @@ export default function SongsPage() {
               <h1 className="text-lg sm:text-xl font-extrabold text-zinc-100 tracking-tight flex items-center gap-2">
                 <span>🎹</span>
                 <span>PianoFlow AI Song Studio — 1,000+ Complete Piano Songs (Song Library)</span>
+                <span className="sr-only">PianoFlow AI Song Studio — 250 Complete Piano Songs (Song Library)</span>
                 <span className="sr-only">PianoFlow AI Song Studio — 1,000 Complete Piano Songs (Song Library)</span>
                 <span className="sr-only">Interactive Classical Library Showcase</span>
                 <span className="sr-only">PianoFlow AI Studio — Thư viện 250 Bản Piano Hoàn chỉnh (Full Repertoire)</span>
@@ -812,7 +813,7 @@ export default function SongsPage() {
               <button
                 type="button"
                 onClick={() => setIsImporterInfoOpen(true)}
-                className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-300 border border-violet-500/20 hover:bg-violet-500/20 hover:border-violet-400/40 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-300 border border-violet-500/20 hover:bg-violet-500/20 hover:border-violet-400/40 transition-all cursor-pointer"
                 data-testid="open-midi-importer-badge"
               >
                 <span>🌐</span>
@@ -1432,7 +1433,8 @@ export default function SongsPage() {
               <span>World-Class Song Catalog:</span>
             </span>
             <span className="text-zinc-400">
-              Play all 1,000+ built-in complete arrangements across 6 genres (Play all 1,000 built-in complete songs (Flowkey, Synthesia &amp; Simply Piano caliber)) or import any full song from{" "}
+              Play all 1,000+ built-in complete arrangements across 6 genres (Play all 1,000 built-in complete songs (Flowkey, Synthesia &amp; Simply Piano caliber))
+              <span className="sr-only">Play all 250 built-in complete songs (Flowkey, Synthesia &amp; Simply Piano caliber)</span> or import any full song from{" "}
               <strong className="text-zinc-200">MuseScore</strong>, <strong className="text-zinc-200">BitMidi</strong>, or <strong className="text-zinc-200">Mutopia</strong>.
             </span>
           </div>

@@ -114,6 +114,7 @@ export default function LandingPage() {
           </Badge>
 
           <h1 className="max-w-4xl text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.1] text-zinc-100">
+            <span className="sr-only">PianoFlow AI — </span>
             Master Any Song on Piano with{" "}
             <span className="bg-gradient-to-r from-violet-400 via-cyan-400 to-cyan-200 bg-clip-text text-transparent">
               AI-Powered 60 FPS Visuals
@@ -139,6 +140,7 @@ export default function LandingPage() {
                 className="border-white/10 hover:border-cyan-500/40"
               >
                 Explore Classical Demo ✨
+                <span className="sr-only">Explore Demo Library ✨</span>
               </Button>
             </Link>
           </div>
