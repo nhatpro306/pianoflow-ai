@@ -12,6 +12,7 @@ interface Props {
   settings: RenderSettings;
   externalIsPlaying?: boolean;
   onTogglePlay?: () => void;
+  onTimeUpdate?: (timeSec: number) => void;
 }
 
 const CANVAS_H = 480;
@@ -41,6 +42,7 @@ export function FallingNotePreview({
   settings,
   externalIsPlaying,
   onTogglePlay,
+  onTimeUpdate,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -217,21 +219,17 @@ export function FallingNotePreview({
   );
 
   const startPlayback = useCallback(
-    async (fromSec: number): Promise<void> => {
+    (fromSec: number): void => {
       if (!synthRef.current) {
         synthRef.current = new SampledPiano();
       }
       const synth = synthRef.current;
       synth.stop();
-      setLoadingSound(true);
-      try {
-        await synth.resumeContext();
-        await synth.ensureInstrument();
-        await synth.play(audioNotes, speed, fromSec);
-        setApproxSound(synth.approximate);
-      } finally {
-        setLoadingSound(false);
-      }
+      void synth.resumeContext();
+      void synth.play(audioNotes, speed, fromSec);
+      setPlaying(true);
+      setApproxSound(synth.approximate);
+      setLoadingSound(false);
     },
     [audioNotes, speed],
   );
@@ -245,9 +243,10 @@ export function FallingNotePreview({
     synthRef.current?.stop();
     pausedAtRef.current = 0;
     setCurrentTime(0);
+    onTimeUpdate?.(0);
     draw(0);
     if (externalIsPlayingRef.current) {
-      void startPlayback(0).then(() => setPlaying(true));
+      startPlayback(0);
     } else {
       setPlaying(false);
     }
@@ -263,13 +262,14 @@ export function FallingNotePreview({
         const fromSec = pausedAtRef.current >= scaledDuration ? 0 : pausedAtRef.current;
         pausedAtRef.current = fromSec;
         setCurrentTime(fromSec);
-        void startPlayback(fromSec).then(() => setPlaying(true));
+        onTimeUpdate?.(fromSec);
+        startPlayback(fromSec);
       } else if (!externalIsPlaying && playing) {
         synthRef.current?.stop();
         setPlaying(false);
       }
     }
-  }, [externalIsPlaying, playing, startPlayback, scaledDuration]);
+  }, [externalIsPlaying, playing, startPlayback, scaledDuration, onTimeUpdate]);
 
   useEffect(() => {
     if (!playing) {
@@ -284,6 +284,7 @@ export function FallingNotePreview({
         synth.stop();
         pausedAtRef.current = 0;
         setCurrentTime(0);
+        onTimeUpdate?.(0);
         setPlaying(false);
         if (externalIsPlaying && onTogglePlay) {
           onTogglePlay();
@@ -291,16 +292,17 @@ export function FallingNotePreview({
         return;
       }
       pausedAtRef.current = t;
-      if (t - lastUiUpdateRef.current > 0.2) {
+      if (t - lastUiUpdateRef.current > 0.08) {
         lastUiUpdateRef.current = t;
         setCurrentTime(t);
+        onTimeUpdate?.(t);
       }
       draw(t);
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [playing, draw, scaledDuration, externalIsPlaying, onTogglePlay]);
+  }, [playing, draw, scaledDuration, externalIsPlaying, onTogglePlay, onTimeUpdate]);
 
   const prevSpeedRef = useRef(speed);
   useEffect(() => {
@@ -309,8 +311,9 @@ export function FallingNotePreview({
     prevSpeedRef.current = speed;
     pausedAtRef.current = (pausedAtRef.current * prev) / speed;
     setCurrentTime(pausedAtRef.current);
+    onTimeUpdate?.(pausedAtRef.current);
     if (playing) {
-      void startPlayback(pausedAtRef.current);
+      startPlayback(pausedAtRef.current);
     } else {
       draw(pausedAtRef.current);
     }
@@ -323,12 +326,14 @@ export function FallingNotePreview({
     if (playing) {
       synth.stop();
       setCurrentTime(pausedAtRef.current);
+      onTimeUpdate?.(pausedAtRef.current);
       setPlaying(false);
     } else {
       const fromSec = pausedAtRef.current >= scaledDuration ? 0 : pausedAtRef.current;
       pausedAtRef.current = fromSec;
       setCurrentTime(fromSec);
-      void startPlayback(fromSec).then(() => setPlaying(true));
+      onTimeUpdate?.(fromSec);
+      startPlayback(fromSec);
     }
   }
 
@@ -343,8 +348,9 @@ export function FallingNotePreview({
   function restart() {
     pausedAtRef.current = 0;
     setCurrentTime(0);
+    onTimeUpdate?.(0);
     if (playing) {
-      void startPlayback(0);
+      startPlayback(0);
     } else {
       draw(0);
     }
@@ -354,8 +360,9 @@ export function FallingNotePreview({
     const next = Math.min(Math.max(value, 0), scaledDuration);
     pausedAtRef.current = next;
     setCurrentTime(next);
+    onTimeUpdate?.(next);
     if (playing) {
-      void startPlayback(next);
+      startPlayback(next);
     } else {
       draw(next);
     }

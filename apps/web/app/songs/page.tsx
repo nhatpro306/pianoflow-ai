@@ -1075,6 +1075,9 @@ export default function SongsPage() {
                   settings={renderSettings}
                   externalIsPlaying={isPlaying && activeMode === "visualizer"}
                   onTogglePlay={handleTogglePlay}
+                  onTimeUpdate={(timeSec) => {
+                    currentTimeRef.current = Math.round(timeSec * 1000);
+                  }}
                 />
               </div>
             </div>

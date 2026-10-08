@@ -696,26 +696,18 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
   // Match against Iconic Theme Registry
   const matchedTheme = findIconicTheme(input.id, input.title);
 
-  // Dynamic bar count based on difficulty, meter, and hash — guaranteed full-length (2-4+ min)
+  // Dynamic bar count based on difficulty, meter, and tempo — guaranteed full-length (2-5+ min)
+  const secPerBar = beatsPerBar * beatSec;
+  const minBarsFor2Min = Math.ceil(125 / Math.max(0.6, secPerBar));
   let totalBars: number;
   if (input.bars) {
-    totalBars = input.bars;
+    totalBars = Math.max(minBarsFor2Min, input.bars);
   } else if (isWaltz) {
-    if (difficulty === "Beginner") {
-      totalBars = 54 + (hash % 5) * 2;
-    } else if (difficulty === "Intermediate") {
-      totalBars = 72 + (hash % 7) * 2;
-    } else {
-      totalBars = 96 + (hash % 11) * 2;
-    }
+    const base = difficulty === "Beginner" ? 76 : difficulty === "Intermediate" ? 98 : 126;
+    totalBars = Math.max(minBarsFor2Min, base + (hash % 9) * 2);
   } else {
-    if (difficulty === "Beginner") {
-      totalBars = 52 + (hash % 5) * 2;
-    } else if (difficulty === "Intermediate") {
-      totalBars = 68 + (hash % 7) * 2;
-    } else {
-      totalBars = 88 + (hash % 11) * 2;
-    }
+    const base = difficulty === "Beginner" ? 68 : difficulty === "Intermediate" ? 88 : 116;
+    totalBars = Math.max(minBarsFor2Min, base + (hash % 9) * 2);
   }
 
   const effectivePattern = input.pattern ?? matchedTheme?.pattern;
@@ -1632,6 +1624,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
     tags: input.tags,
     isCanonical: false,
     qualityTier: "arranged",
+    isFullLength: true,
     noteData,
   };
 }

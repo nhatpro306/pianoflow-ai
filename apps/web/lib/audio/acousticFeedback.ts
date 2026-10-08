@@ -1,16 +1,19 @@
 "use client";
 
 import type { SplendidGrandPiano } from "smplr";
+import { getSharedAudioContext } from "../sampledPiano";
+import { PianoSynth } from "../pianoSynth";
 
 /**
  * Low-latency acoustic piano sound feedback for MIDI and touch interactions.
- * Uses smplr's SplendidGrandPiano with immediate Web Audio oscillator fallback.
+ * Uses smplr's SplendidGrandPiano with immediate high-fidelity physical PianoSynth fallback.
  */
 export class AcousticPianoFeedback {
   private ctx: AudioContext | null = null;
   private instrument: SplendidGrandPiano | null = null;
   private isInstrumentReady = false;
-  private activeOscillators = new Map<number, { osc: OscillatorNode; gain: GainNode }>();
+  private synthEngine: PianoSynth | null = null;
+  private activeNotes = new Map<number, { stop: () => void }>();
 
   public async initPianoAudio(): Promise<void> {
     return this.init();
@@ -19,10 +22,12 @@ export class AcousticPianoFeedback {
   public async init(): Promise<void> {
     if (typeof window === "undefined") return;
     try {
-      this.ctx ??= new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      this.ctx = getSharedAudioContext();
       if (this.ctx.state === "suspended") {
         await this.ctx.resume().catch(() => undefined);
       }
+
+      this.synthEngine ??= new PianoSynth(this.ctx);
 
       if (!this.instrument) {
         const { SplendidGrandPiano } = await import("smplr");
@@ -64,75 +69,32 @@ export class AcousticPianoFeedback {
           note: pitch,
           velocity: Math.max(1, Math.min(127, velocity)),
           time: this.ctx.currentTime,
-          duration: 2.0,
+          duration: 2.5,
         });
         return;
       } catch {
-        // Fall back to synth below
+        // Fall back to physical acoustic synth
       }
     }
 
-    // Web Audio Fallback: Triangle oscillator with lowpass + exponential decay
-    this.playSynthNote(pitch, velocity);
-  }
-
-  private playSynthNote(pitch: number, velocity: number): void {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const freq = 440 * Math.pow(2, (pitch - 69) / 12);
-
-    const osc = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
-    const gain = this.ctx.createGain();
-
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(freq, now);
-
-    // Warm piano-like filter envelope
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(freq * 3.5, now);
-    filter.frequency.exponentialRampToValueAtTime(freq * 1.2, now + 1.2);
-
-    const velScale = velocity / 127;
-    const maxGain = 0.3 * velScale;
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(maxGain, now + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 1.8);
-
-    this.activeOscillators.set(pitch, { osc, gain });
-    setTimeout(() => {
-      if (this.activeOscillators.get(pitch)?.osc === osc) {
-        this.activeOscillators.delete(pitch);
-      }
-    }, 1800);
+    // High-Fidelity Physical Acoustic Piano Fallback
+    this.synthEngine ??= new PianoSynth(this.ctx);
+    const voice = this.synthEngine.triggerNote(pitch, velocity, 2.5);
+    this.activeNotes.set(pitch, voice);
   }
 
   public noteOff(pitch: number): void {
-    if (!this.ctx) return;
-    const active = this.activeOscillators.get(pitch);
+    const active = this.activeNotes.get(pitch);
     if (active) {
-      const now = this.ctx.currentTime;
-      active.gain.gain.cancelScheduledValues(now);
-      active.gain.gain.setValueAtTime(active.gain.gain.value, now);
-      active.gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
-      active.osc.stop(now + 0.08);
-      this.activeOscillators.delete(pitch);
+      active.stop();
+      this.activeNotes.delete(pitch);
     }
   }
 
   public destroy(): void {
-    this.activeOscillators.clear();
-    if (this.ctx && this.ctx.state !== "closed") {
-      this.ctx.close().catch(() => undefined);
-    }
-    this.ctx = null;
+    this.activeNotes.clear();
+    this.synthEngine?.stop();
+    this.synthEngine = null;
     this.instrument = null;
     this.isInstrumentReady = false;
   }
