@@ -16,16 +16,16 @@ import { simplifyNoteData } from '../lib/midi/simplifyEngine';
 
 const SCREENSHOTS_DIR = path.join(__dirname, 'screenshots');
 
-test.describe('PianoFlow AI — Step 4: 560+ Piece Multi-Genre Repertoire Catalog', () => {
-  test('CATALOG-01: In-Memory Verification of 560+ Curated Pieces across 6 Genres', () => {
+test.describe('PianoFlow AI — 1,000+ Piece Multi-Genre Repertoire Catalog', () => {
+  test('CATALOG-01: In-Memory Verification of 1,000+ Curated Pieces across 6 Genres', () => {
     // 1. Verify exact counts
-    expect(ALL_REPERTOIRE_SONGS.length).toBeGreaterThanOrEqual(560);
-    expect(CLASSICAL_SONGS.length).toBe(100);
-    expect(ANIME_SONGS.length).toBe(100);
-    expect(KPOP_SONGS.length).toBe(100);
-    expect(MODERN_POP_SONGS.length).toBe(100);
-    expect(CINEMATIC_GAME_SONGS.length).toBe(100);
-    expect(JAZZ_LOFI_SONGS.length).toBeGreaterThanOrEqual(60);
+    expect(ALL_REPERTOIRE_SONGS.length).toBe(1000);
+    expect(CLASSICAL_SONGS.length).toBe(180);
+    expect(ANIME_SONGS.length).toBe(180);
+    expect(KPOP_SONGS.length).toBe(160);
+    expect(MODERN_POP_SONGS.length).toBe(160);
+    expect(CINEMATIC_GAME_SONGS.length).toBe(160);
+    expect(JAZZ_LOFI_SONGS.length).toBe(160);
 
     // 2. Verify unique IDs
     const idSet = new Set<string>();
@@ -43,13 +43,13 @@ test.describe('PianoFlow AI — Step 4: 560+ Piece Multi-Genre Repertoire Catalo
     }
 
     // 3. Verify helper functions
-    expect(getSongsByGenre('Anime & Ghibli').length).toBe(100);
-    expect(getSongsByGenre('K-Pop').length).toBe(100);
-    expect(getSongsByGenre('Modern & Pop').length).toBe(100);
-    expect(getSongsByGenre('Cinematic & Game').length).toBe(100);
-    expect(getSongsByGenre('Classical').length).toBe(100);
-    expect(getSongsByGenre('Jazz & Lo-Fi').length).toBe(JAZZ_LOFI_SONGS.length);
-    expect(getSongsByGenre('All').length).toBe(ALL_REPERTOIRE_SONGS.length);
+    expect(getSongsByGenre('Anime & Ghibli').length).toBe(180);
+    expect(getSongsByGenre('K-Pop').length).toBe(160);
+    expect(getSongsByGenre('Modern & Pop').length).toBe(160);
+    expect(getSongsByGenre('Cinematic & Game').length).toBe(160);
+    expect(getSongsByGenre('Classical').length).toBe(180);
+    expect(getSongsByGenre('Jazz & Lo-Fi').length).toBe(160);
+    expect(getSongsByGenre('All').length).toBe(1000);
 
     // 4. Verify search helper
     const searchSparkle = searchRepertoire('Sparkle');
@@ -69,7 +69,7 @@ test.describe('PianoFlow AI — Step 4: 560+ Piece Multi-Genre Repertoire Catalo
     expect(getSongById('autumn-leaves')).toBeDefined();
   });
 
-  test('CATALOG-02: Progressive Reduction Guaranteed for All 560+ Repertoire Pieces', () => {
+  test('CATALOG-02: Progressive Reduction Guaranteed for All 1,000 Repertoire Pieces', () => {
     for (const song of ALL_REPERTOIRE_SONGS) {
       const orig = song.noteData.notes.length;
       const easy = simplifyNoteData(song.noteData, 'easy');

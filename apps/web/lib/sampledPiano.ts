@@ -116,7 +116,14 @@ export class SampledPiano {
     }
   }
 
-  private async ensureInstrument(): Promise<SmplrInstrument | null> {
+  async resumeContext(): Promise<void> {
+    this.ctx ??= new AudioContext();
+    if (this.ctx.state === "suspended") {
+      await this.ctx.resume().catch(() => undefined);
+    }
+  }
+
+  async ensureInstrument(): Promise<SmplrInstrument | null> {
     this.ctx ??= new AudioContext();
     if (this.ctx.state === "suspended") await this.ctx.resume().catch(() => undefined);
 

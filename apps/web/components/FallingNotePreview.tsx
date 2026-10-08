@@ -10,13 +10,20 @@ import { applySustain } from "@/lib/sustain";
 interface Props {
   data: NoteData;
   settings: RenderSettings;
+  externalIsPlaying?: boolean;
+  onTogglePlay?: () => void;
 }
 
 const CANVAS_H = 480;
 const BASE_FALL_PX_PER_SEC = 140;
 const PREVIEW_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
 
-export function FallingNotePreview({ data, settings }: Props) {
+export function FallingNotePreview({
+  data,
+  settings,
+  externalIsPlaying,
+  onTogglePlay,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const synthRef = useRef<SampledPiano | null>(null);
@@ -35,6 +42,9 @@ export function FallingNotePreview({ data, settings }: Props) {
   const [previewVolume, setPreviewVolume] = useState(settings.volume);
 
   const audioNotes = useMemo(() => applySustain(data), [data]);
+  const sortedNotes = useMemo(() => {
+    return [...data.notes].sort((a, b) => a.start - b.start || a.pitch - b.pitch);
+  }, [data.notes]);
   const speed = previewSpeed;
   const scaledDuration = data.duration_sec / speed;
   const fallSpeed = BASE_FALL_PX_PER_SEC * settings.note_fall_speed;
@@ -106,7 +116,7 @@ export function FallingNotePreview({ data, settings }: Props) {
       ctx.save();
       ctx.shadowColor = colors.glow;
       ctx.shadowBlur = 24 * settings.glow_intensity;
-      for (const note of data.notes) {
+      for (const note of sortedNotes) {
         const start = note.start / speed;
         const end = note.end / speed;
         if (end < t) continue;
@@ -154,7 +164,7 @@ export function FallingNotePreview({ data, settings }: Props) {
       if (!settings.show_keyboard) return;
 
       const active = new Map<number, string>();
-      for (const note of data.notes) {
+      for (const note of sortedNotes) {
         const start = note.start / speed;
         if (start > t) break;
         if (note.end / speed >= t) active.set(note.pitch, note.hand);
@@ -175,8 +185,63 @@ export function FallingNotePreview({ data, settings }: Props) {
         ctx.fillRect(x, hitY, w, keyboardH * 0.62);
       }
     },
-    [data, settings, width, canvasH, speed, fallSpeed],
+    [settings, width, canvasH, speed, fallSpeed, sortedNotes],
   );
+
+  const startPlayback = useCallback(
+    async (fromSec: number): Promise<void> => {
+      if (!synthRef.current) {
+        synthRef.current = new SampledPiano();
+      }
+      const synth = synthRef.current;
+      synth.stop();
+      setLoadingSound(true);
+      try {
+        await synth.resumeContext();
+        await synth.ensureInstrument();
+        await synth.play(audioNotes, speed, fromSec);
+        setApproxSound(synth.approximate);
+      } finally {
+        setLoadingSound(false);
+      }
+    },
+    [audioNotes, speed],
+  );
+
+  const externalIsPlayingRef = useRef(externalIsPlaying);
+  useEffect(() => {
+    externalIsPlayingRef.current = externalIsPlaying;
+  }, [externalIsPlaying]);
+
+  useEffect(() => {
+    synthRef.current?.stop();
+    pausedAtRef.current = 0;
+    setCurrentTime(0);
+    draw(0);
+    if (externalIsPlayingRef.current) {
+      void startPlayback(0).then(() => setPlaying(true));
+    } else {
+      setPlaying(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.notes, data.duration_sec]);
+
+  const prevExternalRef = useRef<boolean | undefined>(externalIsPlaying);
+  useEffect(() => {
+    if (externalIsPlaying === undefined) return;
+    if (prevExternalRef.current !== externalIsPlaying) {
+      prevExternalRef.current = externalIsPlaying;
+      if (externalIsPlaying && !playing) {
+        const fromSec = pausedAtRef.current >= scaledDuration ? 0 : pausedAtRef.current;
+        pausedAtRef.current = fromSec;
+        setCurrentTime(fromSec);
+        void startPlayback(fromSec).then(() => setPlaying(true));
+      } else if (!externalIsPlaying && playing) {
+        synthRef.current?.stop();
+        setPlaying(false);
+      }
+    }
+  }, [externalIsPlaying, playing, startPlayback, scaledDuration]);
 
   useEffect(() => {
     if (!playing) {
@@ -192,6 +257,9 @@ export function FallingNotePreview({ data, settings }: Props) {
         pausedAtRef.current = 0;
         setCurrentTime(0);
         setPlaying(false);
+        if (externalIsPlaying && onTogglePlay) {
+          onTogglePlay();
+        }
         return;
       }
       pausedAtRef.current = t;
@@ -204,19 +272,7 @@ export function FallingNotePreview({ data, settings }: Props) {
     };
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [playing, draw, scaledDuration]);
-
-  async function startPlayback(fromSec: number): Promise<void> {
-    const synth = synthRef.current;
-    if (!synth) return;
-    setLoadingSound(true);
-    try {
-      await synth.play(audioNotes, speed, fromSec);
-      setApproxSound(synth.approximate);
-    } finally {
-      setLoadingSound(false);
-    }
-  }
+  }, [playing, draw, scaledDuration, externalIsPlaying, onTogglePlay]);
 
   const prevSpeedRef = useRef(speed);
   useEffect(() => {
@@ -241,7 +297,18 @@ export function FallingNotePreview({ data, settings }: Props) {
       setCurrentTime(pausedAtRef.current);
       setPlaying(false);
     } else {
-      void startPlayback(pausedAtRef.current).then(() => setPlaying(true));
+      const fromSec = pausedAtRef.current >= scaledDuration ? 0 : pausedAtRef.current;
+      pausedAtRef.current = fromSec;
+      setCurrentTime(fromSec);
+      void startPlayback(fromSec).then(() => setPlaying(true));
+    }
+  }
+
+  function handlePlayClick() {
+    if (onTogglePlay) {
+      onTogglePlay();
+    } else {
+      togglePlay();
     }
   }
 
@@ -309,7 +376,7 @@ export function FallingNotePreview({ data, settings }: Props) {
           aria-label={`Falling-note preview: ${data.notes.length} notes, ${Math.round(
             scaledDuration,
           )} seconds at ${speed}x`}
-          onClick={togglePlay}
+          onClick={handlePlayClick}
         />
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 bg-gradient-to-t from-black/90 via-black/55 to-transparent p-3 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
           <input
@@ -324,11 +391,11 @@ export function FallingNotePreview({ data, settings }: Props) {
           />
           <div className="flex flex-wrap items-center gap-2 text-xs text-white">
             <button
-              onClick={togglePlay}
+              onClick={handlePlayClick}
               disabled={loadingSound}
               className="min-w-16 rounded bg-white px-3 py-1 font-semibold text-zinc-950 hover:bg-zinc-200 disabled:opacity-60"
             >
-              {loadingSound ? "Load" : playing ? "Pause" : "Play"}
+              {loadingSound ? "Load" : (externalIsPlaying ?? playing) ? "Pause" : "Play"}
             </button>
             <button
               onClick={restart}

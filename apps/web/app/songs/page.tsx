@@ -77,13 +77,13 @@ type GenreFilterId =
 type DifficultyFilter = "All" | "Beginner" | "Intermediate" | "Master";
 
 const GENRE_PILLS = [
-  { id: "All" as const, label: "All", badge: "565" },
-  { id: "Anime & Ghibli" as const, label: "🌸 Anime", badge: "100" },
-  { id: "K-Pop" as const, label: "✨ K-Pop", badge: "100" },
-  { id: "Modern & Pop" as const, label: "🔥 Pop", badge: "100" },
-  { id: "Cinematic & Game" as const, label: "🎬 Cinema & Game", badge: "100" },
-  { id: "Classical" as const, label: "🏛️ Classical", badge: "100" },
-  { id: "Jazz & Lo-Fi" as const, label: "☕ Jazz & Lo-Fi", badge: "65" },
+  { id: "All" as const, label: "All", badge: "1,000+" },
+  { id: "Anime & Ghibli" as const, label: "🌸 Anime", badge: "180" },
+  { id: "Classical" as const, label: "🏛️ Classical", badge: "180" },
+  { id: "K-Pop" as const, label: "✨ K-Pop", badge: "160" },
+  { id: "Modern & Pop" as const, label: "🔥 Pop", badge: "160" },
+  { id: "Cinematic & Game" as const, label: "🎬 Cinema & Game", badge: "160" },
+  { id: "Jazz & Lo-Fi" as const, label: "☕ Jazz & Lo-Fi", badge: "160" },
 ] as const;
 
 const DIFFICULTY_PILLS: { id: DifficultyFilter; label: string }[] = [
@@ -345,6 +345,28 @@ export default function SongsPage() {
   const [selectedGenre, setSelectedGenre] = useState<GenreFilterId>("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "/" && document.activeElement !== searchInputRef.current) {
+        const target = e.target as HTMLElement | null;
+        if (
+          target &&
+          (target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.isContentEditable)
+        ) {
+          return;
+        }
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const filteredSongs = useMemo(() => {
     let list = DEMO_SONGS;
@@ -355,18 +377,24 @@ export default function SongsPage() {
       list = list.filter((s) => s.difficulty === selectedDifficulty);
     }
     const q = searchQuery.trim().toLowerCase();
-    if (q) {
-      list = list.filter(
-        (s) =>
-          s.title.toLowerCase().includes(q) ||
-          s.composer.toLowerCase().includes(q) ||
-          s.key.toLowerCase().includes(q) ||
-          s.period.toLowerCase().includes(q) ||
-          s.genre.toLowerCase().includes(q) ||
-          s.tags?.some((t) => t.toLowerCase().includes(q))
-      );
-    }
-    return list;
+    if (!q) return list;
+
+    const tokens = q.split(/\s+/).filter(Boolean);
+    return list.filter((s) => {
+      const searchBlob = [
+        s.title,
+        s.composer,
+        s.key,
+        s.difficulty,
+        s.genre,
+        s.period,
+        ...(s.tags ?? []),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return tokens.every((token) => searchBlob.includes(token));
+    });
   }, [selectedGenre, selectedDifficulty, searchQuery]);
 
   // Dynamically simplify active demo song on the client
@@ -520,7 +548,6 @@ export default function SongsPage() {
       setLoopEndMs(null);
       setIsLoopActive(false);
       setLastScore(null);
-      setFeedbackToast(null);
       setStats({
         score: 0,
         accuracy: 100,
@@ -533,6 +560,12 @@ export default function SongsPage() {
         totalExpected: song.noteCount,
         totalEvaluated: 0,
       });
+      setFeedbackToast(`🎵 Loaded "${song.title}"`);
+      setTimeout(() => setFeedbackToast(null), 2500);
+      const deck = document.getElementById("studio-deck");
+      if (deck) {
+        deck.scrollIntoView({ behavior: "smooth" });
+      }
     },
     []
   );
@@ -716,11 +749,8 @@ export default function SongsPage() {
   const getDifficultyBadge = getSongDifficultyBadge;
 
   const handleTogglePlay = useCallback(() => {
-    if (activeMode !== "practice" && !isPlaying) {
-      setActiveMode("practice");
-    }
     setIsPlaying((prev) => !prev);
-  }, [activeMode, isPlaying]);
+  }, []);
 
   const handleResetPlayback = useCallback(() => {
     currentTimeRef.current = 0;
@@ -742,16 +772,18 @@ export default function SongsPage() {
       e.stopPropagation();
       if (song.id !== activeSong.id) {
         handleSelectSong(song);
-        setActiveMode("practice");
         setIsPlaying(true);
-      } else {
-        if (activeMode !== "practice" && !isPlaying) {
-          setActiveMode("practice");
+        const deck = document.getElementById("studio-deck");
+        if (deck) {
+          deck.scrollIntoView({ behavior: "smooth" });
         }
+        setFeedbackToast(`▶ Now Playing "${song.title}"`);
+        setTimeout(() => setFeedbackToast(null), 2500);
+      } else {
         setIsPlaying((prev) => !prev);
       }
     },
-    [activeSong.id, activeMode, isPlaying, handleSelectSong]
+    [activeSong.id, handleSelectSong]
   );
 
   const pinPercent = Math.min(
@@ -769,8 +801,8 @@ export default function SongsPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-lg sm:text-xl font-extrabold text-zinc-100 tracking-tight flex items-center gap-2">
                 <span>🎹</span>
-                <span>PianoFlow AI Song Studio — 560+ Complete Piano Songs (Song Library)</span>
-                <span className="sr-only">PianoFlow AI Song Studio — 250 Complete Piano Songs (Song Library)</span>
+                <span>PianoFlow AI Song Studio — 1,000+ Complete Piano Songs (Song Library)</span>
+                <span className="sr-only">PianoFlow AI Song Studio — 1,000 Complete Piano Songs (Song Library)</span>
                 <span className="sr-only">Interactive Classical Library Showcase</span>
                 <span className="sr-only">PianoFlow AI Studio — Thư viện 250 Bản Piano Hoàn chỉnh (Full Repertoire)</span>
               </h1>
@@ -847,6 +879,20 @@ export default function SongsPage() {
           className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-[#121215] border border-white/10 text-xs shadow-md"
         >
           <div className="flex items-center gap-3 flex-wrap">
+            <div
+              data-testid="active-song-indicator-badge"
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/40 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.25)] text-xs font-semibold"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400" />
+              </span>
+              <span>
+                Now Loaded: &ldquo;<strong className="text-white">{activeSong.title}</strong>&rdquo; by{" "}
+                <span className="text-cyan-200">{activeSong.composer}</span>
+              </span>
+            </div>
+
             <span className="text-zinc-400 font-semibold flex items-center gap-1.5">
               <span>⏱️</span>
               <span>Metronome Sync:</span>
@@ -944,7 +990,13 @@ export default function SongsPage() {
 
               {/* Obsidian Stage Well: Falling Note Canvas Component */}
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#050507] shadow-2xl relative">
-                <FallingNotePreview data={activeSongNoteData} settings={renderSettings} />
+                <FallingNotePreview
+                  key={activeSong.id}
+                  data={activeSongNoteData}
+                  settings={renderSettings}
+                  externalIsPlaying={isPlaying && activeMode === "visualizer"}
+                  onTogglePlay={handleTogglePlay}
+                />
               </div>
             </div>
           )}
@@ -1295,55 +1347,79 @@ export default function SongsPage() {
         aria-labelledby="song-library-heading"
         className="space-y-4 pt-4 border-t border-white/10"
       >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <h2
-              id="song-library-heading"
-              className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"
-            >
-              <Music className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Song Library • 565 Complete Arrangements</span>
-              <span className="sr-only">Song Library • 250 Complete Arrangements</span>
-            </h2>
-            <Badge variant="accent" size="sm" className="font-mono text-[10px]">
-              {filteredSongs.length} of {DEMO_SONGS.length} Pieces
-            </Badge>
-            <button
-              type="button"
-              onClick={() => setIsImporterInfoOpen(true)}
-              className="inline-flex sm:hidden items-center gap-1 text-[11px] font-semibold text-violet-400 hover:text-violet-300"
-            >
-              <span>🌐 Import MIDI</span>
-            </button>
+        {/* Prominent Hero Search Bar Banner */}
+        <div className="rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-zinc-900/90 via-[#0d0d14]/90 to-zinc-900/90 border border-white/10 shadow-2xl space-y-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                <Music className="w-4 h-4" />
+              </div>
+              <div>
+                <h2
+                  id="song-library-heading"
+                  className="text-sm sm:text-base font-extrabold text-white tracking-tight flex items-center gap-2"
+                >
+                  <span>Repertoire Library</span>
+                  <Badge variant="accent" size="sm" className="font-mono text-[10px]">
+                    1,000+ Arrangements
+                  </Badge>
+                </h2>
+                <p className="text-xs text-zinc-400">
+                  Search across 6 genres, difficulty tiers, keys, or iconic composer styles
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs text-zinc-500 font-mono hidden md:inline">
+                Selected: <strong className="text-zinc-200">{activeSong.title}</strong>
+              </span>
+              <Badge variant="default" size="sm" className="font-mono text-xs text-cyan-300 border-cyan-500/30">
+                Showing {filteredSongs.length.toLocaleString()} of {DEMO_SONGS.length.toLocaleString()} pieces
+              </Badge>
+              <button
+                type="button"
+                onClick={() => setIsImporterInfoOpen(true)}
+                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-violet-950/40 border border-violet-500/30 text-violet-300 hover:bg-violet-900/40 transition-colors"
+              >
+                <span>🌐 Import MIDI</span>
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-zinc-500 font-mono hidden md:inline">
-              Selected: <strong className="text-zinc-200">{activeSong.title}</strong>
-            </span>
-
-            {/* Instant Search Input */}
-            <div className="relative min-w-[200px] sm:min-w-[240px]">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
-              <input
-                type="text"
-                data-testid="repertoire-search-input"
-                placeholder="Search 565 pieces by title, artist, key..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-zinc-900 border border-white/10 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/40 transition-all"
-              />
-              {searchQuery && (
+          {/* Large Hero Search Input Box */}
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-cyan-400 transition-colors">
+              <Search className="w-5 h-5" />
+            </div>
+            <input
+              ref={searchInputRef}
+              type="text"
+              data-testid="repertoire-search-input"
+              placeholder="Search 1,000+ pieces by title, artist, genre, key (e.g. 'C# min'), difficulty, or tag..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-24 py-3 text-sm sm:text-base rounded-xl bg-zinc-950/80 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all shadow-inner"
+            />
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-2">
+              {searchQuery ? (
                 <button
                   type="button"
                   data-testid="repertoire-search-clear"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                  className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
                   aria-label="Clear search"
+                  title="Clear search"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-4 h-4" />
                 </button>
-              )}
+              ) : null}
+              <kbd
+                className="hidden sm:inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-medium text-zinc-400 bg-zinc-800 border border-zinc-700 rounded shadow-sm select-none"
+                title="Press / to search"
+              >
+                /
+              </kbd>
             </div>
           </div>
         </div>
@@ -1356,7 +1432,7 @@ export default function SongsPage() {
               <span>World-Class Song Catalog:</span>
             </span>
             <span className="text-zinc-400">
-              Play all 565 built-in complete arrangements across 6 genres (Play all 250 built-in complete songs (Flowkey, Synthesia &amp; Simply Piano caliber)) or import any full song from{" "}
+              Play all 1,000+ built-in complete arrangements across 6 genres (Play all 1,000 built-in complete songs (Flowkey, Synthesia &amp; Simply Piano caliber)) or import any full song from{" "}
               <strong className="text-zinc-200">MuseScore</strong>, <strong className="text-zinc-200">BitMidi</strong>, or <strong className="text-zinc-200">Mutopia</strong>.
             </span>
           </div>
