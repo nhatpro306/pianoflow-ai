@@ -134,9 +134,7 @@ class FfmpegVideoEncoder:
             stderr_thread.join(timeout=5)
             if process.returncode != 0:
                 err_text = b"".join(stderr_chunks).decode("utf-8", errors="replace")
-                raise VideoEncodeError(
-                    f"ffmpeg exited {process.returncode}: {err_text[-300:]!r}"
-                )
+                raise VideoEncodeError(f"ffmpeg exited {process.returncode}: {err_text[-300:]!r}")
             if not out_path.is_file() or out_path.stat().st_size < 1000:
                 raise VideoEncodeError("ffmpeg produced an empty MP4.")
             return out_path
