@@ -41,6 +41,7 @@ import {
 } from "@/lib/midi/MidiEngine";
 import { useWebMidi } from "@/lib/midi/useWebMidi";
 import { AcousticPianoFeedback } from "@/lib/audio/acousticFeedback";
+import { AccompanimentEngine } from "@/lib/audio/accompanimentEngine";
 import {
   buildSessionAnalyticsReport,
   type SessionAnalyticsReport,
@@ -513,11 +514,34 @@ export default function SongsPage() {
   const [isWaitMode, setIsWaitMode] = useState(true);
   const [handMode, setHandMode] = useState<HandPracticeMode>("both");
   const [speedMultiplier, setSpeedMultiplier] = useState(1.0);
+  const [autoSoundEnabled, setAutoSoundEnabled] = useState(true);
   const [loopStartMs, setLoopStartMs] = useState<number | null>(null);
   const [loopEndMs, setLoopEndMs] = useState<number | null>(null);
   const [isLoopActive, setIsLoopActive] = useState(false);
   const [lastScore, setLastScore] = useState<ScoreEvent | null>(null);
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
+
+  // Grand Piano accompaniment engine for realistic audio playback during practice
+  const accompanimentRef = useRef<AccompanimentEngine | null>(null);
+
+  useEffect(() => {
+    const acc = new AccompanimentEngine({ autoPlayAll: true, enabled: true, volume: 0.8 });
+    void acc.init();
+    accompanimentRef.current = acc;
+    return () => {
+      acc.destroy();
+      accompanimentRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (accompanimentRef.current) {
+      accompanimentRef.current.setNotes(expectedNotesList);
+      accompanimentRef.current.setHandMode(handMode);
+      accompanimentRef.current.setSpeed(speedMultiplier);
+      accompanimentRef.current.setEnabled(autoSoundEnabled);
+    }
+  }, [expectedNotesList, handMode, speedMultiplier, autoSoundEnabled]);
 
   const [stats, setStats] = useState<PracticeStats>({
     score: 0,
@@ -587,6 +611,8 @@ export default function SongsPage() {
       setActiveSong(song);
       currentTimeRef.current = 0;
       setIsPlaying(false);
+      accompanimentRef.current?.seek(0);
+      accompanimentRef.current?.pause();
       setLoopStartMs(null);
       setLoopEndMs(null);
       setIsLoopActive(false);
@@ -701,6 +727,7 @@ export default function SongsPage() {
     (timeMs: number) => {
       currentTimeRef.current = timeMs;
       engine.seek(timeMs);
+      accompanimentRef.current?.seek(timeMs);
       updateExpectedNotes();
     },
     [engine, updateExpectedNotes]
@@ -723,16 +750,21 @@ export default function SongsPage() {
             candidateTime = loopStartMs;
             currentTimeRef.current = candidateTime;
             engine.seek(candidateTime);
+            accompanimentRef.current?.seek(candidateTime);
           }
         } else if (candidateTime >= totalDurationMs) {
           setIsPlaying(false);
+          accompanimentRef.current?.pause();
           return;
         }
 
         const shouldPause = engine.processInput(combinedActiveNotes, candidateTime, isWaitMode);
 
         if (!shouldPause) {
+          accompanimentRef.current?.tick(candidateTime, prevTime);
           currentTimeRef.current = candidateTime;
+        } else {
+          accompanimentRef.current?.pause();
         }
         updateExpectedNotes();
       }
@@ -758,6 +790,7 @@ export default function SongsPage() {
       lastTimeRef.current = performance.now();
       requestRef.current = requestAnimationFrame(animate);
     } else {
+      accompanimentRef.current?.pause();
       if (requestRef.current !== null) {
         cancelAnimationFrame(requestRef.current);
         requestRef.current = null;
@@ -765,6 +798,7 @@ export default function SongsPage() {
       lastTimeRef.current = null;
     }
     return () => {
+      accompanimentRef.current?.pause();
       if (requestRef.current !== null) {
         cancelAnimationFrame(requestRef.current);
       }
@@ -787,6 +821,7 @@ export default function SongsPage() {
       setSpeedMultiplier(drill.recommendedSpeed || 0.75);
       currentTimeRef.current = drill.loopStartMs;
       engine.seek(drill.loopStartMs);
+      accompanimentRef.current?.seek(drill.loopStartMs);
       setFeedbackToast(`🎯 Loaded ${drill.title} at ${drill.recommendedSpeed || 0.75}x`);
       setTimeout(() => setFeedbackToast(null), 3000);
     },
@@ -802,6 +837,7 @@ export default function SongsPage() {
       setSpeedMultiplier(0.75);
       currentTimeRef.current = measure.startMs;
       engine.seek(measure.startMs);
+      accompanimentRef.current?.seek(measure.startMs);
       setFeedbackToast(`🎯 Loaded Measure ${measure.measureNumber} at 0.75x`);
       setTimeout(() => setFeedbackToast(null), 3000);
     },
@@ -817,6 +853,7 @@ export default function SongsPage() {
   const handleResetPlayback = useCallback(() => {
     currentTimeRef.current = 0;
     engine.seek(0);
+    accompanimentRef.current?.seek(0);
     updateExpectedNotes();
   }, [engine, updateExpectedNotes]);
 
@@ -1114,6 +1151,7 @@ export default function SongsPage() {
                     onClick={() => {
                       currentTimeRef.current = 0;
                       engine.seek(0);
+                      accompanimentRef.current?.seek(0);
                       updateExpectedNotes();
                     }}
                     className="text-xs gap-1"
@@ -1130,6 +1168,18 @@ export default function SongsPage() {
                     className="text-xs font-bold"
                   >
                     {isWaitMode ? "Wait Mode ⏸️" : "Tempo Mode ▶️"}
+                  </Button>
+
+                  {/* Auto Sound Grand Piano toggle */}
+                  <Button
+                    size="sm"
+                    variant={autoSoundEnabled ? "primary" : "outline"}
+                    onClick={() => setAutoSoundEnabled(!autoSoundEnabled)}
+                    data-testid="auto-sound-toggle"
+                    className="text-xs font-bold gap-1"
+                    title="Automatically play Grand Piano sound for song notes during practice"
+                  >
+                    <span>{autoSoundEnabled ? "Grand Piano: ON 🎹" : "Grand Piano: MUTE 🔇"}</span>
                   </Button>
 
                   {/* Hand selector */}

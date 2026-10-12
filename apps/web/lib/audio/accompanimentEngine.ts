@@ -2,11 +2,13 @@
 
 import type { SplendidGrandPiano } from "smplr";
 import type { ExpectedNote, HandPracticeMode } from "../midi/MidiEngine";
+import { getSharedAudioContext } from "../sampledPiano";
 
 export interface AccompanimentEngineOptions {
   volume?: number;
   enabled?: boolean;
   handMode?: HandPracticeMode;
+  autoPlayAll?: boolean;
 }
 
 /**
@@ -26,23 +28,34 @@ export class AccompanimentEngine {
   private handMode: HandPracticeMode = "both";
   private volume = 0.7; // Default 70% volume for pedagogical balance
   private enabled = true;
+  private autoPlayAll = false;
   private speed = 1.0;
   private activeOscillators = new Map<number, { osc: OscillatorNode; gain: GainNode }>();
   private activeTimers = new Set<ReturnType<typeof setTimeout>>();
 
-  constructor(ctx?: AudioContext | null, options?: AccompanimentEngineOptions) {
-    if (ctx) {
-      this.ctx = ctx;
+  constructor(
+    ctxOrOptions?: AudioContext | null | AccompanimentEngineOptions,
+    options?: AccompanimentEngineOptions
+  ) {
+    let opts = options;
+    if (ctxOrOptions && typeof ctxOrOptions === "object" && !("currentTime" in ctxOrOptions)) {
+      opts = ctxOrOptions as AccompanimentEngineOptions;
+    } else if (ctxOrOptions) {
+      this.ctx = ctxOrOptions as AudioContext;
       this.ownsContext = false;
     }
-    if (options?.volume !== undefined) {
-      this.volume = Math.max(0, Math.min(1, options.volume));
+
+    if (opts?.volume !== undefined) {
+      this.volume = Math.max(0, Math.min(1, opts.volume));
     }
-    if (options?.enabled !== undefined) {
-      this.enabled = options.enabled;
+    if (opts?.enabled !== undefined) {
+      this.enabled = opts.enabled;
     }
-    if (options?.handMode !== undefined) {
-      this.handMode = options.handMode;
+    if (opts?.handMode !== undefined) {
+      this.handMode = opts.handMode;
+    }
+    if (opts?.autoPlayAll !== undefined) {
+      this.autoPlayAll = opts.autoPlayAll;
     }
   }
 
@@ -53,13 +66,8 @@ export class AccompanimentEngine {
     if (typeof window === "undefined") return;
     try {
       if (!this.ctx) {
-        const AudioCtx =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        if (AudioCtx) {
-          this.ctx = new AudioCtx();
-          this.ownsContext = true;
-        }
+        this.ctx = getSharedAudioContext();
+        this.ownsContext = false;
       }
 
       if (this.ctx && this.ctx.state === "suspended") {
@@ -128,17 +136,31 @@ export class AccompanimentEngine {
    * Sets the hand isolation mode.
    * - "right": user plays Right Hand, accompaniment plays Left Hand ("L").
    * - "left": user plays Left Hand, accompaniment plays Right Hand ("R").
-   * - "both": user plays both hands; accompaniment is silent.
+   * - "both": user plays both hands; accompaniment is silent unless autoPlayAll is active.
    */
   public setHandMode(mode: HandPracticeMode): void {
     this.handMode = mode;
-    if (mode === "both") {
+    if (mode === "both" && !this.autoPlayAll) {
       this.pause();
     }
   }
 
   public getHandMode(): HandPracticeMode {
     return this.handMode;
+  }
+
+  /**
+   * Configures whether all notes should be automatically played with Grand Piano sound.
+   */
+  public setAutoPlayAll(autoPlayAll: boolean): void {
+    this.autoPlayAll = autoPlayAll;
+    if (!autoPlayAll && this.handMode === "both") {
+      this.pause();
+    }
+  }
+
+  public isAutoPlayAll(): boolean {
+    return this.autoPlayAll;
   }
 
   /**
@@ -206,10 +228,11 @@ export class AccompanimentEngine {
   /**
    * Frame-by-frame tick evaluator:
    * Plays notes that start in the half-open interval [prevTimeMs, currentTimeMs)
-   * for the unpracticed hand.
+   * for the unpracticed hand (or all notes if autoPlayAll is enabled).
    */
   public tick(currentTimeMs: number, prevTimeMs: number): void {
-    if (!this.enabled || this.handMode === "both" || this.volume <= 0) return;
+    if (!this.enabled || this.volume <= 0) return;
+    if (this.handMode === "both" && !this.autoPlayAll) return;
     if (currentTimeMs <= prevTimeMs) return;
     // Guard against massive jump (e.g. background tab wake-up without explicit seek)
     if (currentTimeMs - prevTimeMs > 500) return;
@@ -221,6 +244,7 @@ export class AccompanimentEngine {
 
       const isRH = note.hand ? note.hand === "R" : note.pitch >= 60;
       const isAccompanimentNote =
+        this.autoPlayAll ||
         (this.handMode === "right" && !isRH) ||
         (this.handMode === "left" && isRH);
 
