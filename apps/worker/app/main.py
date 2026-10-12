@@ -10,13 +10,12 @@ import time
 import uuid
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from types import TracebackType
 from typing import Literal
 
 from app.config import get_settings
 from app.jobs.base import RequeueJob
 from app.jobs.registry import get_handler
-from app.queue import JobMessage, QueueError, SqsQueueService, get_queue
+from app.queue import MessageHeartbeat, QueueError, get_queue
 
 logger = logging.getLogger(__name__)
 
@@ -33,83 +32,6 @@ def _handle_signal(signum: int, frame: object) -> None:
 
 
 ProcessResult = Literal["ack", "drop", "requeue"]
-
-
-class MessageHeartbeat:
-    """Background thread that keeps SQS visibility timeout alive during long-running tasks.
-
-    If queue is SQS, calls change_visibility every `interval_seconds` (default 30s)
-    to prevent message from returning to queue during long jobs (e.g. video rendering).
-    Stops cleanly when the job completes, fails, or crashes.
-    """
-
-    def __init__(
-        self,
-        queue: object,
-        message: JobMessage,
-        interval_seconds: float = 30.0,
-        visibility_timeout: int = DEFAULT_JOB_VISIBILITY_SECONDS,
-    ) -> None:
-        self.queue = queue
-        self.message = message
-        self.interval = interval_seconds
-        self.visibility_timeout = visibility_timeout
-        self._stop_event = threading.Event()
-        self._thread: threading.Thread | None = None
-
-    def start(self) -> None:
-        if not (isinstance(self.queue, SqsQueueService) or getattr(self.queue, "is_sqs", False)):
-            return
-        self._stop_event.clear()
-        self._thread = threading.Thread(
-            target=self._run,
-            name=f"heartbeat-{self.message.id[:8]}",
-            daemon=True,
-        )
-        self._thread.start()
-
-    def _run(self) -> None:
-        while not self._stop_event.wait(self.interval):
-            try:
-                if hasattr(self.queue, "change_visibility"):
-                    self.queue.change_visibility(
-                        self.message, visibility_timeout=self.visibility_timeout
-                    )
-                logger.debug(
-                    "heartbeat renewed message visibility",
-                    extra={
-                        "event": "worker.heartbeat_renewed",
-                        "message_id": self.message.id,
-                        "visibility_timeout": self.visibility_timeout,
-                    },
-                )
-            except Exception as exc:
-                logger.warning(
-                    "failed to renew message visibility",
-                    extra={
-                        "event": "worker.heartbeat_failed",
-                        "message_id": self.message.id,
-                        "error": str(exc),
-                    },
-                )
-
-    def stop(self) -> None:
-        self._stop_event.set()
-        if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=2.0)
-            self._thread = None
-
-    def __enter__(self) -> "MessageHeartbeat":
-        self.start()
-        return self
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> None:
-        self.stop()
 
 
 def _should_skip_duplicate(payload: dict) -> bool:
@@ -304,13 +226,21 @@ def run() -> None:
         if message is None:
             continue
 
-        with MessageHeartbeat(
-            queue=queue,
-            message=message,
-            interval_seconds=30.0,
-            visibility_timeout=visibility_timeout,
-        ):
-            result = process_payload(message.body)
+        try:
+            with MessageHeartbeat(
+                queue=queue,
+                message=message,
+                interval_seconds=30.0,
+                visibility_timeout=visibility_timeout,
+            ):
+                result = process_payload(message.body)
+        except Exception as exc:
+            logger.exception(
+                "unexpected exception in message processing",
+                extra={"event": "worker.unexpected_job_exception"},
+            )
+            _record_worker_crash(message.body, exc)
+            result = "drop"
 
         if result == "ack":
             queue.ack(message)

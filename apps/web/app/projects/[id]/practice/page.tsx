@@ -324,7 +324,19 @@ export default function PracticePage() {
         }
       }
     }
-    setExpectedNotesSet(set);
+    setExpectedNotesSet((prev) => {
+      if (prev.size === set.size) {
+        let same = true;
+        for (const p of set) {
+          if (!prev.has(p)) {
+            same = false;
+            break;
+          }
+        }
+        if (same) return prev;
+      }
+      return set;
+    });
   }, [expectedNotesList]);
 
   const expectedNotesHandMap = useMemo(() => {
@@ -659,7 +671,7 @@ export default function PracticePage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-zinc-950 text-white overflow-hidden relative">
+    <div className="flex flex-col h-[calc(100dvh-3.5625rem)] bg-zinc-950 text-white overflow-hidden relative">
       {/* Auto Ramp Speed Boost Toast Notification */}
       {rampToast && (
         <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-none">

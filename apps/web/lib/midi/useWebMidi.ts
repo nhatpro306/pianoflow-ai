@@ -17,7 +17,7 @@ export function useWebMidi(options?: UseWebMidiOptions) {
   const [midiAccess, setMidiAccess] = useState<MIDIAccess | null>(null);
   const [inputs, setInputs] = useState<MIDIInput[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [messages, setMessages] = useState<MidiMessage[]>([]);
+  const [messages] = useState<MidiMessage[]>([]);
   const [activeNotes, setActiveNotes] = useState<Set<number>>(new Set());
 
   const optionsRef = useRef(options);
@@ -75,14 +75,12 @@ export function useWebMidi(options?: UseWebMidiOptions) {
     // Status byte: 1000nnnn (Note Off), 1001nnnn (Note On), 1011nnnn (Control Change)
     const statusByte = midiEvent.data[0];
     const command = statusByte >> 4;
-    const channel = statusByte & 0xf;
     const note = midiEvent.data[1];
     const velocity = midiEvent.data[2];
 
     // Some keyboards send Note On with 0 velocity instead of Note Off
     const isNoteOff = command === 8 || (command === 9 && velocity === 0);
     const isNoteOn = command === 9 && velocity > 0;
-    const normalizedCommand = isNoteOff ? 8 : command;
 
     if (isNoteOn) {
       optionsRef.current?.onNoteOn?.(note, velocity);
@@ -91,25 +89,19 @@ export function useWebMidi(options?: UseWebMidiOptions) {
     }
 
     setActiveNotes((prev) => {
-      const next = new Set(prev);
-      if (isNoteOn) {
+      const exists = prev.has(note);
+      if (isNoteOn && !exists) {
+        const next = new Set(prev);
         next.add(note);
-      } else if (isNoteOff) {
-        next.delete(note);
+        return next;
       }
-      return next;
+      if (isNoteOff && exists) {
+        const next = new Set(prev);
+        next.delete(note);
+        return next;
+      }
+      return prev;
     });
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        command: normalizedCommand,
-        channel,
-        note,
-        velocity: isNoteOff ? 0 : velocity,
-        timestamp: performance.now(),
-      },
-    ].slice(-100)); // Keep last 100 messages
   }, []);
 
   useEffect(() => {

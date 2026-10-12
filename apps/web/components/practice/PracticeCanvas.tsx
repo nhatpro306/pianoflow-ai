@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { keyRect, WHITE_KEY_COUNT } from "@/lib/piano";
 import type { ExpectedNote, ScoreEvent, HandPracticeMode } from "@/lib/midi/MidiEngine";
-import type {
-  LiveMicroTimingFeedback,
-  MicroTimingSessionStats,
+import {
+  type LiveMicroTimingFeedback,
+  type MicroTimingSessionStats,
+  classifyMicroTiming,
 } from "@/lib/practice/microTiming";
 import { MicroTimingGauge } from "./MicroTimingGauge";
 
@@ -212,12 +213,19 @@ export function PracticeCanvas({
   isFullView = false,
   timingFeedback = null,
   timingStats = null,
-  showTimingGauge = false,
+  showTimingGauge = true,
   className = "",
 }: PracticeCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 });
+
+  // Internal micro-timing feedback derived from lastScore when not explicitly supplied externally
+  const [internalTimingFeedback, setInternalTimingFeedback] = useState<LiveMicroTimingFeedback | null>(null);
+  const activeTimingFeedback =
+    timingFeedback !== null && timingFeedback !== undefined
+      ? timingFeedback
+      : internalTimingFeedback;
 
   // Mutable camera offset and frame time
   const cameraXRef = useRef<number>(0);
@@ -275,6 +283,20 @@ export function PracticeCanvas({
         time: Date.now(),
       });
 
+      // Classify micro-timing feedback from score event if not explicitly provided externally
+      const struckPitch = lastScore.playedPitch ?? lastScore.note?.pitch ?? 60;
+      const expectedPitch = lastScore.note?.pitch ?? struckPitch;
+      const hand = (lastScore.note?.hand as "L" | "R") ?? (struckPitch >= 60 ? "R" : "L");
+      const derived = classifyMicroTiming(
+        lastScore.timeDiff,
+        struckPitch,
+        expectedPitch,
+        hand,
+        lastScore.note?.name,
+        Date.now()
+      );
+      setInternalTimingFeedback(derived);
+
       // Spawn glowing radiant spark particles at hit location in virtual space
       const pitch = lastScore.playedPitch ?? lastScore.note?.pitch;
       if (pitch && pitch >= 21 && pitch <= 108) {
@@ -307,14 +329,14 @@ export function PracticeCanvas({
 
   // Micro-timing calibrated particle spark emission
   useEffect(() => {
-    if (timingFeedback) {
-      const pitch = timingFeedback.notePitch;
+    if (activeTimingFeedback) {
+      const pitch = activeTimingFeedback.notePitch;
       if (pitch && pitch >= 21 && pitch <= 108) {
         const lane = keyRect(pitch, virtualWidth);
         const sparkX = lane.x + lane.w / 2;
         const sparkY = dimensions.height - 4;
 
-        if (timingFeedback.rating === "pocket") {
+        if (activeTimingFeedback.rating === "pocket") {
           particlePoolRef.current.spawn(
             sparkX,
             sparkY,
@@ -322,7 +344,7 @@ export function PracticeCanvas({
             18,
             5.0
           );
-        } else if (timingFeedback.rating === "early") {
+        } else if (activeTimingFeedback.rating === "early") {
           particlePoolRef.current.spawn(
             sparkX,
             sparkY,
@@ -330,7 +352,7 @@ export function PracticeCanvas({
             14,
             4.0
           );
-        } else if (timingFeedback.rating === "late") {
+        } else if (activeTimingFeedback.rating === "late") {
           particlePoolRef.current.spawn(
             sparkX,
             sparkY,
@@ -338,12 +360,12 @@ export function PracticeCanvas({
             14,
             4.0
           );
-        } else if (timingFeedback.rating === "miss") {
+        } else if (activeTimingFeedback.rating === "miss") {
           particlePoolRef.current.spawn(sparkX, sparkY, ["#f43f5e", "#fb7185"], 6, 2.0);
         }
       }
     }
-  }, [timingFeedback, virtualWidth, dimensions.height]);
+  }, [activeTimingFeedback, virtualWidth, dimensions.height]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -590,6 +612,49 @@ export function PracticeCanvas({
       }
     }
 
+    // Live Micro-Timing Strike Reticle / Target Bullseye at strike line (Milestone N.1)
+    if (activeTimingFeedback && Date.now() - activeTimingFeedback.timestamp < 1000) {
+      const p = activeTimingFeedback.notePitch;
+      if (p >= 21 && p <= 108) {
+        const lane = keyRect(p, virtualWidth);
+        const centerX = lane.x + lane.w / 2;
+        const color = activeTimingFeedback.color; // #10b981 (pocket), #f59e0b (early), #0284c7 (late), #ef4444 (miss)
+        const age = Date.now() - activeTimingFeedback.timestamp;
+        const alpha = Math.max(0, 1 - age / 1000);
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = color;
+        ctx.fillStyle = `${color}25`;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 14;
+
+        // Outer Reticle Target Ring
+        const ringRadius = Math.max(9, lane.w * 0.45);
+        ctx.beginPath();
+        ctx.arc(centerX, hitY, ringRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fill();
+
+        // Inner Bullseye Dot
+        ctx.beginPath();
+        ctx.arc(centerX, hitY, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+
+        // Precision Crosshairs
+        ctx.beginPath();
+        ctx.moveTo(centerX - ringRadius - 4, hitY);
+        ctx.lineTo(centerX + ringRadius + 4, hitY);
+        ctx.moveTo(centerX, hitY - ringRadius - 4);
+        ctx.lineTo(centerX, hitY + ringRadius + 4);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    }
+
     // Update and draw active particle sparks in virtual space
     particlePoolRef.current.updateAndDraw(ctx);
 
@@ -614,6 +679,7 @@ export function PracticeCanvas({
     loopEndMs,
     isLoopActive,
     showNoteNames,
+    activeTimingFeedback,
   ]);
 
   useEffect(() => {
@@ -650,15 +716,15 @@ export function PracticeCanvas({
         style={{ width: dimensions.width, height: dimensions.height }}
       />
 
-      {/* Embedded Live Micro-Timing Strike Gauge (when enabled) */}
-      {showTimingGauge && (
+      {/* Embedded Live Micro-Timing Strike Gauge (default visible during active practice) */}
+      {showTimingGauge !== false && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-20">
-          <MicroTimingGauge feedback={timingFeedback} stats={timingStats} />
+          <MicroTimingGauge feedback={activeTimingFeedback} stats={timingStats} />
         </div>
       )}
 
-      {/* Real-time Hit Feedback Popup Overlay in Screen Space */}
-      {!showTimingGauge && activeFeedback && Date.now() - activeFeedback.time < 1200 && (
+      {/* Real-time Hit Feedback Popup Overlay in Screen Space (fallback when timing gauge is explicitly hidden) */}
+      {showTimingGauge === false && activeFeedback && Date.now() - activeFeedback.time < 1200 && (
         <div className="absolute bottom-12 left-1/2 -translate-x-1/2 pointer-events-none transition-all duration-300 animate-in fade-in zoom-in-90 flex flex-col items-center">
           <span
             className={`text-2xl font-black tracking-wider uppercase drop-shadow-[0_0_15px_rgba(0,0,0,0.8)] ${

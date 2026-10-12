@@ -51,9 +51,25 @@ smoke.wav
 # Claude session state (local only)
 .claude/session-state.md
 
+# Logs
+*.log
+lambda_logs.txt
+logs.txt
+
+# Scratch MIDI & Audio (preserve test fixtures)
+*.mid
+!**/fixtures/*.mid
+*.wav
+!**/fixtures/*.wav
+
+# Scratch JSON files & test payloads
 env.json
-*.txt
 submit.json
-test.mid
+payload.json
+*-scratch.json
+scratch.json
+
+# Scratch texts & backups
+*.txt
 vercel.json.bak
 

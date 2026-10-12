@@ -955,20 +955,24 @@ export default function SongsPage() {
                 <span className="text-cyan-200">{activeSong.composer}</span>
               </span>
               {Boolean(activeSong.isCanonical || activeSong.qualityTier === "studio_master") && (
-                <span
+                <Badge
+                  variant="warning"
+                  size="sm"
                   data-testid="studio-master-active-badge"
-                  className="ml-1.5 inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                  className="ml-1.5 gap-1 text-[10px] font-semibold tracking-wide"
                 >
                   ⭐ Studio Master (Authentic MIDI)
-                </span>
+                </Badge>
               )}
               {Boolean(activeSong.isFullLength || isSongFullLength(activeSong)) && (
-                <span
+                <Badge
+                  variant="success"
+                  size="sm"
                   data-testid="full-song-active-badge"
-                  className="ml-1.5 inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                  className="ml-1.5 gap-1 text-[10px] font-semibold tracking-wide"
                 >
                   ✨ Full Song (Trọn vẹn)
-                </span>
+                </Badge>
               )}
             </div>
 
@@ -1687,20 +1691,24 @@ export default function SongsPage() {
                       <p className="text-xs text-zinc-400 mt-0.5 truncate">{song.composer}</p>
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
                         {Boolean(song.isCanonical || song.qualityTier === "studio_master") && (
-                          <span
+                          <Badge
+                            variant="warning"
+                            size="sm"
                             data-testid={`badge-studio-master-${song.id}`}
-                            className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                            className="gap-1 text-[10px] font-semibold tracking-wide"
                           >
                             ⭐ Studio Master (Authentic MIDI)
-                          </span>
+                          </Badge>
                         )}
                         {Boolean(song.isFullLength || isSongFullLength(song)) && (
-                          <span
+                          <Badge
+                            variant="success"
+                            size="sm"
                             data-testid={`badge-full-song-${song.id}`}
-                            className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                            className="gap-1 text-[10px] font-semibold tracking-wide"
                           >
                             ✨ Full Song (Trọn vẹn)
-                          </span>
+                          </Badge>
                         )}
                       </div>
                     </div>

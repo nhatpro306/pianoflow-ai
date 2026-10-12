@@ -386,7 +386,7 @@ class TestTranscribeUrlOrchestration:
         mock_download.side_effect = fake_download
         mock_map_reduce.return_value = {"status": "success", "notes": {}}
 
-        transcribe_url(s3_url, {"engine": "transkun"})
+        getattr(transcribe_url, "local", transcribe_url)(s3_url, {"engine": "transkun"})
 
         mock_download.assert_called_once()
         mock_extract.assert_not_called()
@@ -411,7 +411,7 @@ class TestTranscribeUrlOrchestration:
         mock_extract.side_effect = fake_extract
         mock_map_reduce.return_value = {"status": "success", "notes": {}}
 
-        transcribe_url(yt_url, {"engine": "transkun"})
+        getattr(transcribe_url, "local", transcribe_url)(yt_url, {"engine": "transkun"})
 
         mock_extract.assert_called_once()
         mock_download.assert_not_called()
@@ -419,8 +419,10 @@ class TestTranscribeUrlOrchestration:
 
     def test_rejects_ssrf_before_download(self) -> None:
         with pytest.raises(ValueError, match="forbidden"):
-            transcribe_url("http://127.0.0.1:8000/audio.mp3", {})
+            getattr(transcribe_url, "local", transcribe_url)("http://127.0.0.1:8000/audio.mp3", {})
 
     def test_rejects_disallowed_domain(self) -> None:
         with pytest.raises(ValueError, match="allowlist"):
-            transcribe_url("https://malicious-site-unknown.org/video", {})
+            getattr(transcribe_url, "local", transcribe_url)(
+                "https://malicious-site-unknown.org/video", {}
+            )

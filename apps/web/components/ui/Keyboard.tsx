@@ -40,7 +40,37 @@ function getNoteLabel(pitch: number): string {
 const MIN_NOTE = 21; // A0
 const MAX_NOTE = 108; // C8
 
-export function Keyboard({
+function areSetsEqual(a?: Set<number>, b?: Set<number>): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.size !== b.size) return false;
+  for (const item of a) {
+    if (!b.has(item)) return false;
+  }
+  return true;
+}
+
+function areHandMapsEqual(
+  a?: Map<number, "L" | "R"> | Record<number, "L" | "R">,
+  b?: Map<number, "L" | "R"> | Record<number, "L" | "R">
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+
+  const getVal = (m: Map<number, "L" | "R"> | Record<number, "L" | "R">, k: number) =>
+    m instanceof Map ? m.get(k) : m[k];
+
+  const keysA = a instanceof Map ? Array.from(a.keys()) : Object.keys(a).map(Number);
+  const keysB = b instanceof Map ? Array.from(b.keys()) : Object.keys(b).map(Number);
+  if (keysA.length !== keysB.length) return false;
+
+  for (const k of keysA) {
+    if (getVal(a, k) !== getVal(b, k)) return false;
+  }
+  return true;
+}
+
+function KeyboardComponent({
   activeNotes = new Set(),
   expectedNotes = new Set(),
   onNoteOn,
@@ -359,5 +389,21 @@ export function Keyboard({
     </div>
   );
 }
+
+export const Keyboard = React.memo(KeyboardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.isWaitMode === nextProps.isWaitMode &&
+    prevProps.cameraOffset === nextProps.cameraOffset &&
+    prevProps.autoTrack === nextProps.autoTrack &&
+    prevProps.className === nextProps.className &&
+    prevProps.onNoteOn === nextProps.onNoteOn &&
+    prevProps.onNoteOff === nextProps.onNoteOff &&
+    prevProps.onCameraOffsetChange === nextProps.onCameraOffsetChange &&
+    prevProps.onToggleAutoTrack === nextProps.onToggleAutoTrack &&
+    areSetsEqual(prevProps.activeNotes, nextProps.activeNotes) &&
+    areSetsEqual(prevProps.expectedNotes, nextProps.expectedNotes) &&
+    areHandMapsEqual(prevProps.expectedNotesHandMap, nextProps.expectedNotesHandMap)
+  );
+});
 
 export default Keyboard;
