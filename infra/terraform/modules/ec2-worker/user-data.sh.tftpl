@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-yum update -y
-yum install -y docker awscli
+dnf update -y
+dnf install -y docker awscli
 systemctl enable docker
 systemctl start docker
 

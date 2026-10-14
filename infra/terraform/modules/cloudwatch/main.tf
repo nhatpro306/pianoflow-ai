@@ -82,6 +82,31 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
   }
 }
 
+resource "aws_budgets_budget" "cost" {
+  name              = "${var.prefix}-budget"
+  budget_type       = "COST"
+  limit_amount      = "5.00"
+  limit_unit        = "USD"
+  time_unit         = "MONTHLY"
+  time_period_start = "2024-01-01_00:00"
+}
+
+resource "aws_cloudwatch_metric_alarm" "billing_alarm" {
+  alarm_name          = "${var.prefix}-billing-alarm"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "EstimatedCharges"
+  namespace           = "AWS/Billing"
+  period              = 21600
+  statistic           = "Maximum"
+  threshold           = 5.0
+  alarm_description   = "Billing alarm when charges exceed $5.00"
+
+  dimensions = {
+    Currency = "USD"
+  }
+}
+
 output "dashboard_name" {
   value = aws_cloudwatch_dashboard.main.dashboard_name
 }

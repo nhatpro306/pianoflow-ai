@@ -77,7 +77,7 @@ data "aws_ami" "amazon_linux" {
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    values = ["al2023-ami-*-kernel-6.1-x86_64"]
   }
 }
 
@@ -173,6 +173,17 @@ resource "aws_instance" "worker" {
   associate_public_ip_address = true
   key_name                    = var.key_name == "" ? null : var.key_name
 
+  instance_initiated_shutdown_behavior = "stop"
+
+  root_block_device {
+    volume_type           = "gp3"
+    volume_size           = 20
+    iops                  = 3000
+    throughput            = 125
+    delete_on_termination = true
+    encrypted             = true
+  }
+
   user_data = templatefile("${path.module}/user-data.sh.tftpl", {
     aws_region            = var.aws_region
     ecr_registry          = var.ecr_registry
@@ -187,6 +198,22 @@ resource "aws_instance" "worker" {
 
   tags = {
     Name = "${var.prefix}-ec2-worker"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "worker_idle_stop" {
+  alarm_name          = "${var.prefix}-worker-idle-stop"
+  comparison_operator = "LessThanOrEqualToThreshold"
+  evaluation_periods  = 3
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 5
+  alarm_actions       = ["arn:aws:automate:${var.aws_region}:ec2:stop"]
+
+  dimensions = {
+    InstanceId = aws_instance.worker.id
   }
 }
 

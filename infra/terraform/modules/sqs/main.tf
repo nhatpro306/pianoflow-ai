@@ -5,6 +5,7 @@ variable "prefix" {
 resource "aws_sqs_queue" "default_dlq" {
   name                      = "${var.prefix}-q-default-dlq"
   message_retention_seconds = 1209600 # 14 days
+  sqs_managed_sse_enabled   = true
 }
 
 resource "aws_sqs_queue" "default" {
@@ -12,6 +13,7 @@ resource "aws_sqs_queue" "default" {
   visibility_timeout_seconds = 300
   message_retention_seconds  = 86400 # 1 day
   receive_wait_time_seconds  = 20
+  sqs_managed_sse_enabled    = true
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.default_dlq.arn
@@ -22,6 +24,7 @@ resource "aws_sqs_queue" "default" {
 resource "aws_sqs_queue" "audio_dlq" {
   name                      = "${var.prefix}-q-audio-dlq"
   message_retention_seconds = 1209600
+  sqs_managed_sse_enabled   = true
 }
 
 resource "aws_sqs_queue" "audio" {
@@ -29,6 +32,7 @@ resource "aws_sqs_queue" "audio" {
   visibility_timeout_seconds = 600
   message_retention_seconds  = 86400
   receive_wait_time_seconds  = 20
+  sqs_managed_sse_enabled    = true
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.audio_dlq.arn

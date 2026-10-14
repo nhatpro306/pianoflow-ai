@@ -60,9 +60,26 @@ resource "aws_s3_bucket_lifecycle_configuration" "sources" {
   bucket = aws_s3_bucket.sources.id
 
   rule {
-    id     = "abort-incomplete-multipart"
+    id     = "expire-sources"
     status = "Enabled"
     filter {}
+    expiration {
+      days = 30
+    }
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
+
+  rule {
+    id     = "expire-tmp"
+    status = "Enabled"
+    filter {
+      prefix = "tmp/"
+    }
+    expiration {
+      days = 1
+    }
     abort_incomplete_multipart_upload {
       days_after_initiation = 1
     }
