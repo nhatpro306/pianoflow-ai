@@ -108,7 +108,7 @@ const DEMO_MODES: SegmentedControlOption[] = [
   { id: "coaching", label: "AI Coaching & Analytics 📊", testId: "tab-coaching" },
 ];
 
-export const SOUND_PRESETS: { id: PianoSoundId; label: string; icon: string }[] = [
+const SOUND_PRESETS: { id: PianoSoundId; label: string; icon: string }[] = [
   { id: "concert_grand", label: "Concert Grand", icon: "🎹" },
   { id: "warm_grand", label: "Warm Grand", icon: "☕" },
   { id: "bright_grand", label: "Bright Grand", icon: "🌟" },
@@ -117,7 +117,7 @@ export const SOUND_PRESETS: { id: PianoSoundId; label: string; icon: string }[] 
   { id: "electric", label: "Rhodes EP", icon: "⚡" },
 ];
 
-export const REVERB_PRESETS: { id: ReverbLevel; label: string }[] = [
+const REVERB_PRESETS: { id: ReverbLevel; label: string }[] = [
   { id: "off", label: "Off" },
   { id: "light", label: "Light" },
   { id: "medium", label: "Medium" },
