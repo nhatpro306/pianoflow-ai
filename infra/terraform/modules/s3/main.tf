@@ -56,6 +56,49 @@ resource "aws_s3_bucket_public_access_block" "outputs" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "sources" {
+  bucket = aws_s3_bucket.sources.id
+
+  rule {
+    id     = "abort-incomplete-multipart"
+    status = "Enabled"
+    filter {}
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "analysis" {
+  bucket = aws_s3_bucket.analysis.id
+
+  rule {
+    id     = "expire-analysis"
+    status = "Enabled"
+    filter {}
+    expiration {
+      days = 7
+    }
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
+
+  rule {
+    id     = "expire-tmp"
+    status = "Enabled"
+    filter {
+      prefix = "tmp/"
+    }
+    expiration {
+      days = 1
+    }
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
+}
+
 resource "aws_s3_bucket_lifecycle_configuration" "outputs" {
   bucket = aws_s3_bucket.outputs.id
 
@@ -65,6 +108,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "outputs" {
     filter {}
     expiration {
       days = var.output_expiry_days
+    }
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
     }
   }
 
@@ -76,6 +122,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "outputs" {
     }
     expiration {
       days = var.tmp_expiry_days
+    }
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
     }
   }
 }

@@ -165,6 +165,11 @@ resource "aws_lambda_function" "api" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "api" {
+  name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
+  retention_in_days = 14
+}
+
 resource "aws_apigatewayv2_api" "http" {
   name          = "${var.prefix}-api"
   protocol_type = "HTTP"

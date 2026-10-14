@@ -215,7 +215,7 @@ class FrameRenderer:
                 glow_small = small_layer.filter(
                     ImageFilter.GaussianBlur(blur_radius / _GLOW_DOWNSCALE)
                 )
-                glow_layer = glow_small.resize((self.width, self.hit_y), Image.Resampling.NEAREST)
+                glow_layer = glow_small.resize((self.width, self.hit_y), Image.Resampling.BILINEAR)
                 frame.paste(glow_layer, (0, 0), glow_layer)
 
             # Draw sharp note bodies directly onto frame (avoids full-frame alpha mask paste)

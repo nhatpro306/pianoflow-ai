@@ -110,6 +110,7 @@ export class SampledPiano {
   private loadingPromises = new Map<string, Promise<SmplrInstrument | null>>();
   private reverb: Reverb | null = null;
   private reverbAdded = new Set<string>();
+  private feltFilterAdded = new Set<string>();
   private fallback: PianoSynth | null = null;
   private usingFallback = false;
 
@@ -150,12 +151,25 @@ export class SampledPiano {
   }
 
   private applyOutputSettings(instrument: SmplrInstrument): void {
-    const scale = this.config.sound === "felt" ? 0.55 : 0.8;
+    const scale = this.config.sound === "felt" ? 0.75 : 0.8;
     instrument.output.setVolume(Math.round(this.config.volume * 127 * scale));
     if (this.ctx) {
+      const key = this.instrumentKey();
+      if (
+        this.config.sound === "felt" &&
+        !this.feltFilterAdded.has(key) &&
+        typeof this.ctx.createBiquadFilter === "function"
+      ) {
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 1800;
+        filter.Q.value = 0.7;
+        instrument.output.addInsert(filter);
+        this.feltFilterAdded.add(key);
+      }
+
       this.reverb ??= new Reverb(this.ctx);
       const mix = (LIMITS.REVERB_MIX as Record<ReverbLevel, number>)[this.config.reverb] ?? 0;
-      const key = this.instrumentKey();
       if (this.reverbAdded.has(key)) {
         instrument.output.setEffectMix("reverb", mix);
       } else {
@@ -212,6 +226,8 @@ export class SampledPiano {
           return retry;
         } catch {
           this.instruments.delete(key);
+          this.feltFilterAdded.delete(key);
+          this.reverbAdded.delete(key);
           return null;
         }
       } finally {

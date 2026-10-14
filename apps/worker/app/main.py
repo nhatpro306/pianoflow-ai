@@ -3,13 +3,16 @@
 import json
 import logging
 import os
+import shutil
 import signal
 import sys
+import tempfile
 import threading
 import time
 import uuid
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 from typing import Literal
 
 from app.config import get_settings
@@ -191,6 +194,57 @@ def _start_health_server() -> None:
     logger.info("health server listening", extra={"event": "worker.health_server", "port": port})
 
 
+def _cleanup_stale_temp_files(directories: list[Path] | None = None) -> int:
+    """Clean up stale temporary files and directories on container start.
+
+    Prevents disk leaks on small EC2/Render instances from previous crashes
+    or abnormal terminations (e.g. /tmp/pf-*, /tmp/pf-video-*).
+    """
+    candidate_dirs = (
+        directories if directories is not None else [Path(tempfile.gettempdir()), Path("/tmp")]
+    )
+    cleaned_count = 0
+    seen_dirs: set[Path] = set()
+    for base_dir in candidate_dirs:
+        try:
+            resolved = base_dir.resolve()
+        except OSError:
+            resolved = base_dir
+        if resolved in seen_dirs or not base_dir.is_dir():
+            continue
+        seen_dirs.add(resolved)
+        try:
+            for item in base_dir.iterdir():
+                if item.name.startswith("pf-"):
+                    try:
+                        if item.is_dir():
+                            shutil.rmtree(item, ignore_errors=True)
+                        else:
+                            item.unlink(missing_ok=True)
+                        cleaned_count += 1
+                    except OSError as exc:
+                        logger.debug(
+                            "Failed to remove temp file %s: %s",
+                            item,
+                            exc,
+                            extra={"event": "worker.temp_cleanup_failed", "path": str(item)},
+                        )
+        except OSError as exc:
+            logger.debug(
+                "Failed to list temp directory %s: %s",
+                base_dir,
+                exc,
+                extra={"event": "worker.temp_list_failed", "dir": str(base_dir)},
+            )
+
+    if cleaned_count > 0:
+        logger.info(
+            "cleaned up stale temporary files on startup",
+            extra={"event": "worker.stale_temp_cleaned", "count": cleaned_count},
+        )
+    return cleaned_count
+
+
 def run() -> None:
     # Import here so tests can import process_message without logging setup side effects.
     from app.core_logging import setup_logging
@@ -200,6 +254,7 @@ def run() -> None:
     signal.signal(signal.SIGTERM, _handle_signal)
     signal.signal(signal.SIGINT, _handle_signal)
 
+    _cleanup_stale_temp_files()
     _start_health_server()
     queue = get_queue()
     logger.info("worker started", extra={"event": "worker.started"})

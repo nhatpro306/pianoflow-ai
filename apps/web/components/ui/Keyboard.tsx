@@ -376,7 +376,7 @@ function KeyboardComponent({
                   }}
                   onPointerUp={() => onNoteOff?.(note)}
                   onPointerLeave={() => onNoteOff?.(note)}
-                  className={`absolute top-0 h-22 sm:h-28 min-h-[44px] rounded-b-sm z-10 flex-shrink-0 transition-colors duration-75 shadow-lg border-b-2 cursor-pointer touch-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none ${bgClass}`}
+                  className={`absolute top-0 h-22 sm:h-28 min-h-[44px] rounded-b-sm z-10 flex-shrink-0 transition-colors duration-75 shadow-lg border-b-2 cursor-pointer touch-none before:absolute before:-inset-x-2 before:-inset-y-1 before:content-[''] pointer-events-auto focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none ${bgClass}`}
                   style={{
                     left: `${rect.x}px`,
                     width: `${rect.w}px`,

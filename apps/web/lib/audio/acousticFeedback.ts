@@ -4,6 +4,9 @@ import type { SplendidGrandPiano } from "smplr";
 import { getSharedAudioContext } from "../sampledPiano";
 import { PianoSynth } from "../pianoSynth";
 
+export const mapAcousticVelocity = (vel: number): number =>
+  Math.max(1, Math.min(127, Math.round(127 * Math.pow(Math.max(1, vel) / 127, 1.25))));
+
 /**
  * Low-latency acoustic piano sound feedback for MIDI and touch interactions.
  * Uses smplr's SplendidGrandPiano with immediate high-fidelity physical PianoSynth fallback.
@@ -45,19 +48,21 @@ export class AcousticPianoFeedback {
     }
   }
 
+
   public noteOn(pitch: number, velocity: number = 80): void {
     if (typeof window === "undefined") return;
+    const mappedVelocity = mapAcousticVelocity(velocity);
     if (!this.ctx) {
-      void this.init().then(() => this.playNote(pitch, velocity));
+      void this.init().then(() => this.playNote(pitch, mappedVelocity));
       return;
     }
 
     if (this.ctx.state === "suspended") {
-      void this.ctx.resume().then(() => this.playNote(pitch, velocity));
+      void this.ctx.resume().then(() => this.playNote(pitch, mappedVelocity));
       return;
     }
 
-    this.playNote(pitch, velocity);
+    this.playNote(pitch, mappedVelocity);
   }
 
   private playNote(pitch: number, velocity: number): void {
@@ -65,11 +70,24 @@ export class AcousticPianoFeedback {
 
     if (this.isInstrumentReady && this.instrument) {
       try {
-        this.instrument.start({
+        const noteHandle = this.instrument.start({
           note: pitch,
           velocity: Math.max(1, Math.min(127, velocity)),
           time: this.ctx.currentTime,
           duration: 2.5,
+        });
+        this.activeNotes.set(pitch, {
+          stop: () => {
+            try {
+              if (typeof (noteHandle as unknown as { stop?: () => void })?.stop === "function") {
+                (noteHandle as unknown as { stop: () => void }).stop();
+              } else if (typeof noteHandle === "function") {
+                (noteHandle as (time?: number) => void)();
+              }
+            } catch {
+              // Ignore damping error
+            }
+          },
         });
         return;
       } catch {

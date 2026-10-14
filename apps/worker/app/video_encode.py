@@ -26,6 +26,53 @@ class FfmpegVideoEncoder:
     def available(self) -> bool:
         return bool(shutil.which(self.binary))
 
+    def _build_ffmpeg_cmd(
+        self,
+        width: int,
+        height: int,
+        fps: int,
+        wav_path: Path,
+        out_path: Path,
+    ) -> list[str]:
+        return [
+            self.binary,
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "rgb24",
+            "-s",
+            f"{width}x{height}",
+            "-r",
+            str(fps),
+            "-i",
+            "-",
+            "-i",
+            str(wav_path),
+            "-c:v",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-tune",
+            "animation",
+            "-crf",
+            "22",
+            "-pix_fmt",
+            "yuv420p",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "192k",
+            "-ar",
+            "44100",
+            "-shortest",
+            "-movflags",
+            "+faststart",
+            str(out_path),
+        ]
+
     def encode(
         self,
         frames: Iterator[bytes],
@@ -47,38 +94,13 @@ class FfmpegVideoEncoder:
         wav_path = Path(wav_path_str)
         wav_path.write_bytes(wav_bytes)
 
-        command = [
-            self.binary,
-            "-y",
-            "-loglevel",
-            "error",
-            "-f",
-            "rawvideo",
-            "-pix_fmt",
-            "rgb24",
-            "-s",
-            f"{width}x{height}",
-            "-r",
-            str(fps),
-            "-i",
-            "-",
-            "-i",
-            str(wav_path),
-            "-c:v",
-            "libx264",
-            "-preset",
-            "ultrafast",
-            "-crf",
-            "28",
-            "-pix_fmt",
-            "yuv420p",
-            "-c:a",
-            "aac",
-            "-shortest",
-            "-movflags",
-            "+faststart",
-            str(out_path),
-        ]
+        command = self._build_ffmpeg_cmd(
+            width=width,
+            height=height,
+            fps=fps,
+            wav_path=wav_path,
+            out_path=out_path,
+        )
         stderr_chunks: list[bytes] = []
 
         def _drain_stderr(pipe: object) -> None:

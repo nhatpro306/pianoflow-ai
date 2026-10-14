@@ -39,6 +39,7 @@ import {
   type PracticeStats,
   type HandPracticeMode,
 } from "@/lib/midi/MidiEngine";
+import { parseMidiBytes } from "@/lib/midi/midiParser";
 import { useWebMidi } from "@/lib/midi/useWebMidi";
 import { AcousticPianoFeedback } from "@/lib/audio/acousticFeedback";
 import { AccompanimentEngine } from "@/lib/audio/accompanimentEngine";
@@ -53,6 +54,8 @@ import {
   DEMO_SONGS,
   DEFAULT_DEMO_SONG,
   type DemoSong,
+  type GenreCategory,
+  type SongDifficulty,
   loadSongNoteData,
   isSongFullLength,
 } from "@/lib/demoSongs";
@@ -188,14 +191,15 @@ function generateSimulatedReport(
 }
 
 function getSongDifficultyBadge(difficulty: string) {
-  if (difficulty === "Beginner") {
+  const norm = difficulty?.toLowerCase();
+  if (norm === "beginner") {
     return (
       <Badge variant="success" size="sm">
         Beginner
       </Badge>
     );
   }
-  if (difficulty === "Intermediate") {
+  if (norm === "intermediate") {
     return (
       <Badge variant="warning" size="sm">
         Intermediate
@@ -351,6 +355,7 @@ export default function SongsPage() {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isImporterInfoOpen, setIsImporterInfoOpen] = useState(false);
   const [renderSettings, setRenderSettings] = useState<RenderSettings>(DEFAULT_RENDER_SETTINGS);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   // Expanded Repertoire Category Filter & Instant Search State
   const [selectedGenre, setSelectedGenre] = useState<GenreFilterId>("All");
@@ -893,7 +898,69 @@ export default function SongsPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-28">
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+      <main
+        className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6"
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDraggingFile(true);
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setIsDraggingFile(false);
+          }
+        }}
+        onDrop={async (e) => {
+          e.preventDefault();
+          setIsDraggingFile(false);
+          const file = e.dataTransfer.files?.[0];
+          if (!file) return;
+
+          const isMidi =
+            file.name.toLowerCase().endsWith(".mid") ||
+            file.name.toLowerCase().endsWith(".midi");
+
+          if (!isMidi) {
+            setFeedbackToast("Please drop a valid .mid or .midi file.");
+            setTimeout(() => setFeedbackToast(null), 3000);
+            return;
+          }
+
+          try {
+            const buffer = await file.arrayBuffer();
+            const parsed = parseMidiBytes(new Uint8Array(buffer));
+            const newSong: DemoSong = {
+              id: `custom-${Date.now()}`,
+              title: file.name.replace(/\.[^/.]+$/, ""),
+              composer: "Custom Import",
+              period: "Contemporary",
+              genre: "Studio Master" as unknown as GenreCategory,
+              difficulty: (parsed.notes.length > 300 ? "advanced" : "intermediate") as unknown as SongDifficulty,
+              bpm: parsed.bpm || 120,
+              time_signature: parsed.time_signature || "4/4",
+              duration_sec: parsed.duration_sec,
+              noteCount: parsed.notes.length,
+              noteData: parsed,
+              coverGradient: "from-cyan-900 to-indigo-950",
+              tags: ["custom", "imported", "midi"],
+              qualityTier: "studio_master",
+              isCanonical: true,
+              key: "C maj",
+              description: `Custom imported MIDI piece with ${parsed.notes.length} notes.`,
+            };
+
+            setCustomSongs((prev) => [newSong, ...prev]);
+            setActiveSong(newSong);
+            currentTimeRef.current = 0;
+            setIsPlaying(false);
+            setFeedbackToast(`Loaded "${newSong.title}" (${newSong.noteCount} notes) into Studio Deck! 🎹`);
+            setTimeout(() => setFeedbackToast(null), 3000);
+          } catch (err) {
+            console.error("Failed to parse dropped MIDI file:", err);
+            setFeedbackToast("Failed to parse MIDI file.");
+            setTimeout(() => setFeedbackToast(null), 3000);
+          }
+        }}
+      >
         {/* Sleek Sub-Header Action Strip (Replaces Duplicate Sticky Header) */}
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/5">
           <div className="flex items-center gap-3">
@@ -1815,6 +1882,26 @@ export default function SongsPage() {
           setActiveSong(newSong);
         }}
       />
+
+      {/* Instant Drag & Drop MIDI Ingestion Backdrop Overlay */}
+      {isDraggingFile && (
+        <div
+          data-testid="midi-drag-drop-overlay"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-zinc-950/80 backdrop-blur-md border-4 border-dashed border-cyan-400 p-6 pointer-events-none transition-all duration-200"
+        >
+          <div className="flex flex-col items-center justify-center p-8 rounded-3xl bg-zinc-950/90 border border-cyan-400/50 shadow-[0_0_50px_rgba(6,182,212,0.4)] text-center max-w-lg">
+            <div className="w-20 h-20 rounded-2xl bg-cyan-500/10 border border-cyan-400/40 flex items-center justify-center text-cyan-400 mb-6 shadow-[0_0_30px_rgba(6,182,212,0.3)]">
+              <Music className="w-10 h-10 animate-pulse" />
+            </div>
+            <h2 className="text-2xl font-black text-white tracking-tight mb-2">
+              Drop MIDI file to play immediately in Studio Deck
+            </h2>
+            <p className="text-sm text-cyan-200/80">
+              Supports .mid and .midi standard format • Instant zero-latency parsing
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
