@@ -13,7 +13,7 @@ import {
   fetchFullSongJson,
   getCachedSongNoteData,
   FULL_SONG_IDS,
-} from "./songs";
+} from "./songs/index";
 
 export type { SongDifficulty, GenreCategory, RepertoireSong, GenreFilter };
 export type DemoSong = RepertoireSong;
@@ -55,10 +55,23 @@ export const DEMO_SONG_ALIASES: Record<string, string> = {
   "comptine-dun-autre-ete": "comptine-amelie",
   "amelie": "comptine-amelie",
   "pirates-of-the-caribbean": "hes-a-pirate",
+  "pirates": "hes-a-pirate",
+  "he-is-a-pirate": "hes-a-pirate",
 
   // K-Pop Anthems
   "spring-day": "spring-day-bts",
   "bts-spring-day": "spring-day-bts",
+  "butter": "butter-bts",
+  "dynamite": "dynamite-bts",
+  "love-scenario": "love-scenario-ikon",
+
+  // Jazz & Lo-Fi Standards
+  "autumn-leaves": "autumn-leaves",
+  "autumn-leaves-evans": "autumn-leaves",
+  "fly-me-to-the-moon": "fly-me-to-the-moon-jazz",
+  "take-five": "take-five",
+  "the-girl-from-ipanema": "the-girl-from-ipanema",
+  "girl-from-ipanema": "the-girl-from-ipanema",
 };
 
 /** Helper to resolve canonical song or fallback */
@@ -86,8 +99,9 @@ function resolveSong(id: string): RepertoireSong | undefined {
 
 /**
  * Canonical Song Constants
- * Guaranteed non-null exports for landmark pieces across Classical, Anime, Pop, and Cinematic genres.
+ * Guaranteed non-null exports for landmark pieces across Classical, Anime, K-Pop, Modern Pop, Cinematic, and Jazz genres.
  */
+// Classical Monuments
 export const FUR_ELISE: DemoSong =
   resolveSong("fur-elise") ?? ALL_REPERTOIRE_SONGS[0];
 
@@ -105,6 +119,10 @@ export const GYMNOPEDIE_NO_1: DemoSong = {
 export const CANON_IN_D: DemoSong =
   resolveSong("canon-in-d") ?? ALL_REPERTOIRE_SONGS[3];
 
+export const MOONLIGHT_SONATA: DemoSong =
+  resolveSong("moonlight-sonata") ?? ALL_REPERTOIRE_SONGS[0];
+
+// Anime & Ghibli Masterpieces
 export const MERRY_GO_ROUND_OF_LIFE: DemoSong =
   resolveSong("merry-go-round-of-life") ?? ALL_REPERTOIRE_SONGS[0];
 
@@ -114,14 +132,51 @@ export const ONE_SUMMERS_DAY: DemoSong =
 export const SPARKLE: DemoSong =
   resolveSong("sparkle-your-name") ?? ALL_REPERTOIRE_SONGS[0];
 
+export const UNRAVEL: DemoSong =
+  resolveSong("unravel") ?? ALL_REPERTOIRE_SONGS[0];
+
+// K-Pop Anthems
+export const SPRING_DAY: DemoSong =
+  resolveSong("spring-day-bts") ?? ALL_REPERTOIRE_SONGS[0];
+
+export const BUTTER: DemoSong =
+  resolveSong("butter-bts") ?? ALL_REPERTOIRE_SONGS[0];
+
+export const DYNAMITE: DemoSong =
+  resolveSong("dynamite-bts") ?? ALL_REPERTOIRE_SONGS[0];
+
+// Modern Pop & Neoclassical Hits
 export const RIVER_FLOWS_IN_YOU: DemoSong =
   resolveSong("river-flows-in-you") ?? ALL_REPERTOIRE_SONGS[0];
 
 export const GOLDEN_HOUR: DemoSong =
   resolveSong("golden-hour-jvke") ?? ALL_REPERTOIRE_SONGS[0];
 
+export const NUVOLE_BIANCHE: DemoSong =
+  resolveSong("nuvole-bianche") ?? ALL_REPERTOIRE_SONGS[0];
+
+// Cinematic Film Themes
 export const INTERSTELLAR_MAIN_THEME: DemoSong =
   resolveSong("interstellar-main-theme") ?? ALL_REPERTOIRE_SONGS[0];
+
+export const COMPTINE_AMELIE: DemoSong =
+  resolveSong("comptine-amelie") ?? ALL_REPERTOIRE_SONGS[0];
+
+export const HES_A_PIRATE: DemoSong =
+  resolveSong("hes-a-pirate") ?? ALL_REPERTOIRE_SONGS[0];
+
+// Jazz & Lo-Fi Standards
+export const AUTUMN_LEAVES: DemoSong =
+  resolveSong("autumn-leaves") ?? ALL_REPERTOIRE_SONGS[0];
+
+export const FLY_ME_TO_THE_MOON: DemoSong =
+  resolveSong("fly-me-to-the-moon-jazz") ?? ALL_REPERTOIRE_SONGS[0];
+
+export const TAKE_FIVE: DemoSong =
+  resolveSong("take-five") ?? ALL_REPERTOIRE_SONGS[0];
+
+export const THE_GIRL_FROM_IPANEMA: DemoSong =
+  resolveSong("the-girl-from-ipanema") ?? ALL_REPERTOIRE_SONGS[0];
 
 /**
  * Generate synthetic alias song entries for DEMO_SONGS array

@@ -15,7 +15,7 @@ import {
   X,
   ChevronUp,
 } from "lucide-react";
-import type { RenderSettings } from "@pianoflow/shared-types";
+import type { RenderSettings, PianoSoundId, ReverbLevel } from "@pianoflow/shared-types";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Keyboard } from "@/components/ui/Keyboard";
@@ -108,11 +108,27 @@ const DEMO_MODES: SegmentedControlOption[] = [
   { id: "coaching", label: "AI Coaching & Analytics 📊", testId: "tab-coaching" },
 ];
 
+export const SOUND_PRESETS: { id: PianoSoundId; label: string; icon: string }[] = [
+  { id: "concert_grand", label: "Concert Grand", icon: "🎹" },
+  { id: "warm_grand", label: "Warm Grand", icon: "☕" },
+  { id: "bright_grand", label: "Bright Grand", icon: "🌟" },
+  { id: "felt", label: "Soft Felt", icon: "☁️" },
+  { id: "upright", label: "Upright", icon: "🎼" },
+  { id: "electric", label: "Rhodes EP", icon: "⚡" },
+];
+
+export const REVERB_PRESETS: { id: ReverbLevel; label: string }[] = [
+  { id: "off", label: "Off" },
+  { id: "light", label: "Light" },
+  { id: "medium", label: "Medium" },
+  { id: "hall", label: "Hall" },
+];
+
 const DEFAULT_RENDER_SETTINGS: RenderSettings = {
   resolution: "1080p",
   fps: 60,
   speed_multiplier: 1.0,
-  piano_sound: "acoustic_grand",
+  piano_sound: "concert_grand",
   volume: 0.8,
   reverb: "medium",
   difficulty: "original",
@@ -456,16 +472,42 @@ export default function SongsPage() {
   }, [activeSongNoteData]);
 
   // Sound Feedback Engine
+  // Sound Feedback Engine & CC64 Damper Sustain Pedal State
+  const [isPedalDown, setIsPedalDown] = useState(false);
   const audioRef = useRef<AcousticPianoFeedback | null>(null);
 
   useEffect(() => {
     const feedback = new AcousticPianoFeedback();
-    void feedback.init();
+    void feedback.init().then(() => {
+      void feedback.setSound(renderSettings.piano_sound);
+      feedback.setReverb(renderSettings.reverb);
+    });
     audioRef.current = feedback;
     return () => {
       feedback.destroy();
       audioRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Synchronize sound preset with low-latency audio engine and accompaniment
+  useEffect(() => {
+    void audioRef.current?.setSound(renderSettings.piano_sound);
+    void accompanimentRef.current?.setSound(renderSettings.piano_sound);
+  }, [renderSettings.piano_sound]);
+
+  // Synchronize reverb ambience with low-latency acoustic feedback engine
+  useEffect(() => {
+    audioRef.current?.setReverb(renderSettings.reverb);
+  }, [renderSettings.reverb]);
+
+  const handleToggleSustain = useCallback(() => {
+    setIsPedalDown((prev) => {
+      const next = !prev;
+      audioRef.current?.setSustain(next);
+      accompanimentRef.current?.setSustain(next);
+      return next;
+    });
   }, []);
 
   const playSoundOn = useCallback((pitch: number, velocity: number = 80) => {
@@ -476,10 +518,18 @@ export default function SongsPage() {
     audioRef.current?.noteOff(pitch);
   }, []);
 
-  // Web MIDI hardware integration
+  // Web MIDI hardware integration with CC64 sustain pedal support
   const { activeNotes: midiActiveNotes } = useWebMidi({
     onNoteOn: (pitch, vel) => playSoundOn(pitch, vel),
     onNoteOff: (pitch) => playSoundOff(pitch),
+    onControlChange: (controller, value) => {
+      if (controller === 64) {
+        const isDown = value >= 64;
+        setIsPedalDown(isDown);
+        audioRef.current?.setSustain(isDown);
+        accompanimentRef.current?.setSustain(isDown);
+      }
+    },
   });
 
   // Virtual keyboard touch / mouse keys
@@ -530,13 +580,21 @@ export default function SongsPage() {
   const accompanimentRef = useRef<AccompanimentEngine | null>(null);
 
   useEffect(() => {
-    const acc = new AccompanimentEngine({ autoPlayAll: true, enabled: true, volume: 0.8 });
-    void acc.init();
+    const acc = new AccompanimentEngine({
+      autoPlayAll: true,
+      enabled: true,
+      volume: 0.8,
+      sound: renderSettings.piano_sound,
+    });
+    void acc.init().then(() => {
+      void acc.setSound(renderSettings.piano_sound);
+    });
     accompanimentRef.current = acc;
     return () => {
       acc.destroy();
       accompanimentRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -618,6 +676,9 @@ export default function SongsPage() {
       setIsPlaying(false);
       accompanimentRef.current?.seek(0);
       accompanimentRef.current?.pause();
+      setIsPedalDown(false);
+      audioRef.current?.setSustain(false);
+      accompanimentRef.current?.setSustain(false);
       setLoopStartMs(null);
       setLoopEndMs(null);
       setIsLoopActive(false);
@@ -1200,91 +1261,214 @@ export default function SongsPage() {
               className="space-y-4"
             >
               {/* Practice Controls Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-[#121215] border border-white/10 shadow-md">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Button
-                    size="sm"
-                    variant={isPlaying ? "secondary" : "primary"}
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    className="gap-1.5 font-bold text-xs"
-                  >
-                    {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                    <span>{isPlaying ? "Pause" : "Play"}</span>
-                  </Button>
+              <div className="flex flex-col gap-2.5 p-3 rounded-xl bg-[#121215] border border-white/10 shadow-md">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      size="sm"
+                      variant={isPlaying ? "secondary" : "primary"}
+                      onClick={() => setIsPlaying(!isPlaying)}
+                      className="gap-1.5 font-bold text-xs"
+                    >
+                      {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                      <span>{isPlaying ? "Pause" : "Play"}</span>
+                    </Button>
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      currentTimeRef.current = 0;
-                      engine.seek(0);
-                      accompanimentRef.current?.seek(0);
-                      updateExpectedNotes();
-                    }}
-                    className="text-xs gap-1"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>Reset</span>
-                  </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        currentTimeRef.current = 0;
+                        engine.seek(0);
+                        accompanimentRef.current?.seek(0);
+                        setIsPedalDown(false);
+                        audioRef.current?.setSustain(false);
+                        accompanimentRef.current?.setSustain(false);
+                        updateExpectedNotes();
+                      }}
+                      className="text-xs gap-1"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Reset</span>
+                    </Button>
 
-                  {/* Wait Mode Toggle */}
-                  <Button
-                    size="sm"
-                    variant={isWaitMode ? "primary" : "outline"}
-                    onClick={() => setIsWaitMode(!isWaitMode)}
-                    className="text-xs font-bold"
-                  >
-                    {isWaitMode ? "Wait Mode ⏸️" : "Tempo Mode ▶️"}
-                  </Button>
+                    {/* Wait Mode Toggle */}
+                    <Button
+                      size="sm"
+                      variant={isWaitMode ? "primary" : "outline"}
+                      onClick={() => setIsWaitMode(!isWaitMode)}
+                      className="text-xs font-bold"
+                    >
+                      {isWaitMode ? "Wait Mode ⏸️" : "Tempo Mode ▶️"}
+                    </Button>
 
-                  {/* Auto Sound Grand Piano toggle */}
-                  <Button
-                    size="sm"
-                    variant={autoSoundEnabled ? "primary" : "outline"}
-                    onClick={() => setAutoSoundEnabled(!autoSoundEnabled)}
-                    data-testid="auto-sound-toggle"
-                    className="text-xs font-bold gap-1"
-                    title="Automatically play Grand Piano sound for song notes during practice"
-                  >
-                    <span>{autoSoundEnabled ? "Grand Piano: ON 🎹" : "Grand Piano: MUTE 🔇"}</span>
-                  </Button>
+                    {/* Auto Sound Grand Piano toggle */}
+                    <Button
+                      size="sm"
+                      variant={autoSoundEnabled ? "primary" : "outline"}
+                      onClick={() => setAutoSoundEnabled(!autoSoundEnabled)}
+                      data-testid="auto-sound-toggle"
+                      className="text-xs font-bold gap-1"
+                      title="Automatically play Grand Piano sound for song notes during practice"
+                    >
+                      <span>{autoSoundEnabled ? "Grand Piano: ON 🎹" : "Grand Piano: MUTE 🔇"}</span>
+                    </Button>
 
-                  {/* Hand selector */}
-                  <div className="flex items-center bg-zinc-900 border border-white/10 rounded-lg p-0.5 text-xs">
-                    {(["both", "right", "left"] as const).map((h) => (
-                      <button
-                        key={h}
-                        type="button"
-                        onClick={() => setHandMode(h)}
-                        className={`px-2.5 py-1 rounded capitalize font-medium transition-colors ${
-                          handMode === h
-                            ? "bg-zinc-800 text-cyan-300 font-bold"
-                            : "text-zinc-400 hover:text-zinc-200"
-                        }`}
-                      >
-                        {h}
-                      </button>
-                    ))}
+                    {/* Hand selector */}
+                    <div className="flex items-center bg-zinc-900 border border-white/10 rounded-lg p-0.5 text-xs">
+                      {(["both", "right", "left"] as const).map((h) => (
+                        <button
+                          key={h}
+                          type="button"
+                          onClick={() => setHandMode(h)}
+                          className={`px-2.5 py-1 rounded capitalize font-medium transition-colors ${
+                            handMode === h
+                              ? "bg-zinc-800 text-cyan-300 font-bold"
+                              : "text-zinc-400 hover:text-zinc-200"
+                          }`}
+                        >
+                          {h}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Hit Counter Breakdown */}
+                    <div className="hidden xl:flex items-center gap-3 pl-3 border-l border-white/10 text-xs font-mono">
+                      <span className="text-emerald-400 font-semibold">
+                        Perfect: {stats.perfectHits}
+                      </span>
+                      <span className="text-amber-400 font-semibold">Good: {stats.goodHits}</span>
+                      <span className="text-rose-400 font-semibold">Miss: {stats.missHits}</span>
+                    </div>
                   </div>
 
-                  {/* Hit Counter Breakdown */}
-                  <div className="hidden xl:flex items-center gap-3 pl-3 border-l border-white/10 text-xs font-mono">
-                    <span className="text-emerald-400 font-semibold">
-                      Perfect: {stats.perfectHits}
-                    </span>
-                    <span className="text-amber-400 font-semibold">Good: {stats.goodHits}</span>
-                    <span className="text-rose-400 font-semibold">Miss: {stats.missHits}</span>
-                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => setActiveMode("coaching")}
+                    className="bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-900/50 text-xs font-semibold gap-1"
+                  >
+                    <Award className="w-3.5 h-3.5" />
+                    <span>Finish Practice & View AI Coaching 📊</span>
+                  </Button>
                 </div>
 
-                <Button
-                  size="sm"
-                  onClick={() => setActiveMode("coaching")}
-                  className="bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-900/50 text-xs font-semibold gap-1"
+                {/* Sound Preset, Reverb Acoustics & Sustain Pedal Control Strip */}
+                <div
+                  data-testid="practice-acoustics-bar"
+                  className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-white/5 text-xs"
                 >
-                  <Award className="w-3.5 h-3.5" />
-                  <span>Finish Practice & View AI Coaching 📊</span>
-                </Button>
+                  <div className="flex flex-wrap items-center gap-4">
+                    {/* Sound Preset Selector */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-zinc-400 font-semibold flex items-center gap-1">
+                        <span>🎹</span>
+                        <span>Sound:</span>
+                      </span>
+
+                      {/* Dropdown Selector */}
+                      <select
+                        value={renderSettings.piano_sound}
+                        onChange={(e) =>
+                          setRenderSettings((prev) => ({
+                            ...prev,
+                            piano_sound: e.target.value as PianoSoundId,
+                          }))
+                        }
+                        data-testid="sound-preset-select"
+                        aria-label="Sound Instrument Preset"
+                        className="bg-zinc-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-cyan-400 cursor-pointer"
+                      >
+                        {SOUND_PRESETS.map((preset) => (
+                          <option key={preset.id} value={preset.id} className="bg-zinc-900 text-white">
+                            {preset.icon} {preset.label}
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* Pill Button Group */}
+                      <div
+                        data-testid="sound-preset-pill-group"
+                        className="hidden md:flex items-center bg-zinc-900 border border-white/10 rounded-lg p-0.5 text-xs"
+                      >
+                        {SOUND_PRESETS.map((preset) => (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            data-testid={`sound-preset-${preset.id}`}
+                            onClick={() =>
+                              setRenderSettings((prev) => ({
+                                ...prev,
+                                piano_sound: preset.id,
+                              }))
+                            }
+                            className={`px-2 py-1 rounded font-medium transition-colors flex items-center gap-1 cursor-pointer ${
+                              renderSettings.piano_sound === preset.id
+                                ? "bg-zinc-800 text-cyan-300 font-bold shadow-sm"
+                                : "text-zinc-400 hover:text-zinc-200"
+                            }`}
+                          >
+                            <span>{preset.icon}</span>
+                            <span>{preset.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Reverb Ambience Selector */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-zinc-400 font-semibold flex items-center gap-1">
+                        <span>🏛️</span>
+                        <span>Reverb:</span>
+                      </span>
+                      <div
+                        data-testid="reverb-selector"
+                        className="flex items-center bg-zinc-900 border border-white/10 rounded-lg p-0.5 text-xs"
+                      >
+                        {REVERB_PRESETS.map((rev) => (
+                          <button
+                            key={rev.id}
+                            type="button"
+                            data-testid={`reverb-${rev.id}`}
+                            onClick={() =>
+                              setRenderSettings((prev) => ({
+                                ...prev,
+                                reverb: rev.id,
+                              }))
+                            }
+                            className={`px-2.5 py-1 rounded capitalize font-medium transition-colors cursor-pointer ${
+                              renderSettings.reverb === rev.id
+                                ? "bg-zinc-800 text-cyan-300 font-bold shadow-sm"
+                                : "text-zinc-400 hover:text-zinc-200"
+                            }`}
+                          >
+                            {rev.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sustain Pedal Visual Indicator */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-zinc-400 font-semibold">Damper:</span>
+                    <button
+                      type="button"
+                      onClick={handleToggleSustain}
+                      data-testid="sustain-pedal-indicator"
+                      aria-pressed={isPedalDown}
+                      aria-label={`Sustain Pedal: ${isPedalDown ? "ON" : "OFF"}`}
+                      title="Damper Sustain Pedal (CC64) - Press physical MIDI pedal or click to toggle"
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                        isPedalDown
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.3)] animate-pulse"
+                          : "bg-zinc-900 text-zinc-500 border-white/5 hover:text-zinc-400 hover:border-white/10"
+                      }`}
+                    >
+                      <span className="text-sm">🦶</span>
+                      <span className="font-mono font-bold">{isPedalDown ? "Pedal: ON" : "Pedal: OFF"}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Obsidian Stage Well: Practice Falling Notes Canvas */}

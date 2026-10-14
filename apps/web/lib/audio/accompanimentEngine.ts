@@ -1,6 +1,7 @@
 "use client";
 
-import type { SplendidGrandPiano } from "smplr";
+import type { PianoSoundId } from "@pianoflow/shared-types";
+import { Soundfont, SplendidGrandPiano } from "smplr";
 import type { ExpectedNote, HandPracticeMode } from "../midi/MidiEngine";
 import { getSharedAudioContext } from "../sampledPiano";
 
@@ -9,21 +10,26 @@ export interface AccompanimentEngineOptions {
   enabled?: boolean;
   handMode?: HandPracticeMode;
   autoPlayAll?: boolean;
+  sound?: PianoSoundId;
 }
 
 /**
  * Hands-Separate Virtual SoundFont Accompaniment Audio Loop
  *
  * Automatically plays the unpracticed hand with full acoustic nuance
- * using smplr SplendidGrandPiano (with immediate Web Audio oscillator fallback),
+ * using smplr instruments (with immediate Web Audio oscillator fallback),
  * maintaining harmonic context and steady rhythmic support during isolated hand drills.
  */
 export class AccompanimentEngine {
   private ctx: AudioContext | null = null;
   private ownsContext = false;
   private masterGain: GainNode | null = null;
-  private instrument: SplendidGrandPiano | null = null;
+  private instrument: SplendidGrandPiano | Soundfont | null = null;
   private isInstrumentReady = false;
+  private currentSound: PianoSoundId = "concert_grand";
+  private isSustainDown = false;
+  private sustainedNotes = new Set<number>();
+  private activeInstrumentNotes = new Map<number, () => void>();
   private notes: ExpectedNote[] = [];
   private handMode: HandPracticeMode = "both";
   private volume = 0.7; // Default 70% volume for pedagogical balance
@@ -56,6 +62,9 @@ export class AccompanimentEngine {
     }
     if (opts?.autoPlayAll !== undefined) {
       this.autoPlayAll = opts.autoPlayAll;
+    }
+    if (opts?.sound !== undefined) {
+      this.currentSound = opts.sound;
     }
   }
 
@@ -93,18 +102,76 @@ export class AccompanimentEngine {
   }
 
   private async initInstrument(): Promise<void> {
-    if (!this.ctx || this.instrument) return;
+    if (!this.ctx) return;
     try {
-      const { SplendidGrandPiano } = await import("smplr");
-      this.instrument = new SplendidGrandPiano(this.ctx);
+      this.ensureMasterGain();
+      const destination = this.masterGain ?? this.ctx.destination;
+
+      let inst: SplendidGrandPiano | Soundfont;
+      switch (this.currentSound) {
+        case "concert_grand":
+          inst = new SplendidGrandPiano(this.ctx, destination ? { destination } : undefined);
+          break;
+        case "bright_grand":
+          inst = new Soundfont(this.ctx, {
+            instrument: "bright_acoustic_piano",
+            destination: destination ?? undefined,
+          });
+          break;
+        case "warm_grand":
+          inst = new Soundfont(this.ctx, {
+            instrument: "acoustic_grand_piano",
+            destination: destination ?? undefined,
+          });
+          break;
+        case "upright":
+          inst = new Soundfont(this.ctx, {
+            instrument: "acoustic_grand_piano",
+            kit: "FluidR3_GM",
+            destination: destination ?? undefined,
+          });
+          break;
+        case "felt": {
+          inst = new SplendidGrandPiano(this.ctx, destination ? { destination } : undefined);
+          if (typeof this.ctx.createBiquadFilter === "function") {
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(1800, this.ctx.currentTime);
+            filter.Q.setValueAtTime(0.7, this.ctx.currentTime);
+            inst.output.addInsert(filter);
+          }
+          break;
+        }
+        case "electric":
+          inst = new Soundfont(this.ctx, {
+            instrument: "electric_piano_1",
+            destination: destination ?? undefined,
+          });
+          break;
+        default:
+          inst = new SplendidGrandPiano(this.ctx, destination ? { destination } : undefined);
+          break;
+      }
+
+      this.instrument = inst;
       this.applyVolumeToInstrument();
-      this.instrument.load
+
+      inst.load
         .then(() => {
-          this.isInstrumentReady = true;
+          if (this.instrument === inst) {
+            this.isInstrumentReady = true;
+          }
         })
         .catch(() => {
-          this.isInstrumentReady = false;
+          if (this.instrument === inst) {
+            this.isInstrumentReady = false;
+          }
         });
+
+      await inst.load;
+      if (this.instrument === inst) {
+        this.isInstrumentReady = true;
+      }
     } catch {
       this.isInstrumentReady = false;
     }
@@ -119,6 +186,58 @@ export class AccompanimentEngine {
         // Output channel may not support setVolume in mock environments
       }
     }
+  }
+
+  /**
+   * Sets the sound preset for accompaniment backing playback.
+   */
+  public async setSound(sound: PianoSoundId): Promise<void> {
+    if (this.currentSound === sound && this.instrument && this.isInstrumentReady) {
+      return;
+    }
+    this.currentSound = sound;
+    this.isInstrumentReady = false;
+    if (this.instrument) {
+      try {
+        this.instrument.stop();
+        if (
+          "disconnect" in this.instrument &&
+          typeof (this.instrument as { disconnect?: () => void }).disconnect === "function"
+        ) {
+          (this.instrument as { disconnect: () => void }).disconnect();
+        }
+      } catch {
+        // ignore
+      }
+      this.instrument = null;
+    }
+    await this.initInstrument();
+  }
+
+  public getSound(): PianoSoundId {
+    return this.currentSound;
+  }
+
+  /**
+   * Connects damper sustain pedal state so backing notes resonate harmoniously.
+   * When released, dampens and stops all sustained accompaniment voices.
+   */
+  public setSustain(isDown: boolean): void {
+    this.isSustainDown = isDown;
+    if (!isDown) {
+      for (const pitch of this.sustainedNotes) {
+        const stop = this.activeInstrumentNotes.get(pitch);
+        if (stop) {
+          stop();
+          this.activeInstrumentNotes.delete(pitch);
+        }
+      }
+      this.sustainedNotes.clear();
+    }
+  }
+
+  public getSustain(): boolean {
+    return this.isSustainDown;
   }
 
   /**
@@ -277,16 +396,36 @@ export class AccompanimentEngine {
 
     const pitch = note.pitch;
     const rawVelocity = note.velocity ?? 75;
-    const durationSec = Math.max(0.1, (note.end - note.start) / (1000 * Math.max(0.1, this.speed)));
+    const baseDuration = (note.end - note.start) / (1000 * Math.max(0.1, this.speed));
+    const durationSec = this.isSustainDown
+      ? Math.max(baseDuration * 2.2, 3.5)
+      : Math.max(0.1, baseDuration);
 
     if (this.isInstrumentReady && this.instrument) {
       try {
-        this.instrument.start({
+        const noteHandle = this.instrument.start({
           note: pitch,
           velocity: Math.max(1, Math.min(127, rawVelocity)),
           time: this.ctx.currentTime,
           duration: durationSec,
         });
+
+        const stop = () => {
+          try {
+            if (typeof (noteHandle as unknown as { stop?: () => void })?.stop === "function") {
+              (noteHandle as unknown as { stop: () => void }).stop();
+            } else if (typeof noteHandle === "function") {
+              (noteHandle as (time?: number) => void)();
+            }
+          } catch {
+            // ignore
+          }
+        };
+
+        this.activeInstrumentNotes.set(pitch, stop);
+        if (this.isSustainDown) {
+          this.sustainedNotes.add(pitch);
+        }
         return;
       } catch {
         // Fall back to Web Audio oscillator synth
@@ -360,6 +499,16 @@ export class AccompanimentEngine {
       }
     }
 
+    for (const [, stop] of this.activeInstrumentNotes) {
+      try {
+        stop();
+      } catch {
+        // ignore
+      }
+    }
+    this.activeInstrumentNotes.clear();
+    this.sustainedNotes.clear();
+
     if (this.ctx) {
       const now = this.ctx.currentTime;
       for (const [, { osc, gain }] of this.activeOscillators) {
@@ -430,5 +579,7 @@ export class AccompanimentEngine {
     }
     this.ctx = null;
     this.notes = [];
+    this.activeInstrumentNotes.clear();
+    this.sustainedNotes.clear();
   }
 }

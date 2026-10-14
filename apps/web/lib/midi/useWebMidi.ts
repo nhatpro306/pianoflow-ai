@@ -11,6 +11,7 @@ export type MidiMessage = {
 export interface UseWebMidiOptions {
   onNoteOn?: (note: number, velocity: number) => void;
   onNoteOff?: (note: number) => void;
+  onControlChange?: (controller: number, value: number) => void;
 }
 
 export function useWebMidi(options?: UseWebMidiOptions) {
@@ -77,6 +78,14 @@ export function useWebMidi(options?: UseWebMidiOptions) {
     const command = statusByte >> 4;
     const note = midiEvent.data[1];
     const velocity = midiEvent.data[2];
+
+    // Control Change (status 176..191 / 0xB0..0xBF)
+    if ((statusByte >= 176 && statusByte <= 191) || command === 11) {
+      const controller = midiEvent.data[1];
+      const value = midiEvent.data[2];
+      optionsRef.current?.onControlChange?.(controller, value);
+      return;
+    }
 
     // Some keyboards send Note On with 0 velocity instead of Note Off
     const isNoteOff = command === 8 || (command === 9 && velocity === 0);
