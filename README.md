@@ -4,7 +4,7 @@
 
 Turn any piano MIDI into a **tutorial video**, **sheet music**, and a **beginner-friendly version**.
 
-**Live:** https://pianoflow-jet.vercel.app (frontend + auth; API/worker deploy in progress)
+**Demo:** [PianoFlow](https://pianoflow-jet.vercel.app). Deployment notes are recorded in [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md); service availability and end-to-end processing must be checked on the target environment.
 
 ## Features
 
@@ -29,42 +29,44 @@ Full design: [docs/DESIGN.md](docs/DESIGN.md) · Deployment: [docs/DEPLOYMENT.md
 
 ## Run Locally
 
-```bash
-cp .env.example .env
-docker compose up --build -d      # postgres + redis + api + worker
-pnpm install && pnpm dev:web      # Next.js with HMR at http://localhost:3000
+Prerequisites: Docker Compose, Node.js 22 (as used in CI), pnpm **10.34.2** (pinned in `package.json`), and Python **3.12+** with uv for native Python checks. Docker images provide the API/worker Python environment and rendering dependencies.
+
+```powershell
+git clone https://github.com/nhatpro306/pianoflow-ai.git
+cd pianoflow-ai
+Copy-Item .env.example .env
+docker compose up --build -d postgres redis
+docker compose run --rm api /repo/.venv/bin/alembic upgrade head
+docker compose up --build -d api worker
+pnpm install --frozen-lockfile
 ```
+
+Configure the browser app separately: Next.js reads its environment from `apps/web`, not the repository root.
+
+```powershell
+Set-Content apps/web/.env.local 'NEXT_PUBLIC_API_BASE_URL=http://localhost:8000'
+pnpm dev:web
+```
+
+Use that `Set-Content` command on a fresh checkout; edit an existing `.env.local` instead of overwriting it. Configure `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` there when using Supabase auth.
+
+Compose sets local API `AUTH_MODE=dev`, local storage and Redis explicitly. This is a development configuration. Production uses the configured Supabase auth and backend adapters; root `.env.example` documents their fields. Keep service-role keys and database credentials out of `NEXT_PUBLIC_*` values.
 
 API: http://localhost:8000/docs · `/healthz` · `/readyz` · `/internal/metrics`
 
-## Deploy (Free Tier — $0/month)
+## Deployment
 
-**Stage 2** — all services are "forever free", no 12-month expiry:
+The repository includes a Render blueprint, Vercel configuration and AWS infrastructure templates. Their presence describes supported deployment paths, not proof that services are healthy or that a deployment is free.
 
-| Component | Host | Free Tier |
-|---|---|---|
-| Frontend | **Vercel** Hobby | Unlimited deploys |
-| API | **Render** Free | 512MB, sleeps after 15min |
-| Worker | **Render** Free | Background service, 512MB |
-| Database | **Supabase** Free | 500MB Postgres |
-| Storage | **Supabase Storage** | 1GB, 3 private buckets |
-| Queue | **Upstash Redis** Free | 10k commands/day |
-| Auth | **Supabase Auth** Free | Email + Google, 50k MAU |
+| Path | Repository configuration |
+| --- | --- |
+| Local | `docker-compose.yml`: PostgreSQL, Redis, API and worker; optional web profile |
+| Vercel + Render | `vercel.json`, `render.yaml` and CI deployment hooks |
+| AWS | `infra/terraform/` and the adapter configuration described in the deployment guide |
 
-**Stage 3** (AWS portfolio showcase, $0 for 12 months):
+Follow [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) and [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md) for setup and recorded handoff details. Hosting plans, quotas and billing depend on the provider and account; the README makes no fixed-cost guarantee.
 
-| Component | Host | Free Tier |
-|---|---|---|
-| API | **AWS Lambda** | Always free, 1M req/month |
-| Queue | **AWS SQS** | Always free, 1M req/month |
-| Worker | **AWS EC2** t2.micro | 12 months free, 1GB RAM |
-| Storage | **AWS S3** | 12 months free, 5GB |
-| Monitoring | **CloudWatch** | Always free, 10 metrics |
-
-Blueprint: [`render.yaml`](render.yaml) · CI/CD: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) · Full plan: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
-
-Set secrets in GitHub: `DATABASE_URL`, `RENDER_DEPLOY_HOOK_API`, `RENDER_DEPLOY_HOOK_WORKER`.
-Set env vars in Vercel: `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+Before publishing, configure authentication, database migrations, storage, queue and server secrets, then verify a complete upload → queued job → output flow. Health endpoints alone do not establish that rendering succeeds.
 
 ## Monorepo Map
 
@@ -99,21 +101,14 @@ uv run --directory apps/api pytest -q    # API tests
 uv run --directory apps/worker pytest -q # Worker tests
 uv run ruff check .               # Lint
 pnpm -r typecheck                 # TypeScript
-make test                         # All tests
+make test                         # Python tests for api, worker and music-core
 ```
 
-Load test (10 concurrent upload→parse flows against any deployment):
-
-```bash
-uv run --directory apps/api python ../../scripts/load_test.py \
-  --base-url http://localhost:8000 --concurrency 10 \
-  --midi packages/music-core/pianoflow_music/tests/fixtures/simple.mid
-```
+The commands above come from the Makefile and CI. Web browser tests are separate (`pnpm --filter @pianoflow/web test:e2e`) and need the services and auth configuration specified by their Playwright setup. See `scripts/load_test.py` for deployment load-test options; run those only against your configured test environment.
 
 ## Roadmap
 
-Phases 1–11 code complete (auth, $0 deploy stack, AWS free-tier IaC). Live deploys pending. Stages 1–3 run at $0/month.
-Full roadmap: [docs/ROADMAP.md](docs/ROADMAP.md)
+Track implementation milestones in [docs/ROADMAP.md](docs/ROADMAP.md), recorded deployment work in [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md), and operational limits in [docs/RISKS.md](docs/RISKS.md). Audio transcription is beta and depends on the selected engine and worker configuration; a placeholder engine is not evidence of real transcription quality.
 
 ---
 
