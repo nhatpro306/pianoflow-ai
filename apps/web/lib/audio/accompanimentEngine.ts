@@ -420,17 +420,24 @@ export class AccompanimentEngine {
     if (!this.ctx || this.volume <= 0 || !this.enabled) return;
 
     const pitch = note.pitch;
-    const rawVelocity = note.velocity ?? 75;
-    const baseDuration = (note.end - note.start) / (1000 * Math.max(0.1, this.speed));
+    // Apply warm Concert Grand Velocity Curve
+    let v = note.velocity ?? 75;
+    const isLH = note.hand ? note.hand === "L" : pitch < 60;
+    if (isLH) v *= 0.82;
+    if (pitch > 72) v *= Math.max(0.68, 1 - (pitch - 72) * 0.01);
+    if (pitch < 42) v *= 0.85;
+    const finalVelocity = Math.max(28, Math.min(86, Math.round(v)));
+
+    const baseDuration = (note.end - note.start) / (1000 * Math.max(0.25, this.speed));
     const durationSec = this.isSustainDown
       ? Math.max(baseDuration * 2.2, 3.5)
-      : Math.max(0.1, baseDuration);
+      : Math.max(0.45, baseDuration);
 
     if (this.isInstrumentReady && this.instrument) {
       try {
         const noteHandle = this.instrument.start({
           note: pitch,
-          velocity: Math.max(1, Math.min(127, rawVelocity)),
+          velocity: finalVelocity,
           time: this.ctx.currentTime,
           duration: durationSec,
         });
@@ -460,7 +467,7 @@ export class AccompanimentEngine {
       void this.init();
     }
 
-    this.playSynthNote(pitch, rawVelocity, durationSec);
+    this.playSynthNote(pitch, finalVelocity, durationSec);
   }
 
   private playSynthNote(pitch: number, velocity: number, durationSec: number): void {

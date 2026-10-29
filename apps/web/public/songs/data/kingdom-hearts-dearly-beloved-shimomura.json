@@ -7,7 +7,7 @@
     {
       "index": 0,
       "name": "Left Hand (Bass & Accompaniment)",
-      "note_count": 428
+      "note_count": 388
     },
     {
       "index": 1,
@@ -20,7 +20,7 @@
       "id": 1,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 48,
+      "velocity": 44,
       "start": 0,
       "end": 2.8,
       "duration": 2.8,
@@ -29,31 +29,9 @@
     },
     {
       "id": 2,
-      "pitch": 46,
-      "name": "A#2",
-      "velocity": 42,
-      "start": 0,
-      "end": 2.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 3,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 40,
-      "start": 0,
-      "end": 2.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 4,
       "pitch": 78,
       "name": "F#5",
-      "velocity": 76,
+      "velocity": 72,
       "start": 0,
       "end": 1.9,
       "duration": 1.9,
@@ -61,12 +39,34 @@
       "hand": "R"
     },
     {
+      "id": 3,
+      "pitch": 54,
+      "name": "F#3",
+      "velocity": 36,
+      "start": 1,
+      "end": 1.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 4,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 36,
+      "start": 1,
+      "end": 1.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
       "id": 5,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 42,
-      "start": 1,
-      "end": 1.85,
+      "velocity": 36,
+      "start": 2,
+      "end": 2.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
@@ -75,40 +75,18 @@
       "id": 6,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 42,
-      "start": 1,
-      "end": 1.85,
+      "velocity": 36,
+      "start": 2,
+      "end": 2.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 7,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 42,
-      "start": 2,
-      "end": 2.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 8,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 42,
-      "start": 2,
-      "end": 2.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 9,
       "pitch": 82,
       "name": "A#5",
-      "velocity": 72,
+      "velocity": 68,
       "start": 2,
       "end": 2.9,
       "duration": 0.9,
@@ -116,10 +94,10 @@
       "hand": "R"
     },
     {
-      "id": 10,
+      "id": 8,
       "pitch": 47,
       "name": "B2",
-      "velocity": 48,
+      "velocity": 44,
       "start": 3,
       "end": 5.8,
       "duration": 2.8,
@@ -127,10 +105,10 @@
       "hand": "L"
     },
     {
-      "id": 11,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 76,
+      "id": 9,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 72,
       "start": 3,
       "end": 3.9,
       "duration": 0.9,
@@ -138,10 +116,10 @@
       "hand": "R"
     },
     {
-      "id": 12,
+      "id": 10,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 42,
+      "velocity": 36,
       "start": 4,
       "end": 4.85,
       "duration": 0.85,
@@ -149,10 +127,10 @@
       "hand": "L"
     },
     {
-      "id": 13,
+      "id": 11,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 42,
+      "velocity": 36,
       "start": 4,
       "end": 4.85,
       "duration": 0.85,
@@ -160,10 +138,10 @@
       "hand": "L"
     },
     {
-      "id": 14,
+      "id": 12,
       "pitch": 83,
       "name": "B5",
-      "velocity": 74,
+      "velocity": 70,
       "start": 4,
       "end": 4.9,
       "duration": 0.9,
@@ -171,10 +149,10 @@
       "hand": "R"
     },
     {
-      "id": 15,
+      "id": 13,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 42,
+      "velocity": 36,
       "start": 5,
       "end": 5.85,
       "duration": 0.85,
@@ -182,10 +160,10 @@
       "hand": "L"
     },
     {
-      "id": 16,
+      "id": 14,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 42,
+      "velocity": 36,
       "start": 5,
       "end": 5.85,
       "duration": 0.85,
@@ -193,10 +171,10 @@
       "hand": "L"
     },
     {
-      "id": 17,
+      "id": 15,
       "pitch": 44,
       "name": "G#2",
-      "velocity": 48,
+      "velocity": 44,
       "start": 6,
       "end": 8.8,
       "duration": 2.8,
@@ -204,10 +182,10 @@
       "hand": "L"
     },
     {
-      "id": 18,
-      "pitch": 92,
-      "name": "G#6",
-      "velocity": 78,
+      "id": 16,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 74,
       "start": 6,
       "end": 6.9,
       "duration": 0.9,
@@ -215,10 +193,10 @@
       "hand": "R"
     },
     {
-      "id": 19,
+      "id": 17,
       "pitch": 59,
       "name": "B3",
-      "velocity": 42,
+      "velocity": 36,
       "start": 7,
       "end": 7.85,
       "duration": 0.85,
@@ -226,10 +204,10 @@
       "hand": "L"
     },
     {
-      "id": 20,
+      "id": 18,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 42,
+      "velocity": 36,
       "start": 7,
       "end": 7.85,
       "duration": 0.85,
@@ -237,10 +215,10 @@
       "hand": "L"
     },
     {
-      "id": 21,
+      "id": 19,
       "pitch": 83,
       "name": "B5",
-      "velocity": 74,
+      "velocity": 70,
       "start": 7,
       "end": 7.45,
       "duration": 0.45,
@@ -248,10 +226,10 @@
       "hand": "R"
     },
     {
-      "id": 22,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 76,
+      "id": 20,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 72,
       "start": 7.5,
       "end": 7.95,
       "duration": 0.45,
@@ -259,10 +237,10 @@
       "hand": "R"
     },
     {
-      "id": 23,
+      "id": 21,
       "pitch": 59,
       "name": "B3",
-      "velocity": 42,
+      "velocity": 36,
       "start": 8,
       "end": 8.85,
       "duration": 0.85,
@@ -270,10 +248,10 @@
       "hand": "L"
     },
     {
-      "id": 24,
+      "id": 22,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 42,
+      "velocity": 36,
       "start": 8,
       "end": 8.85,
       "duration": 0.85,
@@ -281,10 +259,10 @@
       "hand": "L"
     },
     {
-      "id": 25,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 74,
+      "id": 23,
+      "pitch": 77,
+      "name": "F5",
+      "velocity": 70,
       "start": 8,
       "end": 8.9,
       "duration": 0.9,
@@ -292,10 +270,10 @@
       "hand": "R"
     },
     {
-      "id": 26,
+      "id": 24,
       "pitch": 46,
       "name": "A#2",
-      "velocity": 48,
+      "velocity": 44,
       "start": 9,
       "end": 11.8,
       "duration": 2.8,
@@ -303,10 +281,10 @@
       "hand": "L"
     },
     {
-      "id": 27,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 76,
+      "id": 25,
+      "pitch": 77,
+      "name": "F5",
+      "velocity": 72,
       "start": 9,
       "end": 11.85,
       "duration": 2.85,
@@ -314,12 +292,34 @@
       "hand": "R"
     },
     {
+      "id": 26,
+      "pitch": 61,
+      "name": "C#4",
+      "velocity": 36,
+      "start": 10,
+      "end": 10.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 27,
+      "pitch": 65,
+      "name": "F4",
+      "velocity": 36,
+      "start": 10,
+      "end": 10.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
       "id": 28,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 42,
-      "start": 10,
-      "end": 10.85,
+      "velocity": 36,
+      "start": 11,
+      "end": 11.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
@@ -328,73 +328,29 @@
       "id": 29,
       "pitch": 65,
       "name": "F4",
-      "velocity": 42,
-      "start": 10,
-      "end": 10.85,
+      "velocity": 36,
+      "start": 11,
+      "end": 11.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 30,
-      "pitch": 61,
-      "name": "C#4",
-      "velocity": 42,
-      "start": 11,
-      "end": 11.85,
-      "duration": 0.85,
+      "pitch": 39,
+      "name": "D#2",
+      "velocity": 44,
+      "start": 12,
+      "end": 14.8,
+      "duration": 2.8,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 31,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 42,
-      "start": 11,
-      "end": 11.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 32,
-      "pitch": 39,
-      "name": "D#2",
-      "velocity": 48,
-      "start": 12,
-      "end": 14.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 33,
-      "pitch": 46,
-      "name": "A#2",
-      "velocity": 42,
-      "start": 12,
-      "end": 14.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 34,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 40,
-      "start": 12,
-      "end": 14.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 35,
       "pitch": 78,
       "name": "F#5",
-      "velocity": 76,
+      "velocity": 72,
       "start": 12,
       "end": 13.9,
       "duration": 1.9,
@@ -402,54 +358,54 @@
       "hand": "R"
     },
     {
+      "id": 32,
+      "pitch": 54,
+      "name": "F#3",
+      "velocity": 36,
+      "start": 13,
+      "end": 13.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 33,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 36,
+      "start": 13,
+      "end": 13.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 34,
+      "pitch": 54,
+      "name": "F#3",
+      "velocity": 36,
+      "start": 14,
+      "end": 14.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 35,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 36,
+      "start": 14,
+      "end": 14.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
       "id": 36,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 42,
-      "start": 13,
-      "end": 13.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 37,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 42,
-      "start": 13,
-      "end": 13.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 38,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 42,
-      "start": 14,
-      "end": 14.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 39,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 42,
-      "start": 14,
-      "end": 14.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 40,
       "pitch": 83,
       "name": "B5",
-      "velocity": 72,
+      "velocity": 68,
       "start": 14,
       "end": 14.9,
       "duration": 0.9,
@@ -457,10 +413,10 @@
       "hand": "R"
     },
     {
-      "id": 41,
+      "id": 37,
       "pitch": 47,
       "name": "B2",
-      "velocity": 48,
+      "velocity": 44,
       "start": 15,
       "end": 17.8,
       "duration": 2.8,
@@ -468,10 +424,10 @@
       "hand": "L"
     },
     {
-      "id": 42,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 76,
+      "id": 38,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 72,
       "start": 15,
       "end": 15.9,
       "duration": 0.9,
@@ -479,10 +435,10 @@
       "hand": "R"
     },
     {
-      "id": 43,
+      "id": 39,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 42,
+      "velocity": 36,
       "start": 16,
       "end": 16.85,
       "duration": 0.85,
@@ -490,10 +446,10 @@
       "hand": "L"
     },
     {
-      "id": 44,
+      "id": 40,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 42,
+      "velocity": 36,
       "start": 16,
       "end": 16.85,
       "duration": 0.85,
@@ -501,10 +457,10 @@
       "hand": "L"
     },
     {
-      "id": 45,
-      "pitch": 85,
-      "name": "C#6",
-      "velocity": 74,
+      "id": 41,
+      "pitch": 73,
+      "name": "C#5",
+      "velocity": 70,
       "start": 16,
       "end": 16.9,
       "duration": 0.9,
@@ -512,10 +468,10 @@
       "hand": "R"
     },
     {
-      "id": 46,
+      "id": 42,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 42,
+      "velocity": 36,
       "start": 17,
       "end": 17.85,
       "duration": 0.85,
@@ -523,10 +479,10 @@
       "hand": "L"
     },
     {
-      "id": 47,
+      "id": 43,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 42,
+      "velocity": 36,
       "start": 17,
       "end": 17.85,
       "duration": 0.85,
@@ -534,10 +490,10 @@
       "hand": "L"
     },
     {
-      "id": 48,
+      "id": 44,
       "pitch": 44,
       "name": "G#2",
-      "velocity": 48,
+      "velocity": 44,
       "start": 18,
       "end": 20.8,
       "duration": 2.8,
@@ -545,10 +501,10 @@
       "hand": "L"
     },
     {
-      "id": 49,
-      "pitch": 94,
-      "name": "A#6",
-      "velocity": 78,
+      "id": 45,
+      "pitch": 83,
+      "name": "B5",
+      "velocity": 74,
       "start": 18,
       "end": 18.9,
       "duration": 0.9,
@@ -556,12 +512,56 @@
       "hand": "R"
     },
     {
+      "id": 46,
+      "pitch": 59,
+      "name": "B3",
+      "velocity": 36,
+      "start": 19,
+      "end": 19.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 47,
+      "pitch": 63,
+      "name": "D#4",
+      "velocity": 36,
+      "start": 19,
+      "end": 19.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 48,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 70,
+      "start": 19,
+      "end": 19.45,
+      "duration": 0.45,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 49,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 72,
+      "start": 19.5,
+      "end": 19.95,
+      "duration": 0.45,
+      "track": 1,
+      "hand": "R"
+    },
+    {
       "id": 50,
       "pitch": 59,
       "name": "B3",
-      "velocity": 42,
-      "start": 19,
-      "end": 19.85,
+      "velocity": 36,
+      "start": 20,
+      "end": 20.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
@@ -570,62 +570,18 @@
       "id": 51,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 42,
-      "start": 19,
-      "end": 19.85,
+      "velocity": 36,
+      "start": 20,
+      "end": 20.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 52,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 74,
-      "start": 19,
-      "end": 19.45,
-      "duration": 0.45,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 53,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 76,
-      "start": 19.5,
-      "end": 19.95,
-      "duration": 0.45,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 54,
-      "pitch": 59,
-      "name": "B3",
-      "velocity": 42,
-      "start": 20,
-      "end": 20.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 55,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 42,
-      "start": 20,
-      "end": 20.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 56,
-      "pitch": 82,
-      "name": "A#5",
-      "velocity": 74,
+      "pitch": 83,
+      "name": "B5",
+      "velocity": 70,
       "start": 20,
       "end": 20.9,
       "duration": 0.9,
@@ -633,10 +589,10 @@
       "hand": "R"
     },
     {
-      "id": 57,
+      "id": 53,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 52,
+      "velocity": 48,
       "start": 21,
       "end": 23.8,
       "duration": 2.8,
@@ -644,10 +600,10 @@
       "hand": "L"
     },
     {
-      "id": 58,
+      "id": 54,
       "pitch": 82,
       "name": "A#5",
-      "velocity": 82,
+      "velocity": 76,
       "start": 21,
       "end": 23.85,
       "duration": 2.85,
@@ -655,87 +611,65 @@
       "hand": "R"
     },
     {
-      "id": 59,
+      "id": 55,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 22,
       "end": 22.85,
       "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 56,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 40,
+      "start": 22,
+      "end": 22.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 57,
+      "pitch": 54,
+      "name": "F#3",
+      "velocity": 40,
+      "start": 23,
+      "end": 23.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 58,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 40,
+      "start": 23,
+      "end": 23.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 59,
+      "pitch": 47,
+      "name": "B2",
+      "velocity": 48,
+      "start": 24,
+      "end": 26.8,
+      "duration": 2.8,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 60,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 46,
-      "start": 22,
-      "end": 22.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 61,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 46,
-      "start": 23,
-      "end": 23.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 62,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 46,
-      "start": 23,
-      "end": 23.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 63,
-      "pitch": 47,
-      "name": "B2",
-      "velocity": 52,
-      "start": 24,
-      "end": 26.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 64,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 46,
-      "start": 24,
-      "end": 26.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 65,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 44,
-      "start": 24,
-      "end": 26.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 66,
       "pitch": 78,
       "name": "F#5",
-      "velocity": 82,
+      "velocity": 76,
       "start": 24,
       "end": 25.9,
       "duration": 1.9,
@@ -743,10 +677,10 @@
       "hand": "R"
     },
     {
-      "id": 67,
+      "id": 61,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 25,
       "end": 25.85,
       "duration": 0.85,
@@ -754,12 +688,78 @@
       "hand": "L"
     },
     {
-      "id": 68,
+      "id": 62,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 25,
       "end": 25.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 63,
+      "pitch": 63,
+      "name": "D#4",
+      "velocity": 40,
+      "start": 26,
+      "end": 26.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 64,
+      "pitch": 66,
+      "name": "F#4",
+      "velocity": 40,
+      "start": 26,
+      "end": 26.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 65,
+      "pitch": 83,
+      "name": "B5",
+      "velocity": 72,
+      "start": 26,
+      "end": 26.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 66,
+      "pitch": 44,
+      "name": "G#2",
+      "velocity": 48,
+      "start": 27,
+      "end": 29.8,
+      "duration": 2.8,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 67,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 76,
+      "start": 27,
+      "end": 27.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 68,
+      "pitch": 59,
+      "name": "B3",
+      "velocity": 40,
+      "start": 28,
+      "end": 28.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
@@ -768,84 +768,18 @@
       "id": 69,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 46,
-      "start": 26,
-      "end": 26.85,
+      "velocity": 40,
+      "start": 28,
+      "end": 28.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 70,
-      "pitch": 66,
-      "name": "F#4",
-      "velocity": 46,
-      "start": 26,
-      "end": 26.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 71,
-      "pitch": 83,
-      "name": "B5",
-      "velocity": 78,
-      "start": 26,
-      "end": 26.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 72,
-      "pitch": 44,
-      "name": "G#2",
-      "velocity": 52,
-      "start": 27,
-      "end": 29.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 73,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 82,
-      "start": 27,
-      "end": 27.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 74,
-      "pitch": 59,
-      "name": "B3",
-      "velocity": 46,
-      "start": 28,
-      "end": 28.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 75,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 46,
-      "start": 28,
-      "end": 28.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 76,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 80,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 74,
       "start": 28,
       "end": 28.9,
       "duration": 0.9,
@@ -853,10 +787,10 @@
       "hand": "R"
     },
     {
-      "id": 77,
+      "id": 71,
       "pitch": 59,
       "name": "B3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 29,
       "end": 29.85,
       "duration": 0.85,
@@ -864,10 +798,10 @@
       "hand": "L"
     },
     {
-      "id": 78,
+      "id": 72,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 29,
       "end": 29.85,
       "duration": 0.85,
@@ -875,10 +809,10 @@
       "hand": "L"
     },
     {
-      "id": 79,
+      "id": 73,
       "pitch": 46,
       "name": "A#2",
-      "velocity": 52,
+      "velocity": 48,
       "start": 30,
       "end": 32.8,
       "duration": 2.8,
@@ -886,10 +820,10 @@
       "hand": "L"
     },
     {
-      "id": 80,
-      "pitch": 92,
-      "name": "G#6",
-      "velocity": 84,
+      "id": 74,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 78,
       "start": 30,
       "end": 30.9,
       "duration": 0.9,
@@ -897,10 +831,10 @@
       "hand": "R"
     },
     {
-      "id": 81,
+      "id": 75,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 31,
       "end": 31.85,
       "duration": 0.85,
@@ -908,10 +842,10 @@
       "hand": "L"
     },
     {
-      "id": 82,
+      "id": 76,
       "pitch": 65,
       "name": "F4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 31,
       "end": 31.85,
       "duration": 0.85,
@@ -919,10 +853,10 @@
       "hand": "L"
     },
     {
-      "id": 83,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 80,
+      "id": 77,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 74,
       "start": 31,
       "end": 31.45,
       "duration": 0.45,
@@ -930,10 +864,10 @@
       "hand": "R"
     },
     {
-      "id": 84,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 82,
+      "id": 78,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 76,
       "start": 31.5,
       "end": 31.95,
       "duration": 0.45,
@@ -941,10 +875,10 @@
       "hand": "R"
     },
     {
-      "id": 85,
+      "id": 79,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 32,
       "end": 32.85,
       "duration": 0.85,
@@ -952,10 +886,10 @@
       "hand": "L"
     },
     {
-      "id": 86,
+      "id": 80,
       "pitch": 65,
       "name": "F4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 32,
       "end": 32.85,
       "duration": 0.85,
@@ -963,10 +897,10 @@
       "hand": "L"
     },
     {
-      "id": 87,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 80,
+      "id": 81,
+      "pitch": 77,
+      "name": "F5",
+      "velocity": 74,
       "start": 32,
       "end": 32.9,
       "duration": 0.9,
@@ -974,10 +908,10 @@
       "hand": "R"
     },
     {
-      "id": 88,
+      "id": 82,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 52,
+      "velocity": 48,
       "start": 33,
       "end": 35.8,
       "duration": 2.8,
@@ -985,10 +919,10 @@
       "hand": "L"
     },
     {
-      "id": 89,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 82,
+      "id": 83,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 76,
       "start": 33,
       "end": 35.85,
       "duration": 2.85,
@@ -996,10 +930,10 @@
       "hand": "R"
     },
     {
-      "id": 90,
+      "id": 84,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 34,
       "end": 34.85,
       "duration": 0.85,
@@ -1007,10 +941,10 @@
       "hand": "L"
     },
     {
-      "id": 91,
+      "id": 85,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 34,
       "end": 34.85,
       "duration": 0.85,
@@ -1018,10 +952,10 @@
       "hand": "L"
     },
     {
-      "id": 92,
+      "id": 86,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 35,
       "end": 35.85,
       "duration": 0.85,
@@ -1029,10 +963,10 @@
       "hand": "L"
     },
     {
-      "id": 93,
+      "id": 87,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 35,
       "end": 35.85,
       "duration": 0.85,
@@ -1040,10 +974,10 @@
       "hand": "L"
     },
     {
-      "id": 94,
+      "id": 88,
       "pitch": 47,
       "name": "B2",
-      "velocity": 52,
+      "velocity": 48,
       "start": 36,
       "end": 38.8,
       "duration": 2.8,
@@ -1051,32 +985,10 @@
       "hand": "L"
     },
     {
-      "id": 95,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 46,
-      "start": 36,
-      "end": 38.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 96,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 44,
-      "start": 36,
-      "end": 38.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 97,
+      "id": 89,
       "pitch": 78,
       "name": "F#5",
-      "velocity": 82,
+      "velocity": 76,
       "start": 36,
       "end": 37.9,
       "duration": 1.9,
@@ -1084,10 +996,10 @@
       "hand": "R"
     },
     {
-      "id": 98,
+      "id": 90,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 37,
       "end": 37.85,
       "duration": 0.85,
@@ -1095,10 +1007,10 @@
       "hand": "L"
     },
     {
-      "id": 99,
+      "id": 91,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 37,
       "end": 37.85,
       "duration": 0.85,
@@ -1106,10 +1018,10 @@
       "hand": "L"
     },
     {
-      "id": 100,
+      "id": 92,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 38,
       "end": 38.85,
       "duration": 0.85,
@@ -1117,10 +1029,10 @@
       "hand": "L"
     },
     {
-      "id": 101,
+      "id": 93,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 38,
       "end": 38.85,
       "duration": 0.85,
@@ -1128,10 +1040,10 @@
       "hand": "L"
     },
     {
-      "id": 102,
-      "pitch": 85,
-      "name": "C#6",
-      "velocity": 78,
+      "id": 94,
+      "pitch": 73,
+      "name": "C#5",
+      "velocity": 72,
       "start": 38,
       "end": 38.9,
       "duration": 0.9,
@@ -1139,10 +1051,10 @@
       "hand": "R"
     },
     {
-      "id": 103,
+      "id": 95,
       "pitch": 46,
       "name": "A#2",
-      "velocity": 52,
+      "velocity": 48,
       "start": 39,
       "end": 41.8,
       "duration": 2.8,
@@ -1150,10 +1062,10 @@
       "hand": "L"
     },
     {
-      "id": 104,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 82,
+      "id": 96,
+      "pitch": 77,
+      "name": "F5",
+      "velocity": 76,
       "start": 39,
       "end": 39.9,
       "duration": 0.9,
@@ -1161,10 +1073,10 @@
       "hand": "R"
     },
     {
-      "id": 105,
+      "id": 97,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 40,
       "end": 40.85,
       "duration": 0.85,
@@ -1172,10 +1084,10 @@
       "hand": "L"
     },
     {
-      "id": 106,
+      "id": 98,
       "pitch": 65,
       "name": "F4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 40,
       "end": 40.85,
       "duration": 0.85,
@@ -1183,10 +1095,10 @@
       "hand": "L"
     },
     {
-      "id": 107,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 80,
+      "id": 99,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 74,
       "start": 40,
       "end": 40.9,
       "duration": 0.9,
@@ -1194,10 +1106,10 @@
       "hand": "R"
     },
     {
-      "id": 108,
+      "id": 100,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 41,
       "end": 41.85,
       "duration": 0.85,
@@ -1205,10 +1117,10 @@
       "hand": "L"
     },
     {
-      "id": 109,
+      "id": 101,
       "pitch": 65,
       "name": "F4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 41,
       "end": 41.85,
       "duration": 0.85,
@@ -1216,10 +1128,10 @@
       "hand": "L"
     },
     {
-      "id": 110,
+      "id": 102,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 52,
+      "velocity": 48,
       "start": 42,
       "end": 44.8,
       "duration": 2.8,
@@ -1227,10 +1139,10 @@
       "hand": "L"
     },
     {
-      "id": 111,
-      "pitch": 94,
-      "name": "A#6",
-      "velocity": 84,
+      "id": 103,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 78,
       "start": 42,
       "end": 42.9,
       "duration": 0.9,
@@ -1238,10 +1150,10 @@
       "hand": "R"
     },
     {
-      "id": 112,
+      "id": 104,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 43,
       "end": 43.85,
       "duration": 0.85,
@@ -1249,10 +1161,10 @@
       "hand": "L"
     },
     {
-      "id": 113,
+      "id": 105,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 43,
       "end": 43.85,
       "duration": 0.85,
@@ -1260,10 +1172,10 @@
       "hand": "L"
     },
     {
-      "id": 114,
+      "id": 106,
       "pitch": 82,
       "name": "A#5",
-      "velocity": 80,
+      "velocity": 74,
       "start": 43,
       "end": 43.45,
       "duration": 0.45,
@@ -1271,10 +1183,10 @@
       "hand": "R"
     },
     {
-      "id": 115,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 82,
+      "id": 107,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 76,
       "start": 43.5,
       "end": 43.95,
       "duration": 0.45,
@@ -1282,10 +1194,10 @@
       "hand": "R"
     },
     {
-      "id": 116,
+      "id": 108,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 44,
       "end": 44.85,
       "duration": 0.85,
@@ -1293,10 +1205,10 @@
       "hand": "L"
     },
     {
-      "id": 117,
+      "id": 109,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 44,
       "end": 44.85,
       "duration": 0.85,
@@ -1304,10 +1216,10 @@
       "hand": "L"
     },
     {
-      "id": 118,
+      "id": 110,
       "pitch": 82,
       "name": "A#5",
-      "velocity": 80,
+      "velocity": 74,
       "start": 44,
       "end": 44.9,
       "duration": 0.9,
@@ -1315,10 +1227,10 @@
       "hand": "R"
     },
     {
-      "id": 119,
+      "id": 111,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 52,
+      "velocity": 48,
       "start": 45,
       "end": 47.8,
       "duration": 2.8,
@@ -1326,10 +1238,10 @@
       "hand": "L"
     },
     {
-      "id": 120,
+      "id": 112,
       "pitch": 82,
       "name": "A#5",
-      "velocity": 82,
+      "velocity": 76,
       "start": 45,
       "end": 47.85,
       "duration": 2.85,
@@ -1337,10 +1249,10 @@
       "hand": "R"
     },
     {
-      "id": 121,
+      "id": 113,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 46,
       "end": 46.85,
       "duration": 0.85,
@@ -1348,10 +1260,10 @@
       "hand": "L"
     },
     {
-      "id": 122,
+      "id": 114,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 46,
       "end": 46.85,
       "duration": 0.85,
@@ -1359,10 +1271,10 @@
       "hand": "L"
     },
     {
-      "id": 123,
+      "id": 115,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 47,
       "end": 47.85,
       "duration": 0.85,
@@ -1370,10 +1282,10 @@
       "hand": "L"
     },
     {
-      "id": 124,
+      "id": 116,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 47,
       "end": 47.85,
       "duration": 0.85,
@@ -1381,10 +1293,10 @@
       "hand": "L"
     },
     {
-      "id": 125,
+      "id": 117,
       "pitch": 47,
       "name": "B2",
-      "velocity": 52,
+      "velocity": 48,
       "start": 48,
       "end": 50.8,
       "duration": 2.8,
@@ -1392,32 +1304,10 @@
       "hand": "L"
     },
     {
-      "id": 126,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 46,
-      "start": 48,
-      "end": 50.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 127,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 44,
-      "start": 48,
-      "end": 50.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 128,
+      "id": 118,
       "pitch": 78,
       "name": "F#5",
-      "velocity": 82,
+      "velocity": 76,
       "start": 48,
       "end": 49.9,
       "duration": 1.9,
@@ -1425,10 +1315,10 @@
       "hand": "R"
     },
     {
-      "id": 129,
+      "id": 119,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 49,
       "end": 49.85,
       "duration": 0.85,
@@ -1436,10 +1326,10 @@
       "hand": "L"
     },
     {
-      "id": 130,
+      "id": 120,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 49,
       "end": 49.85,
       "duration": 0.85,
@@ -1447,10 +1337,10 @@
       "hand": "L"
     },
     {
-      "id": 131,
+      "id": 121,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 50,
       "end": 50.85,
       "duration": 0.85,
@@ -1458,10 +1348,10 @@
       "hand": "L"
     },
     {
-      "id": 132,
+      "id": 122,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 50,
       "end": 50.85,
       "duration": 0.85,
@@ -1469,10 +1359,10 @@
       "hand": "L"
     },
     {
-      "id": 133,
+      "id": 123,
       "pitch": 80,
       "name": "G#5",
-      "velocity": 78,
+      "velocity": 72,
       "start": 50,
       "end": 50.9,
       "duration": 0.9,
@@ -1480,10 +1370,10 @@
       "hand": "R"
     },
     {
-      "id": 134,
+      "id": 124,
       "pitch": 44,
       "name": "G#2",
-      "velocity": 52,
+      "velocity": 48,
       "start": 51,
       "end": 53.8,
       "duration": 2.8,
@@ -1491,10 +1381,10 @@
       "hand": "L"
     },
     {
-      "id": 135,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 82,
+      "id": 125,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 76,
       "start": 51,
       "end": 51.9,
       "duration": 0.9,
@@ -1502,10 +1392,10 @@
       "hand": "R"
     },
     {
-      "id": 136,
+      "id": 126,
       "pitch": 59,
       "name": "B3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 52,
       "end": 52.85,
       "duration": 0.85,
@@ -1513,10 +1403,10 @@
       "hand": "L"
     },
     {
-      "id": 137,
+      "id": 127,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 52,
       "end": 52.85,
       "duration": 0.85,
@@ -1524,10 +1414,10 @@
       "hand": "L"
     },
     {
-      "id": 138,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 80,
+      "id": 128,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 74,
       "start": 52,
       "end": 52.9,
       "duration": 0.9,
@@ -1535,10 +1425,10 @@
       "hand": "R"
     },
     {
-      "id": 139,
+      "id": 129,
       "pitch": 59,
       "name": "B3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 53,
       "end": 53.85,
       "duration": 0.85,
@@ -1546,10 +1436,10 @@
       "hand": "L"
     },
     {
-      "id": 140,
+      "id": 130,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 53,
       "end": 53.85,
       "duration": 0.85,
@@ -1557,10 +1447,10 @@
       "hand": "L"
     },
     {
-      "id": 141,
+      "id": 131,
       "pitch": 46,
       "name": "A#2",
-      "velocity": 52,
+      "velocity": 48,
       "start": 54,
       "end": 56.8,
       "duration": 2.8,
@@ -1568,10 +1458,10 @@
       "hand": "L"
     },
     {
-      "id": 142,
-      "pitch": 92,
-      "name": "G#6",
-      "velocity": 84,
+      "id": 132,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 78,
       "start": 54,
       "end": 54.9,
       "duration": 0.9,
@@ -1579,10 +1469,10 @@
       "hand": "R"
     },
     {
-      "id": 143,
+      "id": 133,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 55,
       "end": 55.85,
       "duration": 0.85,
@@ -1590,10 +1480,10 @@
       "hand": "L"
     },
     {
-      "id": 144,
+      "id": 134,
       "pitch": 65,
       "name": "F4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 55,
       "end": 55.85,
       "duration": 0.85,
@@ -1601,10 +1491,10 @@
       "hand": "L"
     },
     {
-      "id": 145,
+      "id": 135,
       "pitch": 80,
       "name": "G#5",
-      "velocity": 80,
+      "velocity": 74,
       "start": 55,
       "end": 55.45,
       "duration": 0.45,
@@ -1612,10 +1502,10 @@
       "hand": "R"
     },
     {
-      "id": 146,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 82,
+      "id": 136,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 76,
       "start": 55.5,
       "end": 55.95,
       "duration": 0.45,
@@ -1623,10 +1513,10 @@
       "hand": "R"
     },
     {
-      "id": 147,
+      "id": 137,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 56,
       "end": 56.85,
       "duration": 0.85,
@@ -1634,10 +1524,10 @@
       "hand": "L"
     },
     {
-      "id": 148,
+      "id": 138,
       "pitch": 65,
       "name": "F4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 56,
       "end": 56.85,
       "duration": 0.85,
@@ -1645,10 +1535,10 @@
       "hand": "L"
     },
     {
-      "id": 149,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 80,
+      "id": 139,
+      "pitch": 77,
+      "name": "F5",
+      "velocity": 74,
       "start": 56,
       "end": 56.9,
       "duration": 0.9,
@@ -1656,10 +1546,10 @@
       "hand": "R"
     },
     {
-      "id": 150,
+      "id": 140,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 52,
+      "velocity": 48,
       "start": 57,
       "end": 59.8,
       "duration": 2.8,
@@ -1667,10 +1557,10 @@
       "hand": "L"
     },
     {
-      "id": 151,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 82,
+      "id": 141,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 76,
       "start": 57,
       "end": 59.85,
       "duration": 2.85,
@@ -1678,10 +1568,10 @@
       "hand": "R"
     },
     {
-      "id": 152,
+      "id": 142,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 58,
       "end": 58.85,
       "duration": 0.85,
@@ -1689,10 +1579,10 @@
       "hand": "L"
     },
     {
-      "id": 153,
+      "id": 143,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 58,
       "end": 58.85,
       "duration": 0.85,
@@ -1700,10 +1590,10 @@
       "hand": "L"
     },
     {
-      "id": 154,
+      "id": 144,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 59,
       "end": 59.85,
       "duration": 0.85,
@@ -1711,10 +1601,10 @@
       "hand": "L"
     },
     {
-      "id": 155,
+      "id": 145,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 59,
       "end": 59.85,
       "duration": 0.85,
@@ -1722,10 +1612,10 @@
       "hand": "L"
     },
     {
-      "id": 156,
+      "id": 146,
       "pitch": 47,
       "name": "B2",
-      "velocity": 52,
+      "velocity": 48,
       "start": 60,
       "end": 62.8,
       "duration": 2.8,
@@ -1733,32 +1623,10 @@
       "hand": "L"
     },
     {
-      "id": 157,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 46,
-      "start": 60,
-      "end": 62.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 158,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 44,
-      "start": 60,
-      "end": 62.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 159,
+      "id": 147,
       "pitch": 78,
       "name": "F#5",
-      "velocity": 82,
+      "velocity": 76,
       "start": 60,
       "end": 61.9,
       "duration": 1.9,
@@ -1766,45 +1634,177 @@
       "hand": "R"
     },
     {
-      "id": 160,
+      "id": 148,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 46,
+      "velocity": 40,
       "start": 61,
       "end": 61.85,
       "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 149,
+      "pitch": 66,
+      "name": "F#4",
+      "velocity": 40,
+      "start": 61,
+      "end": 61.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 150,
+      "pitch": 63,
+      "name": "D#4",
+      "velocity": 40,
+      "start": 62,
+      "end": 62.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 151,
+      "pitch": 66,
+      "name": "F#4",
+      "velocity": 40,
+      "start": 62,
+      "end": 62.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 152,
+      "pitch": 83,
+      "name": "B5",
+      "velocity": 72,
+      "start": 62,
+      "end": 62.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 153,
+      "pitch": 46,
+      "name": "A#2",
+      "velocity": 48,
+      "start": 63,
+      "end": 65.8,
+      "duration": 2.8,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 154,
+      "pitch": 77,
+      "name": "F5",
+      "velocity": 76,
+      "start": 63,
+      "end": 63.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 155,
+      "pitch": 61,
+      "name": "C#4",
+      "velocity": 40,
+      "start": 64,
+      "end": 64.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 156,
+      "pitch": 65,
+      "name": "F4",
+      "velocity": 40,
+      "start": 64,
+      "end": 64.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 157,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 74,
+      "start": 64,
+      "end": 64.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 158,
+      "pitch": 61,
+      "name": "C#4",
+      "velocity": 40,
+      "start": 65,
+      "end": 65.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 159,
+      "pitch": 65,
+      "name": "F4",
+      "velocity": 40,
+      "start": 65,
+      "end": 65.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 160,
+      "pitch": 39,
+      "name": "D#2",
+      "velocity": 48,
+      "start": 66,
+      "end": 68.8,
+      "duration": 2.8,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 161,
-      "pitch": 66,
-      "name": "F#4",
-      "velocity": 46,
-      "start": 61,
-      "end": 61.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 78,
+      "start": 66,
+      "end": 66.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
     },
     {
       "id": 162,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 46,
-      "start": 62,
-      "end": 62.85,
+      "pitch": 54,
+      "name": "F#3",
+      "velocity": 40,
+      "start": 67,
+      "end": 67.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 163,
-      "pitch": 66,
-      "name": "F#4",
-      "velocity": 46,
-      "start": 62,
-      "end": 62.85,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 40,
+      "start": 67,
+      "end": 67.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
@@ -1813,139 +1813,7 @@
       "id": 164,
       "pitch": 83,
       "name": "B5",
-      "velocity": 78,
-      "start": 62,
-      "end": 62.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 165,
-      "pitch": 46,
-      "name": "A#2",
-      "velocity": 52,
-      "start": 63,
-      "end": 65.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 166,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 82,
-      "start": 63,
-      "end": 63.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 167,
-      "pitch": 61,
-      "name": "C#4",
-      "velocity": 46,
-      "start": 64,
-      "end": 64.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 168,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 46,
-      "start": 64,
-      "end": 64.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 169,
-      "pitch": 83,
-      "name": "B5",
-      "velocity": 80,
-      "start": 64,
-      "end": 64.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 170,
-      "pitch": 61,
-      "name": "C#4",
-      "velocity": 46,
-      "start": 65,
-      "end": 65.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 171,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 46,
-      "start": 65,
-      "end": 65.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 172,
-      "pitch": 39,
-      "name": "D#2",
-      "velocity": 52,
-      "start": 66,
-      "end": 68.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 173,
-      "pitch": 94,
-      "name": "A#6",
-      "velocity": 84,
-      "start": 66,
-      "end": 66.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 174,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 46,
-      "start": 67,
-      "end": 67.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 175,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 46,
-      "start": 67,
-      "end": 67.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 176,
-      "pitch": 83,
-      "name": "B5",
-      "velocity": 80,
+      "velocity": 74,
       "start": 67,
       "end": 67.45,
       "duration": 0.45,
@@ -1953,10 +1821,10 @@
       "hand": "R"
     },
     {
-      "id": 177,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 82,
+      "id": 165,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 76,
       "start": 67.5,
       "end": 67.95,
       "duration": 0.45,
@@ -1964,10 +1832,10 @@
       "hand": "R"
     },
     {
-      "id": 178,
+      "id": 166,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 68,
       "end": 68.85,
       "duration": 0.85,
@@ -1975,10 +1843,10 @@
       "hand": "L"
     },
     {
-      "id": 179,
+      "id": 167,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 68,
       "end": 68.85,
       "duration": 0.85,
@@ -1986,10 +1854,10 @@
       "hand": "L"
     },
     {
-      "id": 180,
+      "id": 168,
       "pitch": 82,
       "name": "A#5",
-      "velocity": 80,
+      "velocity": 74,
       "start": 68,
       "end": 68.9,
       "duration": 0.9,
@@ -1997,10 +1865,10 @@
       "hand": "R"
     },
     {
-      "id": 181,
+      "id": 169,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 52,
+      "velocity": 48,
       "start": 69,
       "end": 71.8,
       "duration": 2.8,
@@ -2008,10 +1876,10 @@
       "hand": "L"
     },
     {
-      "id": 182,
+      "id": 170,
       "pitch": 82,
       "name": "A#5",
-      "velocity": 82,
+      "velocity": 76,
       "start": 69,
       "end": 71.85,
       "duration": 2.85,
@@ -2019,10 +1887,10 @@
       "hand": "R"
     },
     {
-      "id": 183,
+      "id": 171,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 70,
       "end": 70.85,
       "duration": 0.85,
@@ -2030,67 +1898,199 @@
       "hand": "L"
     },
     {
-      "id": 184,
+      "id": 172,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 46,
+      "velocity": 40,
       "start": 70,
       "end": 70.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 173,
+      "pitch": 54,
+      "name": "F#3",
+      "velocity": 40,
+      "start": 71,
+      "end": 71.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 174,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 40,
+      "start": 71,
+      "end": 71.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 175,
+      "pitch": 39,
+      "name": "D#2",
+      "velocity": 52,
+      "start": 72,
+      "end": 74.8,
+      "duration": 2.8,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 176,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 82,
+      "start": 72,
+      "end": 73.9,
+      "duration": 1.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 177,
+      "pitch": 54,
+      "name": "F#3",
+      "velocity": 44,
+      "start": 73,
+      "end": 73.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 178,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 44,
+      "start": 73,
+      "end": 73.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 179,
+      "pitch": 54,
+      "name": "F#3",
+      "velocity": 44,
+      "start": 74,
+      "end": 74.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 180,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 44,
+      "start": 74,
+      "end": 74.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 181,
+      "pitch": 83,
+      "name": "B5",
+      "velocity": 78,
+      "start": 74,
+      "end": 74.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 182,
+      "pitch": 47,
+      "name": "B2",
+      "velocity": 52,
+      "start": 75,
+      "end": 77.8,
+      "duration": 2.8,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 183,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 82,
+      "start": 75,
+      "end": 75.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 184,
+      "pitch": 63,
+      "name": "D#4",
+      "velocity": 44,
+      "start": 76,
+      "end": 76.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 185,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 46,
-      "start": 71,
-      "end": 71.85,
+      "pitch": 66,
+      "name": "F#4",
+      "velocity": 44,
+      "start": 76,
+      "end": 76.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 186,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 46,
-      "start": 71,
-      "end": 71.85,
+      "pitch": 73,
+      "name": "C#5",
+      "velocity": 80,
+      "start": 76,
+      "end": 76.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 187,
+      "pitch": 63,
+      "name": "D#4",
+      "velocity": 44,
+      "start": 77,
+      "end": 77.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
-      "id": 187,
-      "pitch": 39,
-      "name": "D#2",
-      "velocity": 60,
-      "start": 72,
-      "end": 74.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
       "id": 188,
-      "pitch": 46,
-      "name": "A#2",
-      "velocity": 54,
-      "start": 72,
-      "end": 74.8,
-      "duration": 2.8,
+      "pitch": 66,
+      "name": "F#4",
+      "velocity": 44,
+      "start": 77,
+      "end": 77.85,
+      "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 189,
-      "pitch": 54,
-      "name": "F#3",
+      "pitch": 42,
+      "name": "F#2",
       "velocity": 52,
-      "start": 72,
-      "end": 74.8,
+      "start": 78,
+      "end": 80.8,
       "duration": 2.8,
       "track": 0,
       "hand": "L"
@@ -2099,161 +2099,7 @@
       "id": 190,
       "pitch": 78,
       "name": "F#5",
-      "velocity": 90,
-      "start": 72,
-      "end": 73.9,
-      "duration": 1.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 191,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 54,
-      "start": 73,
-      "end": 73.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 192,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 54,
-      "start": 73,
-      "end": 73.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 193,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 54,
-      "start": 74,
-      "end": 74.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 194,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 54,
-      "start": 74,
-      "end": 74.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 195,
-      "pitch": 83,
-      "name": "B5",
-      "velocity": 86,
-      "start": 74,
-      "end": 74.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 196,
-      "pitch": 47,
-      "name": "B2",
-      "velocity": 60,
-      "start": 75,
-      "end": 77.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 197,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 90,
-      "start": 75,
-      "end": 75.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 198,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 54,
-      "start": 76,
-      "end": 76.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 199,
-      "pitch": 66,
-      "name": "F#4",
-      "velocity": 54,
-      "start": 76,
-      "end": 76.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 200,
-      "pitch": 85,
-      "name": "C#6",
-      "velocity": 88,
-      "start": 76,
-      "end": 76.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 201,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 54,
-      "start": 77,
-      "end": 77.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 202,
-      "pitch": 66,
-      "name": "F#4",
-      "velocity": 54,
-      "start": 77,
-      "end": 77.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 203,
-      "pitch": 42,
-      "name": "F#2",
-      "velocity": 60,
-      "start": 78,
-      "end": 80.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 204,
-      "pitch": 92,
-      "name": "G#6",
-      "velocity": 92,
+      "velocity": 84,
       "start": 78,
       "end": 78.9,
       "duration": 0.9,
@@ -2261,10 +2107,10 @@
       "hand": "R"
     },
     {
-      "id": 205,
+      "id": 191,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 79,
       "end": 79.85,
       "duration": 0.85,
@@ -2272,10 +2118,10 @@
       "hand": "L"
     },
     {
-      "id": 206,
+      "id": 192,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 79,
       "end": 79.85,
       "duration": 0.85,
@@ -2283,10 +2129,10 @@
       "hand": "L"
     },
     {
-      "id": 207,
-      "pitch": 83,
-      "name": "B5",
-      "velocity": 88,
+      "id": 193,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 80,
       "start": 79,
       "end": 79.45,
       "duration": 0.45,
@@ -2294,10 +2140,10 @@
       "hand": "R"
     },
     {
-      "id": 208,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 90,
+      "id": 194,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 82,
       "start": 79.5,
       "end": 79.95,
       "duration": 0.45,
@@ -2305,10 +2151,10 @@
       "hand": "R"
     },
     {
-      "id": 209,
+      "id": 195,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 80,
       "end": 80.85,
       "duration": 0.85,
@@ -2316,10 +2162,10 @@
       "hand": "L"
     },
     {
-      "id": 210,
+      "id": 196,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 80,
       "end": 80.85,
       "duration": 0.85,
@@ -2327,10 +2173,10 @@
       "hand": "L"
     },
     {
-      "id": 211,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 88,
+      "id": 197,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 80,
       "start": 80,
       "end": 80.9,
       "duration": 0.9,
@@ -2338,10 +2184,10 @@
       "hand": "R"
     },
     {
-      "id": 212,
+      "id": 198,
       "pitch": 49,
       "name": "C#3",
-      "velocity": 60,
+      "velocity": 52,
       "start": 81,
       "end": 83.8,
       "duration": 2.8,
@@ -2349,10 +2195,10 @@
       "hand": "L"
     },
     {
-      "id": 213,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 90,
+      "id": 199,
+      "pitch": 77,
+      "name": "F5",
+      "velocity": 82,
       "start": 81,
       "end": 83.85,
       "duration": 2.85,
@@ -2360,10 +2206,10 @@
       "hand": "R"
     },
     {
-      "id": 214,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 54,
+      "id": 200,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 44,
       "start": 82,
       "end": 82.85,
       "duration": 0.85,
@@ -2371,10 +2217,10 @@
       "hand": "L"
     },
     {
-      "id": 215,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 54,
+      "id": 201,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 44,
       "start": 82,
       "end": 82.85,
       "duration": 0.85,
@@ -2382,10 +2228,10 @@
       "hand": "L"
     },
     {
-      "id": 216,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 54,
+      "id": 202,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 44,
       "start": 83,
       "end": 83.85,
       "duration": 0.85,
@@ -2393,10 +2239,10 @@
       "hand": "L"
     },
     {
-      "id": 217,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 54,
+      "id": 203,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 44,
       "start": 83,
       "end": 83.85,
       "duration": 0.85,
@@ -2404,31 +2250,9 @@
       "hand": "L"
     },
     {
-      "id": 218,
+      "id": 204,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 60,
-      "start": 84,
-      "end": 86.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 219,
-      "pitch": 46,
-      "name": "A#2",
-      "velocity": 54,
-      "start": 84,
-      "end": 86.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 220,
-      "pitch": 54,
-      "name": "F#3",
       "velocity": 52,
       "start": 84,
       "end": 86.8,
@@ -2437,10 +2261,10 @@
       "hand": "L"
     },
     {
-      "id": 221,
+      "id": 205,
       "pitch": 78,
       "name": "F#5",
-      "velocity": 90,
+      "velocity": 82,
       "start": 84,
       "end": 85.9,
       "duration": 1.9,
@@ -2448,10 +2272,10 @@
       "hand": "R"
     },
     {
-      "id": 222,
+      "id": 206,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 85,
       "end": 85.85,
       "duration": 0.85,
@@ -2459,10 +2283,10 @@
       "hand": "L"
     },
     {
-      "id": 223,
+      "id": 207,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 85,
       "end": 85.85,
       "duration": 0.85,
@@ -2470,10 +2294,10 @@
       "hand": "L"
     },
     {
-      "id": 224,
+      "id": 208,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 86,
       "end": 86.85,
       "duration": 0.85,
@@ -2481,10 +2305,10 @@
       "hand": "L"
     },
     {
-      "id": 225,
+      "id": 209,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 86,
       "end": 86.85,
       "duration": 0.85,
@@ -2492,10 +2316,10 @@
       "hand": "L"
     },
     {
-      "id": 226,
-      "pitch": 85,
-      "name": "C#6",
-      "velocity": 86,
+      "id": 210,
+      "pitch": 73,
+      "name": "C#5",
+      "velocity": 78,
       "start": 86,
       "end": 86.9,
       "duration": 0.9,
@@ -2503,10 +2327,10 @@
       "hand": "R"
     },
     {
-      "id": 227,
+      "id": 211,
       "pitch": 47,
       "name": "B2",
-      "velocity": 60,
+      "velocity": 52,
       "start": 87,
       "end": 89.8,
       "duration": 2.8,
@@ -2514,10 +2338,10 @@
       "hand": "L"
     },
     {
-      "id": 228,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 90,
+      "id": 212,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 82,
       "start": 87,
       "end": 87.9,
       "duration": 0.9,
@@ -2525,10 +2349,10 @@
       "hand": "R"
     },
     {
-      "id": 229,
+      "id": 213,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 88,
       "end": 88.85,
       "duration": 0.85,
@@ -2536,10 +2360,10 @@
       "hand": "L"
     },
     {
-      "id": 230,
+      "id": 214,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 88,
       "end": 88.85,
       "duration": 0.85,
@@ -2547,10 +2371,10 @@
       "hand": "L"
     },
     {
-      "id": 231,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 88,
+      "id": 215,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 80,
       "start": 88,
       "end": 88.9,
       "duration": 0.9,
@@ -2558,10 +2382,10 @@
       "hand": "R"
     },
     {
-      "id": 232,
+      "id": 216,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 89,
       "end": 89.85,
       "duration": 0.85,
@@ -2569,10 +2393,10 @@
       "hand": "L"
     },
     {
-      "id": 233,
+      "id": 217,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 89,
       "end": 89.85,
       "duration": 0.85,
@@ -2580,10 +2404,10 @@
       "hand": "L"
     },
     {
-      "id": 234,
+      "id": 218,
       "pitch": 42,
       "name": "F#2",
-      "velocity": 60,
+      "velocity": 52,
       "start": 90,
       "end": 92.8,
       "duration": 2.8,
@@ -2591,10 +2415,10 @@
       "hand": "L"
     },
     {
-      "id": 235,
-      "pitch": 94,
-      "name": "A#6",
-      "velocity": 92,
+      "id": 219,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 84,
       "start": 90,
       "end": 90.9,
       "duration": 0.9,
@@ -2602,10 +2426,10 @@
       "hand": "R"
     },
     {
-      "id": 236,
+      "id": 220,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 91,
       "end": 91.85,
       "duration": 0.85,
@@ -2613,10 +2437,10 @@
       "hand": "L"
     },
     {
-      "id": 237,
+      "id": 221,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 91,
       "end": 91.85,
       "duration": 0.85,
@@ -2624,10 +2448,10 @@
       "hand": "L"
     },
     {
-      "id": 238,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 88,
+      "id": 222,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 80,
       "start": 91,
       "end": 91.45,
       "duration": 0.45,
@@ -2635,10 +2459,10 @@
       "hand": "R"
     },
     {
-      "id": 239,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 90,
+      "id": 223,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 82,
       "start": 91.5,
       "end": 91.95,
       "duration": 0.45,
@@ -2646,10 +2470,10 @@
       "hand": "R"
     },
     {
-      "id": 240,
+      "id": 224,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 92,
       "end": 92.85,
       "duration": 0.85,
@@ -2657,10 +2481,10 @@
       "hand": "L"
     },
     {
-      "id": 241,
+      "id": 225,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 92,
       "end": 92.85,
       "duration": 0.85,
@@ -2668,10 +2492,10 @@
       "hand": "L"
     },
     {
-      "id": 242,
+      "id": 226,
       "pitch": 82,
       "name": "A#5",
-      "velocity": 88,
+      "velocity": 80,
       "start": 92,
       "end": 92.9,
       "duration": 0.9,
@@ -2679,10 +2503,10 @@
       "hand": "R"
     },
     {
-      "id": 243,
+      "id": 227,
       "pitch": 49,
       "name": "C#3",
-      "velocity": 60,
+      "velocity": 52,
       "start": 93,
       "end": 95.8,
       "duration": 2.8,
@@ -2690,10 +2514,10 @@
       "hand": "L"
     },
     {
-      "id": 244,
-      "pitch": 82,
-      "name": "A#5",
-      "velocity": 90,
+      "id": 228,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 82,
       "start": 93,
       "end": 95.85,
       "duration": 2.85,
@@ -2701,10 +2525,10 @@
       "hand": "R"
     },
     {
-      "id": 245,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 54,
+      "id": 229,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 44,
       "start": 94,
       "end": 94.85,
       "duration": 0.85,
@@ -2712,10 +2536,10 @@
       "hand": "L"
     },
     {
-      "id": 246,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 54,
+      "id": 230,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 44,
       "start": 94,
       "end": 94.85,
       "duration": 0.85,
@@ -2723,10 +2547,10 @@
       "hand": "L"
     },
     {
-      "id": 247,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 54,
+      "id": 231,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 44,
       "start": 95,
       "end": 95.85,
       "duration": 0.85,
@@ -2734,10 +2558,10 @@
       "hand": "L"
     },
     {
-      "id": 248,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 54,
+      "id": 232,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 44,
       "start": 95,
       "end": 95.85,
       "duration": 0.85,
@@ -2745,31 +2569,9 @@
       "hand": "L"
     },
     {
-      "id": 249,
+      "id": 233,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 60,
-      "start": 96,
-      "end": 98.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 250,
-      "pitch": 46,
-      "name": "A#2",
-      "velocity": 54,
-      "start": 96,
-      "end": 98.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 251,
-      "pitch": 54,
-      "name": "F#3",
       "velocity": 52,
       "start": 96,
       "end": 98.8,
@@ -2778,10 +2580,10 @@
       "hand": "L"
     },
     {
-      "id": 252,
+      "id": 234,
       "pitch": 78,
       "name": "F#5",
-      "velocity": 90,
+      "velocity": 82,
       "start": 96,
       "end": 97.9,
       "duration": 1.9,
@@ -2789,10 +2591,10 @@
       "hand": "R"
     },
     {
-      "id": 253,
+      "id": 235,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 97,
       "end": 97.85,
       "duration": 0.85,
@@ -2800,10 +2602,10 @@
       "hand": "L"
     },
     {
-      "id": 254,
+      "id": 236,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 97,
       "end": 97.85,
       "duration": 0.85,
@@ -2811,10 +2613,10 @@
       "hand": "L"
     },
     {
-      "id": 255,
+      "id": 237,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 98,
       "end": 98.85,
       "duration": 0.85,
@@ -2822,10 +2624,10 @@
       "hand": "L"
     },
     {
-      "id": 256,
+      "id": 238,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 98,
       "end": 98.85,
       "duration": 0.85,
@@ -2833,10 +2635,10 @@
       "hand": "L"
     },
     {
-      "id": 257,
+      "id": 239,
       "pitch": 83,
       "name": "B5",
-      "velocity": 86,
+      "velocity": 78,
       "start": 98,
       "end": 98.9,
       "duration": 0.9,
@@ -2844,10 +2646,10 @@
       "hand": "R"
     },
     {
-      "id": 258,
+      "id": 240,
       "pitch": 47,
       "name": "B2",
-      "velocity": 60,
+      "velocity": 52,
       "start": 99,
       "end": 101.8,
       "duration": 2.8,
@@ -2855,10 +2657,10 @@
       "hand": "L"
     },
     {
-      "id": 259,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 90,
+      "id": 241,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 82,
       "start": 99,
       "end": 99.9,
       "duration": 0.9,
@@ -2866,10 +2668,10 @@
       "hand": "R"
     },
     {
-      "id": 260,
+      "id": 242,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 100,
       "end": 100.85,
       "duration": 0.85,
@@ -2877,10 +2679,10 @@
       "hand": "L"
     },
     {
-      "id": 261,
+      "id": 243,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 100,
       "end": 100.85,
       "duration": 0.85,
@@ -2888,10 +2690,10 @@
       "hand": "L"
     },
     {
-      "id": 262,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 88,
+      "id": 244,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 80,
       "start": 100,
       "end": 100.9,
       "duration": 0.9,
@@ -2899,10 +2701,10 @@
       "hand": "R"
     },
     {
-      "id": 263,
+      "id": 245,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 101,
       "end": 101.85,
       "duration": 0.85,
@@ -2910,10 +2712,10 @@
       "hand": "L"
     },
     {
-      "id": 264,
+      "id": 246,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 101,
       "end": 101.85,
       "duration": 0.85,
@@ -2921,10 +2723,10 @@
       "hand": "L"
     },
     {
-      "id": 265,
+      "id": 247,
       "pitch": 42,
       "name": "F#2",
-      "velocity": 60,
+      "velocity": 52,
       "start": 102,
       "end": 104.8,
       "duration": 2.8,
@@ -2932,10 +2734,10 @@
       "hand": "L"
     },
     {
-      "id": 266,
-      "pitch": 92,
-      "name": "G#6",
-      "velocity": 92,
+      "id": 248,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 84,
       "start": 102,
       "end": 102.9,
       "duration": 0.9,
@@ -2943,10 +2745,10 @@
       "hand": "R"
     },
     {
-      "id": 267,
+      "id": 249,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 103,
       "end": 103.85,
       "duration": 0.85,
@@ -2954,10 +2756,10 @@
       "hand": "L"
     },
     {
-      "id": 268,
+      "id": 250,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 103,
       "end": 103.85,
       "duration": 0.85,
@@ -2965,10 +2767,10 @@
       "hand": "L"
     },
     {
-      "id": 269,
-      "pitch": 85,
-      "name": "C#6",
-      "velocity": 88,
+      "id": 251,
+      "pitch": 73,
+      "name": "C#5",
+      "velocity": 80,
       "start": 103,
       "end": 103.45,
       "duration": 0.45,
@@ -2976,10 +2778,10 @@
       "hand": "R"
     },
     {
-      "id": 270,
-      "pitch": 85,
-      "name": "C#6",
-      "velocity": 90,
+      "id": 252,
+      "pitch": 73,
+      "name": "C#5",
+      "velocity": 82,
       "start": 103.5,
       "end": 103.95,
       "duration": 0.45,
@@ -2987,10 +2789,10 @@
       "hand": "R"
     },
     {
-      "id": 271,
+      "id": 253,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 104,
       "end": 104.85,
       "duration": 0.85,
@@ -2998,10 +2800,10 @@
       "hand": "L"
     },
     {
-      "id": 272,
+      "id": 254,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 104,
       "end": 104.85,
       "duration": 0.85,
@@ -3009,10 +2811,10 @@
       "hand": "L"
     },
     {
-      "id": 273,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 88,
+      "id": 255,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 80,
       "start": 104,
       "end": 104.9,
       "duration": 0.9,
@@ -3020,10 +2822,10 @@
       "hand": "R"
     },
     {
-      "id": 274,
+      "id": 256,
       "pitch": 49,
       "name": "C#3",
-      "velocity": 60,
+      "velocity": 52,
       "start": 105,
       "end": 107.8,
       "duration": 2.8,
@@ -3031,10 +2833,10 @@
       "hand": "L"
     },
     {
-      "id": 275,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 90,
+      "id": 257,
+      "pitch": 77,
+      "name": "F5",
+      "velocity": 82,
       "start": 105,
       "end": 107.85,
       "duration": 2.85,
@@ -3042,10 +2844,10 @@
       "hand": "R"
     },
     {
-      "id": 276,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 54,
+      "id": 258,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 44,
       "start": 106,
       "end": 106.85,
       "duration": 0.85,
@@ -3053,10 +2855,10 @@
       "hand": "L"
     },
     {
-      "id": 277,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 54,
+      "id": 259,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 44,
       "start": 106,
       "end": 106.85,
       "duration": 0.85,
@@ -3064,10 +2866,10 @@
       "hand": "L"
     },
     {
-      "id": 278,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 54,
+      "id": 260,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 44,
       "start": 107,
       "end": 107.85,
       "duration": 0.85,
@@ -3075,10 +2877,10 @@
       "hand": "L"
     },
     {
-      "id": 279,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 54,
+      "id": 261,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 44,
       "start": 107,
       "end": 107.85,
       "duration": 0.85,
@@ -3086,31 +2888,9 @@
       "hand": "L"
     },
     {
-      "id": 280,
+      "id": 262,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 60,
-      "start": 108,
-      "end": 110.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 281,
-      "pitch": 46,
-      "name": "A#2",
-      "velocity": 54,
-      "start": 108,
-      "end": 110.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 282,
-      "pitch": 54,
-      "name": "F#3",
       "velocity": 52,
       "start": 108,
       "end": 110.8,
@@ -3119,10 +2899,10 @@
       "hand": "L"
     },
     {
-      "id": 283,
+      "id": 263,
       "pitch": 78,
       "name": "F#5",
-      "velocity": 90,
+      "velocity": 82,
       "start": 108,
       "end": 109.9,
       "duration": 1.9,
@@ -3130,10 +2910,10 @@
       "hand": "R"
     },
     {
-      "id": 284,
+      "id": 264,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 109,
       "end": 109.85,
       "duration": 0.85,
@@ -3141,10 +2921,10 @@
       "hand": "L"
     },
     {
-      "id": 285,
+      "id": 265,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 109,
       "end": 109.85,
       "duration": 0.85,
@@ -3152,10 +2932,10 @@
       "hand": "L"
     },
     {
-      "id": 286,
+      "id": 266,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 110,
       "end": 110.85,
       "duration": 0.85,
@@ -3163,10 +2943,10 @@
       "hand": "L"
     },
     {
-      "id": 287,
+      "id": 267,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 110,
       "end": 110.85,
       "duration": 0.85,
@@ -3174,10 +2954,10 @@
       "hand": "L"
     },
     {
-      "id": 288,
+      "id": 268,
       "pitch": 80,
       "name": "G#5",
-      "velocity": 86,
+      "velocity": 78,
       "start": 110,
       "end": 110.9,
       "duration": 0.9,
@@ -3185,10 +2965,10 @@
       "hand": "R"
     },
     {
-      "id": 289,
+      "id": 269,
       "pitch": 47,
       "name": "B2",
-      "velocity": 60,
+      "velocity": 52,
       "start": 111,
       "end": 113.8,
       "duration": 2.8,
@@ -3196,10 +2976,10 @@
       "hand": "L"
     },
     {
-      "id": 290,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 90,
+      "id": 270,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 82,
       "start": 111,
       "end": 111.9,
       "duration": 0.9,
@@ -3207,10 +2987,10 @@
       "hand": "R"
     },
     {
-      "id": 291,
+      "id": 271,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 112,
       "end": 112.85,
       "duration": 0.85,
@@ -3218,10 +2998,10 @@
       "hand": "L"
     },
     {
-      "id": 292,
+      "id": 272,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 112,
       "end": 112.85,
       "duration": 0.85,
@@ -3229,10 +3009,10 @@
       "hand": "L"
     },
     {
-      "id": 293,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 88,
+      "id": 273,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 80,
       "start": 112,
       "end": 112.9,
       "duration": 0.9,
@@ -3240,10 +3020,10 @@
       "hand": "R"
     },
     {
-      "id": 294,
+      "id": 274,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 113,
       "end": 113.85,
       "duration": 0.85,
@@ -3251,10 +3031,10 @@
       "hand": "L"
     },
     {
-      "id": 295,
+      "id": 275,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 113,
       "end": 113.85,
       "duration": 0.85,
@@ -3262,10 +3042,10 @@
       "hand": "L"
     },
     {
-      "id": 296,
+      "id": 276,
       "pitch": 42,
       "name": "F#2",
-      "velocity": 60,
+      "velocity": 52,
       "start": 114,
       "end": 116.8,
       "duration": 2.8,
@@ -3273,10 +3053,10 @@
       "hand": "L"
     },
     {
-      "id": 297,
-      "pitch": 94,
-      "name": "A#6",
-      "velocity": 92,
+      "id": 277,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 84,
       "start": 114,
       "end": 114.9,
       "duration": 0.9,
@@ -3284,10 +3064,10 @@
       "hand": "R"
     },
     {
-      "id": 298,
+      "id": 278,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 115,
       "end": 115.85,
       "duration": 0.85,
@@ -3295,10 +3075,10 @@
       "hand": "L"
     },
     {
-      "id": 299,
+      "id": 279,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 115,
       "end": 115.85,
       "duration": 0.85,
@@ -3306,10 +3086,10 @@
       "hand": "L"
     },
     {
-      "id": 300,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 88,
+      "id": 280,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 80,
       "start": 115,
       "end": 115.45,
       "duration": 0.45,
@@ -3317,10 +3097,10 @@
       "hand": "R"
     },
     {
-      "id": 301,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 90,
+      "id": 281,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 82,
       "start": 115.5,
       "end": 115.95,
       "duration": 0.45,
@@ -3328,10 +3108,10 @@
       "hand": "R"
     },
     {
-      "id": 302,
+      "id": 282,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 54,
+      "velocity": 44,
       "start": 116,
       "end": 116.85,
       "duration": 0.85,
@@ -3339,10 +3119,10 @@
       "hand": "L"
     },
     {
-      "id": 303,
+      "id": 283,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 54,
+      "velocity": 44,
       "start": 116,
       "end": 116.85,
       "duration": 0.85,
@@ -3350,10 +3130,10 @@
       "hand": "L"
     },
     {
-      "id": 304,
+      "id": 284,
       "pitch": 82,
       "name": "A#5",
-      "velocity": 88,
+      "velocity": 80,
       "start": 116,
       "end": 116.9,
       "duration": 0.9,
@@ -3361,10 +3141,10 @@
       "hand": "R"
     },
     {
-      "id": 305,
+      "id": 285,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 56,
+      "velocity": 48,
       "start": 117,
       "end": 119.8,
       "duration": 2.8,
@@ -3372,10 +3152,10 @@
       "hand": "L"
     },
     {
-      "id": 306,
+      "id": 286,
       "pitch": 82,
       "name": "A#5",
-      "velocity": 86,
+      "velocity": 78,
       "start": 117,
       "end": 119.85,
       "duration": 2.85,
@@ -3383,10 +3163,10 @@
       "hand": "R"
     },
     {
-      "id": 307,
+      "id": 287,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 50,
+      "velocity": 40,
       "start": 118,
       "end": 118.85,
       "duration": 0.85,
@@ -3394,10 +3174,10 @@
       "hand": "L"
     },
     {
-      "id": 308,
+      "id": 288,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 50,
+      "velocity": 40,
       "start": 118,
       "end": 118.85,
       "duration": 0.85,
@@ -3405,10 +3185,10 @@
       "hand": "L"
     },
     {
-      "id": 309,
+      "id": 289,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 50,
+      "velocity": 40,
       "start": 119,
       "end": 119.85,
       "duration": 0.85,
@@ -3416,10 +3196,10 @@
       "hand": "L"
     },
     {
-      "id": 310,
+      "id": 290,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 50,
+      "velocity": 40,
       "start": 119,
       "end": 119.85,
       "duration": 0.85,
@@ -3427,31 +3207,9 @@
       "hand": "L"
     },
     {
-      "id": 311,
+      "id": 291,
       "pitch": 47,
       "name": "B2",
-      "velocity": 56,
-      "start": 120,
-      "end": 122.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 312,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 50,
-      "start": 120,
-      "end": 122.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 313,
-      "pitch": 63,
-      "name": "D#4",
       "velocity": 48,
       "start": 120,
       "end": 122.8,
@@ -3460,10 +3218,10 @@
       "hand": "L"
     },
     {
-      "id": 314,
-      "pitch": 80,
-      "name": "G#5",
-      "velocity": 86,
+      "id": 292,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 78,
       "start": 120,
       "end": 121.9,
       "duration": 1.9,
@@ -3471,10 +3229,10 @@
       "hand": "R"
     },
     {
-      "id": 315,
+      "id": 293,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 121,
       "end": 121.85,
       "duration": 0.85,
@@ -3482,10 +3240,10 @@
       "hand": "L"
     },
     {
-      "id": 316,
+      "id": 294,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 121,
       "end": 121.85,
       "duration": 0.85,
@@ -3493,10 +3251,10 @@
       "hand": "L"
     },
     {
-      "id": 317,
+      "id": 295,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 122,
       "end": 122.85,
       "duration": 0.85,
@@ -3504,10 +3262,10 @@
       "hand": "L"
     },
     {
-      "id": 318,
+      "id": 296,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 122,
       "end": 122.85,
       "duration": 0.85,
@@ -3515,10 +3273,10 @@
       "hand": "L"
     },
     {
-      "id": 319,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 82,
+      "id": 297,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 74,
       "start": 122,
       "end": 122.9,
       "duration": 0.9,
@@ -3526,10 +3284,10 @@
       "hand": "R"
     },
     {
-      "id": 320,
+      "id": 298,
       "pitch": 44,
       "name": "G#2",
-      "velocity": 56,
+      "velocity": 48,
       "start": 123,
       "end": 125.8,
       "duration": 2.8,
@@ -3537,10 +3295,10 @@
       "hand": "L"
     },
     {
-      "id": 321,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 86,
+      "id": 299,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 78,
       "start": 123,
       "end": 123.9,
       "duration": 0.9,
@@ -3548,10 +3306,10 @@
       "hand": "R"
     },
     {
-      "id": 322,
+      "id": 300,
       "pitch": 59,
       "name": "B3",
-      "velocity": 50,
+      "velocity": 40,
       "start": 124,
       "end": 124.85,
       "duration": 0.85,
@@ -3559,10 +3317,10 @@
       "hand": "L"
     },
     {
-      "id": 323,
+      "id": 301,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 124,
       "end": 124.85,
       "duration": 0.85,
@@ -3570,10 +3328,10 @@
       "hand": "L"
     },
     {
-      "id": 324,
-      "pitch": 92,
-      "name": "G#6",
-      "velocity": 84,
+      "id": 302,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 76,
       "start": 124,
       "end": 124.9,
       "duration": 0.9,
@@ -3581,10 +3339,10 @@
       "hand": "R"
     },
     {
-      "id": 325,
+      "id": 303,
       "pitch": 59,
       "name": "B3",
-      "velocity": 50,
+      "velocity": 40,
       "start": 125,
       "end": 125.85,
       "duration": 0.85,
@@ -3592,10 +3350,10 @@
       "hand": "L"
     },
     {
-      "id": 326,
+      "id": 304,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 125,
       "end": 125.85,
       "duration": 0.85,
@@ -3603,10 +3361,10 @@
       "hand": "L"
     },
     {
-      "id": 327,
+      "id": 305,
       "pitch": 46,
       "name": "A#2",
-      "velocity": 56,
+      "velocity": 48,
       "start": 126,
       "end": 128.8,
       "duration": 2.8,
@@ -3614,12 +3372,254 @@
       "hand": "L"
     },
     {
-      "id": 328,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 88,
+      "id": 306,
+      "pitch": 73,
+      "name": "C#5",
+      "velocity": 80,
       "start": 126,
       "end": 126.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 307,
+      "pitch": 61,
+      "name": "C#4",
+      "velocity": 40,
+      "start": 127,
+      "end": 127.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 308,
+      "pitch": 65,
+      "name": "F4",
+      "velocity": 40,
+      "start": 127,
+      "end": 127.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 309,
+      "pitch": 77,
+      "name": "F5",
+      "velocity": 76,
+      "start": 127,
+      "end": 127.45,
+      "duration": 0.45,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 310,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 78,
+      "start": 127.5,
+      "end": 127.95,
+      "duration": 0.45,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 311,
+      "pitch": 61,
+      "name": "C#4",
+      "velocity": 40,
+      "start": 128,
+      "end": 128.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 312,
+      "pitch": 65,
+      "name": "F4",
+      "velocity": 40,
+      "start": 128,
+      "end": 128.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 313,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 76,
+      "start": 128,
+      "end": 128.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 314,
+      "pitch": 39,
+      "name": "D#2",
+      "velocity": 48,
+      "start": 129,
+      "end": 131.8,
+      "duration": 2.8,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 315,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 78,
+      "start": 129,
+      "end": 131.85,
+      "duration": 2.85,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 316,
+      "pitch": 54,
+      "name": "F#3",
+      "velocity": 40,
+      "start": 130,
+      "end": 130.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 317,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 40,
+      "start": 130,
+      "end": 130.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 318,
+      "pitch": 54,
+      "name": "F#3",
+      "velocity": 40,
+      "start": 131,
+      "end": 131.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 319,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 40,
+      "start": 131,
+      "end": 131.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 320,
+      "pitch": 47,
+      "name": "B2",
+      "velocity": 48,
+      "start": 132,
+      "end": 134.8,
+      "duration": 2.8,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 321,
+      "pitch": 83,
+      "name": "B5",
+      "velocity": 78,
+      "start": 132,
+      "end": 133.9,
+      "duration": 1.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 322,
+      "pitch": 63,
+      "name": "D#4",
+      "velocity": 40,
+      "start": 133,
+      "end": 133.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 323,
+      "pitch": 66,
+      "name": "F#4",
+      "velocity": 40,
+      "start": 133,
+      "end": 133.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 324,
+      "pitch": 63,
+      "name": "D#4",
+      "velocity": 40,
+      "start": 134,
+      "end": 134.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 325,
+      "pitch": 66,
+      "name": "F#4",
+      "velocity": 40,
+      "start": 134,
+      "end": 134.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 326,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 74,
+      "start": 134,
+      "end": 134.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 327,
+      "pitch": 46,
+      "name": "A#2",
+      "velocity": 48,
+      "start": 135,
+      "end": 137.8,
+      "duration": 2.8,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 328,
+      "pitch": 73,
+      "name": "C#5",
+      "velocity": 78,
+      "start": 135,
+      "end": 135.9,
       "duration": 0.9,
       "track": 1,
       "hand": "R"
@@ -3628,9 +3628,9 @@
       "id": 329,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 50,
-      "start": 127,
-      "end": 127.85,
+      "velocity": 40,
+      "start": 136,
+      "end": 136.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
@@ -3639,119 +3639,119 @@
       "id": 330,
       "pitch": 65,
       "name": "F4",
-      "velocity": 50,
-      "start": 127,
-      "end": 127.85,
+      "velocity": 40,
+      "start": 136,
+      "end": 136.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 331,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 84,
-      "start": 127,
-      "end": 127.45,
-      "duration": 0.45,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 76,
+      "start": 136,
+      "end": 136.9,
+      "duration": 0.9,
       "track": 1,
       "hand": "R"
     },
     {
       "id": 332,
-      "pitch": 82,
-      "name": "A#5",
-      "velocity": 86,
-      "start": 127.5,
-      "end": 127.95,
-      "duration": 0.45,
-      "track": 1,
-      "hand": "R"
+      "pitch": 61,
+      "name": "C#4",
+      "velocity": 40,
+      "start": 137,
+      "end": 137.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
     },
     {
       "id": 333,
-      "pitch": 61,
-      "name": "C#4",
-      "velocity": 50,
-      "start": 128,
-      "end": 128.85,
+      "pitch": 65,
+      "name": "F4",
+      "velocity": 40,
+      "start": 137,
+      "end": 137.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 334,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 50,
-      "start": 128,
-      "end": 128.85,
-      "duration": 0.85,
+      "pitch": 39,
+      "name": "D#2",
+      "velocity": 48,
+      "start": 138,
+      "end": 140.8,
+      "duration": 2.8,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 335,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 84,
-      "start": 128,
-      "end": 128.9,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 80,
+      "start": 138,
+      "end": 138.9,
       "duration": 0.9,
       "track": 1,
       "hand": "R"
     },
     {
       "id": 336,
-      "pitch": 39,
-      "name": "D#2",
-      "velocity": 56,
-      "start": 129,
-      "end": 131.8,
-      "duration": 2.8,
+      "pitch": 54,
+      "name": "F#3",
+      "velocity": 40,
+      "start": 139,
+      "end": 139.85,
+      "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 337,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 86,
-      "start": 129,
-      "end": 131.85,
-      "duration": 2.85,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 40,
+      "start": 139,
+      "end": 139.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 338,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 76,
+      "start": 139,
+      "end": 139.45,
+      "duration": 0.45,
       "track": 1,
       "hand": "R"
     },
     {
-      "id": 338,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 50,
-      "start": 130,
-      "end": 130.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
       "id": 339,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 50,
-      "start": 130,
-      "end": 130.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 78,
+      "start": 139.5,
+      "end": 139.95,
+      "duration": 0.45,
+      "track": 1,
+      "hand": "R"
     },
     {
       "id": 340,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 50,
-      "start": 131,
-      "end": 131.85,
+      "velocity": 40,
+      "start": 140,
+      "end": 140.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
@@ -3760,282 +3760,18 @@
       "id": 341,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 50,
-      "start": 131,
-      "end": 131.85,
+      "velocity": 40,
+      "start": 140,
+      "end": 140.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 342,
-      "pitch": 47,
-      "name": "B2",
-      "velocity": 56,
-      "start": 132,
-      "end": 134.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 343,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 50,
-      "start": 132,
-      "end": 134.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 344,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 48,
-      "start": 132,
-      "end": 134.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 345,
-      "pitch": 82,
-      "name": "A#5",
-      "velocity": 86,
-      "start": 132,
-      "end": 133.9,
-      "duration": 1.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 346,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 50,
-      "start": 133,
-      "end": 133.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 347,
-      "pitch": 66,
-      "name": "F#4",
-      "velocity": 50,
-      "start": 133,
-      "end": 133.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 348,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 50,
-      "start": 134,
-      "end": 134.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 349,
-      "pitch": 66,
-      "name": "F#4",
-      "velocity": 50,
-      "start": 134,
-      "end": 134.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 350,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 82,
-      "start": 134,
-      "end": 134.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 351,
-      "pitch": 46,
-      "name": "A#2",
-      "velocity": 56,
-      "start": 135,
-      "end": 137.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 352,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 86,
-      "start": 135,
-      "end": 135.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 353,
-      "pitch": 61,
-      "name": "C#4",
-      "velocity": 50,
-      "start": 136,
-      "end": 136.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 354,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 50,
-      "start": 136,
-      "end": 136.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 355,
-      "pitch": 94,
-      "name": "A#6",
-      "velocity": 84,
-      "start": 136,
-      "end": 136.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 356,
-      "pitch": 61,
-      "name": "C#4",
-      "velocity": 50,
-      "start": 137,
-      "end": 137.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 357,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 50,
-      "start": 137,
-      "end": 137.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 358,
-      "pitch": 39,
-      "name": "D#2",
-      "velocity": 56,
-      "start": 138,
-      "end": 140.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 359,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 88,
-      "start": 138,
-      "end": 138.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 360,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 50,
-      "start": 139,
-      "end": 139.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 361,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 50,
-      "start": 139,
-      "end": 139.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 362,
-      "pitch": 82,
-      "name": "A#5",
-      "velocity": 84,
-      "start": 139,
-      "end": 139.45,
-      "duration": 0.45,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 363,
-      "pitch": 82,
-      "name": "A#5",
-      "velocity": 86,
-      "start": 139.5,
-      "end": 139.95,
-      "duration": 0.45,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 364,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 50,
-      "start": 140,
-      "end": 140.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 365,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 50,
-      "start": 140,
-      "end": 140.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 366,
       "pitch": 80,
       "name": "G#5",
-      "velocity": 84,
+      "velocity": 76,
       "start": 140,
       "end": 140.9,
       "duration": 0.9,
@@ -4043,10 +3779,10 @@
       "hand": "R"
     },
     {
-      "id": 367,
+      "id": 343,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 56,
+      "velocity": 48,
       "start": 141,
       "end": 143.8,
       "duration": 2.8,
@@ -4054,10 +3790,10 @@
       "hand": "L"
     },
     {
-      "id": 368,
-      "pitch": 80,
-      "name": "G#5",
-      "velocity": 86,
+      "id": 344,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 78,
       "start": 141,
       "end": 143.85,
       "duration": 2.85,
@@ -4065,10 +3801,10 @@
       "hand": "R"
     },
     {
-      "id": 369,
+      "id": 345,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 50,
+      "velocity": 40,
       "start": 142,
       "end": 142.85,
       "duration": 0.85,
@@ -4076,10 +3812,10 @@
       "hand": "L"
     },
     {
-      "id": 370,
+      "id": 346,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 50,
+      "velocity": 40,
       "start": 142,
       "end": 142.85,
       "duration": 0.85,
@@ -4087,10 +3823,10 @@
       "hand": "L"
     },
     {
-      "id": 371,
+      "id": 347,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 50,
+      "velocity": 40,
       "start": 143,
       "end": 143.85,
       "duration": 0.85,
@@ -4098,10 +3834,10 @@
       "hand": "L"
     },
     {
-      "id": 372,
+      "id": 348,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 50,
+      "velocity": 40,
       "start": 143,
       "end": 143.85,
       "duration": 0.85,
@@ -4109,31 +3845,9 @@
       "hand": "L"
     },
     {
-      "id": 373,
+      "id": 349,
       "pitch": 47,
       "name": "B2",
-      "velocity": 56,
-      "start": 144,
-      "end": 146.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 374,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 50,
-      "start": 144,
-      "end": 146.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 375,
-      "pitch": 63,
-      "name": "D#4",
       "velocity": 48,
       "start": 144,
       "end": 146.8,
@@ -4142,10 +3856,10 @@
       "hand": "L"
     },
     {
-      "id": 376,
-      "pitch": 85,
-      "name": "C#6",
-      "velocity": 86,
+      "id": 350,
+      "pitch": 71,
+      "name": "B4",
+      "velocity": 78,
       "start": 144,
       "end": 145.9,
       "duration": 1.9,
@@ -4153,10 +3867,10 @@
       "hand": "R"
     },
     {
-      "id": 377,
+      "id": 351,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 145,
       "end": 145.85,
       "duration": 0.85,
@@ -4164,10 +3878,10 @@
       "hand": "L"
     },
     {
-      "id": 378,
+      "id": 352,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 145,
       "end": 145.85,
       "duration": 0.85,
@@ -4175,10 +3889,10 @@
       "hand": "L"
     },
     {
-      "id": 379,
+      "id": 353,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 146,
       "end": 146.85,
       "duration": 0.85,
@@ -4186,10 +3900,10 @@
       "hand": "L"
     },
     {
-      "id": 380,
+      "id": 354,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 146,
       "end": 146.85,
       "duration": 0.85,
@@ -4197,10 +3911,10 @@
       "hand": "L"
     },
     {
-      "id": 381,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 82,
+      "id": 355,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 74,
       "start": 146,
       "end": 146.9,
       "duration": 0.9,
@@ -4208,10 +3922,10 @@
       "hand": "R"
     },
     {
-      "id": 382,
+      "id": 356,
       "pitch": 44,
       "name": "G#2",
-      "velocity": 56,
+      "velocity": 48,
       "start": 147,
       "end": 149.8,
       "duration": 2.8,
@@ -4219,10 +3933,10 @@
       "hand": "L"
     },
     {
-      "id": 383,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 86,
+      "id": 357,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 78,
       "start": 147,
       "end": 147.9,
       "duration": 0.9,
@@ -4230,10 +3944,10 @@
       "hand": "R"
     },
     {
-      "id": 384,
+      "id": 358,
       "pitch": 59,
       "name": "B3",
-      "velocity": 50,
+      "velocity": 40,
       "start": 148,
       "end": 148.85,
       "duration": 0.85,
@@ -4241,10 +3955,10 @@
       "hand": "L"
     },
     {
-      "id": 385,
+      "id": 359,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 148,
       "end": 148.85,
       "duration": 0.85,
@@ -4252,10 +3966,10 @@
       "hand": "L"
     },
     {
-      "id": 386,
-      "pitch": 92,
-      "name": "G#6",
-      "velocity": 84,
+      "id": 360,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 76,
       "start": 148,
       "end": 148.9,
       "duration": 0.9,
@@ -4263,10 +3977,10 @@
       "hand": "R"
     },
     {
-      "id": 387,
+      "id": 361,
       "pitch": 59,
       "name": "B3",
-      "velocity": 50,
+      "velocity": 40,
       "start": 149,
       "end": 149.85,
       "duration": 0.85,
@@ -4274,10 +3988,10 @@
       "hand": "L"
     },
     {
-      "id": 388,
+      "id": 362,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 149,
       "end": 149.85,
       "duration": 0.85,
@@ -4285,10 +3999,10 @@
       "hand": "L"
     },
     {
-      "id": 389,
+      "id": 363,
       "pitch": 46,
       "name": "A#2",
-      "velocity": 56,
+      "velocity": 48,
       "start": 150,
       "end": 152.8,
       "duration": 2.8,
@@ -4296,10 +4010,10 @@
       "hand": "L"
     },
     {
-      "id": 390,
-      "pitch": 85,
-      "name": "C#6",
-      "velocity": 88,
+      "id": 364,
+      "pitch": 73,
+      "name": "C#5",
+      "velocity": 80,
       "start": 150,
       "end": 150.9,
       "duration": 0.9,
@@ -4307,10 +4021,10 @@
       "hand": "R"
     },
     {
-      "id": 391,
+      "id": 365,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 151,
       "end": 151.85,
       "duration": 0.85,
@@ -4318,10 +4032,10 @@
       "hand": "L"
     },
     {
-      "id": 392,
+      "id": 366,
       "pitch": 65,
       "name": "F4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 151,
       "end": 151.85,
       "duration": 0.85,
@@ -4329,10 +4043,10 @@
       "hand": "L"
     },
     {
-      "id": 393,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 84,
+      "id": 367,
+      "pitch": 77,
+      "name": "F5",
+      "velocity": 76,
       "start": 151,
       "end": 151.45,
       "duration": 0.45,
@@ -4340,10 +4054,10 @@
       "hand": "R"
     },
     {
-      "id": 394,
-      "pitch": 85,
-      "name": "C#6",
-      "velocity": 86,
+      "id": 368,
+      "pitch": 73,
+      "name": "C#5",
+      "velocity": 78,
       "start": 151.5,
       "end": 151.95,
       "duration": 0.45,
@@ -4351,10 +4065,10 @@
       "hand": "R"
     },
     {
-      "id": 395,
+      "id": 369,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 152,
       "end": 152.85,
       "duration": 0.85,
@@ -4362,10 +4076,10 @@
       "hand": "L"
     },
     {
-      "id": 396,
+      "id": 370,
       "pitch": 65,
       "name": "F4",
-      "velocity": 50,
+      "velocity": 40,
       "start": 152,
       "end": 152.85,
       "duration": 0.85,
@@ -4373,10 +4087,10 @@
       "hand": "L"
     },
     {
-      "id": 397,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 84,
+      "id": 371,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 76,
       "start": 152,
       "end": 152.9,
       "duration": 0.9,
@@ -4384,10 +4098,10 @@
       "hand": "R"
     },
     {
-      "id": 398,
+      "id": 372,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 64,
+      "velocity": 56,
       "start": 153,
       "end": 155.8,
       "duration": 2.8,
@@ -4395,10 +4109,10 @@
       "hand": "L"
     },
     {
-      "id": 399,
-      "pitch": 101,
-      "name": "F7",
-      "velocity": 96,
+      "id": 373,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 86,
       "start": 153,
       "end": 155.85,
       "duration": 2.85,
@@ -4406,10 +4120,10 @@
       "hand": "R"
     },
     {
-      "id": 400,
+      "id": 374,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 154,
       "end": 154.85,
       "duration": 0.85,
@@ -4417,10 +4131,10 @@
       "hand": "L"
     },
     {
-      "id": 401,
+      "id": 375,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 154,
       "end": 154.85,
       "duration": 0.85,
@@ -4428,10 +4142,10 @@
       "hand": "L"
     },
     {
-      "id": 402,
+      "id": 376,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 155,
       "end": 155.85,
       "duration": 0.85,
@@ -4439,10 +4153,10 @@
       "hand": "L"
     },
     {
-      "id": 403,
+      "id": 377,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 155,
       "end": 155.85,
       "duration": 0.85,
@@ -4450,31 +4164,9 @@
       "hand": "L"
     },
     {
-      "id": 404,
+      "id": 378,
       "pitch": 47,
       "name": "B2",
-      "velocity": 64,
-      "start": 156,
-      "end": 158.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 405,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 58,
-      "start": 156,
-      "end": 158.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 406,
-      "pitch": 63,
-      "name": "D#4",
       "velocity": 56,
       "start": 156,
       "end": 158.8,
@@ -4483,10 +4175,10 @@
       "hand": "L"
     },
     {
-      "id": 407,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 96,
+      "id": 379,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 86,
       "start": 156,
       "end": 157.9,
       "duration": 1.9,
@@ -4494,10 +4186,10 @@
       "hand": "R"
     },
     {
-      "id": 408,
+      "id": 380,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 157,
       "end": 157.85,
       "duration": 0.85,
@@ -4505,10 +4197,10 @@
       "hand": "L"
     },
     {
-      "id": 409,
+      "id": 381,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 157,
       "end": 157.85,
       "duration": 0.85,
@@ -4516,10 +4208,10 @@
       "hand": "L"
     },
     {
-      "id": 410,
+      "id": 382,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 158,
       "end": 158.85,
       "duration": 0.85,
@@ -4527,10 +4219,10 @@
       "hand": "L"
     },
     {
-      "id": 411,
+      "id": 383,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 158,
       "end": 158.85,
       "duration": 0.85,
@@ -4538,10 +4230,10 @@
       "hand": "L"
     },
     {
-      "id": 412,
-      "pitch": 92,
-      "name": "G#6",
-      "velocity": 92,
+      "id": 384,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 82,
       "start": 158,
       "end": 158.9,
       "duration": 0.9,
@@ -4549,10 +4241,10 @@
       "hand": "R"
     },
     {
-      "id": 413,
+      "id": 385,
       "pitch": 42,
       "name": "F#2",
-      "velocity": 64,
+      "velocity": 56,
       "start": 159,
       "end": 161.8,
       "duration": 2.8,
@@ -4560,10 +4252,10 @@
       "hand": "L"
     },
     {
-      "id": 414,
-      "pitch": 102,
-      "name": "F#7",
-      "velocity": 96,
+      "id": 386,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 86,
       "start": 159,
       "end": 159.9,
       "duration": 0.9,
@@ -4571,10 +4263,10 @@
       "hand": "R"
     },
     {
-      "id": 415,
+      "id": 387,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 160,
       "end": 160.85,
       "duration": 0.85,
@@ -4582,10 +4274,10 @@
       "hand": "L"
     },
     {
-      "id": 416,
+      "id": 388,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 160,
       "end": 160.85,
       "duration": 0.85,
@@ -4593,10 +4285,10 @@
       "hand": "L"
     },
     {
-      "id": 417,
-      "pitch": 99,
-      "name": "D#7",
-      "velocity": 94,
+      "id": 389,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 84,
       "start": 160,
       "end": 160.9,
       "duration": 0.9,
@@ -4604,10 +4296,10 @@
       "hand": "R"
     },
     {
-      "id": 418,
+      "id": 390,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 161,
       "end": 161.85,
       "duration": 0.85,
@@ -4615,10 +4307,10 @@
       "hand": "L"
     },
     {
-      "id": 419,
+      "id": 391,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 161,
       "end": 161.85,
       "duration": 0.85,
@@ -4626,10 +4318,10 @@
       "hand": "L"
     },
     {
-      "id": 420,
+      "id": 392,
       "pitch": 49,
       "name": "C#3",
-      "velocity": 64,
+      "velocity": 56,
       "start": 162,
       "end": 164.8,
       "duration": 2.8,
@@ -4637,10 +4329,10 @@
       "hand": "L"
     },
     {
-      "id": 421,
-      "pitch": 106,
-      "name": "A#7",
-      "velocity": 98,
+      "id": 393,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 88,
       "start": 162,
       "end": 162.9,
       "duration": 0.9,
@@ -4648,10 +4340,10 @@
       "hand": "R"
     },
     {
-      "id": 422,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 58,
+      "id": 394,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 48,
       "start": 163,
       "end": 163.85,
       "duration": 0.85,
@@ -4659,10 +4351,10 @@
       "hand": "L"
     },
     {
-      "id": 423,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 58,
+      "id": 395,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 48,
       "start": 163,
       "end": 163.85,
       "duration": 0.85,
@@ -4670,10 +4362,10 @@
       "hand": "L"
     },
     {
-      "id": 424,
-      "pitch": 97,
-      "name": "C#7",
-      "velocity": 94,
+      "id": 396,
+      "pitch": 73,
+      "name": "C#5",
+      "velocity": 84,
       "start": 163,
       "end": 163.45,
       "duration": 0.45,
@@ -4681,10 +4373,10 @@
       "hand": "R"
     },
     {
-      "id": 425,
-      "pitch": 99,
-      "name": "D#7",
-      "velocity": 96,
+      "id": 397,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 86,
       "start": 163.5,
       "end": 163.95,
       "duration": 0.45,
@@ -4692,10 +4384,10 @@
       "hand": "R"
     },
     {
-      "id": 426,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 58,
+      "id": 398,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 48,
       "start": 164,
       "end": 164.85,
       "duration": 0.85,
@@ -4703,10 +4395,10 @@
       "hand": "L"
     },
     {
-      "id": 427,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 58,
+      "id": 399,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 48,
       "start": 164,
       "end": 164.85,
       "duration": 0.85,
@@ -4714,10 +4406,10 @@
       "hand": "L"
     },
     {
-      "id": 428,
-      "pitch": 94,
-      "name": "A#6",
-      "velocity": 94,
+      "id": 400,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 84,
       "start": 164,
       "end": 164.9,
       "duration": 0.9,
@@ -4725,10 +4417,10 @@
       "hand": "R"
     },
     {
-      "id": 429,
+      "id": 401,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 64,
+      "velocity": 56,
       "start": 165,
       "end": 167.8,
       "duration": 2.8,
@@ -4736,10 +4428,10 @@
       "hand": "L"
     },
     {
-      "id": 430,
-      "pitch": 94,
-      "name": "A#6",
-      "velocity": 96,
+      "id": 402,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 86,
       "start": 165,
       "end": 167.85,
       "duration": 2.85,
@@ -4747,10 +4439,10 @@
       "hand": "R"
     },
     {
-      "id": 431,
+      "id": 403,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 166,
       "end": 166.85,
       "duration": 0.85,
@@ -4758,10 +4450,10 @@
       "hand": "L"
     },
     {
-      "id": 432,
+      "id": 404,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 166,
       "end": 166.85,
       "duration": 0.85,
@@ -4769,10 +4461,10 @@
       "hand": "L"
     },
     {
-      "id": 433,
+      "id": 405,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 167,
       "end": 167.85,
       "duration": 0.85,
@@ -4780,10 +4472,10 @@
       "hand": "L"
     },
     {
-      "id": 434,
+      "id": 406,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 167,
       "end": 167.85,
       "duration": 0.85,
@@ -4791,31 +4483,9 @@
       "hand": "L"
     },
     {
-      "id": 435,
+      "id": 407,
       "pitch": 47,
       "name": "B2",
-      "velocity": 64,
-      "start": 168,
-      "end": 170.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 436,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 58,
-      "start": 168,
-      "end": 170.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 437,
-      "pitch": 63,
-      "name": "D#4",
       "velocity": 56,
       "start": 168,
       "end": 170.8,
@@ -4824,10 +4494,10 @@
       "hand": "L"
     },
     {
-      "id": 438,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 96,
+      "id": 408,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 86,
       "start": 168,
       "end": 169.9,
       "duration": 1.9,
@@ -4835,10 +4505,10 @@
       "hand": "R"
     },
     {
-      "id": 439,
+      "id": 409,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 169,
       "end": 169.85,
       "duration": 0.85,
@@ -4846,10 +4516,10 @@
       "hand": "L"
     },
     {
-      "id": 440,
+      "id": 410,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 169,
       "end": 169.85,
       "duration": 0.85,
@@ -4857,10 +4527,10 @@
       "hand": "L"
     },
     {
-      "id": 441,
+      "id": 411,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 170,
       "end": 170.85,
       "duration": 0.85,
@@ -4868,10 +4538,10 @@
       "hand": "L"
     },
     {
-      "id": 442,
+      "id": 412,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 170,
       "end": 170.85,
       "duration": 0.85,
@@ -4879,10 +4549,10 @@
       "hand": "L"
     },
     {
-      "id": 443,
-      "pitch": 92,
-      "name": "G#6",
-      "velocity": 92,
+      "id": 413,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 82,
       "start": 170,
       "end": 170.9,
       "duration": 0.9,
@@ -4890,10 +4560,10 @@
       "hand": "R"
     },
     {
-      "id": 444,
+      "id": 414,
       "pitch": 42,
       "name": "F#2",
-      "velocity": 64,
+      "velocity": 56,
       "start": 171,
       "end": 173.8,
       "duration": 2.8,
@@ -4901,10 +4571,10 @@
       "hand": "L"
     },
     {
-      "id": 445,
-      "pitch": 102,
-      "name": "F#7",
-      "velocity": 96,
+      "id": 415,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 86,
       "start": 171,
       "end": 171.9,
       "duration": 0.9,
@@ -4912,10 +4582,10 @@
       "hand": "R"
     },
     {
-      "id": 446,
+      "id": 416,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 172,
       "end": 172.85,
       "duration": 0.85,
@@ -4923,10 +4593,10 @@
       "hand": "L"
     },
     {
-      "id": 447,
+      "id": 417,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 172,
       "end": 172.85,
       "duration": 0.85,
@@ -4934,10 +4604,10 @@
       "hand": "L"
     },
     {
-      "id": 448,
-      "pitch": 95,
-      "name": "B6",
-      "velocity": 94,
+      "id": 418,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 84,
       "start": 172,
       "end": 172.9,
       "duration": 0.9,
@@ -4945,10 +4615,10 @@
       "hand": "R"
     },
     {
-      "id": 449,
+      "id": 419,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 173,
       "end": 173.85,
       "duration": 0.85,
@@ -4956,10 +4626,10 @@
       "hand": "L"
     },
     {
-      "id": 450,
+      "id": 420,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 173,
       "end": 173.85,
       "duration": 0.85,
@@ -4967,10 +4637,10 @@
       "hand": "L"
     },
     {
-      "id": 451,
+      "id": 421,
       "pitch": 49,
       "name": "C#3",
-      "velocity": 64,
+      "velocity": 56,
       "start": 174,
       "end": 176.8,
       "duration": 2.8,
@@ -4978,10 +4648,10 @@
       "hand": "L"
     },
     {
-      "id": 452,
-      "pitch": 104,
-      "name": "G#7",
-      "velocity": 98,
+      "id": 422,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 88,
       "start": 174,
       "end": 174.9,
       "duration": 0.9,
@@ -4989,10 +4659,10 @@
       "hand": "R"
     },
     {
-      "id": 453,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 58,
+      "id": 423,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 48,
       "start": 175,
       "end": 175.85,
       "duration": 0.85,
@@ -5000,10 +4670,10 @@
       "hand": "L"
     },
     {
-      "id": 454,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 58,
+      "id": 424,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 48,
       "start": 175,
       "end": 175.85,
       "duration": 0.85,
@@ -5011,10 +4681,10 @@
       "hand": "L"
     },
     {
-      "id": 455,
-      "pitch": 97,
-      "name": "C#7",
-      "velocity": 94,
+      "id": 425,
+      "pitch": 73,
+      "name": "C#5",
+      "velocity": 84,
       "start": 175,
       "end": 175.45,
       "duration": 0.45,
@@ -5022,10 +4692,10 @@
       "hand": "R"
     },
     {
-      "id": 456,
-      "pitch": 99,
-      "name": "D#7",
-      "velocity": 96,
+      "id": 426,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 86,
       "start": 175.5,
       "end": 175.95,
       "duration": 0.45,
@@ -5033,10 +4703,10 @@
       "hand": "R"
     },
     {
-      "id": 457,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 58,
+      "id": 427,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 48,
       "start": 176,
       "end": 176.85,
       "duration": 0.85,
@@ -5044,10 +4714,10 @@
       "hand": "L"
     },
     {
-      "id": 458,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 58,
+      "id": 428,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 48,
       "start": 176,
       "end": 176.85,
       "duration": 0.85,
@@ -5055,10 +4725,10 @@
       "hand": "L"
     },
     {
-      "id": 459,
-      "pitch": 101,
-      "name": "F7",
-      "velocity": 94,
+      "id": 429,
+      "pitch": 77,
+      "name": "F5",
+      "velocity": 84,
       "start": 176,
       "end": 176.9,
       "duration": 0.9,
@@ -5066,10 +4736,10 @@
       "hand": "R"
     },
     {
-      "id": 460,
+      "id": 430,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 64,
+      "velocity": 56,
       "start": 177,
       "end": 179.8,
       "duration": 2.8,
@@ -5077,10 +4747,10 @@
       "hand": "L"
     },
     {
-      "id": 461,
-      "pitch": 101,
-      "name": "F7",
-      "velocity": 96,
+      "id": 431,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 86,
       "start": 177,
       "end": 179.85,
       "duration": 2.85,
@@ -5088,10 +4758,10 @@
       "hand": "R"
     },
     {
-      "id": 462,
+      "id": 432,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 178,
       "end": 178.85,
       "duration": 0.85,
@@ -5099,10 +4769,10 @@
       "hand": "L"
     },
     {
-      "id": 463,
+      "id": 433,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 178,
       "end": 178.85,
       "duration": 0.85,
@@ -5110,10 +4780,10 @@
       "hand": "L"
     },
     {
-      "id": 464,
+      "id": 434,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 179,
       "end": 179.85,
       "duration": 0.85,
@@ -5121,10 +4791,10 @@
       "hand": "L"
     },
     {
-      "id": 465,
+      "id": 435,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 179,
       "end": 179.85,
       "duration": 0.85,
@@ -5132,31 +4802,9 @@
       "hand": "L"
     },
     {
-      "id": 466,
+      "id": 436,
       "pitch": 47,
       "name": "B2",
-      "velocity": 64,
-      "start": 180,
-      "end": 182.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 467,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 58,
-      "start": 180,
-      "end": 182.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 468,
-      "pitch": 63,
-      "name": "D#4",
       "velocity": 56,
       "start": 180,
       "end": 182.8,
@@ -5165,10 +4813,10 @@
       "hand": "L"
     },
     {
-      "id": 469,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 96,
+      "id": 437,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 86,
       "start": 180,
       "end": 181.9,
       "duration": 1.9,
@@ -5176,10 +4824,10 @@
       "hand": "R"
     },
     {
-      "id": 470,
+      "id": 438,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 181,
       "end": 181.85,
       "duration": 0.85,
@@ -5187,10 +4835,10 @@
       "hand": "L"
     },
     {
-      "id": 471,
+      "id": 439,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 181,
       "end": 181.85,
       "duration": 0.85,
@@ -5198,10 +4846,10 @@
       "hand": "L"
     },
     {
-      "id": 472,
+      "id": 440,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 182,
       "end": 182.85,
       "duration": 0.85,
@@ -5209,10 +4857,10 @@
       "hand": "L"
     },
     {
-      "id": 473,
+      "id": 441,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 182,
       "end": 182.85,
       "duration": 0.85,
@@ -5220,10 +4868,10 @@
       "hand": "L"
     },
     {
-      "id": 474,
-      "pitch": 94,
-      "name": "A#6",
-      "velocity": 92,
+      "id": 442,
+      "pitch": 83,
+      "name": "B5",
+      "velocity": 82,
       "start": 182,
       "end": 182.9,
       "duration": 0.9,
@@ -5231,10 +4879,10 @@
       "hand": "R"
     },
     {
-      "id": 475,
+      "id": 443,
       "pitch": 42,
       "name": "F#2",
-      "velocity": 64,
+      "velocity": 56,
       "start": 183,
       "end": 185.8,
       "duration": 2.8,
@@ -5242,12 +4890,364 @@
       "hand": "L"
     },
     {
-      "id": 476,
-      "pitch": 102,
-      "name": "F#7",
-      "velocity": 96,
+      "id": 444,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 86,
       "start": 183,
       "end": 183.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 445,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 48,
+      "start": 184,
+      "end": 184.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 446,
+      "pitch": 61,
+      "name": "C#4",
+      "velocity": 48,
+      "start": 184,
+      "end": 184.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 447,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 84,
+      "start": 184,
+      "end": 184.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 448,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 48,
+      "start": 185,
+      "end": 185.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 449,
+      "pitch": 61,
+      "name": "C#4",
+      "velocity": 48,
+      "start": 185,
+      "end": 185.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 450,
+      "pitch": 49,
+      "name": "C#3",
+      "velocity": 56,
+      "start": 186,
+      "end": 188.8,
+      "duration": 2.8,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 451,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 88,
+      "start": 186,
+      "end": 186.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 452,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 48,
+      "start": 187,
+      "end": 187.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 453,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 48,
+      "start": 187,
+      "end": 187.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 454,
+      "pitch": 83,
+      "name": "B5",
+      "velocity": 84,
+      "start": 187,
+      "end": 187.45,
+      "duration": 0.45,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 455,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 86,
+      "start": 187.5,
+      "end": 187.95,
+      "duration": 0.45,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 456,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 48,
+      "start": 188,
+      "end": 188.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 457,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 48,
+      "start": 188,
+      "end": 188.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 458,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 84,
+      "start": 188,
+      "end": 188.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 459,
+      "pitch": 39,
+      "name": "D#2",
+      "velocity": 56,
+      "start": 189,
+      "end": 191.8,
+      "duration": 2.8,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 460,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 86,
+      "start": 189,
+      "end": 191.85,
+      "duration": 2.85,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 461,
+      "pitch": 54,
+      "name": "F#3",
+      "velocity": 48,
+      "start": 190,
+      "end": 190.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 462,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 48,
+      "start": 190,
+      "end": 190.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 463,
+      "pitch": 54,
+      "name": "F#3",
+      "velocity": 48,
+      "start": 191,
+      "end": 191.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 464,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 48,
+      "start": 191,
+      "end": 191.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 465,
+      "pitch": 47,
+      "name": "B2",
+      "velocity": 56,
+      "start": 192,
+      "end": 194.8,
+      "duration": 2.8,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 466,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 86,
+      "start": 192,
+      "end": 193.9,
+      "duration": 1.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 467,
+      "pitch": 63,
+      "name": "D#4",
+      "velocity": 48,
+      "start": 193,
+      "end": 193.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 468,
+      "pitch": 66,
+      "name": "F#4",
+      "velocity": 48,
+      "start": 193,
+      "end": 193.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 469,
+      "pitch": 63,
+      "name": "D#4",
+      "velocity": 48,
+      "start": 194,
+      "end": 194.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 470,
+      "pitch": 66,
+      "name": "F#4",
+      "velocity": 48,
+      "start": 194,
+      "end": 194.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 471,
+      "pitch": 83,
+      "name": "B5",
+      "velocity": 82,
+      "start": 194,
+      "end": 194.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 472,
+      "pitch": 42,
+      "name": "F#2",
+      "velocity": 56,
+      "start": 195,
+      "end": 197.8,
+      "duration": 2.8,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 473,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 86,
+      "start": 195,
+      "end": 195.9,
+      "duration": 0.9,
+      "track": 1,
+      "hand": "R"
+    },
+    {
+      "id": 474,
+      "pitch": 58,
+      "name": "A#3",
+      "velocity": 48,
+      "start": 196,
+      "end": 196.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 475,
+      "pitch": 61,
+      "name": "C#4",
+      "velocity": 48,
+      "start": 196,
+      "end": 196.85,
+      "duration": 0.85,
+      "track": 0,
+      "hand": "L"
+    },
+    {
+      "id": 476,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 84,
+      "start": 196,
+      "end": 196.9,
       "duration": 0.9,
       "track": 1,
       "hand": "R"
@@ -5256,9 +5256,9 @@
       "id": 477,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
-      "start": 184,
-      "end": 184.85,
+      "velocity": 48,
+      "start": 197,
+      "end": 197.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
@@ -5267,392 +5267,18 @@
       "id": 478,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 58,
-      "start": 184,
-      "end": 184.85,
+      "velocity": 48,
+      "start": 197,
+      "end": 197.85,
       "duration": 0.85,
       "track": 0,
       "hand": "L"
     },
     {
       "id": 479,
-      "pitch": 99,
-      "name": "D#7",
-      "velocity": 94,
-      "start": 184,
-      "end": 184.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 480,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 58,
-      "start": 185,
-      "end": 185.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 481,
-      "pitch": 61,
-      "name": "C#4",
-      "velocity": 58,
-      "start": 185,
-      "end": 185.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 482,
       "pitch": 49,
       "name": "C#3",
-      "velocity": 64,
-      "start": 186,
-      "end": 188.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 483,
-      "pitch": 106,
-      "name": "A#7",
-      "velocity": 98,
-      "start": 186,
-      "end": 186.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 484,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 58,
-      "start": 187,
-      "end": 187.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 485,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 58,
-      "start": 187,
-      "end": 187.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 486,
-      "pitch": 95,
-      "name": "B6",
-      "velocity": 94,
-      "start": 187,
-      "end": 187.45,
-      "duration": 0.45,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 487,
-      "pitch": 99,
-      "name": "D#7",
-      "velocity": 96,
-      "start": 187.5,
-      "end": 187.95,
-      "duration": 0.45,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 488,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 58,
-      "start": 188,
-      "end": 188.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 489,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 58,
-      "start": 188,
-      "end": 188.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 490,
-      "pitch": 94,
-      "name": "A#6",
-      "velocity": 94,
-      "start": 188,
-      "end": 188.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 491,
-      "pitch": 39,
-      "name": "D#2",
-      "velocity": 64,
-      "start": 189,
-      "end": 191.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 492,
-      "pitch": 94,
-      "name": "A#6",
-      "velocity": 96,
-      "start": 189,
-      "end": 191.85,
-      "duration": 2.85,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 493,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 58,
-      "start": 190,
-      "end": 190.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 494,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 58,
-      "start": 190,
-      "end": 190.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 495,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 58,
-      "start": 191,
-      "end": 191.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 496,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 58,
-      "start": 191,
-      "end": 191.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 497,
-      "pitch": 47,
-      "name": "B2",
-      "velocity": 64,
-      "start": 192,
-      "end": 194.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 498,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 58,
-      "start": 192,
-      "end": 194.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 499,
-      "pitch": 63,
-      "name": "D#4",
       "velocity": 56,
-      "start": 192,
-      "end": 194.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 500,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 96,
-      "start": 192,
-      "end": 193.9,
-      "duration": 1.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 501,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 58,
-      "start": 193,
-      "end": 193.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 502,
-      "pitch": 66,
-      "name": "F#4",
-      "velocity": 58,
-      "start": 193,
-      "end": 193.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 503,
-      "pitch": 63,
-      "name": "D#4",
-      "velocity": 58,
-      "start": 194,
-      "end": 194.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 504,
-      "pitch": 66,
-      "name": "F#4",
-      "velocity": 58,
-      "start": 194,
-      "end": 194.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 505,
-      "pitch": 94,
-      "name": "A#6",
-      "velocity": 92,
-      "start": 194,
-      "end": 194.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 506,
-      "pitch": 42,
-      "name": "F#2",
-      "velocity": 64,
-      "start": 195,
-      "end": 197.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 507,
-      "pitch": 102,
-      "name": "F#7",
-      "velocity": 96,
-      "start": 195,
-      "end": 195.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 508,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 58,
-      "start": 196,
-      "end": 196.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 509,
-      "pitch": 61,
-      "name": "C#4",
-      "velocity": 58,
-      "start": 196,
-      "end": 196.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 510,
-      "pitch": 99,
-      "name": "D#7",
-      "velocity": 94,
-      "start": 196,
-      "end": 196.9,
-      "duration": 0.9,
-      "track": 1,
-      "hand": "R"
-    },
-    {
-      "id": 511,
-      "pitch": 58,
-      "name": "A#3",
-      "velocity": 58,
-      "start": 197,
-      "end": 197.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 512,
-      "pitch": 61,
-      "name": "C#4",
-      "velocity": 58,
-      "start": 197,
-      "end": 197.85,
-      "duration": 0.85,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 513,
-      "pitch": 49,
-      "name": "C#3",
-      "velocity": 64,
       "start": 198,
       "end": 200.8,
       "duration": 2.8,
@@ -5660,10 +5286,10 @@
       "hand": "L"
     },
     {
-      "id": 514,
-      "pitch": 104,
-      "name": "G#7",
-      "velocity": 98,
+      "id": 480,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 88,
       "start": 198,
       "end": 198.9,
       "duration": 0.9,
@@ -5671,10 +5297,10 @@
       "hand": "R"
     },
     {
-      "id": 515,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 58,
+      "id": 481,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 48,
       "start": 199,
       "end": 199.85,
       "duration": 0.85,
@@ -5682,10 +5308,10 @@
       "hand": "L"
     },
     {
-      "id": 516,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 58,
+      "id": 482,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 48,
       "start": 199,
       "end": 199.85,
       "duration": 0.85,
@@ -5693,10 +5319,10 @@
       "hand": "L"
     },
     {
-      "id": 517,
-      "pitch": 92,
-      "name": "G#6",
-      "velocity": 94,
+      "id": 483,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 84,
       "start": 199,
       "end": 199.45,
       "duration": 0.45,
@@ -5704,10 +5330,10 @@
       "hand": "R"
     },
     {
-      "id": 518,
-      "pitch": 99,
-      "name": "D#7",
-      "velocity": 96,
+      "id": 484,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 86,
       "start": 199.5,
       "end": 199.95,
       "duration": 0.45,
@@ -5715,10 +5341,10 @@
       "hand": "R"
     },
     {
-      "id": 519,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 58,
+      "id": 485,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 48,
       "start": 200,
       "end": 200.85,
       "duration": 0.85,
@@ -5726,10 +5352,10 @@
       "hand": "L"
     },
     {
-      "id": 520,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 58,
+      "id": 486,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 48,
       "start": 200,
       "end": 200.85,
       "duration": 0.85,
@@ -5737,10 +5363,10 @@
       "hand": "L"
     },
     {
-      "id": 521,
-      "pitch": 101,
-      "name": "F7",
-      "velocity": 94,
+      "id": 487,
+      "pitch": 77,
+      "name": "F5",
+      "velocity": 84,
       "start": 200,
       "end": 200.9,
       "duration": 0.9,
@@ -5748,10 +5374,10 @@
       "hand": "R"
     },
     {
-      "id": 522,
+      "id": 488,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 64,
+      "velocity": 56,
       "start": 201,
       "end": 203.8,
       "duration": 2.8,
@@ -5759,10 +5385,10 @@
       "hand": "L"
     },
     {
-      "id": 523,
-      "pitch": 101,
-      "name": "F7",
-      "velocity": 96,
+      "id": 489,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 86,
       "start": 201,
       "end": 203.85,
       "duration": 2.85,
@@ -5770,10 +5396,10 @@
       "hand": "R"
     },
     {
-      "id": 524,
+      "id": 490,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 202,
       "end": 202.85,
       "duration": 0.85,
@@ -5781,10 +5407,10 @@
       "hand": "L"
     },
     {
-      "id": 525,
+      "id": 491,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 202,
       "end": 202.85,
       "duration": 0.85,
@@ -5792,10 +5418,10 @@
       "hand": "L"
     },
     {
-      "id": 526,
+      "id": 492,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 203,
       "end": 203.85,
       "duration": 0.85,
@@ -5803,10 +5429,10 @@
       "hand": "L"
     },
     {
-      "id": 527,
+      "id": 493,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 203,
       "end": 203.85,
       "duration": 0.85,
@@ -5814,31 +5440,9 @@
       "hand": "L"
     },
     {
-      "id": 528,
+      "id": 494,
       "pitch": 47,
       "name": "B2",
-      "velocity": 64,
-      "start": 204,
-      "end": 206.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 529,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 58,
-      "start": 204,
-      "end": 206.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 530,
-      "pitch": 63,
-      "name": "D#4",
       "velocity": 56,
       "start": 204,
       "end": 206.8,
@@ -5847,10 +5451,10 @@
       "hand": "L"
     },
     {
-      "id": 531,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 96,
+      "id": 495,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 86,
       "start": 204,
       "end": 205.9,
       "duration": 1.9,
@@ -5858,10 +5462,10 @@
       "hand": "R"
     },
     {
-      "id": 532,
+      "id": 496,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 205,
       "end": 205.85,
       "duration": 0.85,
@@ -5869,10 +5473,10 @@
       "hand": "L"
     },
     {
-      "id": 533,
+      "id": 497,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 205,
       "end": 205.85,
       "duration": 0.85,
@@ -5880,10 +5484,10 @@
       "hand": "L"
     },
     {
-      "id": 534,
+      "id": 498,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 206,
       "end": 206.85,
       "duration": 0.85,
@@ -5891,10 +5495,10 @@
       "hand": "L"
     },
     {
-      "id": 535,
+      "id": 499,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 206,
       "end": 206.85,
       "duration": 0.85,
@@ -5902,10 +5506,10 @@
       "hand": "L"
     },
     {
-      "id": 536,
-      "pitch": 92,
-      "name": "G#6",
-      "velocity": 92,
+      "id": 500,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 82,
       "start": 206,
       "end": 206.9,
       "duration": 0.9,
@@ -5913,10 +5517,10 @@
       "hand": "R"
     },
     {
-      "id": 537,
+      "id": 501,
       "pitch": 42,
       "name": "F#2",
-      "velocity": 64,
+      "velocity": 56,
       "start": 207,
       "end": 209.8,
       "duration": 2.8,
@@ -5924,10 +5528,10 @@
       "hand": "L"
     },
     {
-      "id": 538,
-      "pitch": 102,
-      "name": "F#7",
-      "velocity": 96,
+      "id": 502,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 86,
       "start": 207,
       "end": 207.9,
       "duration": 0.9,
@@ -5935,10 +5539,10 @@
       "hand": "R"
     },
     {
-      "id": 539,
+      "id": 503,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 208,
       "end": 208.85,
       "duration": 0.85,
@@ -5946,10 +5550,10 @@
       "hand": "L"
     },
     {
-      "id": 540,
+      "id": 504,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 208,
       "end": 208.85,
       "duration": 0.85,
@@ -5957,10 +5561,10 @@
       "hand": "L"
     },
     {
-      "id": 541,
-      "pitch": 99,
-      "name": "D#7",
-      "velocity": 94,
+      "id": 505,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 84,
       "start": 208,
       "end": 208.9,
       "duration": 0.9,
@@ -5968,10 +5572,10 @@
       "hand": "R"
     },
     {
-      "id": 542,
+      "id": 506,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 58,
+      "velocity": 48,
       "start": 209,
       "end": 209.85,
       "duration": 0.85,
@@ -5979,10 +5583,10 @@
       "hand": "L"
     },
     {
-      "id": 543,
+      "id": 507,
       "pitch": 61,
       "name": "C#4",
-      "velocity": 58,
+      "velocity": 48,
       "start": 209,
       "end": 209.85,
       "duration": 0.85,
@@ -5990,10 +5594,10 @@
       "hand": "L"
     },
     {
-      "id": 544,
+      "id": 508,
       "pitch": 49,
       "name": "C#3",
-      "velocity": 64,
+      "velocity": 56,
       "start": 210,
       "end": 212.8,
       "duration": 2.8,
@@ -6001,10 +5605,10 @@
       "hand": "L"
     },
     {
-      "id": 545,
-      "pitch": 106,
-      "name": "A#7",
-      "velocity": 98,
+      "id": 509,
+      "pitch": 80,
+      "name": "G#5",
+      "velocity": 88,
       "start": 210,
       "end": 210.9,
       "duration": 0.9,
@@ -6012,10 +5616,10 @@
       "hand": "R"
     },
     {
-      "id": 546,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 58,
+      "id": 510,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 48,
       "start": 211,
       "end": 211.85,
       "duration": 0.85,
@@ -6023,10 +5627,10 @@
       "hand": "L"
     },
     {
-      "id": 547,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 58,
+      "id": 511,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 48,
       "start": 211,
       "end": 211.85,
       "duration": 0.85,
@@ -6034,10 +5638,10 @@
       "hand": "L"
     },
     {
-      "id": 548,
-      "pitch": 99,
-      "name": "D#7",
-      "velocity": 94,
+      "id": 512,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 84,
       "start": 211,
       "end": 211.45,
       "duration": 0.45,
@@ -6045,10 +5649,10 @@
       "hand": "R"
     },
     {
-      "id": 549,
-      "pitch": 99,
-      "name": "D#7",
-      "velocity": 96,
+      "id": 513,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 86,
       "start": 211.5,
       "end": 211.95,
       "duration": 0.45,
@@ -6056,10 +5660,10 @@
       "hand": "R"
     },
     {
-      "id": 550,
-      "pitch": 65,
-      "name": "F4",
-      "velocity": 58,
+      "id": 514,
+      "pitch": 53,
+      "name": "F3",
+      "velocity": 48,
       "start": 212,
       "end": 212.85,
       "duration": 0.85,
@@ -6067,10 +5671,10 @@
       "hand": "L"
     },
     {
-      "id": 551,
-      "pitch": 68,
-      "name": "G#4",
-      "velocity": 58,
+      "id": 515,
+      "pitch": 56,
+      "name": "G#3",
+      "velocity": 48,
       "start": 212,
       "end": 212.85,
       "duration": 0.85,
@@ -6078,10 +5682,10 @@
       "hand": "L"
     },
     {
-      "id": 552,
-      "pitch": 94,
-      "name": "A#6",
-      "velocity": 94,
+      "id": 516,
+      "pitch": 82,
+      "name": "A#5",
+      "velocity": 84,
       "start": 212,
       "end": 212.9,
       "duration": 0.9,
@@ -6089,10 +5693,10 @@
       "hand": "R"
     },
     {
-      "id": 553,
+      "id": 517,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 48,
+      "velocity": 42,
       "start": 213,
       "end": 215.8,
       "duration": 2.8,
@@ -6100,10 +5704,10 @@
       "hand": "L"
     },
     {
-      "id": 554,
+      "id": 518,
       "pitch": 82,
       "name": "A#5",
-      "velocity": 74,
+      "velocity": 70,
       "start": 213,
       "end": 215.85,
       "duration": 2.85,
@@ -6111,10 +5715,10 @@
       "hand": "R"
     },
     {
-      "id": 555,
+      "id": 519,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 214,
       "end": 214.85,
       "duration": 0.85,
@@ -6122,10 +5726,10 @@
       "hand": "L"
     },
     {
-      "id": 556,
+      "id": 520,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 214,
       "end": 214.85,
       "duration": 0.85,
@@ -6133,10 +5737,10 @@
       "hand": "L"
     },
     {
-      "id": 557,
+      "id": 521,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 215,
       "end": 215.85,
       "duration": 0.85,
@@ -6144,10 +5748,10 @@
       "hand": "L"
     },
     {
-      "id": 558,
+      "id": 522,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 215,
       "end": 215.85,
       "duration": 0.85,
@@ -6155,20 +5759,9 @@
       "hand": "L"
     },
     {
-      "id": 559,
+      "id": 523,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 48,
-      "start": 216,
-      "end": 218.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 560,
-      "pitch": 46,
-      "name": "A#2",
       "velocity": 42,
       "start": 216,
       "end": 218.8,
@@ -6177,21 +5770,10 @@
       "hand": "L"
     },
     {
-      "id": 561,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 40,
-      "start": 216,
-      "end": 218.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 562,
+      "id": 524,
       "pitch": 78,
       "name": "F#5",
-      "velocity": 74,
+      "velocity": 70,
       "start": 216,
       "end": 217.9,
       "duration": 1.9,
@@ -6199,10 +5781,10 @@
       "hand": "R"
     },
     {
-      "id": 563,
+      "id": 525,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 217,
       "end": 217.85,
       "duration": 0.85,
@@ -6210,10 +5792,10 @@
       "hand": "L"
     },
     {
-      "id": 564,
+      "id": 526,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 217,
       "end": 217.85,
       "duration": 0.85,
@@ -6221,10 +5803,10 @@
       "hand": "L"
     },
     {
-      "id": 565,
+      "id": 527,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 218,
       "end": 218.85,
       "duration": 0.85,
@@ -6232,10 +5814,10 @@
       "hand": "L"
     },
     {
-      "id": 566,
+      "id": 528,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 218,
       "end": 218.85,
       "duration": 0.85,
@@ -6243,10 +5825,10 @@
       "hand": "L"
     },
     {
-      "id": 567,
+      "id": 529,
       "pitch": 82,
       "name": "A#5",
-      "velocity": 70,
+      "velocity": 66,
       "start": 218,
       "end": 218.9,
       "duration": 0.9,
@@ -6254,10 +5836,10 @@
       "hand": "R"
     },
     {
-      "id": 568,
+      "id": 530,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 48,
+      "velocity": 42,
       "start": 219,
       "end": 221.8,
       "duration": 2.8,
@@ -6265,10 +5847,10 @@
       "hand": "L"
     },
     {
-      "id": 569,
-      "pitch": 90,
-      "name": "F#6",
-      "velocity": 74,
+      "id": 531,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 70,
       "start": 219,
       "end": 219.9,
       "duration": 0.9,
@@ -6276,10 +5858,10 @@
       "hand": "R"
     },
     {
-      "id": 570,
+      "id": 532,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 220,
       "end": 220.85,
       "duration": 0.85,
@@ -6287,10 +5869,10 @@
       "hand": "L"
     },
     {
-      "id": 571,
+      "id": 533,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 220,
       "end": 220.85,
       "duration": 0.85,
@@ -6298,10 +5880,10 @@
       "hand": "L"
     },
     {
-      "id": 572,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 72,
+      "id": 534,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 68,
       "start": 220,
       "end": 220.9,
       "duration": 0.9,
@@ -6309,10 +5891,10 @@
       "hand": "R"
     },
     {
-      "id": 573,
+      "id": 535,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 221,
       "end": 221.85,
       "duration": 0.85,
@@ -6320,10 +5902,10 @@
       "hand": "L"
     },
     {
-      "id": 574,
+      "id": 536,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 221,
       "end": 221.85,
       "duration": 0.85,
@@ -6331,10 +5913,10 @@
       "hand": "L"
     },
     {
-      "id": 575,
+      "id": 537,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 48,
+      "velocity": 42,
       "start": 222,
       "end": 224.8,
       "duration": 2.8,
@@ -6342,10 +5924,10 @@
       "hand": "L"
     },
     {
-      "id": 576,
-      "pitch": 92,
-      "name": "G#6",
-      "velocity": 76,
+      "id": 538,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 72,
       "start": 222,
       "end": 222.9,
       "duration": 0.9,
@@ -6353,10 +5935,10 @@
       "hand": "R"
     },
     {
-      "id": 577,
+      "id": 539,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 223,
       "end": 223.85,
       "duration": 0.85,
@@ -6364,10 +5946,10 @@
       "hand": "L"
     },
     {
-      "id": 578,
+      "id": 540,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 223,
       "end": 223.85,
       "duration": 0.85,
@@ -6375,10 +5957,10 @@
       "hand": "L"
     },
     {
-      "id": 579,
+      "id": 541,
       "pitch": 80,
       "name": "G#5",
-      "velocity": 72,
+      "velocity": 68,
       "start": 223,
       "end": 223.45,
       "duration": 0.45,
@@ -6386,10 +5968,10 @@
       "hand": "R"
     },
     {
-      "id": 580,
-      "pitch": 87,
-      "name": "D#6",
-      "velocity": 74,
+      "id": 542,
+      "pitch": 75,
+      "name": "D#5",
+      "velocity": 70,
       "start": 223.5,
       "end": 223.95,
       "duration": 0.45,
@@ -6397,10 +5979,10 @@
       "hand": "R"
     },
     {
-      "id": 581,
+      "id": 543,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 224,
       "end": 224.85,
       "duration": 0.85,
@@ -6408,10 +5990,10 @@
       "hand": "L"
     },
     {
-      "id": 582,
+      "id": 544,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 224,
       "end": 224.85,
       "duration": 0.85,
@@ -6419,10 +6001,10 @@
       "hand": "L"
     },
     {
-      "id": 583,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 72,
+      "id": 545,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 68,
       "start": 224,
       "end": 224.9,
       "duration": 0.9,
@@ -6430,10 +6012,10 @@
       "hand": "R"
     },
     {
-      "id": 584,
+      "id": 546,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 48,
+      "velocity": 42,
       "start": 225,
       "end": 227.8,
       "duration": 2.8,
@@ -6441,10 +6023,10 @@
       "hand": "L"
     },
     {
-      "id": 585,
-      "pitch": 89,
-      "name": "F6",
-      "velocity": 74,
+      "id": 547,
+      "pitch": 78,
+      "name": "F#5",
+      "velocity": 70,
       "start": 225,
       "end": 227.85,
       "duration": 2.85,
@@ -6452,10 +6034,10 @@
       "hand": "R"
     },
     {
-      "id": 586,
+      "id": 548,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 226,
       "end": 226.85,
       "duration": 0.85,
@@ -6463,10 +6045,10 @@
       "hand": "L"
     },
     {
-      "id": 587,
+      "id": 549,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 226,
       "end": 226.85,
       "duration": 0.85,
@@ -6474,10 +6056,10 @@
       "hand": "L"
     },
     {
-      "id": 588,
+      "id": 550,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 227,
       "end": 227.85,
       "duration": 0.85,
@@ -6485,10 +6067,10 @@
       "hand": "L"
     },
     {
-      "id": 589,
+      "id": 551,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 227,
       "end": 227.85,
       "duration": 0.85,
@@ -6496,20 +6078,9 @@
       "hand": "L"
     },
     {
-      "id": 590,
+      "id": 552,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 48,
-      "start": 228,
-      "end": 230.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 591,
-      "pitch": 46,
-      "name": "A#2",
       "velocity": 42,
       "start": 228,
       "end": 230.8,
@@ -6518,21 +6089,10 @@
       "hand": "L"
     },
     {
-      "id": 592,
-      "pitch": 54,
-      "name": "F#3",
-      "velocity": 40,
-      "start": 228,
-      "end": 230.8,
-      "duration": 2.8,
-      "track": 0,
-      "hand": "L"
-    },
-    {
-      "id": 593,
+      "id": 553,
       "pitch": 78,
       "name": "F#5",
-      "velocity": 74,
+      "velocity": 70,
       "start": 228,
       "end": 229.9,
       "duration": 1.9,
@@ -6540,10 +6100,10 @@
       "hand": "R"
     },
     {
-      "id": 594,
+      "id": 554,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 229,
       "end": 229.85,
       "duration": 0.85,
@@ -6551,10 +6111,10 @@
       "hand": "L"
     },
     {
-      "id": 595,
+      "id": 555,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 229,
       "end": 229.85,
       "duration": 0.85,
@@ -6562,10 +6122,10 @@
       "hand": "L"
     },
     {
-      "id": 596,
+      "id": 556,
       "pitch": 54,
       "name": "F#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 230,
       "end": 230.85,
       "duration": 0.85,
@@ -6573,10 +6133,10 @@
       "hand": "L"
     },
     {
-      "id": 597,
+      "id": 557,
       "pitch": 58,
       "name": "A#3",
-      "velocity": 42,
+      "velocity": 34,
       "start": 230,
       "end": 230.85,
       "duration": 0.85,
@@ -6584,10 +6144,10 @@
       "hand": "L"
     },
     {
-      "id": 598,
-      "pitch": 85,
-      "name": "C#6",
-      "velocity": 70,
+      "id": 558,
+      "pitch": 73,
+      "name": "C#5",
+      "velocity": 66,
       "start": 230,
       "end": 230.9,
       "duration": 0.9,
@@ -6595,10 +6155,10 @@
       "hand": "R"
     },
     {
-      "id": 599,
+      "id": 559,
       "pitch": 39,
       "name": "D#2",
-      "velocity": 56,
+      "velocity": 46,
       "start": 231,
       "end": 233.85,
       "duration": 2.85,
@@ -6606,10 +6166,10 @@
       "hand": "L"
     },
     {
-      "id": 600,
+      "id": 560,
       "pitch": 46,
       "name": "A#2",
-      "velocity": 52,
+      "velocity": 44,
       "start": 231,
       "end": 233.85,
       "duration": 2.85,
@@ -6617,10 +6177,10 @@
       "hand": "L"
     },
     {
-      "id": 601,
+      "id": 561,
       "pitch": 51,
       "name": "D#3",
-      "velocity": 54,
+      "velocity": 45,
       "start": 231,
       "end": 233.85,
       "duration": 2.85,
@@ -6628,10 +6188,10 @@
       "hand": "L"
     },
     {
-      "id": 602,
+      "id": 562,
       "pitch": 63,
       "name": "D#4",
-      "velocity": 70,
+      "velocity": 66,
       "start": 231,
       "end": 233.85,
       "duration": 2.85,
@@ -6639,10 +6199,10 @@
       "hand": "R"
     },
     {
-      "id": 603,
+      "id": 563,
       "pitch": 66,
       "name": "F#4",
-      "velocity": 72,
+      "velocity": 68,
       "start": 231,
       "end": 233.85,
       "duration": 2.85,
@@ -6650,10 +6210,10 @@
       "hand": "R"
     },
     {
-      "id": 604,
+      "id": 564,
       "pitch": 70,
       "name": "A#4",
-      "velocity": 74,
+      "velocity": 70,
       "start": 231,
       "end": 233.85,
       "duration": 2.85,

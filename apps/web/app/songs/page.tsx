@@ -396,9 +396,9 @@ export default function SongsPage() {
   useEffect(() => {
     let isCancelled = false;
     void loadSongNoteData(activeSong).then((fullData) => {
-      if (!isCancelled && fullData && fullData.notes.length > activeSong.noteData.notes.length) {
+      if (!isCancelled && fullData && fullData.notes.length > 0) {
         setActiveSong((prev) => {
-          if (prev.id === activeSong.id) {
+          if (prev.id === activeSong.id && prev.noteData !== fullData) {
             return {
               ...prev,
               noteData: fullData,
@@ -693,12 +693,14 @@ export default function SongsPage() {
 
   // Handle switching songs
   const handleSelectSong = useCallback(
-    (song: DemoSong) => {
+    (song: DemoSong, autoPlay = false) => {
       setActiveSong(song);
       currentTimeRef.current = 0;
-      setIsPlaying(false);
+      setIsPlaying(autoPlay);
       accompanimentRef.current?.seek(0);
-      accompanimentRef.current?.pause();
+      if (!autoPlay) {
+        accompanimentRef.current?.pause();
+      }
       setIsPedalDown(false);
       audioRef.current?.setSustain(false);
       accompanimentRef.current?.setSustain(false);
@@ -723,9 +725,9 @@ export default function SongsPage() {
 
       // Asynchronously upgrade to full-length version if available from static catalog
       void loadSongNoteData(song).then((fullData) => {
-        if (fullData && fullData.notes.length > song.noteData.notes.length) {
+        if (fullData && fullData.notes.length > 0) {
           setActiveSong((prev) => {
-            if (prev.id === song.id) {
+            if (prev.id === song.id && prev.noteData !== fullData) {
               return {
                 ...prev,
                 noteData: fullData,
@@ -959,8 +961,7 @@ export default function SongsPage() {
     (e: React.MouseEvent, song: DemoSong) => {
       e.stopPropagation();
       if (song.id !== activeSong.id) {
-        handleSelectSong(song);
-        setIsPlaying(true);
+        handleSelectSong(song, true);
         const deck = document.getElementById("studio-deck");
         if (deck) {
           deck.scrollIntoView({ behavior: "smooth" });

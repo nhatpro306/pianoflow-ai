@@ -258,13 +258,18 @@ export function FallingNotePreview({
       }
       const synth = synthRef.current;
       synth.stop();
+      synth.configure({
+        sound: settings.piano_sound,
+        volume: previewVolume,
+        reverb: settings.reverb,
+      });
       void synth.resumeContext();
       void synth.play(audioNotes, speed, fromSec);
       setPlaying(true);
       setApproxSound(synth.approximate);
       setLoadingSound(false);
     },
-    [audioNotes, speed],
+    [audioNotes, speed, settings.piano_sound, previewVolume, settings.reverb],
   );
 
   const externalIsPlayingRef = useRef(externalIsPlaying);

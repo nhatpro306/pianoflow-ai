@@ -200,7 +200,8 @@ export class SampledPiano {
 
   private applyOutputSettings(instrument: SmplrInstrument): void {
     const scale = this.config.sound === "felt" ? 0.75 : 0.8;
-    instrument.output.setVolume(Math.round(this.config.volume * 127 * scale));
+    // Lower max output volume scale slightly to prevent polyphonic Web Audio summing distortion
+    instrument.output.setVolume(Math.round(this.config.volume * 92 * scale));
     if (this.ctx) {
       const key = this.instrumentKey();
       if (
@@ -399,15 +400,29 @@ export class SampledPiano {
       const start = note.start / this.speed;
       if (start > horizon) break;
       const scheduleTime = this.startCtxTime + note.start / this.speed;
-      const velocity =
-        this.config.sound === "felt"
-          ? Math.round(30 + (note.velocity / 127) * 50)
-          : note.velocity;
+
+      // Warm Concert Grand Velocity Curve
+      let v = note.velocity ?? 76;
+      if (note.hand === "L" || note.track === 0) {
+        v *= 0.82;
+      }
+      if (note.pitch > 72) {
+        v *= Math.max(0.68, 1 - (note.pitch - 72) * 0.01);
+      }
+      if (note.pitch < 42) {
+        v *= 0.85;
+      }
+      let finalVelocity = Math.max(28, Math.min(86, Math.round(v)));
+      if (this.config.sound === "felt") {
+        finalVelocity = Math.round(26 + (finalVelocity / 86) * 44);
+      }
+
+      const rawDur = note.duration / this.speed;
       instrument.start({
         note: note.pitch,
-        velocity,
+        velocity: finalVelocity,
         time: scheduleTime,
-        duration: Math.max(0.08, note.duration / this.speed),
+        duration: Math.max(0.38, rawDur),
       });
       this.nextIndex++;
     }

@@ -125,10 +125,10 @@ export function buildFurEliseData(): NoteData {
         const bStart = curTime;
         const alb = [b.lhRoot, b.chord[1], b.chord[0], b.chord[1], b.lhRoot, b.chord[2]];
         for (let i = 0; i < 6; i++) {
-          noteId = addNote(notes, noteId, alb[i], bStart + i * (s16 * 0.9), s16 * 0.85, 65, "L");
+          noteId = addNote(notes, noteId, alb[i], bStart + i * s16, s16 * 0.95, 62, "L");
         }
         for (let i = 0; i < b.rhMel.length; i++) {
-          noteId = addNote(notes, noteId, b.rhMel[i] + (loop === 1 ? 12 : 0), bStart + i * (s16 * 0.9), s16 * 0.85, 78, "R");
+          noteId = addNote(notes, noteId, b.rhMel[i] + (loop === 1 ? 12 : 0), bStart + i * s16, s16 * 0.95, 78, "R");
         }
         curTime += measureSec;
       }
@@ -137,7 +137,7 @@ export function buildFurEliseData(): NoteData {
     for (let i = 0; i < chrom.length; i++) {
       noteId = addNote(notes, noteId, chrom[i], curTime + i * (s32 * 2), s32 * 1.8, 75 - i, "R");
       if (i % 4 === 0) {
-        noteId = addNote(notes, noteId, 40, curTime + i * (s32 * 2), measureSec, 68, "L");
+        noteId = addNote(notes, noteId, 40, curTime + i * (s32 * 2), measureSec, 65, "L");
       }
     }
     curTime += chrom.length * (s32 * 2) + measureSec;
@@ -149,29 +149,28 @@ export function buildFurEliseData(): NoteData {
       const bStart = curTime;
       for (let i = 0; i < 6; i++) {
         const p = i % 2 === 0 ? 33 : 45;
-        noteId = addNote(notes, noteId, p, bStart + i * s16, s16 * 0.95, 74 + (b % 3) * 4, "L");
+        noteId = addNote(notes, noteId, p, bStart + i * s16, s16 * 0.95, 68 + (b % 3) * 4, "L");
       }
       const chordPitches = b < 6 ? [60, 64, 69, 72] : b < 11 ? [59, 62, 65, 71] : [58, 62, 67, 70];
       for (const cp of chordPitches) {
-        noteId = addNote(notes, noteId, cp, bStart, measureSec * 0.9, 85, "R");
+        noteId = addNote(notes, noteId, cp, bStart, measureSec * 0.9, 82, "R");
       }
       if (b % 2 === 1) {
         const run = [72, 76, 81, 84, 88, 84, 81, 76];
         for (let r = 0; r < run.length; r++) {
-          noteId = addNote(notes, noteId, run[r], bStart + s16 * 3 + r * s32, s32 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, run[r], bStart + s16 * 3 + r * s32, s32 * 0.9, 80, "R");
         }
       }
       curTime += measureSec;
     }
-    const cascade = [];
-    for (let p = 88; p >= 64; p--) cascade.push(p);
-    for (let i = 0; i < cascade.length; i++) {
-      noteId = addNote(notes, noteId, cascade[i], curTime + i * (s32 * 1.5), s32 * 1.4, 78, "R");
+    const beethovenCascade = [69, 72, 76, 81, 84, 88, 84, 81, 76, 72, 69, 64, 76, 75, 76, 75, 76, 71, 74, 72];
+    for (let i = 0; i < beethovenCascade.length; i++) {
+      noteId = addNote(notes, noteId, beethovenCascade[i], curTime + i * (s32 * 1.5), s32 * 1.4, 76, "R");
       if (i % 6 === 0) {
-        noteId = addNote(notes, noteId, 40, curTime + i * (s32 * 1.5), measureSec, 65, "L");
+        noteId = addNote(notes, noteId, 45, curTime + i * (s32 * 1.5), measureSec, 62, "L");
       }
     }
-    curTime += cascade.length * (s32 * 1.5) + measureSec;
+    curTime += beethovenCascade.length * (s32 * 1.5) + measureSec;
   }
 
   function emitCoda() {
@@ -371,13 +370,14 @@ export function buildCanonInDData(): NoteData {
     } else if (c < 12) {
       const baseScale = [78, 81, 79, 78, 76, 74, 73, 71, 69, 67, 66, 67, 69, 71, 73, 74];
       for (let i = 0; i < 32; i++) {
-        const p = baseScale[i % baseScale.length] + (i >= 16 ? 4 : 0);
+        const p = baseScale[i % baseScale.length];
         noteId = addNote(notes, noteId, p, rhStart + i * s16, s16 * 0.9, 84, "R");
       }
     } else if (c < 18) {
       for (let b = 0; b < 8; b++) {
         const root = groundBass[b] + 24;
-        const arp = [root, root + 4, root + 7, root + 12];
+        const third = (b === 2 || b === 3) ? 3 : 4;
+        const arp = [root, root + third, root + 7, root + 12];
         for (let i = 0; i < 4; i++) {
           noteId = addNote(notes, noteId, arp[i], rhStart + b * beatSec + i * s16, s16 * 0.88, 82, "R");
         }
@@ -390,7 +390,8 @@ export function buildCanonInDData(): NoteData {
       }
     } else {
       for (let b = 0; b < 8; b++) {
-        const chord = [groundBass[b] + 12, groundBass[b] + 16, groundBass[b] + 19, groundBass[b] + 24];
+        const third = (b === 2 || b === 3) ? 3 : 4;
+        const chord = [groundBass[b] + 12, groundBass[b] + 12 + third, groundBass[b] + 19, groundBass[b] + 24];
         for (const cp of chord) {
           noteId = addNote(notes, noteId, cp, rhStart + b * beatSec, beatSec * 0.95, 88, "R");
         }
@@ -449,24 +450,30 @@ export function buildClairDeLuneData(): NoteData {
     } else if (bar < 45) {
       const roots = [37, 44, 42, 39, 41, 46, 44, 37];
       const root = roots[bar % roots.length];
-      noteId = addNote(notes, noteId, root, bStart, beatSec * 2.8, 62, "L");
-      noteId = addNote(notes, noteId, root + 7, bStart, beatSec * 2.8, 58, "L");
+      noteId = addNote(notes, noteId, root, bStart, beatSec * 2.8, 56, "L");
+      noteId = addNote(notes, noteId, root + 7, bStart, beatSec * 2.8, 52, "L");
 
-      const scale = [root + 12, root + 16, root + 19, root + 23, root + 26, root + 28, root + 31, root + 35];
+      // Pure Db major diatonic arpeggios
+      const dbMajorPcs = [1, 3, 5, 6, 8, 10, 0];
+      const rawScale = [root + 12, root + 16, root + 19, root + 23, root + 28, root + 31, root + 36];
+      const diatonicArp = rawScale.map((p) => {
+        const pc = ((p % 12) + 12) % 12;
+        return dbMajorPcs.includes(pc) ? p : p + 1;
+      });
       for (let s = 0; s < 18; s++) {
-        const p = scale[s % scale.length];
+        const p = diatonicArp[s % diatonicArp.length];
         const st = bStart + s * s16;
-        noteId = addNote(notes, noteId, p, st, s16 * 0.95, 66 + (s % 6) * 3, s < 6 ? "L" : "R");
+        noteId = addNote(notes, noteId, p, st, s16 * 0.95, 60 + (s % 6) * 3, s < 6 ? "L" : "R");
       }
-      noteId = addNote(notes, noteId, root + 36, bStart + beatSec, beatSec * 1.8, 84, "R");
+      noteId = addNote(notes, noteId, root + 36, bStart + beatSec, beatSec * 1.8, 80, "R");
     } else if (bar < 57) {
-      noteId = addNote(notes, noteId, 37, bStart, beatSec * 2.8, 52, "L");
-      noteId = addNote(notes, noteId, 49, bStart, beatSec * 2.8, 50, "L");
+      noteId = addNote(notes, noteId, 37, bStart, beatSec * 2.8, 50, "L");
+      noteId = addNote(notes, noteId, 49, bStart, beatSec * 2.8, 48, "L");
+      const harp = [61, 65, 68, 73, 77, 80, 77, 73, 68];
       for (let s = 0; s < 9; s++) {
-        const p = 61 + (s % 5) * 4;
-        noteId = addNote(notes, noteId, p, bStart + s * s8, s8 * 0.9, 58, "R");
+        noteId = addNote(notes, noteId, harp[s], bStart + s * s8, s8 * 0.9, 56, "R");
       }
-      noteId = addNote(notes, noteId, 73, bStart, beatSec * 1.5, 78, "R");
+      noteId = addNote(notes, noteId, 73, bStart, beatSec * 1.5, 76, "R");
     } else {
       [25, 37, 44, 49].forEach((p) => {
         noteId = addNote(notes, noteId, p, bStart, beatSec * 2.9, 45, "L");
@@ -533,8 +540,8 @@ export function buildGymnopedie1Data(): NoteData {
     if (melodyPhrases[bar]) {
       const phrase = melodyPhrases[bar];
       for (let i = 0; i < phrase.length; i++) {
-        const mStart = bStart + (i * 1.5) * beatSec;
-        noteId = addNote(notes, noteId, phrase[i], mStart, beatSec * 1.4, 76, "R");
+        const mStart = bStart + (i + 1) * beatSec;
+        noteId = addNote(notes, noteId, phrase[i], mStart, beatSec * 0.95, 76, "R");
       }
     }
   }
@@ -739,6 +746,63 @@ export interface ArrangedSongConfig {
   }[];
 }
 
+/**
+ * Snaps a candidate melody pitch to an acoustically consonant pitch.
+ * On strong beats, snaps to chord tones; on weak beats, snaps to diatonic scale avoiding harsh semitone clashes.
+ */
+export function snapToConsonantPitch(
+  rawPitch: number,
+  chordRoot: number,
+  thirdInterval: number,
+  fifthInterval: number,
+  keyRoot: number,
+  isMinorKey: boolean,
+  isStrongBeat: boolean
+): number {
+  const chordTones = [
+    ((chordRoot % 12) + 12) % 12,
+    (((chordRoot + thirdInterval) % 12) + 12) % 12,
+    (((chordRoot + fifthInterval) % 12) + 12) % 12,
+  ];
+  const rawPc = ((rawPitch % 12) + 12) % 12;
+
+  // Already a chord tone
+  if (chordTones.includes(rawPc)) return rawPitch;
+
+  if (isStrongBeat) {
+    let closestTone = rawPitch;
+    let minDiff = 999;
+    for (const offset of [-4, -3, -2, -1, 1, 2, 3, 4]) {
+      const candidate = rawPitch + offset;
+      const candidatePc = ((candidate % 12) + 12) % 12;
+      if (chordTones.includes(candidatePc) && Math.abs(offset) < minDiff) {
+        minDiff = Math.abs(offset);
+        closestTone = candidate;
+      }
+    }
+    return closestTone;
+  }
+
+  // On passing beats: check for semitone clash with chord tones
+  const clashWithRoot = Math.abs(rawPc - chordTones[0]) === 1 || Math.abs(rawPc - chordTones[0]) === 11;
+  const clashWithThird = Math.abs(rawPc - chordTones[1]) === 1 || Math.abs(rawPc - chordTones[1]) === 11;
+  if (clashWithRoot || clashWithThird) {
+    let closestTone = rawPitch;
+    let minDiff = 999;
+    for (const offset of [-1, 1, -2, 2]) {
+      const candidate = rawPitch + offset;
+      const candidatePc = ((candidate % 12) + 12) % 12;
+      if (chordTones.includes(candidatePc) && Math.abs(offset) < minDiff) {
+        minDiff = Math.abs(offset);
+        closestTone = candidate;
+      }
+    }
+    return closestTone;
+  }
+
+  return rawPitch;
+}
+
 export function buildFullArrangedSong(config: ArrangedSongConfig): NoteData {
   const { bpm, time_sig, keyRoot, isMinor, lhName, rhName, sections } = config;
   const beatsPerBar = time_sig === "3/4" ? 3 : time_sig === "2/4" ? 2 : 4;
@@ -749,14 +813,14 @@ export function buildFullArrangedSong(config: ArrangedSongConfig): NoteData {
   let noteId = 1;
   let curTime = 0;
 
-  // Balanced velocity helpers: Left Hand accompaniment strictly balanced (48-68), Right Hand melodies expressive and clear (75-98)
+  // Balanced velocity helpers: Left Hand accompaniment strictly balanced (40-58), Right Hand melodies expressive and singing (65-86)
   function addLhNote(pitch: number, start: number, dur: number, vel: number): void {
-    const balancedVel = Math.max(48, Math.min(68, Math.round(vel)));
+    const balancedVel = Math.max(38, Math.min(58, Math.round(vel)));
     noteId = addNote(notes, noteId, pitch, start, dur, balancedVel, "L");
   }
 
   function addRhNote(pitch: number, start: number, dur: number, vel: number): void {
-    const expressiveVel = Math.max(75, Math.min(98, Math.round(vel)));
+    const expressiveVel = Math.max(62, Math.min(86, Math.round(vel)));
     noteId = addNote(notes, noteId, pitch, start, dur, expressiveVel, "R");
   }
 
@@ -765,7 +829,10 @@ export function buildFullArrangedSong(config: ArrangedSongConfig): NoteData {
       const bStart = curTime;
       const chordOffset = sec.chordRoots[bar % sec.chordRoots.length] ?? 0;
       const root = keyRoot + chordOffset;
-      const bassPitch = root - 24;
+      let normRoot = root;
+      while (normRoot - 24 < 36) normRoot += 12;
+      while (normRoot - 24 > 48) normRoot -= 12;
+      const bassPitch = Math.max(36, normRoot - 24);
 
       // Diatonic 3rd and 5th intervals matching chord degree relative to keyRoot
       const { third: thirdInterval, fifth: fifthInterval } = getDiatonicChordIntervals(chordOffset, isMinor);
@@ -867,39 +934,75 @@ export function buildFullArrangedSong(config: ArrangedSongConfig): NoteData {
 
       if (sec.rhRhythm === "waltzCantabile") {
         for (let s = 0; s < 3; s++) {
-          const p = melBase + mel[(bar * 3 + s) % mel.length];
+          const rawP = melBase + mel[(bar * 3 + s) % mel.length];
+          const p = snapToConsonantPitch(rawP, root, thirdInterval, fifthInterval, keyRoot, isMinor, s === 0);
           addRhNote(p, bStart + s * beatSec, beatSec * 0.92, sec.dynamics.rh);
         }
       } else if (sec.rhRhythm === "climaxOctaves") {
         for (let s = 0; s < beatsPerBar * 2; s++) {
-          const p = melBase + mel[(bar * 2 + s) % mel.length];
-          addRhNote(p, bStart + s * s8, s8 * 0.9, sec.dynamics.rh + 6);
-          addRhNote(p + 12, bStart + s * s8, s8 * 0.9, sec.dynamics.rh + 4);
+          const rawP = melBase + mel[(bar * 2 + s) % mel.length];
+          const isDownbeat = s === 0 || s === beatsPerBar;
+          const p = snapToConsonantPitch(rawP, root, thirdInterval, fifthInterval, keyRoot, isMinor, isDownbeat);
+          addRhNote(p, bStart + s * s8, s8 * 0.9, Math.min(86, sec.dynamics.rh));
+          if (isDownbeat) {
+            addRhNote(p - 12, bStart + s * s8, s8 * 0.9, Math.min(80, sec.dynamics.rh - 4));
+          }
         }
       } else if (sec.rhRhythm === "cascades") {
         for (let s = 0; s < beatsPerBar * 4; s++) {
-          const p = melBase + mel[(bar * 4 + s) % mel.length];
+          const rawP = melBase + mel[(bar * 4 + s) % mel.length];
           const isAccent = s % 4 === 0;
-          addRhNote(p + 12, bStart + s * s16, s16 * 0.9, isAccent ? sec.dynamics.rh + 4 : sec.dynamics.rh - 3);
+          const p = snapToConsonantPitch(rawP, root, thirdInterval, fifthInterval, keyRoot, isMinor, isAccent);
+          addRhNote(p + 12, bStart + s * s16, s16 * 0.9, isAccent ? Math.min(86, sec.dynamics.rh + 2) : Math.min(80, sec.dynamics.rh - 4));
         }
       } else if (sec.rhRhythm === "syncopated16th") {
         const syncBeats = [0, 0.75, 1.5, 2.0, 2.75, 3.25];
         for (let i = 0; i < syncBeats.length; i++) {
           const offsetBeat = syncBeats[i];
           if (offsetBeat >= beatsPerBar) continue;
-          const p = melBase + mel[(bar * syncBeats.length + i) % mel.length];
-          addRhNote(p, bStart + offsetBeat * beatSec, beatSec * 0.6, sec.dynamics.rh + (i === 0 ? 3 : 0));
+          const rawP = melBase + mel[(bar * syncBeats.length + i) % mel.length];
+          const isDown = i === 0;
+          const p = snapToConsonantPitch(rawP, root, thirdInterval, fifthInterval, keyRoot, isMinor, isDown);
+          addRhNote(p, bStart + offsetBeat * beatSec, beatSec * 0.6, isDown ? Math.min(86, sec.dynamics.rh) : Math.min(82, sec.dynamics.rh - 2));
         }
       } else if (sec.rhRhythm === "marchStaccato") {
         for (let s = 0; s < beatsPerBar * 2; s++) {
-          const p = melBase + mel[(bar * 2 + s) % mel.length];
-          addRhNote(p, bStart + s * s8, s8 * 0.7, sec.dynamics.rh);
+          const rawP = melBase + mel[(bar * 2 + s) % mel.length];
+          const p = snapToConsonantPitch(rawP, root, thirdInterval, fifthInterval, keyRoot, isMinor, s === 0);
+          addRhNote(p, bStart + s * s8, s8 * 0.7, Math.min(84, sec.dynamics.rh));
         }
       } else {
-        for (let s = 0; s < beatsPerBar * 2; s++) {
-          if (s === beatsPerBar * 2 - 1 && bar % 2 === 1) continue;
-          const p = melBase + mel[(bar * 2 + s) % mel.length];
-          addRhNote(p, bStart + s * s8, s8 * 0.92, sec.dynamics.rh - (s % 2 === 0 ? 0 : 3));
+        // Expressive 4-bar breathing rhythm templates
+        const phrasePattern = bar % 4;
+        if (phrasePattern === 0) {
+          // Downbeat quarter + flowing 8ths
+          const raw0 = melBase + mel[(bar * 2) % mel.length];
+          const p0 = snapToConsonantPitch(raw0, root, thirdInterval, fifthInterval, keyRoot, isMinor, true);
+          addRhNote(p0, bStart, beatSec * 0.92, Math.min(86, sec.dynamics.rh));
+          for (let s = 2; s < beatsPerBar * 2; s++) {
+            const rawP = melBase + mel[(bar * 2 + s) % mel.length];
+            const p = snapToConsonantPitch(rawP, root, thirdInterval, fifthInterval, keyRoot, isMinor, false);
+            addRhNote(p, bStart + s * s8, s8 * 0.9, Math.min(80, sec.dynamics.rh - 3));
+          }
+        } else if (phrasePattern === 1) {
+          // Flowing 8ths leading into phrase peak
+          for (let s = 0; s < beatsPerBar * 2; s++) {
+            const rawP = melBase + mel[(bar * 2 + s) % mel.length];
+            const p = snapToConsonantPitch(rawP, root, thirdInterval, fifthInterval, keyRoot, isMinor, s === 0);
+            addRhNote(p, bStart + s * s8, s8 * 0.9, Math.min(84, sec.dynamics.rh - (s % 2 === 0 ? 0 : 3)));
+          }
+        } else if (phrasePattern === 2) {
+          // Climax / Turn: Lyrical suspension
+          for (let s = 0; s < beatsPerBar * 2 - 1; s++) {
+            const rawP = melBase + mel[(bar * 2 + s) % mel.length];
+            const p = snapToConsonantPitch(rawP, root, thirdInterval, fifthInterval, keyRoot, isMinor, s === 0);
+            addRhNote(p, bStart + s * s8, s8 * 0.9, Math.min(86, sec.dynamics.rh));
+          }
+        } else {
+          // Resolution & Breath: Half note singing downbeat, then silence to let piano resonance breathe
+          const raw0 = melBase + mel[(bar * 2) % mel.length];
+          const p0 = snapToConsonantPitch(raw0, root, thirdInterval, fifthInterval, keyRoot, isMinor, true);
+          addRhNote(p0, bStart, beatSec * 1.85, Math.min(84, sec.dynamics.rh));
         }
       }
 
@@ -910,11 +1013,11 @@ export function buildFullArrangedSong(config: ArrangedSongConfig): NoteData {
   // Final cadential chord
   const finalDur = beatsPerBar * beatSec * 1.5;
   const { third: tonicThird } = getDiatonicChordIntervals(0, isMinor);
-  addLhNote(keyRoot - 24, curTime, finalDur, 65);
-  addLhNote(keyRoot - 12, curTime, finalDur, 62);
-  addLhNote(keyRoot - 12 + tonicThird, curTime, finalDur, 58);
-  addRhNote(keyRoot, curTime, finalDur, 82);
-  addRhNote(keyRoot + 12, curTime, finalDur, 88);
+  addLhNote(keyRoot - 24, curTime, finalDur, 52);
+  addLhNote(keyRoot - 12, curTime, finalDur, 50);
+  addLhNote(keyRoot - 12 + tonicThird, curTime, finalDur, 48);
+  addRhNote(keyRoot, curTime, finalDur, 76);
+  addRhNote(keyRoot + 12, curTime, finalDur, 82);
   curTime += finalDur;
 
   const duration_sec = Number(curTime.toFixed(2));
@@ -1344,53 +1447,80 @@ export function buildMozartRondoAllaTurcaData(): NoteData {
   let curTime = 0;
 
   function emitThemeA(repetitions = 2) {
+    const barSec = 2 * s4;
     for (let r = 0; r < repetitions; r++) {
-      const motifA = [
-        { p: 71, d: s16 }, { p: 69, d: s16 }, { p: 68, d: s16 }, { p: 69, d: s16 },
-        { p: 72, d: s8 },
-        { p: 74, d: s16 }, { p: 72, d: s16 }, { p: 71, d: s16 }, { p: 72, d: s16 },
-        { p: 76, d: s8 },
-        { p: 77, d: s16 }, { p: 76, d: s16 }, { p: 75, d: s16 }, { p: 76, d: s16 },
-        { p: 83, d: s16 }, { p: 81, d: s16 }, { p: 80, d: s16 }, { p: 81, d: s16 }, { p: 83, d: s8 },
-        { p: 84, d: s8 }, { p: 81, d: s8 }, { p: 84, d: s8 }, { p: 83, d: s8 }, { p: 81, d: s4 }
-      ];
-      let t = curTime;
-      for (const m of motifA) {
-        noteId = addNote(notes, noteId, m.p, t, m.d * 0.92, 85, "R");
-        t += m.d;
-      }
+      // 8 Bars of Period 1 (A minor)
       for (let b = 0; b < 8; b++) {
-        const bt = curTime + b * s4 * 2;
-        const root = b < 4 ? 45 : 40;
-        const ch = b < 4 ? [57, 60, 64] : [56, 59, 64];
-        noteId = addNote(notes, noteId, root, bt, s8 * 0.8, 70, "L");
+        const bt = curTime + b * barSec;
+        const root = b < 4 ? 45 : b === 6 ? 40 : 45;
+        const ch = b < 4 ? [57, 60, 64] : b === 6 ? [56, 59, 64] : [57, 60, 64];
+        noteId = addNote(notes, noteId, root, bt, s8 * 0.85, 62, "L");
         for (const cp of ch) {
-          noteId = addNote(notes, noteId, cp, bt + s8, s8 * 0.8, 65, "L");
-          noteId = addNote(notes, noteId, cp, bt + s4 + s8, s8 * 0.8, 65, "L");
+          noteId = addNote(notes, noteId, cp, bt + s8, s8 * 0.8, 56, "L");
+          noteId = addNote(notes, noteId, cp, bt + s4 + s8, s8 * 0.8, 56, "L");
+        }
+
+        if (b === 0 || b === 4) {
+          noteId = addNote(notes, noteId, 71, bt, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 69, bt + s16, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 68, bt + s16 * 2, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 69, bt + s16 * 3, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 72, bt + s4, s8 * 0.9, 85, "R");
+          noteId = addNote(notes, noteId, 74, bt + s4 + s8, s16 * 0.9, 80, "R");
+          noteId = addNote(notes, noteId, 72, bt + s4 + s8 + s16, s16 * 0.9, 80, "R");
+        } else if (b === 1 || b === 5) {
+          noteId = addNote(notes, noteId, 71, bt, s16 * 0.9, 80, "R");
+          noteId = addNote(notes, noteId, 72, bt + s16, s16 * 0.9, 80, "R");
+          noteId = addNote(notes, noteId, 76, bt + s8, s8 * 0.9, 85, "R");
+          noteId = addNote(notes, noteId, 77, bt + s4, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 76, bt + s4 + s16, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 75, bt + s4 + s16 * 2, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 76, bt + s4 + s16 * 3, s16 * 0.9, 82, "R");
+        } else if (b === 2 || b === 6) {
+          noteId = addNote(notes, noteId, 83, bt, s16 * 0.9, 84, "R");
+          noteId = addNote(notes, noteId, 81, bt + s16, s16 * 0.9, 84, "R");
+          noteId = addNote(notes, noteId, 80, bt + s16 * 2, s16 * 0.9, 84, "R");
+          noteId = addNote(notes, noteId, 81, bt + s16 * 3, s16 * 0.9, 84, "R");
+          noteId = addNote(notes, noteId, 83, bt + s4, s8 * 0.9, 84, "R");
+          noteId = addNote(notes, noteId, 84, bt + s4 + s8, s8 * 0.9, 84, "R");
+        } else if (b === 3 || b === 7) {
+          noteId = addNote(notes, noteId, 81, bt, s8 * 0.9, 84, "R");
+          noteId = addNote(notes, noteId, 84, bt + s8, s8 * 0.9, 84, "R");
+          noteId = addNote(notes, noteId, 83, bt + s4, s8 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 81, bt + s4 + s8, s8 * 0.9, 84, "R");
         }
       }
-      curTime = t;
+      curTime += 8 * barSec;
 
-      const motifA2 = [
-        { p: 76, d: s16 }, { p: 77, d: s16 }, { p: 79, d: s16 }, { p: 81, d: s16 },
-        { p: 83, d: s8 }, { p: 79, d: s8 },
-        { p: 76, d: s16 }, { p: 77, d: s16 }, { p: 79, d: s16 }, { p: 81, d: s16 },
-        { p: 83, d: s8 }, { p: 79, d: s8 },
-        { p: 77, d: s16 }, { p: 76, d: s16 }, { p: 74, d: s16 }, { p: 72, d: s16 },
-        { p: 71, d: s8 }, { p: 69, d: s4 }
-      ];
-      t = curTime;
-      for (const m of motifA2) {
-        noteId = addNote(notes, noteId, m.p, t, m.d * 0.92, 82, "R");
-        t += m.d;
+      // 8 Bars of Period 2 (C major / A minor modulation)
+      for (let b = 0; b < 8; b++) {
+        const bt = curTime + b * barSec;
+        noteId = addNote(notes, noteId, 45, bt, s8 * 0.85, 64, "L");
+        noteId = addNote(notes, noteId, 57, bt + s8, s8 * 0.8, 58, "L");
+        noteId = addNote(notes, noteId, 60, bt + s8, s8 * 0.8, 58, "L");
+        noteId = addNote(notes, noteId, 57, bt + s4 + s8, s8 * 0.8, 58, "L");
+        noteId = addNote(notes, noteId, 60, bt + s4 + s8, s8 * 0.8, 58, "L");
+
+        if (b === 0 || b === 1 || b === 4 || b === 5) {
+          noteId = addNote(notes, noteId, 76, bt, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 77, bt + s16, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 79, bt + s16 * 2, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 81, bt + s16 * 3, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 83, bt + s4, s8 * 0.9, 84, "R");
+          noteId = addNote(notes, noteId, 79, bt + s4 + s8, s8 * 0.9, 80, "R");
+        } else if (b === 2 || b === 6) {
+          noteId = addNote(notes, noteId, 77, bt, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 76, bt + s16, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 74, bt + s16 * 2, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 72, bt + s16 * 3, s16 * 0.9, 82, "R");
+          noteId = addNote(notes, noteId, 71, bt + s4, s8 * 0.9, 80, "R");
+          noteId = addNote(notes, noteId, 69, bt + s4 + s8, s8 * 0.9, 82, "R");
+        } else {
+          noteId = addNote(notes, noteId, 68, bt, s4 * 0.9, 80, "R");
+          noteId = addNote(notes, noteId, b === 3 ? 64 : 81, bt + s4, s4 * 0.9, 84, "R");
+        }
       }
-      for (let b = 0; b < 6; b++) {
-        const bt = curTime + b * s4 * 2;
-        noteId = addNote(notes, noteId, 45, bt, s8 * 0.8, 72, "L");
-        noteId = addNote(notes, noteId, 57, bt + s8, s8 * 0.8, 65, "L");
-        noteId = addNote(notes, noteId, 60, bt + s8, s8 * 0.8, 65, "L");
-      }
-      curTime = t;
+      curTime += 8 * barSec;
     }
   }
 
@@ -2492,39 +2622,105 @@ export function buildTheEntertainerData(): NoteData {
 export function buildAutumnLeavesData(): NoteData {
   const bpm = 88;
   const beatSec = 60 / bpm;
+  const s8 = beatSec / 2;
   const notes: Note[] = [];
   let noteId = 1;
   let curTime = 0;
 
+  // Authentic Jazz Standard Cycle in G minor / Bb major:
+  // Cm7 - F7 - Bbmaj7 - Ebmaj7 - Am7b5 - D7 - Gm6 - Gm7
   const jazzBars = [
-    { bass: 36, chord: [58, 63, 67], rh: [{ p: 64, d: beatSec }, { p: 66, d: beatSec }, { p: 67, d: beatSec }, { p: 72, d: beatSec }] },
-    { bass: 41, chord: [57, 63, 65], rh: [{ p: 72, d: beatSec * 3 }, { p: 74, d: beatSec }] },
-    { bass: 46, chord: [57, 62, 65], rh: [{ p: 71, d: beatSec * 3 }, { p: 72, d: beatSec }] },
-    { bass: 39, chord: [55, 62, 67], rh: [{ p: 69, d: beatSec * 3 }, { p: 71, d: beatSec }] },
-    { bass: 45, chord: [55, 60, 63], rh: [{ p: 67, d: beatSec * 3 }, { p: 69, d: beatSec }] },
-    { bass: 38, chord: [54, 60, 64], rh: [{ p: 66, d: beatSec * 3 }, { p: 67, d: beatSec }] },
-    { bass: 43, chord: [55, 58, 62], rh: [{ p: 67, d: beatSec * 4 }] },
-    { bass: 43, chord: [55, 58, 62], rh: [{ p: 67, d: beatSec * 4 }] }
+    {
+      bass: 36, // C2
+      walk: [36, 39, 43, 42],
+      chord: [58, 63, 67], // Bb3, Eb4, G4 (Cm7)
+      rhMelody: [{ p: 72, d: beatSec * 3 }, { p: 74, d: beatSec }], // C5, D5
+    },
+    {
+      bass: 41, // F2
+      walk: [41, 45, 48, 47],
+      chord: [57, 63, 65], // A3, Eb4, F4 (F7)
+      rhMelody: [{ p: 70, d: beatSec * 3 }, { p: 72, d: beatSec }], // Bb4, C5
+    },
+    {
+      bass: 46, // Bb2
+      walk: [46, 50, 53, 51],
+      chord: [57, 62, 65], // A3, D4, F4 (Bbmaj7)
+      rhMelody: [{ p: 69, d: beatSec * 3 }, { p: 70, d: beatSec }], // A4, Bb4
+    },
+    {
+      bass: 39, // Eb2
+      walk: [39, 43, 46, 44],
+      chord: [55, 62, 67], // G3, D4, G4 (Ebmaj7)
+      rhMelody: [{ p: 67, d: beatSec * 4 }], // G4
+    },
+    {
+      bass: 45, // A2
+      walk: [45, 48, 51, 50],
+      chord: [55, 60, 63], // G3, C4, Eb4 (Am7b5)
+      rhMelody: [{ p: 66, d: beatSec * 3 }, { p: 67, d: beatSec }], // F#4, G4
+    },
+    {
+      bass: 38, // D2
+      walk: [38, 42, 45, 44],
+      chord: [54, 60, 64], // F#3, C4, E4 (D7)
+      rhMelody: [{ p: 69, d: beatSec * 3 }, { p: 70, d: beatSec }], // A4, Bb4
+    },
+    {
+      bass: 43, // G2
+      walk: [43, 46, 50, 48],
+      chord: [55, 58, 62], // G3, Bb3, D4 (Gm6)
+      rhMelody: [{ p: 67, d: beatSec * 4 }], // G4
+    },
+    {
+      bass: 43, // G2
+      walk: [43, 46, 50, 41],
+      chord: [55, 58, 62], // G3, Bb3, D4 (Gm7)
+      rhMelody: [
+        { p: 67, d: beatSec * 2 },
+        { p: 69, d: beatSec },
+        { p: 70, d: beatSec },
+      ],
+    },
   ];
 
   for (let chorus = 0; chorus < 8; chorus++) {
-    for (const jb of jazzBars) {
+    for (let b = 0; b < jazzBars.length; b++) {
+      const jb = jazzBars[b];
       const bt = curTime;
-      noteId = addNote(notes, noteId, jb.bass, bt, beatSec * 0.9, 74, "L");
-      noteId = addNote(notes, noteId, jb.bass + 4, bt + beatSec, beatSec * 0.9, 70, "L");
-      noteId = addNote(notes, noteId, jb.bass + 7, bt + beatSec * 2, beatSec * 0.9, 72, "L");
-      noteId = addNote(notes, noteId, jb.bass + 2, bt + beatSec * 3, beatSec * 0.9, 68, "L");
+
+      for (let w = 0; w < 4; w++) {
+        noteId = addNote(notes, noteId, jb.walk[w], bt + w * beatSec, beatSec * 0.9, 54, "L");
+      }
 
       for (const cp of jb.chord) {
-        noteId = addNote(notes, noteId, cp, bt + beatSec, beatSec * 0.8, 64, "L");
-        noteId = addNote(notes, noteId, cp, bt + beatSec * 3, beatSec * 0.8, 64, "L");
+        noteId = addNote(notes, noteId, cp, bt + beatSec * 1.5, beatSec * 0.6, 48, "L");
+        noteId = addNote(notes, noteId, cp, bt + beatSec * 3, beatSec * 0.7, 48, "L");
       }
 
       let rt = bt;
-      for (const r of jb.rh) {
-        noteId = addNote(notes, noteId, r.p + (chorus >= 2 ? 12 : 0), rt, r.d * 0.95, 80 + (chorus >= 2 ? 6 : 0), "R");
-        rt += r.d;
+      if (chorus >= 2 && chorus <= 5) {
+        const soloLicks: number[][] = [
+          [72, 74, 75, 77, 75, 74, 72, 70],
+          [69, 70, 72, 74, 72, 70, 69, 67],
+          [65, 69, 70, 72, 74, 77, 75, 74],
+          [75, 74, 72, 70, 69, 67, 65, 67],
+          [66, 67, 69, 70, 72, 74, 72, 70],
+          [69, 70, 72, 74, 75, 74, 72, 69],
+          [67, 70, 74, 75, 74, 70, 67, 62],
+          [67, 70, 72, 74, 75, 77, 79, 74],
+        ];
+        const lick = soloLicks[b % soloLicks.length];
+        for (let s = 0; s < lick.length; s++) {
+          noteId = addNote(notes, noteId, lick[s], bt + s * s8, s8 * 0.9, 80, "R");
+        }
+      } else {
+        for (const m of jb.rhMelody) {
+          noteId = addNote(notes, noteId, m.p + (chorus === 1 || chorus === 7 ? 12 : 0), rt, m.d * 0.95, 82, "R");
+          rt += m.d;
+        }
       }
+
       curTime += 4 * beatSec;
     }
   }
@@ -3277,3 +3473,158 @@ export function buildFlyMeToTheMoonData(): NoteData {
     ],
   });
 }
+
+/**
+ * Universal Landmark Full Song Generator Registry
+ * Maps canonical repertoire IDs and aliases directly to their dedicated full-length generators.
+ */
+export const FULL_SONG_GENERATOR_REGISTRY: Record<string, () => NoteData> = {
+  "fur-elise": buildFurEliseData,
+  "furelise": buildFurEliseData,
+  "moonlight-sonata": buildMoonlightSonataData,
+  "moonlightsonata": buildMoonlightSonataData,
+  "beethovenmoonlight": buildMoonlightSonataData,
+  "moonlight-sonata-3rd": buildMoonlightSonata3rdData,
+  "moonlightsonata3rd": buildMoonlightSonata3rdData,
+  "prestoagitato": buildMoonlightSonata3rdData,
+  "canon-in-d": buildCanonInDData,
+  "canonind": buildCanonInDData,
+  "pachelbelcanon": buildCanonInDData,
+  "clair-de-lune": buildClairDeLuneData,
+  "clairdelune": buildClairDeLuneData,
+  "gymnopedie-1": buildGymnopedie1Data,
+  "gymnopedie-no-1": buildGymnopedie1Data,
+  "gymnopedie1": buildGymnopedie1Data,
+  "gymnopedieno1": buildGymnopedie1Data,
+  "bach-prelude-c-major": buildBachPreludeCMajorData,
+  "prelude-in-c": buildBachPreludeCMajorData,
+  "bachpreludecmajor": buildBachPreludeCMajorData,
+  "preludecmajorbwv846": buildBachPreludeCMajorData,
+  "preludeinc": buildBachPreludeCMajorData,
+  "mozart-rondo-alla-turca": buildMozartRondoAllaTurcaData,
+  "rondo-alla-turca": buildMozartRondoAllaTurcaData,
+  "rondoallaturca": buildMozartRondoAllaTurcaData,
+  "mozartrondoallaturca": buildMozartRondoAllaTurcaData,
+  "chopin-nocturne-op9-no2": buildChopinNocturneOp9No2Data,
+  "chopinnocturneop9no2": buildChopinNocturneOp9No2Data,
+  "chopinebmajornocturne": buildChopinNocturneOp9No2Data,
+  "chopin-waltz-in-a-minor": buildChopinWaltzInAMinorData,
+  "chopin-waltz-a-minor": buildChopinWaltzInAMinorData,
+  "chopinwaltzaminor": buildChopinWaltzInAMinorData,
+  "chopinwaltzinaminor": buildChopinWaltzInAMinorData,
+  "ode-to-joy": buildOdeToJoyData,
+  "odetojoy": buildOdeToJoyData,
+  "beethovenodetojoy": buildOdeToJoyData,
+  "bach-minuet-in-g": buildBachMinuetInGData,
+  "bachminueting": buildBachMinuetInGData,
+  "minuetingmajor": buildBachMinuetInGData,
+  "river-flows-in-you": buildRiverFlowsInYouData,
+  "riverflowsinyou": buildRiverFlowsInYouData,
+  "riverflows": buildRiverFlowsInYouData,
+  "yirumariverflowsinyou": buildRiverFlowsInYouData,
+  "sparkle": buildSparkleData,
+  "sparkle-your-name": buildSparkleData,
+  "sparkleyourname": buildSparkleData,
+  "radwimpssparkle": buildSparkleData,
+  "interstellar": buildInterstellarData,
+  "interstellar-main-theme": buildInterstellarData,
+  "interstellarmaintheme": buildInterstellarData,
+  "firststepinterstellar": buildInterstellarData,
+  "he-is-a-pirate": buildHeIsAPirateData,
+  "hes-a-pirate": buildHeIsAPirateData,
+  "heisapirate": buildHeIsAPirateData,
+  "hesapirate": buildHeIsAPirateData,
+  "piratesofthecaribbean": buildHeIsAPirateData,
+  "merry-go-round-of-life": buildMerryGoRoundOfLifeData,
+  "merrygoroundoflife": buildMerryGoRoundOfLifeData,
+  "howlsmovingcastle": buildMerryGoRoundOfLifeData,
+  "the-entertainer": buildTheEntertainerData,
+  "the-entertainer-joplin": buildTheEntertainerData,
+  "theentertainer": buildTheEntertainerData,
+  "theentertainerjoplin": buildTheEntertainerData,
+  "autumn-leaves": buildAutumnLeavesData,
+  "autumnleaves": buildAutumnLeavesData,
+  "billevansautumnleaves": buildAutumnLeavesData,
+  "megalovania": buildMegalovaniaData,
+  "megalovaniaundertale": buildMegalovaniaData,
+  "super-mario-theme": buildSuperMarioThemeData,
+  "super-mario-bros-theme": buildSuperMarioThemeData,
+  "supermariotheme": buildSuperMarioThemeData,
+  "supermariobros": buildSuperMarioThemeData,
+  "supermariobrostheme": buildSuperMarioThemeData,
+  "zelda-lullaby": buildZeldasLullabyData,
+  "zeldas-lullaby": buildZeldasLullabyData,
+  "zeldaslullaby": buildZeldasLullabyData,
+  "zeldalullaby": buildZeldasLullabyData,
+  "zeldalullabykondo": buildZeldasLullabyData,
+  "golden-hour": buildGoldenHourData,
+  "golden-hour-jvke": buildGoldenHourData,
+  "goldenhour": buildGoldenHourData,
+  "goldenhourjvke": buildGoldenHourData,
+  "love-story": buildLoveStoryData,
+  "love-story-taylor-swift": buildLoveStoryData,
+  "lovestory": buildLoveStoryData,
+  "lovestorytaylorswift": buildLoveStoryData,
+  "the-scientist": buildTheScientistData,
+  "the-scientist-coldplay": buildTheScientistData,
+  "thescientist": buildTheScientistData,
+  "thescientistcoldplay": buildTheScientistData,
+  "spring-day": buildSpringDayData,
+  "spring-day-bts": buildSpringDayData,
+  "springday": buildSpringDayData,
+  "springdaybts": buildSpringDayData,
+  "one-summers-day": buildOneSummersDayData,
+  "onesummersday": buildOneSummersDayData,
+  "spiritedawayonesummersday": buildOneSummersDayData,
+  "kiss-the-rain": buildKissTheRainData,
+  "kisstherain": buildKissTheRainData,
+  "yirumakisstherain": buildKissTheRainData,
+  "fly-me-to-the-moon": buildFlyMeToTheMoonData,
+  "fly-me-to-the-moon-jazz": buildFlyMeToTheMoonData,
+  "flymetothemoon": buildFlyMeToTheMoonData,
+  "flymetothemoonjazz": buildFlyMeToTheMoonData,
+  "gurenge": buildGurengeData,
+  "blue-bird": buildBlueBirdData,
+  "blue-bird-naruto": buildBlueBirdData,
+  "bluebird": buildBlueBirdData,
+  "bluebirdnaruto": buildBlueBirdData,
+  "hikaru-nara": buildHikaruNaraData,
+  "hikarunara": buildHikaruNaraData,
+  "nandemonaiya": buildNandemonaiyaData,
+  "katawaredoki": buildKatawaredokiData,
+  "unravel": buildUnravelData,
+  "tokyo-ghoul-unravel-acoustic-solo": buildUnravelData,
+  "hedwigs-theme": buildHedwigsThemeData,
+  "hedwigstheme": buildHedwigsThemeData,
+  "someone-like-you": buildSomeoneLikeYouData,
+  "someone-like-you-adele": buildSomeoneLikeYouData,
+  "someonelikeyou": buildSomeoneLikeYouData,
+  "someonelikeyouadele": buildSomeoneLikeYouData,
+  "shape-of-you": buildShapeOfYouData,
+  "shapeofyou": buildShapeOfYouData,
+  "shallow": buildShallowData,
+  "shallow-lady-gaga": buildShallowData,
+  "shallowladygaga": buildShallowData,
+  "bohemian-rhapsody": buildBohemianRhapsodyData,
+  "bohemianrhapsody": buildBohemianRhapsodyData,
+  "all-of-me": buildAllOfMeData,
+  "all-of-me-john-legend": buildAllOfMeData,
+  "allofme": buildAllOfMeData,
+  "allofmejohnlegend": buildAllOfMeData,
+  "dynamite": buildDynamiteData,
+  "dynamite-bts": buildDynamiteData,
+  "butter": buildButterData,
+  "butter-bts": buildButterData,
+  "love-scenario": buildLoveScenarioData,
+  "love-scenario-ikon": buildLoveScenarioData,
+  "lovescenario": buildLoveScenarioData,
+  "lovescenarioikon": buildLoveScenarioData,
+  "stay-with-me": buildStayWithMeData,
+  "stay-with-me-chanyeol": buildStayWithMeData,
+  "staywithme": buildStayWithMeData,
+  "staywithmechanyeol": buildStayWithMeData,
+  "debussy-arabesque-1": buildDebussyArabesque1Data,
+  "premiere-arabesque": buildDebussyArabesque1Data,
+  "debussyarabesque1": buildDebussyArabesque1Data,
+  "premierearabesque": buildDebussyArabesque1Data,
+};

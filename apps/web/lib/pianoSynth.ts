@@ -256,7 +256,7 @@ export class PianoSynth {
   public scheduleNote(note: Note, when: number): void {
     if (!this.ctx || !this.master) return;
 
-    const duration = Math.max(0.08, note.duration / this.speed);
+    const duration = Math.max(0.45, note.duration / this.speed);
     const velocity = Math.min(1, Math.max(0.05, note.velocity / 127));
     const t0 = Math.max(when, this.ctx.currentTime);
     const freq = midiToFreq(note.pitch);

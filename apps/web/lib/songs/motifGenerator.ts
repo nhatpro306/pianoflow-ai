@@ -31,6 +31,7 @@ import {
   buildKissTheRainData,
   buildFlyMeToTheMoonData,
   getDiatonicChordIntervals,
+  FULL_SONG_GENERATOR_REGISTRY,
 } from "./fullSongGenerators";
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -636,58 +637,62 @@ export function createCanonicalSong(
 function getLandmarkCanonicalSong(input: MotifSongInput): RepertoireSong | null {
   const normId = input.id.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-  let noteData: NoteData | null = null;
+  // 1. Direct registry lookup across all 51+ landmark pieces and canonical aliases
+  const directGen = FULL_SONG_GENERATOR_REGISTRY[input.id] ?? FULL_SONG_GENERATOR_REGISTRY[normId];
+  let noteData: NoteData | null = directGen ? directGen() : null;
 
-  if (normId === "moonlightsonata" || normId === "beethovenmoonlight") {
-    noteData = buildMoonlightSonataData();
-  } else if (normId === "moonlightsonata3rd" || normId === "prestoagitato") {
-    noteData = buildMoonlightSonata3rdData();
-  } else if (normId === "odetojoy" || normId === "beethovenodetojoy") {
-    noteData = buildOdeToJoyData();
-  } else if (normId === "bachpreludecmajor" || normId === "preludecmajorbwv846" || normId === "preludeinc") {
-    noteData = buildBachPreludeCMajorData();
-  } else if (normId === "interstellarmaintheme" || normId === "firststepinterstellar" || normId === "interstellar") {
-    noteData = buildInterstellarData();
-  } else if (normId === "sparkleyourname" || normId === "radwimpssparkle" || normId === "sparkle") {
-    noteData = buildSparkleData();
-  } else if (normId === "autumnleaves" || normId === "billevansautumnleaves") {
-    noteData = buildAutumnLeavesData();
-  } else if (normId === "theentertainerjoplin" || normId === "theentertainer") {
-    noteData = buildTheEntertainerData();
-  } else if (normId === "merrygoroundoflife" || normId === "howlsmovingcastle") {
-    noteData = buildMerryGoRoundOfLifeData();
-  } else if (normId === "chopinnocturneop9no2" || normId === "chopinebmajornocturne") {
-    noteData = buildChopinNocturneOp9No2Data();
-  } else if (normId === "chopinwaltzaminor" || normId === "chopinwaltzinaminor") {
-    noteData = buildChopinWaltzInAMinorData();
-  } else if (normId === "rondoallaturca" || normId === "mozartrondoallaturca") {
-    noteData = buildMozartRondoAllaTurcaData();
-  } else if (normId === "bachminueting" || normId === "minuetingmajor") {
-    noteData = buildBachMinuetInGData();
-  } else if (normId === "heisapirate" || normId === "hesapirate" || normId === "piratesofthecaribbean") {
-    noteData = buildHeIsAPirateData();
-  } else if (normId === "megalovania" || normId === "megalovaniaundertale") {
-    noteData = buildMegalovaniaData();
-  } else if (normId === "supermariotheme" || normId === "supermariobros" || normId === "supermariobrostheme") {
-    noteData = buildSuperMarioThemeData();
-  } else if (normId === "zeldaslullaby" || normId === "zeldalullaby" || normId === "zeldalullabykondo") {
-    noteData = buildZeldasLullabyData();
-  } else if (normId === "goldenhour" || normId === "goldenhourjvke") {
-    noteData = buildGoldenHourData();
-  } else if (normId === "onesummersday" || normId === "spiritedawayonesummersday") {
-    noteData = buildOneSummersDayData();
-  } else if (normId === "kisstherain" || normId === "yirumakisstherain") {
-    noteData = buildKissTheRainData();
-  } else if (normId === "flymetothemoon" || normId === "flymetothemoonjazz") {
-    noteData = buildFlyMeToTheMoonData();
-  } else if (normId === "lovestorytaylorswift" || normId === "lovestory") {
-    noteData = buildLoveStoryData();
-  } else if (normId === "thescientistcoldplay" || normId === "thescientist") {
-    noteData = buildTheScientistData();
-  } else if (normId === "springdaybts" || normId === "springday") {
-    noteData = buildSpringDayData();
-  } else if (normId === "riverflowsinyou" || normId === "riverflows" || normId === "yirumariverflowsinyou") {
-    noteData = buildRiverFlowsInYouData();
+  if (!noteData) {
+    if (normId === "moonlightsonata" || normId === "beethovenmoonlight") {
+      noteData = buildMoonlightSonataData();
+    } else if (normId === "moonlightsonata3rd" || normId === "prestoagitato") {
+      noteData = buildMoonlightSonata3rdData();
+    } else if (normId === "odetojoy" || normId === "beethovenodetojoy") {
+      noteData = buildOdeToJoyData();
+    } else if (normId === "bachpreludecmajor" || normId === "preludecmajorbwv846" || normId === "preludeinc") {
+      noteData = buildBachPreludeCMajorData();
+    } else if (normId === "interstellarmaintheme" || normId === "firststepinterstellar" || normId === "interstellar") {
+      noteData = buildInterstellarData();
+    } else if (normId === "sparkleyourname" || normId === "radwimpssparkle" || normId === "sparkle") {
+      noteData = buildSparkleData();
+    } else if (normId === "autumnleaves" || normId === "billevansautumnleaves") {
+      noteData = buildAutumnLeavesData();
+    } else if (normId === "theentertainerjoplin" || normId === "theentertainer") {
+      noteData = buildTheEntertainerData();
+    } else if (normId === "merrygoroundoflife" || normId === "howlsmovingcastle") {
+      noteData = buildMerryGoRoundOfLifeData();
+    } else if (normId === "chopinnocturneop9no2" || normId === "chopinebmajornocturne") {
+      noteData = buildChopinNocturneOp9No2Data();
+    } else if (normId === "chopinwaltzaminor" || normId === "chopinwaltzinaminor") {
+      noteData = buildChopinWaltzInAMinorData();
+    } else if (normId === "rondoallaturca" || normId === "mozartrondoallaturca") {
+      noteData = buildMozartRondoAllaTurcaData();
+    } else if (normId === "bachminueting" || normId === "minuetingmajor") {
+      noteData = buildBachMinuetInGData();
+    } else if (normId === "heisapirate" || normId === "hesapirate" || normId === "piratesofthecaribbean") {
+      noteData = buildHeIsAPirateData();
+    } else if (normId === "megalovania" || normId === "megalovaniaundertale") {
+      noteData = buildMegalovaniaData();
+    } else if (normId === "supermariotheme" || normId === "supermariobros" || normId === "supermariobrostheme") {
+      noteData = buildSuperMarioThemeData();
+    } else if (normId === "zeldaslullaby" || normId === "zeldalullaby" || normId === "zeldalullabykondo") {
+      noteData = buildZeldasLullabyData();
+    } else if (normId === "goldenhour" || normId === "goldenhourjvke") {
+      noteData = buildGoldenHourData();
+    } else if (normId === "onesummersday" || normId === "spiritedawayonesummersday") {
+      noteData = buildOneSummersDayData();
+    } else if (normId === "kisstherain" || normId === "yirumakisstherain") {
+      noteData = buildKissTheRainData();
+    } else if (normId === "flymetothemoon" || normId === "flymetothemoonjazz") {
+      noteData = buildFlyMeToTheMoonData();
+    } else if (normId === "lovestorytaylorswift" || normId === "lovestory") {
+      noteData = buildLoveStoryData();
+    } else if (normId === "thescientistcoldplay" || normId === "thescientist") {
+      noteData = buildTheScientistData();
+    } else if (normId === "springdaybts" || normId === "springday") {
+      noteData = buildSpringDayData();
+    } else if (normId === "riverflowsinyou" || normId === "riverflows" || normId === "yirumariverflowsinyou") {
+      noteData = buildRiverFlowsInYouData();
+    }
   }
 
   if (noteData) {
@@ -716,6 +721,69 @@ function getLandmarkCanonicalSong(input: MotifSongInput): RepertoireSong | null 
   return null;
 }
 
+/**
+ * Resolves a melody pitch into a consonant tone relative to the active chord.
+ * Normalizes into the warm singing piano register [62, 84] (D4 - C6).
+ * Snaps downbeats/strong beats to chord tones and eliminates harsh semitone clashes on passing beats.
+ */
+export function resolveConsonantMelodyPitch(
+  rawPitch: number,
+  currentRoot: number,
+  chordThird: number,
+  chordFifth: number,
+  isStrongBeat: boolean
+): number {
+  let p = rawPitch;
+  while (p < 62) p += 12;
+  while (p > 84) p -= 12;
+
+  const chordToneClasses = [
+    ((currentRoot % 12) + 12) % 12,
+    (((currentRoot + chordThird) % 12) + 12) % 12,
+    (((currentRoot + chordFifth) % 12) + 12) % 12,
+  ];
+
+  const pc = ((p % 12) + 12) % 12;
+
+  if (chordToneClasses.includes(pc)) return p;
+
+  if (isStrongBeat) {
+    let best = p;
+    let minDiff = 999;
+    for (const offset of [-4, -3, -2, -1, 1, 2, 3, 4]) {
+      const cand = p + offset;
+      if (cand < 60 || cand > 86) continue;
+      const candPc = ((cand % 12) + 12) % 12;
+      if (chordToneClasses.includes(candPc) && Math.abs(offset) < minDiff) {
+        minDiff = Math.abs(offset);
+        best = cand;
+      }
+    }
+    return best;
+  }
+
+  // Passing beat: avoid semitone clash with chord tones
+  const clashWithRoot = Math.abs(pc - chordToneClasses[0]) === 1 || Math.abs(pc - chordToneClasses[0]) === 11;
+  const clashWithThird = Math.abs(pc - chordToneClasses[1]) === 1 || Math.abs(pc - chordToneClasses[1]) === 11;
+
+  if (clashWithRoot || clashWithThird) {
+    let best = p;
+    let minDiff = 999;
+    for (const offset of [-1, 1, -2, 2]) {
+      const cand = p + offset;
+      if (cand < 60 || cand > 86) continue;
+      const candPc = ((cand % 12) + 12) % 12;
+      if (chordToneClasses.includes(candPc) && Math.abs(offset) < minDiff) {
+        minDiff = Math.abs(offset);
+        best = cand;
+      }
+    }
+    return best;
+  }
+
+  return p;
+}
+
 // ─────────────────────────────────────────────────────────────
 // PROCEDURAL PIANO REPERTOIRE ENGINE
 // ─────────────────────────────────────────────────────────────
@@ -733,9 +801,6 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
   const timeSig = input.time_signature ?? "4/4";
   const bpm = input.bpm;
   const difficulty = input.difficulty;
-
-  const thirdInterval = scaleType === "minor" || scaleType === "dorian" ? 3 : 4;
-  const fifthInterval = 7;
 
   // Meter timing
   const isWaltz = timeSig === "3/4" || timeSig === "3/8";
@@ -883,7 +948,10 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
     const chordOffset = prog[sectionBar % prog.length] ?? 0;
 
     const currentRoot = root + chordOffset;
-    const bassPitch = currentRoot - 24;
+    let normRoot = currentRoot;
+    while (normRoot - 24 < 38) normRoot += 12;
+    while (normRoot - 24 > 50) normRoot -= 12;
+    const bassPitch = normRoot - 24;
     const registerShift = section === "chorus" ? (isClimax ? 12 : 0) : 0;
 
     // Diatonic triad intervals matching chord degree relative to keyRoot
@@ -892,13 +960,13 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
       scaleType === "minor" || scaleType === "dorian"
     );
 
-    // ── Dynamic Hierarchy: Singing RH Melody vs Warm Subtle LH Accompaniment ──
+    // ── Dynamic Hierarchy: Singing RH Melody (max 86) vs Warm Subtle LH Accompaniment (max 58) ──
     const dynamics = {
-      intro: { lh: 48, rh: 76 },
-      verse: { lh: 52, rh: 82 },
-      chorus: { lh: isClimax ? 64 : 60, rh: isClimax ? 96 : 90 },
-      bridge: { lh: 56, rh: 86 },
-      outro: { lh: 48, rh: 74 },
+      intro: { lh: 44, rh: 72 },
+      verse: { lh: 48, rh: 76 },
+      chorus: { lh: isClimax ? 56 : 52, rh: isClimax ? 86 : 82 },
+      bridge: { lh: 48, rh: 78 },
+      outro: { lh: 42, rh: 70 },
     }[section];
 
     // ── FINAL BAR: Grand Cadence ──
@@ -909,9 +977,9 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
       notes.push(
         {
           id: noteId++,
-          pitch: root - 24,
-          name: pitchToName(root - 24),
-          velocity: dynamics.lh + 8,
+          pitch: bassPitch,
+          name: pitchToName(bassPitch),
+          velocity: Math.min(56, dynamics.lh + 4),
           start: Number(barStart.toFixed(3)),
           end: Number((barStart + finalChordDur).toFixed(3)),
           duration: finalChordDur,
@@ -920,9 +988,9 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         },
         {
           id: noteId++,
-          pitch: root - 17,
-          name: pitchToName(root - 17),
-          velocity: dynamics.lh + 4,
+          pitch: normRoot - 17,
+          name: pitchToName(normRoot - 17),
+          velocity: Math.min(52, dynamics.lh + 2),
           start: Number(barStart.toFixed(3)),
           end: Number((barStart + finalChordDur).toFixed(3)),
           duration: finalChordDur,
@@ -931,9 +999,9 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         },
         {
           id: noteId++,
-          pitch: root - 12,
-          name: pitchToName(root - 12),
-          velocity: dynamics.lh + 6,
+          pitch: normRoot - 12,
+          name: pitchToName(normRoot - 12),
+          velocity: Math.min(54, dynamics.lh + 3),
           start: Number(barStart.toFixed(3)),
           end: Number((barStart + finalChordDur).toFixed(3)),
           duration: finalChordDur,
@@ -943,12 +1011,15 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
       );
 
       // RH Grand Cadence: 3 notes (tonic triad root, 3rd, 5th)
+      let rhCadRoot = normRoot;
+      while (rhCadRoot < 60) rhCadRoot += 12;
+      while (rhCadRoot > 72) rhCadRoot -= 12;
       notes.push(
         {
           id: noteId++,
-          pitch: root,
-          name: pitchToName(root),
-          velocity: dynamics.rh - 4,
+          pitch: rhCadRoot,
+          name: pitchToName(rhCadRoot),
+          velocity: Math.min(80, dynamics.rh - 4),
           start: Number(barStart.toFixed(3)),
           end: Number((barStart + finalChordDur).toFixed(3)),
           duration: finalChordDur,
@@ -957,9 +1028,9 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         },
         {
           id: noteId++,
-          pitch: root + thirdInterval,
-          name: pitchToName(root + thirdInterval),
-          velocity: dynamics.rh - 2,
+          pitch: rhCadRoot + chordThird,
+          name: pitchToName(rhCadRoot + chordThird),
+          velocity: Math.min(82, dynamics.rh - 2),
           start: Number(barStart.toFixed(3)),
           end: Number((barStart + finalChordDur).toFixed(3)),
           duration: finalChordDur,
@@ -968,9 +1039,9 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         },
         {
           id: noteId++,
-          pitch: root + fifthInterval,
-          name: pitchToName(root + fifthInterval),
-          velocity: dynamics.rh,
+          pitch: rhCadRoot + chordFifth,
+          name: pitchToName(rhCadRoot + chordFifth),
+          velocity: Math.min(84, dynamics.rh),
           start: Number(barStart.toFixed(3)),
           end: Number((barStart + finalChordDur).toFixed(3)),
           duration: finalChordDur,
@@ -983,13 +1054,11 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
 
     // ─────────────────────────────────────────────────────────────
     // LEFT HAND ACCOMPANIMENT GENERATION
-    // Authentic piano voice leading: Alberti bass, slow ballad tenths, waltz lilt, broken arpeggios
+    // Authentic piano voice leading: Alberti bass (C3-A3), walking bass, pop groove, flowing ballad wave
     // ─────────────────────────────────────────────────────────────
-    const isPhraseStart = bar % 4 === 0;
-
     if (accompStyle === "waltz") {
       // ── WALTZ LILTS (3/4 or 3/8) ──
-      // Beat 0: Deep bass root
+      // Beat 0: Bass root
       notes.push({
         id: noteId++,
         pitch: bassPitch,
@@ -1002,44 +1071,21 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         hand: "L",
       });
 
-      // On phrase start: rich 3-note harmonic sonority on Beat 0
-      if (isPhraseStart) {
-        notes.push(
-          {
-            id: noteId++,
-            pitch: currentRoot - 17,
-            name: pitchToName(currentRoot - 17),
-            velocity: dynamics.lh - 6,
-            start: Number(barStart.toFixed(3)),
-            end: Number((barStart + beatSec * 2.8).toFixed(3)),
-            duration: Number((beatSec * 2.8).toFixed(3)),
-            track: 0,
-            hand: "L",
-          },
-          {
-            id: noteId++,
-            pitch: currentRoot - 12 + chordThird,
-            name: pitchToName(currentRoot - 12 + chordThird),
-            velocity: dynamics.lh - 8,
-            start: Number(barStart.toFixed(3)),
-            end: Number((barStart + beatSec * 2.8).toFixed(3)),
-            duration: Number((beatSec * 2.8).toFixed(3)),
-            track: 0,
-            hand: "L",
-          }
-        );
-      }
+      // Beats 1 & 2: Gentle 2-note harmony chords in tenor/alto register [48, 64]
+      let cp1 = currentRoot - 12 + chordThird;
+      let cp2 = currentRoot - 12 + chordFifth;
+      while (cp1 < 48) cp1 += 12;
+      while (cp1 > 64) cp1 -= 12;
+      while (cp2 < 52) cp2 += 12;
+      while (cp2 > 67) cp2 -= 12;
 
-      // Beats 1 & 2: 2-note harmony chords (strictly 3rd and 5th of chord)
-      const chordPitch1 = currentRoot - 12 + chordThird;
-      const chordPitch2 = currentRoot - 12 + chordFifth;
       [1, 2].forEach((beat) => {
         notes.push(
           {
             id: noteId++,
-            pitch: chordPitch1,
-            name: pitchToName(chordPitch1),
-            velocity: dynamics.lh - 6,
+            pitch: cp1,
+            name: pitchToName(cp1),
+            velocity: dynamics.lh - 8,
             start: Number((barStart + beatSec * beat).toFixed(3)),
             end: Number((barStart + beatSec * (beat + 0.85)).toFixed(3)),
             duration: Number((beatSec * 0.85).toFixed(3)),
@@ -1048,9 +1094,9 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
           },
           {
             id: noteId++,
-            pitch: chordPitch2,
-            name: pitchToName(chordPitch2),
-            velocity: dynamics.lh - 6,
+            pitch: cp2,
+            name: pitchToName(cp2),
+            velocity: dynamics.lh - 8,
             start: Number((barStart + beatSec * beat).toFixed(3)),
             end: Number((barStart + beatSec * (beat + 0.85)).toFixed(3)),
             duration: Number((beatSec * 0.85).toFixed(3)),
@@ -1061,46 +1107,21 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
       });
     } else if (accompStyle === "alberti") {
       // ── ALBERTI BASS (Classical Root -> 5th -> 3rd -> 5th) ──
-      const rootP = bassPitch;
-      const fifthP = currentRoot - 17;
-      const thirdP = currentRoot - 24 + chordThird;
-
-      // On phrase downbeat: 3-note harmonic sonority on Beat 0
-      if (isPhraseStart) {
-        notes.push(
-          {
-            id: noteId++,
-            pitch: fifthP,
-            name: pitchToName(fifthP),
-            velocity: dynamics.lh - 4,
-            start: Number(barStart.toFixed(3)),
-            end: Number((barStart + beatSec * 0.9).toFixed(3)),
-            duration: Number((beatSec * 0.9).toFixed(3)),
-            track: 0,
-            hand: "L",
-          },
-          {
-            id: noteId++,
-            pitch: thirdP,
-            name: pitchToName(thirdP),
-            velocity: dynamics.lh - 6,
-            start: Number(barStart.toFixed(3)),
-            end: Number((barStart + beatSec * 0.9).toFixed(3)),
-            duration: Number((beatSec * 0.9).toFixed(3)),
-            track: 0,
-            hand: "L",
-          }
-        );
-      }
+      // Strictly in tenor/alto register [48, 57] (C3 - A3) for transparent Mozartian clarity
+      let albRoot = currentRoot - 12;
+      while (albRoot < 48) albRoot += 12;
+      while (albRoot > 57) albRoot -= 12;
+      const fifthP = albRoot + chordFifth;
+      const thirdP = albRoot + chordThird;
 
       if (difficulty === "Beginner") {
-        const albertiPitches = [rootP, fifthP, thirdP, fifthP];
+        const albertiPitches = [albRoot, fifthP, thirdP, fifthP];
         for (let b = 0; b < 4; b++) {
           notes.push({
             id: noteId++,
             pitch: albertiPitches[b],
             name: pitchToName(albertiPitches[b]),
-            velocity: dynamics.lh - (b === 0 ? 0 : 6),
+            velocity: dynamics.lh - (b === 0 ? 2 : 8),
             start: Number((barStart + beatSec * b).toFixed(3)),
             end: Number((barStart + beatSec * (b + 0.9)).toFixed(3)),
             duration: Number((beatSec * 0.9).toFixed(3)),
@@ -1109,14 +1130,14 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
           });
         }
       } else {
-        const pattern = [rootP, fifthP, thirdP, fifthP, rootP, fifthP, thirdP, fifthP];
+        const pattern = [albRoot, fifthP, thirdP, fifthP, albRoot, fifthP, thirdP, fifthP];
         for (let step = 0; step < 8; step++) {
           const t = barStart + beatSec * (step * 0.5);
           notes.push({
             id: noteId++,
             pitch: pattern[step],
             name: pitchToName(pattern[step]),
-            velocity: dynamics.lh - (step % 2 === 0 ? 2 : 8),
+            velocity: dynamics.lh - (step % 2 === 0 ? 4 : 10),
             start: Number(t.toFixed(3)),
             end: Number((t + beatSec * 0.45).toFixed(3)),
             duration: Number((beatSec * 0.45).toFixed(3)),
@@ -1126,39 +1147,11 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         }
       }
     } else if (accompStyle === "walking_bass") {
-      // ── JAZZ WALKING BASS (Quarter-note walk with guide chords) ──
+      // ── JAZZ WALKING BASS (Quarter-note diatonic walk with tasteful guide tone) ──
       const rootP = bassPitch;
-      const thirdP = currentRoot - 24 + chordThird;
-      const fifthP = currentRoot - 17;
-      const approachP = bar % 2 === 0 ? currentRoot - 13 : currentRoot - 25;
-
-      // On phrase downbeat: 3-note guide tone voicing on beat 0
-      if (isPhraseStart) {
-        notes.push(
-          {
-            id: noteId++,
-            pitch: currentRoot - 12 + chordThird,
-            name: pitchToName(currentRoot - 12 + chordThird),
-            velocity: dynamics.lh - 6,
-            start: Number(barStart.toFixed(3)),
-            end: Number((barStart + beatSec * 0.9).toFixed(3)),
-            duration: Number((beatSec * 0.9).toFixed(3)),
-            track: 0,
-            hand: "L",
-          },
-          {
-            id: noteId++,
-            pitch: currentRoot - 12 + (scaleType === "minor" ? 10 : 11),
-            name: pitchToName(currentRoot - 12 + (scaleType === "minor" ? 10 : 11)),
-            velocity: dynamics.lh - 6,
-            start: Number(barStart.toFixed(3)),
-            end: Number((barStart + beatSec * 0.9).toFixed(3)),
-            duration: Number((beatSec * 0.9).toFixed(3)),
-            track: 0,
-            hand: "L",
-          }
-        );
-      }
+      const thirdP = bassPitch + chordThird;
+      const fifthP = bassPitch + chordFifth;
+      const approachP = bassPitch + (scaleType === "minor" ? 10 : 9);
 
       const walkPitches = [rootP, thirdP, fifthP, approachP];
       for (let b = 0; b < 4; b++) {
@@ -1166,7 +1159,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
           id: noteId++,
           pitch: walkPitches[b],
           name: pitchToName(walkPitches[b]),
-          velocity: dynamics.lh - (b === 0 ? 0 : 4),
+          velocity: dynamics.lh - (b === 0 ? 0 : 6),
           start: Number((barStart + beatSec * b).toFixed(3)),
           end: Number((barStart + beatSec * (b + 0.9)).toFixed(3)),
           duration: Number((beatSec * 0.9).toFixed(3)),
@@ -1175,35 +1168,37 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         });
       }
 
-      // Syncopated guide chord on beat 1.5
-      const guide3 = currentRoot - 12 + chordThird;
-      const guide7 = currentRoot - 12 + (scaleType === "minor" ? 10 : 11);
+      // Syncopated guide chord on beat 2.5
+      let guide3 = currentRoot - 12 + chordThird;
+      while (guide3 < 50) guide3 += 12;
+      while (guide3 > 64) guide3 -= 12;
+      const guide5 = guide3 + (chordFifth - chordThird);
       notes.push(
         {
           id: noteId++,
           pitch: guide3,
           name: pitchToName(guide3),
-          velocity: dynamics.lh - 8,
-          start: Number((barStart + beatSec * 1.5).toFixed(3)),
-          end: Number((barStart + beatSec * 2.1).toFixed(3)),
+          velocity: dynamics.lh - 10,
+          start: Number((barStart + beatSec * 2.5).toFixed(3)),
+          end: Number((barStart + beatSec * 3.1).toFixed(3)),
           duration: Number((beatSec * 0.6).toFixed(3)),
           track: 0,
           hand: "L",
         },
         {
           id: noteId++,
-          pitch: guide7,
-          name: pitchToName(guide7),
-          velocity: dynamics.lh - 8,
-          start: Number((barStart + beatSec * 1.5).toFixed(3)),
-          end: Number((barStart + beatSec * 2.1).toFixed(3)),
+          pitch: guide5,
+          name: pitchToName(guide5),
+          velocity: dynamics.lh - 12,
+          start: Number((barStart + beatSec * 2.5).toFixed(3)),
+          end: Number((barStart + beatSec * 3.1).toFixed(3)),
           duration: Number((beatSec * 0.6).toFixed(3)),
           track: 0,
           hand: "L",
         }
       );
     } else if (accompStyle === "pop_groove") {
-      // ── POP GROOVE (Bass root + 5th + 10th syncopation) ──
+      // ── POP GROOVE (Bass root + syncopated mid-register dyads) ──
       // Beat 0: Bass root
       notes.push({
         id: noteId++,
@@ -1217,40 +1212,12 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         hand: "L",
       });
 
-      // On phrase downbeat: 3-note sonority on Beat 0
-      if (isPhraseStart) {
-        notes.push(
-          {
-            id: noteId++,
-            pitch: currentRoot - 17,
-            name: pitchToName(currentRoot - 17),
-            velocity: dynamics.lh - 6,
-            start: Number(barStart.toFixed(3)),
-            end: Number((barStart + beatSec * 1.4).toFixed(3)),
-            duration: Number((beatSec * 1.4).toFixed(3)),
-            track: 0,
-            hand: "L",
-          },
-          {
-            id: noteId++,
-            pitch: currentRoot - 12,
-            name: pitchToName(currentRoot - 12),
-            velocity: dynamics.lh - 6,
-            start: Number(barStart.toFixed(3)),
-            end: Number((barStart + beatSec * 1.4).toFixed(3)),
-            duration: Number((beatSec * 1.4).toFixed(3)),
-            track: 0,
-            hand: "L",
-          }
-        );
-      }
-
-      // Beat 1.5: 8th bounce
+      // Beat 1.5: Light octave bounce
       notes.push({
         id: noteId++,
-        pitch: currentRoot - 12,
-        name: pitchToName(currentRoot - 12),
-        velocity: dynamics.lh - 6,
+        pitch: bassPitch + 12,
+        name: pitchToName(bassPitch + 12),
+        velocity: dynamics.lh - 8,
         start: Number((barStart + beatSec * 1.5).toFixed(3)),
         end: Number((barStart + beatSec * 1.95).toFixed(3)),
         duration: Number((beatSec * 0.45).toFixed(3)),
@@ -1258,13 +1225,20 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         hand: "L",
       });
 
-      // Beat 2: Fifth + Third (2-note chord)
+      // Beat 2: Fifth + Third (gentle mid-register dyad in [48, 67])
+      let dyad3 = currentRoot - 12 + chordThird;
+      let dyad5 = currentRoot - 12 + chordFifth;
+      while (dyad3 < 48) dyad3 += 12;
+      while (dyad3 > 64) dyad3 -= 12;
+      while (dyad5 < 52) dyad5 += 12;
+      while (dyad5 > 67) dyad5 -= 12;
+
       notes.push(
         {
           id: noteId++,
-          pitch: currentRoot - 17,
-          name: pitchToName(currentRoot - 17),
-          velocity: dynamics.lh - 4,
+          pitch: dyad3,
+          name: pitchToName(dyad3),
+          velocity: dynamics.lh - 6,
           start: Number((barStart + beatSec * 2).toFixed(3)),
           end: Number((barStart + beatSec * 2.9).toFixed(3)),
           duration: Number((beatSec * 0.9).toFixed(3)),
@@ -1273,9 +1247,9 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         },
         {
           id: noteId++,
-          pitch: currentRoot - 12 + chordThird,
-          name: pitchToName(currentRoot - 12 + chordThird),
-          velocity: dynamics.lh - 6,
+          pitch: dyad5,
+          name: pitchToName(dyad5),
+          velocity: dynamics.lh - 8,
           start: Number((barStart + beatSec * 2).toFixed(3)),
           end: Number((barStart + beatSec * 2.9).toFixed(3)),
           duration: Number((beatSec * 0.9).toFixed(3)),
@@ -1284,8 +1258,8 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         }
       );
     } else {
-      // ── BALLAD ARPEGGIO & BROKEN TENTHS (Default flowing texture) ──
-      // Beat 0: Deep root
+      // ── BALLAD ARPEGGIO & FLOWING 8TH-NOTE WAVE (Warm romantic texture) ──
+      // Beat 0: Bass root
       notes.push({
         id: noteId++,
         pitch: bassPitch,
@@ -1298,72 +1272,71 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         hand: "L",
       });
 
-      // On phrase downbeat: rich 3-note harmonic sonority on Beat 0 (Root + 5th + 10th)
-      if (isPhraseStart) {
-        notes.push(
-          {
-            id: noteId++,
-            pitch: currentRoot - 17,
-            name: pitchToName(currentRoot - 17),
-            velocity: dynamics.lh - 6,
-            start: Number(barStart.toFixed(3)),
-            end: Number((barStart + beatSec * 1.8).toFixed(3)),
-            duration: Number((beatSec * 1.8).toFixed(3)),
-            track: 0,
-            hand: "L",
-          },
-          {
-            id: noteId++,
-            pitch: currentRoot - 12 + chordThird,
-            name: pitchToName(currentRoot - 12 + chordThird),
-            velocity: dynamics.lh - 8,
-            start: Number(barStart.toFixed(3)),
-            end: Number((barStart + beatSec * 1.8).toFixed(3)),
-            duration: Number((beatSec * 1.8).toFixed(3)),
-            track: 0,
-            hand: "L",
-          }
-        );
-      }
+      // Arpeggio wave pitches spanning Bass -> Tenor -> Alto
+      const pRoot = bassPitch;
+      const pFifth = bassPitch + chordFifth;
+      const pOct = bassPitch + 12;
+      const pTenth = bassPitch + 12 + chordThird;
+      const pTwelfth = bassPitch + 12 + chordFifth;
 
-      // Gentle broken arpeggio steps: 5th -> Octave -> 10th
-      const pitches = [
-        currentRoot - 17,
-        currentRoot - 12,
-        currentRoot - 12 + chordThird,
-      ];
-      for (let b = 1; b < beatsPerBar; b++) {
-        const p = pitches[(b - 1) % pitches.length];
-        notes.push({
-          id: noteId++,
-          pitch: p,
-          name: pitchToName(p),
-          velocity: dynamics.lh - 6,
-          start: Number((barStart + beatSec * b).toFixed(3)),
-          end: Number((barStart + beatSec * (b + 0.9)).toFixed(3)),
-          duration: Number((beatSec * 0.9).toFixed(3)),
-          track: 0,
-          hand: "L",
-        });
+      if (isWaltz) {
+        // 3/4 waltz: 6 8th-notes wave
+        const wavePitches = [pRoot, pFifth, pOct, pTenth, pOct, pFifth];
+        for (let step = 1; step < 6; step++) {
+          const t = barStart + beatSec * (step * 0.5);
+          notes.push({
+            id: noteId++,
+            pitch: wavePitches[step],
+            name: pitchToName(wavePitches[step]),
+            velocity: dynamics.lh - 8,
+            start: Number(t.toFixed(3)),
+            end: Number((t + beatSec * 0.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 0,
+            hand: "L",
+          });
+        }
+      } else {
+        // 4/4 meter: 8 8th-notes wave
+        const wavePitches = [pRoot, pFifth, pOct, pTenth, pTwelfth, pTenth, pOct, pFifth];
+        for (let step = 1; step < 8; step++) {
+          const t = barStart + beatSec * (step * 0.5);
+          notes.push({
+            id: noteId++,
+            pitch: wavePitches[step],
+            name: pitchToName(wavePitches[step]),
+            velocity: dynamics.lh - 8,
+            start: Number(t.toFixed(3)),
+            end: Number((t + beatSec * 0.9).toFixed(3)),
+            duration: Number((beatSec * 0.9).toFixed(3)),
+            track: 0,
+            hand: "L",
+          });
+        }
       }
     }
 
     // ─────────────────────────────────────────────────────────────
     // RIGHT HAND MELODY PHRASING & RHYTHMIC VARIETY
-    // Pure singing voice (RH velocity 76-92) with lyrical variety & natural rests!
-    // NO jarring Beat 0 triad!
+    // Pure singing voice (RH velocity 76-86) with lyrical variety & natural rests!
+    // Every pitch is harmonized to be consonant with the active chord.
     // ─────────────────────────────────────────────────────────────
     const melodyStep = isWaltz ? 3 : 4;
     const melodyIdx = (bar * melodyStep + (section === "bridge" ? 2 : 0)) % defaultMelody.length;
-    const melPitch = root + registerShift + defaultMelody[melodyIdx];
 
+    const getMelodyPitch = (offsetIdx: number, isStrong: boolean) => {
+      const raw = root + registerShift + defaultMelody[(melodyIdx + offsetIdx) % defaultMelody.length];
+      return resolveConsonantMelodyPitch(raw, currentRoot, chordThird, chordFifth, isStrong);
+    };
+
+    const melPitch = getMelodyPitch(0, true);
     const phrasePattern = bar % 4; // 0: statement, 1: response, 2: climax, 3: resolution
 
     if (isWaltz) {
       // ── WALTZ RIGHT HAND PHRASING ──
       if (phrasePattern === 0) {
         // Half note on beat 0, quarter on beat 2
-        const m1 = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
+        const m1 = getMelodyPitch(2, false);
         notes.push(
           {
             id: noteId++,
@@ -1390,7 +1363,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         );
       } else if (phrasePattern === 1) {
         // Flowing quarter notes on beats 0 & 1, gentle breath rest on beat 2
-        const m1 = root + registerShift + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
+        const m1 = getMelodyPitch(1, false);
         notes.push(
           {
             id: noteId++,
@@ -1417,9 +1390,9 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         );
       } else if (phrasePattern === 2) {
         // Climax: Quarter note on beat 0 + two 8th notes on beat 1 + quarter on beat 2
-        const m1a = root + registerShift + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
-        const m1b = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
-        const m2 = root + registerShift + defaultMelody[(melodyIdx + 3) % defaultMelody.length];
+        const m1a = getMelodyPitch(1, false);
+        const m1b = getMelodyPitch(2, false);
+        const m2 = getMelodyPitch(3, false);
         notes.push(
           {
             id: noteId++,
@@ -1484,7 +1457,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
       // ── 4/4 METER RIGHT HAND PHRASING ──
       if (phrasePattern === 0) {
         // Lyrical Statement: Dotted half note on beat 0 + quarter note on beat 3
-        const m3 = root + registerShift + defaultMelody[(melodyIdx + 3) % defaultMelody.length];
+        const m3 = getMelodyPitch(3, false);
         notes.push(
           {
             id: noteId++,
@@ -1511,9 +1484,9 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         );
       } else if (phrasePattern === 1) {
         // Flowing Response: Quarter on beat 0, quarter on beat 1, two 8th notes on beat 2, breath rest on beat 3
-        const m1 = root + registerShift + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
-        const m2a = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
-        const m2b = root + registerShift + defaultMelody[(melodyIdx + 3) % defaultMelody.length];
+        const m1 = getMelodyPitch(1, false);
+        const m2a = getMelodyPitch(2, false);
+        const m2b = getMelodyPitch(3, false);
         notes.push(
           {
             id: noteId++,
@@ -1562,9 +1535,9 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         );
       } else if (phrasePattern === 2) {
         // Climax: Quarter notes across beats 0, 1, 2, 3
-        const m1 = root + registerShift + defaultMelody[(melodyIdx + 1) % defaultMelody.length];
-        const m2 = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
-        const m3 = root + registerShift + defaultMelody[(melodyIdx + 3) % defaultMelody.length];
+        const m1 = getMelodyPitch(1, false);
+        const m2 = getMelodyPitch(2, false);
+        const m3 = getMelodyPitch(3, false);
         notes.push(
           {
             id: noteId++,
@@ -1613,7 +1586,7 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
         );
       } else {
         // Resolution: Half note on beat 0, half note on beat 2
-        const m2 = root + registerShift + defaultMelody[(melodyIdx + 2) % defaultMelody.length];
+        const m2 = getMelodyPitch(2, false);
         notes.push(
           {
             id: noteId++,
