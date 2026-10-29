@@ -3,6 +3,7 @@
 import type { PianoSoundId } from "@pianoflow/shared-types";
 import { Soundfont, SplendidGrandPiano } from "smplr";
 import type { ExpectedNote, HandPracticeMode } from "../midi/MidiEngine";
+import { PianoSynth } from "../pianoSynth";
 import { getSharedAudioContext } from "../sampledPiano";
 
 export interface AccompanimentEngineOptions {
@@ -38,6 +39,8 @@ export class AccompanimentEngine {
   private speed = 1.0;
   private activeOscillators = new Map<number, { osc: OscillatorNode; gain: GainNode }>();
   private activeTimers = new Set<ReturnType<typeof setTimeout>>();
+  private synthEngine: PianoSynth | null = null;
+  private initPromise: Promise<void> | null = null;
 
   constructor(
     ctxOrOptions?: AudioContext | null | AccompanimentEngineOptions,
@@ -64,8 +67,21 @@ export class AccompanimentEngine {
       this.autoPlayAll = opts.autoPlayAll;
     }
     if (opts?.sound !== undefined) {
-      this.currentSound = opts.sound;
+      this.currentSound = opts.sound || "concert_grand";
+    } else {
+      this.currentSound = "concert_grand";
     }
+
+    if (typeof window !== "undefined") {
+      void this.init();
+    }
+  }
+
+  /**
+   * Returns whether grand piano samples are fully loaded and ready.
+   */
+  public isReady(): boolean {
+    return this.isInstrumentReady;
   }
 
   /**
@@ -73,21 +89,30 @@ export class AccompanimentEngine {
    */
   public async init(): Promise<void> {
     if (typeof window === "undefined") return;
-    try {
-      if (!this.ctx) {
-        this.ctx = getSharedAudioContext();
-        this.ownsContext = false;
-      }
+    if (this.isInstrumentReady && this.instrument) return;
+    if (this.initPromise) return this.initPromise;
 
-      if (this.ctx && this.ctx.state === "suspended") {
-        await this.ctx.resume().catch(() => undefined);
-      }
+    this.initPromise = (async () => {
+      try {
+        if (!this.ctx) {
+          this.ctx = getSharedAudioContext();
+          this.ownsContext = false;
+        }
 
-      this.ensureMasterGain();
-      await this.initInstrument();
-    } catch (e) {
-      console.warn("AccompanimentEngine init fallback to synth", e);
-    }
+        if (this.ctx && typeof this.ctx.resume === "function" && this.ctx.state === "suspended") {
+          await this.ctx.resume().catch(() => undefined);
+        }
+
+        this.ensureMasterGain();
+        await this.initInstrument();
+      } catch (e) {
+        console.warn("AccompanimentEngine init fallback to synth", e);
+      } finally {
+        this.initPromise = null;
+      }
+    })();
+
+    return this.initPromise;
   }
 
   private ensureMasterGain(): void {
@@ -428,15 +453,44 @@ export class AccompanimentEngine {
         }
         return;
       } catch {
-        // Fall back to Web Audio oscillator synth
+        // Fall back to physical acoustic synth
       }
+    } else {
+      // Grand piano samples still loading: trigger loading eagerly without blocking
+      void this.init();
     }
 
     this.playSynthNote(pitch, rawVelocity, durationSec);
   }
 
   private playSynthNote(pitch: number, velocity: number, durationSec: number): void {
-    if (!this.ctx) return;
+    if (!this.ctx || this.volume <= 0 || !this.enabled) return;
+
+    // Primary: Delegate to high-fidelity physical acoustic PianoSynth (eliminating 8-bit synthetic beep)
+    try {
+      this.synthEngine ??= new PianoSynth(this.ctx);
+      const effectiveVelocity = Math.max(1, Math.min(127, Math.round(velocity * this.volume)));
+      const voice = this.synthEngine.triggerNote(pitch, effectiveVelocity, durationSec);
+
+      const stop = () => {
+        try {
+          voice.stop();
+        } catch {
+          // ignore
+        }
+      };
+
+      this.activeInstrumentNotes.set(pitch, stop);
+      if (this.isSustainDown) {
+        this.sustainedNotes.add(pitch);
+      }
+      return;
+    } catch {
+      // Fallback to warm physical sine model if PianoSynth throws in constrained contexts
+    }
+
+    if (typeof this.ctx.createOscillator !== "function") return;
+
     const now = this.ctx.currentTime;
     const freq = 440 * Math.pow(2, (pitch - 69) / 12);
 
@@ -445,20 +499,22 @@ export class AccompanimentEngine {
       const filter = this.ctx.createBiquadFilter();
       const gain = this.ctx.createGain();
 
-      osc.type = "triangle";
+      // Warm sine tone with gentle harmonic envelope instead of harsh triangle wave
+      osc.type = "sine";
       osc.frequency.setValueAtTime(freq, now);
 
       filter.type = "lowpass";
-      filter.frequency.setValueAtTime(freq * 3.5, now);
+      const filterCutoff = Math.min(3800, Math.max(300, freq * 2.0));
+      filter.frequency.setValueAtTime(filterCutoff, now);
       filter.frequency.exponentialRampToValueAtTime(
-        Math.max(20, freq * 1.2),
+        Math.max(100, filterCutoff * 0.35),
         now + Math.min(1.2, durationSec)
       );
 
       const velScale = velocity / 127;
       const maxGain = Math.max(0.0001, 0.22 * velScale * this.volume);
       gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.linearRampToValueAtTime(maxGain, now + 0.005);
+      gain.gain.linearRampToValueAtTime(maxGain, now + 0.012); // Soft 12ms attack transient
       gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
 
       osc.connect(filter);
@@ -494,6 +550,14 @@ export class AccompanimentEngine {
     if (this.instrument) {
       try {
         this.instrument.stop();
+      } catch {
+        // ignore
+      }
+    }
+
+    if (this.synthEngine) {
+      try {
+        this.synthEngine.stop();
       } catch {
         // ignore
       }
@@ -549,6 +613,15 @@ export class AccompanimentEngine {
    */
   public destroy(): void {
     this.pause();
+    if (this.synthEngine) {
+      try {
+        this.synthEngine.stop();
+      } catch {
+        // ignore
+      }
+      this.synthEngine = null;
+    }
+
     if (this.instrument) {
       try {
         this.instrument.stop();

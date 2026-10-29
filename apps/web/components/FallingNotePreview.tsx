@@ -4,7 +4,7 @@ import type { NoteData, RenderSettings } from "@pianoflow/shared-types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { HIGHEST, isBlack, keyRect, LOWEST } from "@/lib/piano";
-import { SampledPiano } from "@/lib/sampledPiano";
+import { prewarmGrandPiano, SampledPiano } from "@/lib/sampledPiano";
 import { applySustain } from "@/lib/sustain";
 
 interface Props {
@@ -98,6 +98,7 @@ export function FallingNotePreview({
   }, []);
 
   useEffect(() => {
+    void prewarmGrandPiano();
     synthRef.current = new SampledPiano();
     return () => {
       synthRef.current?.stop();
@@ -159,10 +160,24 @@ export function FallingNotePreview({
         const lane = keyRect(note.pitch, width);
         const noteW = isBlack(note.pitch) ? lane.w : lane.w * 0.86;
         const x = lane.x + (lane.w - noteW) / 2;
-        ctx.fillStyle = note.hand === "L" ? colors.left_hand : colors.right_hand;
+        const renderTop = Math.max(-height, top);
+        const renderHeight = Math.min(height, hitY - top);
+        const baseColor = note.hand === "L" ? colors.left_hand : colors.right_hand;
+
+        // Dual-hand dynamic glow per note
+        ctx.shadowColor = baseColor;
+
+        // 3D vertical linear gradient with specular highlight on top, richer tone on bottom
+        const noteGrad = ctx.createLinearGradient(x, renderTop, x, renderTop + renderHeight);
+        noteGrad.addColorStop(0, "rgba(255, 255, 255, 0.45)");
+        noteGrad.addColorStop(0.2, baseColor);
+        noteGrad.addColorStop(0.85, baseColor);
+        noteGrad.addColorStop(1, "rgba(0, 0, 0, 0.28)");
+
+        ctx.fillStyle = noteGrad;
         ctx.globalAlpha = 0.55 + (note.velocity / 127) * 0.45;
         ctx.beginPath();
-        ctx.roundRect(x, Math.max(-height, top), noteW, Math.min(height, hitY - top), 4);
+        ctx.roundRect(x, renderTop, noteW, renderHeight, 4);
         ctx.fill();
 
         if (settings.show_note_names && height > 18 && noteW > 16) {
@@ -182,6 +197,10 @@ export function FallingNotePreview({
       fog.addColorStop(1, `rgba(255,255,255,${0.1 + settings.glow_intensity * 0.12})`);
       ctx.fillStyle = fog;
       ctx.fillRect(0, hitY - 80, width, 80);
+
+      // Crimson piano felt strip (2.5px right above strike line hitY - 2.5)
+      ctx.fillStyle = "#881337";
+      ctx.fillRect(0, hitY - 2.5, width, 2.5);
 
       ctx.save();
       ctx.shadowColor = colors.glow;
@@ -203,7 +222,14 @@ export function FallingNotePreview({
       for (let pitch = LOWEST; pitch <= HIGHEST; pitch++) {
         if (isBlack(pitch)) continue;
         const { x, w } = keyRect(pitch, width);
-        ctx.fillStyle = active.has(pitch) ? colors.key_highlight : "#f4f4f5";
+        const hand = active.get(pitch);
+        const activeColor =
+          hand === "L"
+            ? colors.left_hand
+            : hand === "R"
+              ? colors.right_hand
+              : colors.key_highlight;
+        ctx.fillStyle = active.has(pitch) ? activeColor : "#f4f4f5";
         ctx.fillRect(x + 0.5, hitY, w - 1, keyboardH);
         ctx.strokeStyle = "#27272a";
         ctx.strokeRect(x + 0.5, hitY, w - 1, keyboardH);
@@ -211,7 +237,14 @@ export function FallingNotePreview({
       for (let pitch = LOWEST; pitch <= HIGHEST; pitch++) {
         if (!isBlack(pitch)) continue;
         const { x, w } = keyRect(pitch, width);
-        ctx.fillStyle = active.has(pitch) ? colors.key_highlight : "#101012";
+        const hand = active.get(pitch);
+        const activeColor =
+          hand === "L"
+            ? colors.left_hand
+            : hand === "R"
+              ? colors.right_hand
+              : colors.key_highlight;
+        ctx.fillStyle = active.has(pitch) ? activeColor : "#101012";
         ctx.fillRect(x, hitY, w, keyboardH * 0.62);
       }
     },

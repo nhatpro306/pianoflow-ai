@@ -659,6 +659,52 @@ export function buildGenericFullPieceData(
   };
 }
 
+/**
+ * Diatonic triad interval helper
+ * Returns the correct third (major 4 or minor 3) and fifth (perfect 7 or diminished 6)
+ * based on the chord's scale degree offset relative to keyRoot.
+ */
+export function getDiatonicChordIntervals(
+  chordOffset: number,
+  isMinor: boolean
+): { third: number; fifth: number } {
+  const degree = ((chordOffset % 12) + 12) % 12;
+
+  if (isMinor) {
+    // In minor key:
+    // degree 0 (i), 5 (iv), 7 (v) -> minor third (3), perfect fifth (7)
+    // degree 2 (ii°) -> minor third (3), diminished fifth (6)
+    // degree 3 (bIII), 8 (bVI), 10 (bVII) -> major third (4), perfect fifth (7)
+    if (degree === 0 || degree === 5 || degree === 7) {
+      return { third: 3, fifth: 7 };
+    }
+    if (degree === 2) {
+      return { third: 3, fifth: 6 };
+    }
+    if (degree === 3 || degree === 8 || degree === 10) {
+      return { third: 4, fifth: 7 };
+    }
+    return { third: 3, fifth: 7 };
+  } else {
+    // In major key:
+    // degree 0 (I), 5 (IV), 7 (V) -> major third (4), perfect fifth (7)
+    // degree 2 (ii), 4 (iii), 9 (vi) -> minor third (3), perfect fifth (7)
+    // degree 11 (vii°) -> minor third (3), diminished fifth (6)
+    // Borrowed/modal interchange degrees:
+    // degree 10 (bVII), 8 (bVI), 3 (bIII), 1 (bII) -> major third (4), perfect fifth (7)
+    if (degree === 0 || degree === 5 || degree === 7 || degree === 10 || degree === 8 || degree === 3 || degree === 1) {
+      return { third: 4, fifth: 7 };
+    }
+    if (degree === 2 || degree === 4 || degree === 9) {
+      return { third: 3, fifth: 7 };
+    }
+    if (degree === 11) {
+      return { third: 3, fifth: 6 };
+    }
+    return { third: 4, fifth: 7 };
+  }
+}
+
 export interface ArrangedSongConfig {
   bpm: number;
   time_sig: "4/4" | "3/4" | "2/4" | "12/8";
@@ -675,6 +721,7 @@ export interface ArrangedSongConfig {
       | "rockPower"
       | "waltz"
       | "stride"
+      | "bossaSwing"
       | "discoFunk"
       | "alberti"
       | "rollingArp"
@@ -702,8 +749,16 @@ export function buildFullArrangedSong(config: ArrangedSongConfig): NoteData {
   let noteId = 1;
   let curTime = 0;
 
-  const thirdInterval = isMinor ? 3 : 4;
-  const fifthInterval = 7;
+  // Balanced velocity helpers: Left Hand accompaniment strictly balanced (48-68), Right Hand melodies expressive and clear (75-98)
+  function addLhNote(pitch: number, start: number, dur: number, vel: number): void {
+    const balancedVel = Math.max(48, Math.min(68, Math.round(vel)));
+    noteId = addNote(notes, noteId, pitch, start, dur, balancedVel, "L");
+  }
+
+  function addRhNote(pitch: number, start: number, dur: number, vel: number): void {
+    const expressiveVel = Math.max(75, Math.min(98, Math.round(vel)));
+    noteId = addNote(notes, noteId, pitch, start, dur, expressiveVel, "R");
+  }
 
   for (const sec of sections) {
     for (let bar = 0; bar < sec.bars; bar++) {
@@ -712,49 +767,62 @@ export function buildFullArrangedSong(config: ArrangedSongConfig): NoteData {
       const root = keyRoot + chordOffset;
       const bassPitch = root - 24;
 
+      // Diatonic 3rd and 5th intervals matching chord degree relative to keyRoot
+      const { third: thirdInterval, fifth: fifthInterval } = getDiatonicChordIntervals(chordOffset, isMinor);
+
       // 1. LEFT HAND ACCOMPANIMENT
       if (sec.lhStyle === "waltz") {
-        noteId = addNote(notes, noteId, bassPitch, bStart, beatSec * 2.5, sec.dynamics.lh, "L");
+        addLhNote(bassPitch, bStart, beatSec * 2.5, sec.dynamics.lh);
         const wChord = [root - 12 + thirdInterval, root - 12 + fifthInterval];
         for (let b = 1; b < 3; b++) {
           for (const cp of wChord) {
-            noteId = addNote(notes, noteId, cp, bStart + b * beatSec, beatSec * 0.85, sec.dynamics.lh - 4, "L");
+            addLhNote(cp, bStart + b * beatSec, beatSec * 0.85, sec.dynamics.lh - 4);
           }
         }
       } else if (sec.lhStyle === "ballad10th") {
-        noteId = addNote(notes, noteId, bassPitch, bStart, beatSec * 3.5, sec.dynamics.lh, "L");
-        noteId = addNote(notes, noteId, root - 17, bStart + beatSec, beatSec * 2.5, sec.dynamics.lh - 3, "L");
-        noteId = addNote(notes, noteId, root - 12 + thirdInterval, bStart + beatSec * 2, beatSec * 1.8, sec.dynamics.lh - 2, "L");
-        noteId = addNote(notes, noteId, root - 12, bStart + beatSec * 3, beatSec * 0.9, sec.dynamics.lh - 4, "L");
+        addLhNote(bassPitch, bStart, beatSec * 3.5, sec.dynamics.lh);
+        addLhNote(root - 17, bStart + beatSec, beatSec * 2.5, sec.dynamics.lh - 3);
+        addLhNote(root - 12 + thirdInterval, bStart + beatSec * 2, beatSec * 1.8, sec.dynamics.lh - 2);
+        addLhNote(root - 12, bStart + beatSec * 3, beatSec * 0.9, sec.dynamics.lh - 4);
       } else if (sec.lhStyle === "rockPower") {
         for (let i = 0; i < beatsPerBar * 2; i++) {
           const t = bStart + i * s8;
           const isDownbeat = i % 2 === 0;
           const vel = isDownbeat ? sec.dynamics.lh : sec.dynamics.lh - 6;
-          noteId = addNote(notes, noteId, bassPitch, t, s8 * 0.85, vel, "L");
-          noteId = addNote(notes, noteId, root - 17, t, s8 * 0.85, vel - 2, "L");
+          addLhNote(bassPitch, t, s8 * 0.85, vel);
+          addLhNote(root - 17, t, s8 * 0.85, vel - 2);
         }
       } else if (sec.lhStyle === "discoFunk") {
-        noteId = addNote(notes, noteId, bassPitch, bStart, s8 * 0.9, sec.dynamics.lh + 4, "L");
-        noteId = addNote(notes, noteId, root - 12, bStart + s8, s8 * 0.8, sec.dynamics.lh - 2, "L");
-        noteId = addNote(notes, noteId, root - 12 + thirdInterval, bStart + beatSec * 1.5, s8 * 0.8, sec.dynamics.lh, "L");
-        noteId = addNote(notes, noteId, bassPitch, bStart + beatSec * 2, s8 * 0.9, sec.dynamics.lh + 2, "L");
-        noteId = addNote(notes, noteId, root - 17, bStart + beatSec * 3, s8 * 0.85, sec.dynamics.lh - 2, "L");
+        addLhNote(bassPitch, bStart, s8 * 0.9, sec.dynamics.lh + 4);
+        addLhNote(root - 12, bStart + s8, s8 * 0.8, sec.dynamics.lh - 2);
+        addLhNote(root - 12 + thirdInterval, bStart + beatSec * 1.5, s8 * 0.8, sec.dynamics.lh);
+        addLhNote(bassPitch, bStart + beatSec * 2, s8 * 0.9, sec.dynamics.lh + 2);
+        addLhNote(root - 17, bStart + beatSec * 3, s8 * 0.85, sec.dynamics.lh - 2);
       } else if (sec.lhStyle === "stride") {
-        noteId = addNote(notes, noteId, bassPitch, bStart, beatSec * 0.9, sec.dynamics.lh + 2, "L");
+        addLhNote(bassPitch, bStart, beatSec * 0.9, sec.dynamics.lh + 2);
         const ch = [root - 12, root - 12 + thirdInterval, root - 12 + fifthInterval];
         for (const cp of ch) {
-          noteId = addNote(notes, noteId, cp, bStart + beatSec, beatSec * 0.8, sec.dynamics.lh - 4, "L");
+          addLhNote(cp, bStart + beatSec, beatSec * 0.8, sec.dynamics.lh - 4);
         }
-        noteId = addNote(notes, noteId, root - 17, bStart + beatSec * 2, beatSec * 0.9, sec.dynamics.lh, "L");
+        addLhNote(root - 17, bStart + beatSec * 2, beatSec * 0.9, sec.dynamics.lh);
         for (const cp of ch) {
-          noteId = addNote(notes, noteId, cp, bStart + beatSec * 3, beatSec * 0.8, sec.dynamics.lh - 4, "L");
+          addLhNote(cp, bStart + beatSec * 3, beatSec * 0.8, sec.dynamics.lh - 4);
         }
+      } else if (sec.lhStyle === "bossaSwing") {
+        // Classic Sinatra swing/bossa bass with syncopated guide tones
+        addLhNote(bassPitch, bStart, beatSec * 1.4, sec.dynamics.lh + 2);
+        const swingChord = [root - 12, root - 12 + thirdInterval, root - 12 + fifthInterval];
+        for (const cp of swingChord) {
+          addLhNote(cp, bStart + beatSec * 1.5, beatSec * 0.45, sec.dynamics.lh - 4);
+        }
+        addLhNote(root - 17, bStart + beatSec * 2, beatSec * 0.9, sec.dynamics.lh);
+        const approach = bar % 2 === 0 ? bassPitch + 2 : bassPitch - 1;
+        addLhNote(approach, bStart + beatSec * 3, beatSec * 0.85, sec.dynamics.lh - 2);
       } else if (sec.lhStyle === "alberti") {
         const albP = [bassPitch, root - 17, root - 24 + thirdInterval, root - 17];
         for (let i = 0; i < beatsPerBar * 2; i++) {
           const p = albP[i % albP.length];
-          noteId = addNote(notes, noteId, p, bStart + i * s8, s8 * 0.9, sec.dynamics.lh - (i % 2 === 0 ? 0 : 4), "L");
+          addLhNote(p, bStart + i * s8, s8 * 0.9, sec.dynamics.lh - (i % 2 === 0 ? 0 : 4));
         }
       } else if (sec.lhStyle === "rollingArp") {
         const arpP = [
@@ -769,7 +837,7 @@ export function buildFullArrangedSong(config: ArrangedSongConfig): NoteData {
         ];
         for (let i = 0; i < beatsPerBar * 4; i++) {
           const p = arpP[i % arpP.length];
-          noteId = addNote(notes, noteId, p, bStart + i * s16, s16 * 0.9, sec.dynamics.lh - 4, "L");
+          addLhNote(p, bStart + i * s16, s16 * 0.9, sec.dynamics.lh - 4);
         }
       } else if (sec.lhStyle === "continuous16th") {
         const cascP = [
@@ -784,34 +852,35 @@ export function buildFullArrangedSong(config: ArrangedSongConfig): NoteData {
         ];
         for (let i = 0; i < beatsPerBar * 4; i++) {
           const p = cascP[i % cascP.length];
-          noteId = addNote(notes, noteId, p, bStart + i * s16, s16 * 0.92, sec.dynamics.lh - 2, "L");
+          addLhNote(p, bStart + i * s16, s16 * 0.92, sec.dynamics.lh - 2);
         }
       } else {
         for (let b = 0; b < beatsPerBar; b++) {
-          noteId = addNote(notes, noteId, bassPitch, bStart + b * beatSec, beatSec * 0.45, sec.dynamics.lh, "L");
+          addLhNote(bassPitch, bStart + b * beatSec, beatSec * 0.45, sec.dynamics.lh);
         }
       }
 
       // 2. RIGHT HAND MELODY & PHRASING
+      // Anchored in the song's tonic key (keyRoot + 12) rather than transposed by chordOffset!
       const mel = sec.rhMelody;
-      const melBase = root + 12;
+      const melBase = keyRoot + 12;
 
       if (sec.rhRhythm === "waltzCantabile") {
         for (let s = 0; s < 3; s++) {
           const p = melBase + mel[(bar * 3 + s) % mel.length];
-          noteId = addNote(notes, noteId, p, bStart + s * beatSec, beatSec * 0.92, sec.dynamics.rh, "R");
+          addRhNote(p, bStart + s * beatSec, beatSec * 0.92, sec.dynamics.rh);
         }
       } else if (sec.rhRhythm === "climaxOctaves") {
         for (let s = 0; s < beatsPerBar * 2; s++) {
           const p = melBase + mel[(bar * 2 + s) % mel.length];
-          noteId = addNote(notes, noteId, p, bStart + s * s8, s8 * 0.9, sec.dynamics.rh + 6, "R");
-          noteId = addNote(notes, noteId, p + 12, bStart + s * s8, s8 * 0.9, sec.dynamics.rh + 4, "R");
+          addRhNote(p, bStart + s * s8, s8 * 0.9, sec.dynamics.rh + 6);
+          addRhNote(p + 12, bStart + s * s8, s8 * 0.9, sec.dynamics.rh + 4);
         }
       } else if (sec.rhRhythm === "cascades") {
         for (let s = 0; s < beatsPerBar * 4; s++) {
           const p = melBase + mel[(bar * 4 + s) % mel.length];
           const isAccent = s % 4 === 0;
-          noteId = addNote(notes, noteId, p + 12, bStart + s * s16, s16 * 0.9, isAccent ? sec.dynamics.rh + 4 : sec.dynamics.rh - 3, "R");
+          addRhNote(p + 12, bStart + s * s16, s16 * 0.9, isAccent ? sec.dynamics.rh + 4 : sec.dynamics.rh - 3);
         }
       } else if (sec.rhRhythm === "syncopated16th") {
         const syncBeats = [0, 0.75, 1.5, 2.0, 2.75, 3.25];
@@ -819,18 +888,18 @@ export function buildFullArrangedSong(config: ArrangedSongConfig): NoteData {
           const offsetBeat = syncBeats[i];
           if (offsetBeat >= beatsPerBar) continue;
           const p = melBase + mel[(bar * syncBeats.length + i) % mel.length];
-          noteId = addNote(notes, noteId, p, bStart + offsetBeat * beatSec, beatSec * 0.6, sec.dynamics.rh + (i === 0 ? 3 : 0), "R");
+          addRhNote(p, bStart + offsetBeat * beatSec, beatSec * 0.6, sec.dynamics.rh + (i === 0 ? 3 : 0));
         }
       } else if (sec.rhRhythm === "marchStaccato") {
         for (let s = 0; s < beatsPerBar * 2; s++) {
           const p = melBase + mel[(bar * 2 + s) % mel.length];
-          noteId = addNote(notes, noteId, p, bStart + s * s8, s8 * 0.7, sec.dynamics.rh, "R");
+          addRhNote(p, bStart + s * s8, s8 * 0.7, sec.dynamics.rh);
         }
       } else {
         for (let s = 0; s < beatsPerBar * 2; s++) {
           if (s === beatsPerBar * 2 - 1 && bar % 2 === 1) continue;
           const p = melBase + mel[(bar * 2 + s) % mel.length];
-          noteId = addNote(notes, noteId, p, bStart + s * s8, s8 * 0.92, sec.dynamics.rh - (s % 2 === 0 ? 0 : 3), "R");
+          addRhNote(p, bStart + s * s8, s8 * 0.92, sec.dynamics.rh - (s % 2 === 0 ? 0 : 3));
         }
       }
 
@@ -840,11 +909,12 @@ export function buildFullArrangedSong(config: ArrangedSongConfig): NoteData {
 
   // Final cadential chord
   const finalDur = beatsPerBar * beatSec * 1.5;
-  noteId = addNote(notes, noteId, keyRoot - 24, curTime, finalDur, 65, "L");
-  noteId = addNote(notes, noteId, keyRoot - 12, curTime, finalDur, 62, "L");
-  noteId = addNote(notes, noteId, keyRoot - 12 + thirdInterval, curTime, finalDur, 60, "L");
-  noteId = addNote(notes, noteId, keyRoot, curTime, finalDur, 68, "R");
-  noteId = addNote(notes, noteId, keyRoot + 12, curTime, finalDur, 72, "R");
+  const { third: tonicThird } = getDiatonicChordIntervals(0, isMinor);
+  addLhNote(keyRoot - 24, curTime, finalDur, 65);
+  addLhNote(keyRoot - 12, curTime, finalDur, 62);
+  addLhNote(keyRoot - 12 + tonicThird, curTime, finalDur, 58);
+  addRhNote(keyRoot, curTime, finalDur, 82);
+  addRhNote(keyRoot + 12, curTime, finalDur, 88);
   curTime += finalDur;
 
   const duration_sec = Number(curTime.toFixed(2));
@@ -2957,4 +3027,253 @@ export function buildSpringDayData(): NoteData {
     ],
     notes,
   };
+}
+
+// 20. ONE SUMMER'S DAY (Joe Hisaishi / Spirited Away)
+export function buildOneSummersDayData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 80,
+    time_sig: "4/4",
+    keyRoot: 60, // C4
+    isMinor: false,
+    lhName: "Left Hand (Nostalgic Rolling Ghibli Arpeggios)",
+    rhName: "Right Hand (Spirited Away Theme & Emotional Bridge)",
+    sections: [
+      {
+        name: "intro",
+        bars: 8,
+        chordRoots: [5, 7, 4, 9], // Fmaj7 - G - Em7 - Am7 (Royal Road)
+        lhStyle: "rollingArp",
+        rhMelody: [4, 7, 9, 11, 12, 11, 9, 7, 4, 2, 0, 2],
+        rhRhythm: "lyrical8th",
+        dynamics: { lh: 52, rh: 78 },
+      },
+      {
+        name: "verse",
+        bars: 16,
+        chordRoots: [5, 7, 4, 9, 2, 7, 0, 0], // F - G - Em - Am - Dm - G - C - C
+        lhStyle: "rollingArp",
+        rhMelody: [4, 7, 11, 12, 14, 12, 11, 9, 7, 4, 2, 4, 7, 9, 7, 4],
+        rhRhythm: "lyrical8th",
+        dynamics: { lh: 55, rh: 82 },
+      },
+      {
+        name: "preChorus",
+        bars: 8,
+        chordRoots: [5, 7, 4, 9, 5, 7, 0, 0],
+        lhStyle: "ballad10th",
+        rhMelody: [7, 9, 11, 12, 14, 16, 17, 16, 14, 12, 11, 9, 11, 12, 14],
+        rhRhythm: "syncopated16th",
+        dynamics: { lh: 58, rh: 85 },
+      },
+      {
+        name: "chorus",
+        bars: 16,
+        chordRoots: [5, 7, 4, 9, 5, 7, 0, 0, 5, 7, 4, 9, 2, 7, 0, 0],
+        lhStyle: "rollingArp",
+        rhMelody: [16, 14, 12, 11, 9, 7, 9, 11, 12, 14, 16, 19, 16, 14, 12, 11],
+        rhRhythm: "climaxOctaves",
+        dynamics: { lh: 65, rh: 94 },
+      },
+      {
+        name: "verse",
+        bars: 12,
+        chordRoots: [5, 7, 4, 9, 2, 7, 0, 0],
+        lhStyle: "rollingArp",
+        rhMelody: [4, 7, 11, 12, 14, 12, 11, 9, 7, 4, 2, 4],
+        rhRhythm: "lyrical8th",
+        dynamics: { lh: 54, rh: 80 },
+      },
+      {
+        name: "bridge",
+        bars: 8,
+        chordRoots: [2, 7, 0, 9, 2, 7, 0, 0],
+        lhStyle: "continuous16th",
+        rhMelody: [12, 14, 16, 19, 21, 19, 16, 14, 12, 11, 9, 7],
+        rhRhythm: "cascades",
+        dynamics: { lh: 62, rh: 88 },
+      },
+      {
+        name: "chorus",
+        bars: 16,
+        chordRoots: [5, 7, 4, 9, 5, 7, 0, 0, 5, 7, 4, 9, 2, 7, 0, 0],
+        lhStyle: "rollingArp",
+        rhMelody: [16, 14, 12, 11, 9, 7, 9, 11, 12, 14, 16, 19, 16, 14, 12, 11],
+        rhRhythm: "climaxOctaves",
+        dynamics: { lh: 66, rh: 96 },
+      },
+      {
+        name: "coda",
+        bars: 8,
+        chordRoots: [5, 7, 0, 0],
+        lhStyle: "rollingArp",
+        rhMelody: [12, 11, 9, 7, 4, 2, 0, 0],
+        rhRhythm: "lyrical8th",
+        dynamics: { lh: 50, rh: 76 },
+      },
+    ],
+  });
+}
+
+// 21. KISS THE RAIN (Yiruma)
+export function buildKissTheRainData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 68,
+    time_sig: "4/4",
+    keyRoot: 56, // Ab3
+    isMinor: false,
+    lhName: "Left Hand (Gentle Lyrical Ballad 10th Arpeggios)",
+    rhName: "Right Hand (Emotional Singing Ballad Hook & Drops)",
+    sections: [
+      {
+        name: "intro",
+        bars: 6,
+        chordRoots: [0, 7, 9, 4, 5, 0], // Ab - Eb - Fm - Cm - Db - Ab
+        lhStyle: "ballad10th",
+        rhMelody: [12, 11, 9, 7, 9, 12, 11, 7, 5, 4, 2, 4, 7, 4, 2, 0],
+        rhRhythm: "lyrical8th",
+        dynamics: { lh: 50, rh: 76 },
+      },
+      {
+        name: "verse",
+        bars: 16,
+        chordRoots: [0, 7, 9, 4, 5, 0, 2, 7], // Ab - Eb - Fm - Cm - Db - Ab - Bbm - Eb
+        lhStyle: "ballad10th",
+        rhMelody: [4, 7, 9, 11, 12, 11, 9, 7, 4, 2, 4, 5, 7, 5, 4, 2],
+        rhRhythm: "lyrical8th",
+        dynamics: { lh: 52, rh: 78 },
+      },
+      {
+        name: "preChorus",
+        bars: 8,
+        chordRoots: [5, 7, 4, 9, 5, 7, 0, 0],
+        lhStyle: "rollingArp",
+        rhMelody: [7, 9, 11, 12, 14, 12, 11, 9, 7, 5, 4, 2, 4, 7, 9, 11],
+        rhRhythm: "syncopated16th",
+        dynamics: { lh: 56, rh: 82 },
+      },
+      {
+        name: "chorus",
+        bars: 16,
+        chordRoots: [0, 7, 9, 4, 5, 0, 5, 7, 0, 7, 9, 4, 5, 7, 0, 0],
+        lhStyle: "ballad10th",
+        rhMelody: [12, 14, 16, 14, 12, 11, 9, 7, 9, 11, 12, 14, 16, 12, 9, 7],
+        rhRhythm: "climaxOctaves",
+        dynamics: { lh: 64, rh: 92 },
+      },
+      {
+        name: "verse",
+        bars: 12,
+        chordRoots: [0, 7, 9, 4, 5, 0, 2, 7],
+        lhStyle: "ballad10th",
+        rhMelody: [4, 7, 9, 11, 12, 11, 9, 7, 4, 2, 4, 2],
+        rhRhythm: "lyrical8th",
+        dynamics: { lh: 52, rh: 78 },
+      },
+      {
+        name: "bridge",
+        bars: 8,
+        chordRoots: [5, 7, 9, 0, 5, 7, 0, 0],
+        lhStyle: "rollingArp",
+        rhMelody: [14, 16, 19, 16, 14, 12, 11, 9, 7, 9, 11, 14, 16, 14, 12, 11],
+        rhRhythm: "cascades",
+        dynamics: { lh: 60, rh: 86 },
+      },
+      {
+        name: "chorus",
+        bars: 16,
+        chordRoots: [0, 7, 9, 4, 5, 0, 5, 7, 0, 7, 9, 4, 5, 7, 0, 0],
+        lhStyle: "ballad10th",
+        rhMelody: [12, 14, 16, 14, 12, 11, 9, 7, 9, 11, 12, 14, 16, 12, 9, 7],
+        rhRhythm: "climaxOctaves",
+        dynamics: { lh: 66, rh: 94 },
+      },
+      {
+        name: "coda",
+        bars: 8,
+        chordRoots: [5, 7, 0, 0],
+        lhStyle: "ballad10th",
+        rhMelody: [7, 4, 2, 0, 0],
+        rhRhythm: "lyrical8th",
+        dynamics: { lh: 48, rh: 75 },
+      },
+    ],
+  });
+}
+
+// 22. FLY ME TO THE MOON (Bart Howard / Frank Sinatra)
+export function buildFlyMeToTheMoonData(): NoteData {
+  return buildFullArrangedSong({
+    bpm: 120,
+    time_sig: "4/4",
+    keyRoot: 60, // C4
+    isMinor: false,
+    lhName: "Left Hand (Classic Sinatra Swing/Bossa Bass & Guide Tones)",
+    rhName: "Right Hand (Classic Sinatra Melody & Jazzy Swing Phrasing)",
+    sections: [
+      {
+        name: "intro",
+        bars: 8,
+        chordRoots: [9, 2, 7, 0, 5, 11, 4, 9], // Am7 - Dm7 - G7 - Cmaj7 - Fmaj7 - Bm7b5 - E7 - Am7
+        lhStyle: "bossaSwing",
+        rhMelody: [12, 11, 9, 7, 5, 7, 9, 12, 11, 9, 7, 5, 4],
+        rhRhythm: "syncopated16th",
+        dynamics: { lh: 55, rh: 80 },
+      },
+      {
+        name: "verse",
+        bars: 16,
+        chordRoots: [9, 2, 7, 0, 5, 11, 4, 9, 2, 7, 0, 9, 2, 7, 0, 4],
+        lhStyle: "bossaSwing",
+        rhMelody: [12, 11, 9, 7, 5, 7, 9, 12, 11, 9, 7, 5, 4, 9, 7, 5, 4, 2, 4, 5, 9, 7, 5, 4, 2, 0],
+        rhRhythm: "syncopated16th",
+        dynamics: { lh: 58, rh: 84 },
+      },
+      {
+        name: "chorus",
+        bars: 16,
+        chordRoots: [2, 7, 0, 9, 2, 7, 0, 4, 9, 2, 7, 0, 5, 11, 4, 9],
+        lhStyle: "bossaSwing",
+        rhMelody: [2, 4, 5, 7, 9, 11, 12, 14, 12, 11, 9, 7, 12, 11, 9, 7, 5, 7, 9, 12, 14, 16, 17, 16, 14, 12],
+        rhRhythm: "syncopated16th",
+        dynamics: { lh: 62, rh: 88 },
+      },
+      {
+        name: "bridge",
+        bars: 16, // Jazz Solo / Improvisation
+        chordRoots: [9, 2, 7, 0, 5, 11, 4, 9, 2, 7, 0, 9, 2, 7, 0, 4],
+        lhStyle: "stride",
+        rhMelody: [12, 14, 15, 16, 19, 17, 16, 14, 12, 11, 9, 8, 9, 11, 12, 14, 16, 19, 21, 19, 17, 16, 14, 12],
+        rhRhythm: "cascades",
+        dynamics: { lh: 64, rh: 92 },
+      },
+      {
+        name: "verse",
+        bars: 16,
+        chordRoots: [9, 2, 7, 0, 5, 11, 4, 9, 2, 7, 0, 9, 2, 7, 0, 4],
+        lhStyle: "bossaSwing",
+        rhMelody: [12, 11, 9, 7, 5, 7, 9, 12, 11, 9, 7, 5, 4, 9, 7, 5, 4, 2, 4, 5, 9, 7, 5, 4, 2, 0],
+        rhRhythm: "syncopated16th",
+        dynamics: { lh: 58, rh: 85 },
+      },
+      {
+        name: "chorus",
+        bars: 16,
+        chordRoots: [2, 7, 0, 9, 2, 7, 0, 4, 9, 2, 7, 0, 5, 11, 4, 0],
+        lhStyle: "bossaSwing",
+        rhMelody: [2, 4, 5, 7, 9, 11, 12, 14, 12, 11, 9, 7, 12, 11, 9, 7, 5, 7, 9, 12, 14, 16, 17, 16, 14, 12],
+        rhRhythm: "climaxOctaves",
+        dynamics: { lh: 66, rh: 95 },
+      },
+      {
+        name: "coda",
+        bars: 8,
+        chordRoots: [2, 7, 0, 0],
+        lhStyle: "stride",
+        rhMelody: [12, 11, 9, 7, 5, 4, 2, 0, 0],
+        rhRhythm: "syncopated16th",
+        dynamics: { lh: 52, rh: 78 },
+      },
+    ],
+  });
 }

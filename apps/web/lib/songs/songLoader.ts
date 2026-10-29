@@ -5,6 +5,7 @@
 
 import type { NoteData } from "@pianoflow/shared-types";
 import type { RepertoireSong } from "./types";
+import { decodeCompactSong, type CompactSongData } from "./compactSongDecoder";
 
 export const FULL_SONG_IDS = new Set<string>([
   "fur-elise",
@@ -132,7 +133,7 @@ export function normalizeSongDataId(songId: string): string {
 }
 
 /**
- * Asynchronously loads the complete NoteData JSON from /songs/data/[id].json
+ * Asynchronously loads the complete NoteData JSON from /songs/data/[id].json (or compact fallback).
  * Caches in memory for instant subsequent lookups.
  */
 export async function fetchFullSongJson(songId: string): Promise<NoteData | null> {
@@ -141,7 +142,7 @@ export async function fetchFullSongJson(songId: string): Promise<NoteData | null
     return songMemoryCache.get(normalizedId)!;
   }
 
-  // 1. Browser environment: Fetch from /songs/data/
+  // 1. Browser environment: Fetch /songs/data/[id].json directly to eliminate 404 network errors
   if (typeof window !== "undefined") {
     try {
       const res = await fetch(`/songs/data/${normalizedId}.json`);
@@ -152,13 +153,29 @@ export async function fetchFullSongJson(songId: string): Promise<NoteData | null
         return data;
       }
     } catch {
-      // Fallback to song noteData
+      // Fallback
+    }
+
+    // Optional fallback to compact format if available
+    try {
+      const compactRes = await fetch(`/songs/data/${normalizedId}.compact.json`);
+      if (compactRes.ok) {
+        const compact = (await compactRes.json()) as CompactSongData;
+        const data = decodeCompactSong(compact);
+        songMemoryCache.set(normalizedId, data);
+        songMemoryCache.set(songId, data);
+        return data;
+      }
+    } catch {
+      // Ignore fallback failure
     }
   } else {
     // 2. Node.js environment (SSR, Playwright, Vitest)
     try {
       const fs = await import("node:fs");
       const path = await import("node:path");
+
+      // Check standard JSON first
       const candidatePaths = [
         path.resolve(process.cwd(), `apps/web/public/songs/data/${normalizedId}.json`),
         path.resolve(process.cwd(), `public/songs/data/${normalizedId}.json`),
@@ -171,6 +188,21 @@ export async function fetchFullSongJson(songId: string): Promise<NoteData | null
         songMemoryCache.set(songId, data);
         return data;
       }
+
+      // Check compact format fallback
+      const compactCandidates = [
+        path.resolve(process.cwd(), `apps/web/public/songs/data/${normalizedId}.compact.json`),
+        path.resolve(process.cwd(), `public/songs/data/${normalizedId}.compact.json`),
+      ];
+      const foundCompactPath = compactCandidates.find((p) => fs.existsSync(p));
+      if (foundCompactPath) {
+        const raw = fs.readFileSync(foundCompactPath, "utf-8");
+        const compact = JSON.parse(raw) as CompactSongData;
+        const data = decodeCompactSong(compact);
+        songMemoryCache.set(normalizedId, data);
+        songMemoryCache.set(songId, data);
+        return data;
+      }
     } catch {
       // Ignore
     }
@@ -178,6 +210,8 @@ export async function fetchFullSongJson(songId: string): Promise<NoteData | null
 
   return null;
 }
+
+export const loadSongNotes = fetchFullSongJson;
 
 /**
  * Loads the NoteData for a repertoire song, upgrading to the full-length version if available.

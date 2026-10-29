@@ -7,6 +7,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { NoteData } from "@pianoflow/shared-types";
+import { DEMO_SONGS } from "../apps/web/lib/demoSongs";
 import {
   buildFurEliseData,
   buildMoonlightSonataData,
@@ -14,6 +15,9 @@ import {
   buildClairDeLuneData,
   buildGymnopedie1Data,
   buildBachPreludeCMajorData,
+  buildOneSummersDayData,
+  buildKissTheRainData,
+  buildFlyMeToTheMoonData,
   buildGenericFullPieceData,
   buildGurengeData,
   buildBlueBirdData,
@@ -71,17 +75,7 @@ const LANDMARK_GENERATORS: Record<string, () => NoteData> = {
   "debussy-arabesque-1": buildDebussyArabesque1Data,
 
   // Anime & Ghibli
-  "one-summers-day": () =>
-    buildGenericFullPieceData(
-      80,
-      "4/4",
-      68,
-      60,
-      false,
-      "ballad",
-      "Left Hand (Nostalgic Rolling Ghibli Arpeggios)",
-      "Right Hand (Spirited Away Theme & Emotional Bridge)"
-    ),
+  "one-summers-day": buildOneSummersDayData,
   "merry-go-round-of-life": buildMerryGoRoundOfLifeData,
   "sparkle": buildSparkleData,
   "gurenge": buildGurengeData,
@@ -102,17 +96,7 @@ const LANDMARK_GENERATORS: Record<string, () => NoteData> = {
 
   // Modern & Pop
   "river-flows-in-you": buildRiverFlowsInYouData,
-  "kiss-the-rain": () =>
-    buildGenericFullPieceData(
-      68,
-      "4/4",
-      58,
-      56,
-      false,
-      "ballad",
-      "Left Hand (Gentle Lyrical Arpeggios)",
-      "Right Hand (Emotional Singing Ballad Hook)"
-    ),
+  "kiss-the-rain": buildKissTheRainData,
   "love-story": buildLoveStoryData,
   "the-scientist": buildTheScientistData,
   "golden-hour": buildGoldenHourData,
@@ -124,17 +108,7 @@ const LANDMARK_GENERATORS: Record<string, () => NoteData> = {
 
   // Jazz & Lo-Fi
   "autumn-leaves": buildAutumnLeavesData,
-  "fly-me-to-the-moon": () =>
-    buildGenericFullPieceData(
-      120,
-      "4/4",
-      84,
-      60,
-      false,
-      "ballad",
-      "Left Hand (Bossa & Medium Swing Bass)",
-      "Right Hand (Classic Sinatra Melody & Jazz Improvisation)"
-    ),
+  "fly-me-to-the-moon": buildFlyMeToTheMoonData,
 
   // K-Pop
   "spring-day-bts": buildSpringDayData,
@@ -184,6 +158,19 @@ export function generateAllFullSongs() {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
+  console.log(`🎹 Generating 1,000+ Complete Catalog Pieces to: ${outputDir}`);
+  let catalogCount = 0;
+  for (const song of DEMO_SONGS) {
+    // If it's a dedicated landmark generator piece, let LANDMARK_GENERATORS handle it below
+    if (LANDMARK_GENERATORS[song.id] || Object.values(ALIAS_MAP).includes(song.id)) {
+      continue;
+    }
+    const filePath = path.join(outputDir, `${song.id}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(song.noteData, null, 2), "utf-8");
+    catalogCount++;
+  }
+  console.log(`  ✓ Baked ${catalogCount} catalog songs with diatonic harmonies and [21..108] pitch clamping.`);
+
   console.log(`🎹 Generating Full-Length Landmark Repertoire Pieces to: ${outputDir}`);
 
   for (const [id, generator] of Object.entries(LANDMARK_GENERATORS)) {
@@ -208,7 +195,27 @@ export function generateAllFullSongs() {
     }
   }
 
-  console.log(`✨ All full song datasets generated successfully!`);
+  // Final validation pass across all output files
+  const allGeneratedFiles = fs.readdirSync(outputDir).filter((f) => f.endsWith(".json"));
+  let outOfRangeNotes = 0;
+  let minPitchFound = 127;
+  let maxPitchFound = 0;
+
+  for (const fileName of allGeneratedFiles) {
+    const filePath = path.join(outputDir, fileName);
+    const content = JSON.parse(fs.readFileSync(filePath, "utf-8")) as NoteData;
+    for (const note of content.notes) {
+      if (note.pitch < minPitchFound) minPitchFound = note.pitch;
+      if (note.pitch > maxPitchFound) maxPitchFound = note.pitch;
+      if (note.pitch < 21 || note.pitch > 108) {
+        outOfRangeNotes++;
+      }
+    }
+  }
+
+  console.log(
+    `✨ All ${allGeneratedFiles.length} song datasets verified! Out-of-range notes: ${outOfRangeNotes}, Min pitch: ${minPitchFound}, Max pitch: ${maxPitchFound}`
+  );
 }
 
 generateAllFullSongs();

@@ -8,6 +8,16 @@ import { LIMITS } from "@pianoflow/shared-types";
 export const LOWEST = LIMITS.PIANO_LOWEST_PITCH; // 21
 export const HIGHEST = LIMITS.PIANO_HIGHEST_PITCH; // 108
 
+/**
+ * Clamps or octave-folds an out-of-range MIDI pitch safely into [LOWEST, HIGHEST] (21..108).
+ */
+export function clampPitch(pitch: number): number {
+  let p = pitch;
+  while (p > HIGHEST) p -= 12;
+  while (p < LOWEST) p += 12;
+  return Math.max(LOWEST, Math.min(HIGHEST, p));
+}
+
 const BLACK_CLASSES = new Set([1, 3, 6, 8, 10]);
 
 export function isBlack(pitch: number): boolean {
@@ -16,8 +26,9 @@ export function isBlack(pitch: number): boolean {
 
 /** Count of white keys from A0 up to (exclusive) the given pitch. */
 export function whiteIndex(pitch: number): number {
+  const safePitch = clampPitch(pitch);
   let count = 0;
-  for (let p = LOWEST; p < pitch; p++) {
+  for (let p = LOWEST; p < safePitch; p++) {
     if (!isBlack(p)) count++;
   }
   return count;
@@ -41,9 +52,10 @@ const WHITE_INDEX: number[] = (() => {
  * Returns { x, w } of the key rectangle.
  */
 export function keyRect(pitch: number, width: number): { x: number; w: number } {
+  const safePitch = clampPitch(pitch);
   const whiteW = width / WHITE_KEY_COUNT;
-  const index = WHITE_INDEX[pitch - LOWEST];
-  if (isBlack(pitch)) {
+  const index = WHITE_INDEX[safePitch - LOWEST] ?? 0;
+  if (isBlack(safePitch)) {
     const blackW = whiteW * 0.6;
     return { x: (index + 1) * whiteW - blackW / 2, w: blackW };
   }

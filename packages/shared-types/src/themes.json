@@ -48,6 +48,46 @@
       "glow": "#fb923c",
       "hit_effect": "#fff7ed",
       "background": "#0a0404"
+    },
+    "rose_gold": {
+      "right_hand": "#f43f5e",
+      "left_hand": "#fb7185",
+      "key_highlight": "#fda4af",
+      "glow": "#f43f5e",
+      "hit_effect": "#ffe4e6",
+      "background": "#0c0507"
+    },
+    "emerald": {
+      "right_hand": "#10b981",
+      "left_hand": "#34d399",
+      "key_highlight": "#6ee7b7",
+      "glow": "#059669",
+      "hit_effect": "#ecfdf5",
+      "background": "#020905"
+    },
+    "midnight": {
+      "right_hand": "#6366f1",
+      "left_hand": "#38bdf8",
+      "key_highlight": "#818cf8",
+      "glow": "#4f46e5",
+      "hit_effect": "#e0e7ff",
+      "background": "#030712"
+    },
+    "sunset": {
+      "right_hand": "#f97316",
+      "left_hand": "#e11d48",
+      "key_highlight": "#fb923c",
+      "glow": "#ea580c",
+      "hit_effect": "#fff7ed",
+      "background": "#0c0404"
+    },
+    "monochrome": {
+      "right_hand": "#f4f4f5",
+      "left_hand": "#a1a1aa",
+      "key_highlight": "#e4e4e7",
+      "glow": "#ffffff",
+      "hit_effect": "#ffffff",
+      "background": "#09090b"
     }
   }
 }

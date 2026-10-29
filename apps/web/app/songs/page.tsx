@@ -15,7 +15,14 @@ import {
   X,
   ChevronUp,
 } from "lucide-react";
-import type { RenderSettings, PianoSoundId, ReverbLevel } from "@pianoflow/shared-types";
+import type {
+  RenderSettings,
+  PianoSoundId,
+  ReverbLevel,
+  NoteColors,
+  PresetName,
+} from "@pianoflow/shared-types";
+import { THEME_PRESETS } from "@pianoflow/shared-types";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Keyboard } from "@/components/ui/Keyboard";
@@ -124,6 +131,15 @@ const REVERB_PRESETS: { id: ReverbLevel; label: string }[] = [
   { id: "hall", label: "Hall" },
 ];
 
+const THEME_PRESET_OPTIONS: { id: keyof typeof THEME_PRESETS; label: string; icon: string }[] = [
+  { id: "neon", label: "Neon", icon: "⚡" },
+  { id: "rose_gold", label: "Rose Gold", icon: "🌸" },
+  { id: "emerald", label: "Emerald", icon: "💎" },
+  { id: "midnight", label: "Midnight", icon: "🌌" },
+  { id: "sunset", label: "Sunset", icon: "🌅" },
+  { id: "monochrome", label: "Monochrome", icon: "⚪" },
+];
+
 const DEFAULT_RENDER_SETTINGS: RenderSettings = {
   resolution: "1080p",
   fps: 60,
@@ -135,14 +151,7 @@ const DEFAULT_RENDER_SETTINGS: RenderSettings = {
   show_note_names: true,
   show_keyboard: true,
   theme_preset: "neon",
-  colors: {
-    right_hand: "#7c3aed",
-    left_hand: "#22d3ee",
-    key_highlight: "#38bdf8",
-    glow: "#06b6d4",
-    hit_effect: "#22d3ee",
-    background: "#09090b",
-  },
+  colors: THEME_PRESETS.neon,
   glow_intensity: 0.5,
   note_fall_speed: 1.0,
   keyboard_size: 1.0,
@@ -508,6 +517,20 @@ export default function SongsPage() {
       accompanimentRef.current?.setSustain(next);
       return next;
     });
+  }, []);
+
+  const handleSelectTheme = useCallback((themeId: keyof typeof THEME_PRESETS) => {
+    const presetData = THEME_PRESETS[themeId];
+    const newColors = (
+      presetData && "colors" in (presetData as Record<string, unknown>)
+        ? (presetData as unknown as { colors: NoteColors }).colors
+        : presetData
+    ) as NoteColors;
+    setRenderSettings((prev) => ({
+      ...prev,
+      theme_preset: themeId as PresetName,
+      colors: newColors ?? prev.colors,
+    }));
   }, []);
 
   const playSoundOn = useCallback((pitch: number, velocity: number = 80) => {
@@ -1226,12 +1249,35 @@ export default function SongsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="text-zinc-400">
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Visualizer Theme Selector */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-zinc-400 font-semibold flex items-center gap-1">
+                      <span>🎨</span>
+                      <span>Theme:</span>
+                    </span>
+                    <select
+                      value={renderSettings.theme_preset}
+                      onChange={(e) =>
+                        handleSelectTheme(e.target.value as keyof typeof THEME_PRESETS)
+                      }
+                      data-testid="visualizer-theme-select"
+                      aria-label="Visualizer Theme Preset"
+                      className="bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-cyan-400 cursor-pointer"
+                    >
+                      {THEME_PRESET_OPTIONS.map((theme) => (
+                        <option key={theme.id} value={theme.id} className="bg-zinc-900 text-white">
+                          {theme.icon} {theme.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <span className="text-zinc-400 hidden sm:inline">
                     Engine: <strong className="text-zinc-200">Sampled Grand Piano</strong>
                   </span>
-                  <Badge variant="default" size="sm">
-                    1080p 60FPS Neon
+                  <Badge variant="default" size="sm" className="capitalize">
+                    1080p 60FPS {String(renderSettings.theme_preset).replace("_", " ")}
                   </Badge>
                 </div>
               </div>
@@ -1414,6 +1460,54 @@ export default function SongsPage() {
                       </div>
                     </div>
 
+                    {/* Theme Preset Selector */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-zinc-400 font-semibold flex items-center gap-1">
+                        <span>🎨</span>
+                        <span>Theme:</span>
+                      </span>
+
+                      {/* Dropdown Selector */}
+                      <select
+                        value={renderSettings.theme_preset}
+                        onChange={(e) =>
+                          handleSelectTheme(e.target.value as keyof typeof THEME_PRESETS)
+                        }
+                        data-testid="theme-preset-select"
+                        aria-label="Visualizer Theme Preset"
+                        className="bg-zinc-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-cyan-400 cursor-pointer"
+                      >
+                        {THEME_PRESET_OPTIONS.map((theme) => (
+                          <option key={theme.id} value={theme.id} className="bg-zinc-900 text-white">
+                            {theme.icon} {theme.label}
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* Pill Button Group */}
+                      <div
+                        data-testid="theme-preset-pill-group"
+                        className="hidden lg:flex items-center bg-zinc-900 border border-white/10 rounded-lg p-0.5 text-xs"
+                      >
+                        {THEME_PRESET_OPTIONS.map((theme) => (
+                          <button
+                            key={theme.id}
+                            type="button"
+                            data-testid={`theme-preset-${theme.id}`}
+                            onClick={() => handleSelectTheme(theme.id)}
+                            className={`px-2 py-1 rounded font-medium transition-colors flex items-center gap-1 cursor-pointer ${
+                              renderSettings.theme_preset === theme.id
+                                ? "bg-zinc-800 text-cyan-300 font-bold shadow-sm"
+                                : "text-zinc-400 hover:text-zinc-200"
+                            }`}
+                          >
+                            <span>{theme.icon}</span>
+                            <span>{theme.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Reverb Ambience Selector */}
                     <div className="flex items-center gap-2">
                       <span className="text-zinc-400 font-semibold flex items-center gap-1">
@@ -1508,6 +1602,7 @@ export default function SongsPage() {
                   loopStartMs={loopStartMs}
                   loopEndMs={loopEndMs}
                   isLoopActive={isLoopActive}
+                  colors={renderSettings.colors}
                 />
               </div>
 
@@ -1957,6 +2052,12 @@ export default function SongsPage() {
                         : "bg-[#121215] border-white/10 hover:border-white/20 hover:-translate-y-0.5 shadow-md"
                     }`}
                   >
+                    {/* Colorful gradient accent strip */}
+                    <div
+                      className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${song.coverGradient || "from-cyan-500 to-blue-600"}`}
+                      aria-hidden="true"
+                    />
+
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[11px] font-mono text-zinc-400">{song.period}</span>

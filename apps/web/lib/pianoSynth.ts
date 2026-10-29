@@ -71,6 +71,7 @@ export class PianoSynth {
   private soundboardStage1: BiquadFilterNode | null = null;
   private soundboardStage2: BiquadFilterNode | null = null;
   private soundboardStage3: BiquadFilterNode | null = null;
+  private compressor: DynamicsCompressorNode | null = null;
   private hammerBuffer: AudioBuffer | null = null;
   private timer: number | null = null;
   private nextIndex = 0;
@@ -136,33 +137,47 @@ export class PianoSynth {
     if (this.master) return;
 
     this.master = ctx.createGain();
-    this.master.gain.value = 0.72;
+    this.master.gain.value = 0.65;
+
+    if (typeof ctx.createDynamicsCompressor === "function") {
+      this.compressor = ctx.createDynamicsCompressor();
+      this.compressor.threshold.value = -18;
+      this.compressor.knee.value = 12;
+      this.compressor.ratio.value = 4.0;
+      this.compressor.attack.value = 0.003;
+      this.compressor.release.value = 0.25;
+    }
 
     if (typeof ctx.createBiquadFilter === "function") {
       this.soundboardStage1 = ctx.createBiquadFilter();
       this.soundboardStage1.type = "peaking";
       this.soundboardStage1.frequency.value = 480;
       this.soundboardStage1.Q.value = 1.4;
-      this.soundboardStage1.gain.value = 4.5;
+      this.soundboardStage1.gain.value = 1.2;
 
       this.soundboardStage2 = ctx.createBiquadFilter();
       this.soundboardStage2.type = "peaking";
       this.soundboardStage2.frequency.value = 820;
       this.soundboardStage2.Q.value = 1.6;
-      this.soundboardStage2.gain.value = 3.5;
+      this.soundboardStage2.gain.value = 1.0;
 
       this.soundboardStage3 = ctx.createBiquadFilter();
       this.soundboardStage3.type = "peaking";
       this.soundboardStage3.frequency.value = 1400;
       this.soundboardStage3.Q.value = 2.0;
-      this.soundboardStage3.gain.value = 2.2;
+      this.soundboardStage3.gain.value = 0.8;
 
       this.soundboardStage1.connect(this.soundboardStage2);
       this.soundboardStage2.connect(this.soundboardStage3);
       this.soundboardStage3.connect(this.master);
     }
 
-    this.master.connect(ctx.destination);
+    if (this.compressor) {
+      this.master.connect(this.compressor);
+      this.compressor.connect(ctx.destination);
+    } else {
+      this.master.connect(ctx.destination);
+    }
   }
 
   private getSoundboardInput(): AudioNode {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import type { NoteColors } from "@pianoflow/shared-types";
 import { keyRect, WHITE_KEY_COUNT } from "@/lib/piano";
 import type { ExpectedNote, ScoreEvent, HandPracticeMode } from "@/lib/midi/MidiEngine";
 import {
@@ -38,6 +39,8 @@ interface PracticeCanvasProps {
   timingStats?: MicroTimingSessionStats | null;
   /** Whether to render embedded MicroTimingGauge overlay inside canvas */
   showTimingGauge?: boolean;
+  /** Active theme colors */
+  colors?: NoteColors;
   className?: string;
 }
 
@@ -214,6 +217,7 @@ export function PracticeCanvas({
   timingFeedback = null,
   timingStats = null,
   showTimingGauge = true,
+  colors,
   className = "",
 }: PracticeCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -270,7 +274,7 @@ export function PracticeCanvas({
   }, []);
 
   const { width, height } = dimensions;
-  const whiteKeyWidth = isFullView ? width / WHITE_KEY_COUNT : Math.max(26, width / 15);
+  const whiteKeyWidth = isFullView ? width / WHITE_KEY_COUNT : Math.max(32, width / 15);
   const virtualWidth = isFullView ? width : WHITE_KEY_COUNT * whiteKeyWidth;
 
   useEffect(() => {
@@ -410,7 +414,7 @@ export function PracticeCanvas({
 
     // 2. Static Background Gradient in Screen Space
     const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-    bgGradient.addColorStop(0, "#09090b");
+    bgGradient.addColorStop(0, colors?.background ?? "#09090b");
     bgGradient.addColorStop(1, "#111116");
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, width, height);
@@ -522,23 +526,28 @@ export function PracticeCanvas({
         ? expectedNotes.has(note.pitch)
         : Math.abs(note.start - curTime) <= 500;
 
+      const rhColor = colors?.right_hand ?? "#a855f7";
+      const lhColor = colors?.left_hand ?? "#06b6d4";
+      const keyHighlightColor = colors?.key_highlight ?? "#38bdf8";
+      const glowColor = colors?.glow ?? "#38bdf8";
+
       ctx.save();
 
       // Hand isolation luminescence & dimming
       if (!isHandActive) {
         ctx.globalAlpha = 0.35;
         ctx.shadowBlur = 0;
-        ctx.fillStyle = isRH ? "#7e22ce" : "#0e7490";
+        ctx.fillStyle = isRH ? rhColor : lhColor;
       } else {
         ctx.globalAlpha = 1.0;
         if (isCurrentExpected) {
           ctx.shadowBlur = 14;
-          ctx.shadowColor = "#38bdf8";
-          ctx.fillStyle = isRH ? "#c084fc" : "#38bdf8";
+          ctx.shadowColor = glowColor;
+          ctx.fillStyle = isRH ? keyHighlightColor : lhColor;
         } else {
           ctx.shadowBlur = 8;
-          ctx.shadowColor = isRH ? "#a855f7" : "#06b6d4";
-          ctx.fillStyle = isRH ? "#a855f7" : "#06b6d4";
+          ctx.shadowColor = isRH ? rhColor : lhColor;
+          ctx.fillStyle = isRH ? rhColor : lhColor;
         }
       }
 
@@ -680,6 +689,7 @@ export function PracticeCanvas({
     isLoopActive,
     showNoteNames,
     activeTimingFeedback,
+    colors,
   ]);
 
   useEffect(() => {

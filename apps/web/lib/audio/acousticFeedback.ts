@@ -28,6 +28,18 @@ export class AcousticPianoFeedback {
   private currentReverb: ReverbLevel = "light";
   private reverb: Reverb | null = null;
   private reverbAdded = false;
+  private initPromise: Promise<void> | null = null;
+
+  constructor() {
+    this.currentSound = "concert_grand";
+    if (typeof window !== "undefined") {
+      void this.init();
+    }
+  }
+
+  public isReady(): boolean {
+    return this.isInstrumentReady;
+  }
 
   public async initPianoAudio(): Promise<void> {
     return this.init();
@@ -35,21 +47,30 @@ export class AcousticPianoFeedback {
 
   public async init(): Promise<void> {
     if (typeof window === "undefined") return;
-    try {
-      this.ctx = getSharedAudioContext();
-      if (this.ctx.state === "suspended") {
-        await this.ctx.resume().catch(() => undefined);
-      }
+    if (this.isInstrumentReady && this.instrument) return;
+    if (this.initPromise) return this.initPromise;
 
-      this.ensureMasterCompressor();
-      this.synthEngine ??= new PianoSynth(this.ctx);
+    this.initPromise = (async () => {
+      try {
+        this.ctx = getSharedAudioContext();
+        if (this.ctx && typeof this.ctx.resume === "function" && this.ctx.state === "suspended") {
+          await this.ctx.resume().catch(() => undefined);
+        }
 
-      if (!this.instrument) {
-        await this.setSound(this.currentSound);
+        this.ensureMasterCompressor();
+        this.synthEngine ??= new PianoSynth(this.ctx);
+
+        if (!this.instrument) {
+          await this.setSound(this.currentSound);
+        }
+      } catch (e) {
+        console.warn("AcousticPianoFeedback init fallback to synth", e);
+      } finally {
+        this.initPromise = null;
       }
-    } catch (e) {
-      console.warn("AcousticPianoFeedback init fallback to synth", e);
-    }
+    })();
+
+    return this.initPromise;
   }
 
   /**
@@ -84,7 +105,7 @@ export class AcousticPianoFeedback {
    * Gracefully falls back to PianoSynth if network fails or offline.
    */
   public async setSound(sound: PianoSoundId): Promise<void> {
-    this.currentSound = sound;
+    this.currentSound = sound || "concert_grand";
     if (typeof window === "undefined") return;
 
     if (!this.ctx) {
@@ -304,6 +325,9 @@ export class AcousticPianoFeedback {
       } catch {
         // Fall back to physical acoustic synth
       }
+    } else {
+      // Instrument not ready yet - pre-warm/load immediately without blocking
+      void this.init();
     }
 
     // High-Fidelity Physical Acoustic Piano Fallback

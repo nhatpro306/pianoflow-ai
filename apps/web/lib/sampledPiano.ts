@@ -18,6 +18,37 @@ const TICK_MS = 120;
 const SAMPLE_LOAD_TIMEOUT_MS = 15000;
 
 let sharedAudioContext: AudioContext | null = null;
+let prewarmedGrandPiano: SplendidGrandPiano | null = null;
+let prewarmedGrandPianoPromise: Promise<SplendidGrandPiano | null> | null = null;
+
+/**
+ * Pre-warms the default SplendidGrandPiano instrument eagerly in the background.
+ */
+export function prewarmGrandPiano(ctx?: AudioContext): Promise<SplendidGrandPiano | null> {
+  if (typeof window === "undefined") return Promise.resolve(null);
+  const audioCtx = ctx ?? getSharedAudioContext();
+  if (!audioCtx || typeof audioCtx.createBuffer !== "function") return Promise.resolve(null);
+  if (prewarmedGrandPiano) return Promise.resolve(prewarmedGrandPiano);
+  if (prewarmedGrandPianoPromise) return prewarmedGrandPianoPromise;
+
+  try {
+    const inst = new SplendidGrandPiano(audioCtx);
+    prewarmedGrandPianoPromise = inst.load
+      .then(() => {
+        prewarmedGrandPiano = inst;
+        return inst;
+      })
+      .catch(() => {
+        prewarmedGrandPianoPromise = null;
+        return null;
+      });
+  } catch {
+    prewarmedGrandPianoPromise = null;
+    return Promise.resolve(null);
+  }
+
+  return prewarmedGrandPianoPromise;
+}
 
 /**
  * Returns the centralized singleton AudioContext.
@@ -36,13 +67,23 @@ export function getSharedAudioContext(): AudioContext {
 }
 
 /**
- * Proactively resumes the singleton AudioContext upon first user interaction.
+ * Proactively resumes the singleton AudioContext upon first user interaction
+ * and eagerly pre-warms SplendidGrandPiano samples.
  */
 export function autoResumeSharedAudioContext(): void {
   if (typeof window === "undefined") return;
   const ctx = getSharedAudioContext();
-  if (ctx && ctx.state === "suspended") {
-    void ctx.resume().catch(() => undefined);
+  if (ctx && typeof ctx.resume === "function") {
+    if (ctx.state === "suspended") {
+      void ctx
+        .resume()
+        .then(() => {
+          void prewarmGrandPiano(ctx);
+        })
+        .catch(() => undefined);
+    } else {
+      void prewarmGrandPiano(ctx);
+    }
   }
 }
 
@@ -113,6 +154,7 @@ export class SampledPiano {
   private feltFilterAdded = new Set<string>();
   private fallback: PianoSynth | null = null;
   private usingFallback = false;
+  private playSessionId = 0;
 
   private config: SoundConfig = { sound: "concert_grand", volume: 0.8, reverb: "light" };
   private timer: number | null = null;
@@ -124,7 +166,12 @@ export class SampledPiano {
   constructor() {
     if (typeof window !== "undefined") {
       this.ctx = getSharedAudioContext();
+      void this.ensureInstrument();
     }
+  }
+
+  public isReady(): boolean {
+    return this.readyInstruments.has(this.instrumentKey());
   }
 
   get time(): number {
@@ -138,8 +185,9 @@ export class SampledPiano {
   }
 
   configure(config: SoundConfig): void {
-    const soundChanged = config.sound !== this.config.sound;
-    this.config = config;
+    const sound = config.sound || "concert_grand";
+    const soundChanged = sound !== this.config.sound;
+    this.config = { ...config, sound };
     const instrument = this.instruments.get(this.instrumentKey());
     if (instrument && !soundChanged) {
       this.applyOutputSettings(instrument);
@@ -181,9 +229,11 @@ export class SampledPiano {
 
   async resumeContext(): Promise<void> {
     this.ctx = getSharedAudioContext();
-    if (this.ctx.state === "suspended") {
+    if (this.ctx && typeof this.ctx.resume === "function" && this.ctx.state === "suspended") {
       await this.ctx.resume().catch(() => undefined);
     }
+    void prewarmGrandPiano(this.ctx);
+    void this.ensureInstrument();
   }
 
   /**
@@ -191,7 +241,7 @@ export class SampledPiano {
    */
   async ensureInstrument(): Promise<SmplrInstrument | null> {
     this.ctx = getSharedAudioContext();
-    if (this.ctx.state === "suspended") {
+    if (this.ctx && typeof this.ctx.resume === "function" && this.ctx.state === "suspended") {
       await this.ctx.resume().catch(() => undefined);
     }
 
@@ -201,11 +251,32 @@ export class SampledPiano {
       if (inst) return inst;
     }
 
+    if (key === "concert_grand" && prewarmedGrandPiano) {
+      this.instruments.set(key, prewarmedGrandPiano);
+      this.applyOutputSettings(prewarmedGrandPiano);
+      this.readyInstruments.add(key);
+      return prewarmedGrandPiano;
+    }
+
     if (this.loadingPromises.has(key)) {
       return this.loadingPromises.get(key)!;
     }
 
     const loadPromise = (async () => {
+      if (key === "concert_grand" && prewarmedGrandPianoPromise) {
+        try {
+          const prewarmed = await withTimeout(prewarmedGrandPianoPromise, SAMPLE_LOAD_TIMEOUT_MS);
+          if (prewarmed) {
+            this.instruments.set(key, prewarmed);
+            this.applyOutputSettings(prewarmed);
+            this.readyInstruments.add(key);
+            return prewarmed;
+          }
+        } catch {
+          // Fall back to direct instantiation below
+        }
+      }
+
       let instrument = this.instruments.get(key);
       if (!instrument) {
         instrument = createInstrument(this.ctx!, this.config.sound);
@@ -247,6 +318,9 @@ export class SampledPiano {
    */
   async play(notes: Note[], speed: number, fromSec: number): Promise<void> {
     this.stop();
+    const sessionId = ++this.playSessionId;
+    this.notes = notes;
+    this.speed = speed;
     this.ctx = getSharedAudioContext();
     if (this.ctx.state === "suspended") {
       void this.ctx.resume().catch(() => undefined);
@@ -262,15 +336,36 @@ export class SampledPiano {
       this.fallback ??= new PianoSynth(this.ctx);
       this.fallback.play(notes, speed, fromSec, this.ctx);
 
-      // Trigger background sample loading without blocking playback
-      void this.ensureInstrument();
+      // Trigger background sample loading and hot-swap seamlessly
+      void this.ensureInstrument().then((loadedInst) => {
+        if (
+          this.playSessionId !== sessionId ||
+          !this.usingFallback ||
+          !loadedInst ||
+          !this.ctx
+        ) {
+          return;
+        }
+
+        const curSec = this.fallback ? this.fallback.time : fromSec;
+        this.fallback?.stop();
+        this.usingFallback = false;
+
+        this.startCtxTime = this.ctx.currentTime - curSec;
+        this.nextIndex = this.notes.findIndex((n) => n.start / speed >= curSec);
+        if (this.nextIndex === -1) this.nextIndex = this.notes.length;
+
+        if (this.timer !== null) {
+          clearInterval(this.timer);
+        }
+        this.timer = window.setInterval(() => this.tick(loadedInst), TICK_MS);
+        this.tick(loadedInst);
+      });
       return;
     }
 
     // Instrument samples are ready — execute sample playback
     this.usingFallback = false;
-    this.notes = notes;
-    this.speed = speed;
     this.startCtxTime = this.ctx.currentTime - fromSec;
     this.nextIndex = this.notes.findIndex((n) => n.start / speed >= fromSec);
     if (this.nextIndex === -1) this.nextIndex = this.notes.length;
@@ -280,6 +375,8 @@ export class SampledPiano {
   }
 
   stop(): void {
+    this.playSessionId++;
+    this.usingFallback = false;
     if (this.timer !== null) {
       clearInterval(this.timer);
       this.timer = null;
