@@ -9,7 +9,8 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
     | "hand-rh"
     | "hand-lh"
     | "accent"
-    | "streak";
+    | "streak"
+    | "outline";
   size?: "sm" | "md";
   dot?: boolean;
 }
@@ -36,6 +37,7 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
       accent:
         "bg-gradient-to-r from-violet-500/10 to-cyan-500/10 text-cyan-300 border-cyan-500/30",
       streak: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+      outline: "bg-transparent text-zinc-400 border-zinc-700/60",
     };
 
     const dotColors = {
@@ -47,6 +49,7 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
       "hand-lh": "bg-cyan-400",
       accent: "bg-cyan-400",
       streak: "bg-amber-400",
+      outline: "bg-zinc-400",
     };
 
     const sizes = {

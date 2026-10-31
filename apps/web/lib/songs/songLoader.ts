@@ -91,10 +91,9 @@ const songMemoryCache = new Map<string, NoteData>();
 export function isSongFullLength(songOrId: string | RepertoireSong): boolean {
   if (!songOrId) return false;
   if (typeof songOrId === "object") {
-    if (songOrId.isFullLength !== undefined) return Boolean(songOrId.isFullLength);
-    return true;
+    return songOrId.completeness === "complete" || (songOrId.isFullLength === true && songOrId.reviewStatus === "verified");
   }
-  return true;
+  return FULL_SONG_IDS.has(normalizeSongDataId(songOrId));
 }
 
 export function normalizeSongDataId(songId: string): string {

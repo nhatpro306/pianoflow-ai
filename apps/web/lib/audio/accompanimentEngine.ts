@@ -431,7 +431,7 @@ export class AccompanimentEngine {
     const baseDuration = (note.end - note.start) / (1000 * Math.max(0.25, this.speed));
     const durationSec = this.isSustainDown
       ? Math.max(baseDuration * 2.2, 3.5)
-      : Math.max(0.45, baseDuration);
+      : Math.max(0.04, baseDuration);
 
     if (this.isInstrumentReady && this.instrument) {
       try {

@@ -14,6 +14,10 @@ export type SongDifficulty = "Beginner" | "Intermediate" | "Master";
 
 export type QualityTier = "studio_master" | "arranged";
 
+export type ContentType = "score_arrangement" | "excerpt" | "generated_exercise";
+export type ReviewStatus = "verified" | "pending" | "unreviewed";
+export type Completeness = "complete" | "excerpt" | "unknown";
+
 export interface RepertoireSong {
   id: string;
   title: string;
@@ -32,6 +36,9 @@ export interface RepertoireSong {
   isCanonical?: boolean;
   qualityTier?: QualityTier;
   isFullLength?: boolean;
+  contentType?: ContentType;
+  reviewStatus?: ReviewStatus;
+  completeness?: Completeness;
   noteData: NoteData;
 }
 

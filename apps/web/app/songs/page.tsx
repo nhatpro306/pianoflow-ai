@@ -1143,24 +1143,33 @@ export default function SongsPage() {
                 Now Loaded: &ldquo;<strong className="text-white">{activeSong.title}</strong>&rdquo; by{" "}
                 <span className="text-cyan-200">{activeSong.composer}</span>
               </span>
-              {Boolean(activeSong.isCanonical || activeSong.qualityTier === "studio_master") && (
+              {activeSong.reviewStatus === "verified" ? (
                 <Badge
                   variant="warning"
                   size="sm"
                   data-testid="studio-master-active-badge"
                   className="ml-1.5 gap-1 text-[10px] font-semibold tracking-wide"
                 >
-                  ⭐ Studio Master (Authentic MIDI)
+                  ⭐ Verified Score Arrangement
                 </Badge>
-              )}
-              {Boolean(activeSong.isFullLength || isSongFullLength(activeSong)) && (
+              ) : activeSong.contentType === "generated_exercise" ? (
+                <Badge
+                  variant="outline"
+                  size="sm"
+                  data-testid="exercise-active-badge"
+                  className="ml-1.5 gap-1 text-[10px] font-semibold tracking-wide text-zinc-400 border-zinc-700/60"
+                >
+                  🎹 Practice Exercise
+                </Badge>
+              ) : null}
+              {Boolean(activeSong.completeness === "complete" && activeSong.reviewStatus === "verified") && (
                 <Badge
                   variant="success"
                   size="sm"
                   data-testid="full-song-active-badge"
                   className="ml-1.5 gap-1 text-[10px] font-semibold tracking-wide"
                 >
-                  ✨ Full Song (Trọn vẹn)
+                  ✨ Complete Piece
                 </Badge>
               )}
             </div>
@@ -1857,17 +1866,21 @@ export default function SongsPage() {
               <span className="text-xs text-zinc-500 font-mono hidden md:inline">
                 Selected: <strong className="text-zinc-200">{activeSong.title}</strong>
               </span>
-              {Boolean(activeSong.isCanonical || activeSong.qualityTier === "studio_master") && (
+              {activeSong.reviewStatus === "verified" ? (
                 <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                  ⭐ Studio Master (Authentic MIDI)
+                  ⭐ Verified Score Arrangement
                 </span>
-              )}
-              {Boolean(activeSong.isFullLength || isSongFullLength(activeSong)) && (
+              ) : activeSong.contentType === "generated_exercise" ? (
+                <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700">
+                  🎹 Practice Exercise
+                </span>
+              ) : null}
+              {Boolean(activeSong.completeness === "complete" && activeSong.reviewStatus === "verified") && (
                 <span
                   data-testid="repertoire-header-full-song-badge"
                   className="hidden md:inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
                 >
-                  ✨ Full Song (Trọn vẹn)
+                  ✨ Complete Piece
                 </span>
               )}
               <Badge variant="default" size="sm" className="font-mono text-xs text-cyan-300 border-cyan-500/30">
@@ -2093,24 +2106,33 @@ export default function SongsPage() {
                       </h3>
                       <p className="text-xs text-zinc-400 mt-0.5 truncate">{song.composer}</p>
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                        {Boolean(song.isCanonical || song.qualityTier === "studio_master") && (
+                        {song.reviewStatus === "verified" ? (
                           <Badge
                             variant="warning"
                             size="sm"
                             data-testid={`badge-studio-master-${song.id}`}
                             className="gap-1 text-[10px] font-semibold tracking-wide"
                           >
-                            ⭐ Studio Master (Authentic MIDI)
+                            ⭐ Verified Score Arrangement
                           </Badge>
-                        )}
-                        {Boolean(song.isFullLength || isSongFullLength(song)) && (
+                        ) : song.contentType === "generated_exercise" ? (
+                          <Badge
+                            variant="outline"
+                            size="sm"
+                            data-testid={`badge-exercise-${song.id}`}
+                            className="gap-1 text-[10px] font-semibold tracking-wide text-zinc-400 border-zinc-700/60"
+                          >
+                            🎹 Practice Exercise
+                          </Badge>
+                        ) : null}
+                        {Boolean(song.completeness === "complete" && song.reviewStatus === "verified") && (
                           <Badge
                             variant="success"
                             size="sm"
                             data-testid={`badge-full-song-${song.id}`}
                             className="gap-1 text-[10px] font-semibold tracking-wide"
                           >
-                            ✨ Full Song (Trọn vẹn)
+                            ✨ Complete Piece
                           </Badge>
                         )}
                       </div>

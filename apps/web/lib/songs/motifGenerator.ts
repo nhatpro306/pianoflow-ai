@@ -727,8 +727,11 @@ function getLandmarkCanonicalSong(input: MotifSongInput): RepertoireSong | null 
       noteCount: noteData.notes.length,
       tags: input.tags,
       isCanonical: true,
-      qualityTier: "studio_master",
+      qualityTier: "arranged",
       isFullLength: true,
+      contentType: "score_arrangement",
+      reviewStatus: "verified",
+      completeness: "complete",
       noteData,
     };
   }
@@ -1679,7 +1682,10 @@ export function createMotifSong(input: MotifSongInput): RepertoireSong {
     tags: input.tags,
     isCanonical: false,
     qualityTier: "arranged",
-    isFullLength: true,
+    isFullLength: false,
+    contentType: "generated_exercise",
+    reviewStatus: "unreviewed",
+    completeness: "unknown",
     noteData,
   };
 }

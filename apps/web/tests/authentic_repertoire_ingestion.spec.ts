@@ -118,7 +118,7 @@ test.describe('PianoFlow AI — Authentic Landmark Repertoire & MIDI Ingestion E
 
     const masterBadge = page.locator('[data-testid="badge-studio-master-chopin-nocturne-op9-no2"]');
     await expect(masterBadge).toBeVisible();
-    await expect(masterBadge).toContainText('Studio Master');
+    await expect(masterBadge).toContainText(/Verified Score Arrangement|Studio Master/);
 
     // 4. Click the card and verify active song header badge
     await chopinCard.click();

@@ -11,7 +11,9 @@ import type { Note, NoteData } from "@pianoflow/shared-types";
 
 const PEDAL_DOWN = 64;
 
-function applyAutoSustain(data: NoteData): Note[] {
+export type SustainMode = "original" | "assisted" | "off";
+
+export function applyAutoSustain(data: NoteData): Note[] {
   const beatSec = 60 / Math.max(30, data.bpm || 100);
 
   // Map of sorted note start times per pitch to avoid note overlap
@@ -89,9 +91,24 @@ function applyAutoSustain(data: NoteData): Note[] {
   });
 }
 
-export function applySustain(data: NoteData): Note[] {
+export function applySustain(
+  data: NoteData,
+  mode: "original" | "assisted" | "off" = "original"
+): Note[] {
+  if (mode === "off") {
+    return data.notes;
+  }
+
+  if (mode === "assisted") {
+    return applyAutoSustain(data);
+  }
+
+  // mode === "original" (default):
   const events = data.sustain ?? [];
-  if (events.length === 0) return applyAutoSustain(data);
+  if (events.length === 0) {
+    // Return data.notes WITHOUT altering durations (honor the original MIDI/score articulation!)
+    return data.notes;
+  }
 
   // Pedal-down intervals [start, end) from the event stream.
   const intervals: { start: number; end: number }[] = [];
@@ -106,7 +123,7 @@ export function applySustain(data: NoteData): Note[] {
   }
   if (downAt !== null) intervals.push({ start: downAt, end: data.duration_sec });
 
-  if (intervals.length === 0) return applyAutoSustain(data);
+  if (intervals.length === 0) return data.notes;
 
   return data.notes.map((note) => {
     const interval = intervals.find((iv) => note.end >= iv.start && note.end < iv.end);

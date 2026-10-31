@@ -102,10 +102,34 @@ if (typeof window !== "undefined") {
   window.addEventListener("click", unlockAudio, { once: true });
 }
 
-interface SoundConfig {
+export type VelocityCurve = "linear" | "soft" | "hard" | "compressed";
+
+export interface SampledPianoConfig {
   sound: PianoSoundId;
   volume: number; // 0..1
   reverb: ReverbLevel;
+  velocityCurve?: VelocityCurve;
+  pedalMode?: "original" | "assisted" | "off";
+}
+
+export type SoundConfig = SampledPianoConfig;
+
+export function applyVelocityCurve(rawVel: number, curve?: VelocityCurve): number {
+  if (!curve || curve === "linear") return rawVel;
+  const normalized = Math.max(0, Math.min(1, rawVel / 127));
+  switch (curve) {
+    case "soft":
+      // Natural nuance at lower velocities
+      return Math.pow(normalized, 1.35) * 127;
+    case "hard":
+      // More punch at medium velocities
+      return Math.pow(normalized, 0.75) * 127;
+    case "compressed":
+      // Mild dynamic compression
+      return 36 + normalized * 74;
+    default:
+      return rawVel;
+  }
 }
 
 type SmplrInstrument = SplendidGrandPiano | Soundfont;
@@ -156,7 +180,12 @@ export class SampledPiano {
   private usingFallback = false;
   private playSessionId = 0;
 
-  private config: SoundConfig = { sound: "concert_grand", volume: 0.8, reverb: "light" };
+  private config: SampledPianoConfig = {
+    sound: "concert_grand",
+    volume: 0.8,
+    reverb: "light",
+    pedalMode: "original",
+  };
   private timer: number | null = null;
   private nextIndex = 0;
   private startCtxTime = 0;
@@ -184,10 +213,15 @@ export class SampledPiano {
     return this.usingFallback;
   }
 
-  configure(config: SoundConfig): void {
-    const sound = config.sound || "concert_grand";
+  configure(config: SampledPianoConfig): void {
+    const sound = config.sound || this.config.sound || "concert_grand";
     const soundChanged = sound !== this.config.sound;
-    this.config = { ...config, sound };
+    this.config = {
+      ...this.config,
+      ...config,
+      sound,
+      pedalMode: config.pedalMode ?? this.config.pedalMode ?? "original",
+    };
     const instrument = this.instruments.get(this.instrumentKey());
     if (instrument && !soundChanged) {
       this.applyOutputSettings(instrument);
@@ -401,28 +435,19 @@ export class SampledPiano {
       if (start > horizon) break;
       const scheduleTime = this.startCtxTime + note.start / this.speed;
 
-      // Warm Concert Grand Velocity Curve
-      let v = note.velocity ?? 76;
-      if (note.hand === "L" || note.track === 0) {
-        v *= 0.82;
-      }
-      if (note.pitch > 72) {
-        v *= Math.max(0.68, 1 - (note.pitch - 72) * 0.01);
-      }
-      if (note.pitch < 42) {
-        v *= 0.85;
-      }
-      let finalVelocity = Math.max(28, Math.min(86, Math.round(v)));
+      // Full dynamic expression from pp to ff without artificial compression
+      const rawVel = note.velocity ?? 76;
+      let velocity = Math.max(1, Math.min(127, Math.round(applyVelocityCurve(rawVel, this.config.velocityCurve))));
       if (this.config.sound === "felt") {
-        finalVelocity = Math.round(26 + (finalVelocity / 86) * 44);
+        velocity = Math.round(Math.max(1, Math.min(100, velocity * 0.85)));
       }
 
       const rawDur = note.duration / this.speed;
       instrument.start({
         note: note.pitch,
-        velocity: finalVelocity,
+        velocity,
         time: scheduleTime,
-        duration: Math.max(0.38, rawDur),
+        duration: Math.max(0.04, rawDur),
       });
       this.nextIndex++;
     }
