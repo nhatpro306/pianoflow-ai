@@ -98,9 +98,28 @@ def _setup_ready_project(tmp_path):
 
 
 class FakeAudioRenderer:
-    def render_wav(self, midi_bytes: bytes, sample_rate: int = 44100) -> bytes:
+    def __init__(self) -> None:
+        self.calls: list[dict] = []
+
+    def render_wav(
+        self,
+        midi_bytes: bytes,
+        sample_rate: int = 44100,
+        volume: float = 1.0,
+        reverb: str = "medium",
+        **kwargs,
+    ) -> bytes:
         assert midi_bytes[:4] == b"MThd"
+        self.calls.append({
+            "midi_bytes": midi_bytes,
+            "sample_rate": sample_rate,
+            "volume": volume,
+            "reverb": reverb,
+        })
         return b"RIFF" + b"\x00" * 200
+
+    def wav_to_mp3(self, wav_bytes: bytes, bitrate: str = "320k") -> bytes:
+        return b"ID3\x03\x00\x00\x00\x00\x00#" + b"\x00" * 200
 
 
 class FakeVideoEncoder:
@@ -144,7 +163,7 @@ def test_render_video_creates_streaming_output(tmp_path, monkeypatch) -> None:
         job = db.get(RenderJob, job_id)
         assert job is not None
         assert job.status == "completed", job.error_message
-        output = db.query(OutputFile).filter(OutputFile.job_id == job_id).one()
+        output = db.query(OutputFile).filter(OutputFile.job_id == job_id, OutputFile.kind == "video_mp4").one()
         assert output.kind == "video_mp4"
         assert output.content_type == "video/mp4"
         assert output.output_metadata["download_allowed"] is False
@@ -152,6 +171,15 @@ def test_render_video_creates_streaming_output(tmp_path, monkeypatch) -> None:
         assert output.output_metadata["access_policy"] == "private_streaming"
         assert output.output_metadata["speed_multiplier"] == 1.5
         assert get_storage().download(output.storage_key)[4:8] == b"ftyp"
+
+        wav_out = db.query(OutputFile).filter(OutputFile.job_id == job_id, OutputFile.kind == "audio_wav").one()
+        assert wav_out.content_type == "audio/wav"
+        assert wav_out.output_metadata["download_allowed"] is True
+        assert wav_out.output_metadata["tail_margin_sec"] == 1.5
+
+        mp3_out = db.query(OutputFile).filter(OutputFile.job_id == job_id, OutputFile.kind == "audio_mp3").one()
+        assert mp3_out.content_type == "audio/mpeg"
+        assert mp3_out.output_metadata["download_allowed"] is True
 
 
 def test_render_video_fails_permanently_on_audio_error(tmp_path, monkeypatch) -> None:
@@ -162,7 +190,7 @@ def test_render_video_fails_permanently_on_audio_error(tmp_path, monkeypatch) ->
     from app.jobs import render_video
 
     class BrokenAudio:
-        def render_wav(self, midi_bytes: bytes, sample_rate: int = 44100) -> bytes:
+        def render_wav(self, midi_bytes: bytes, sample_rate: int = 44100, **kwargs) -> bytes:
             raise AudioRenderError("fluidsynth binary not found in worker image.")
 
     monkeypatch.setattr(render_video, "get_audio_renderer", lambda: BrokenAudio())
@@ -216,3 +244,60 @@ def test_ffmpeg_encoder_accepts_streamed_frames() -> None:
         assert mp4_path.read_bytes()[4:8] == b"ftyp"
     finally:
         mp4_path.unlink()
+
+
+def test_render_video_audio_settings_forwarded_and_tail_preserved(tmp_path, monkeypatch) -> None:
+    SessionMaker, job_id, _project_id = _setup_ready_project(tmp_path)
+
+    from app.db import OutputFile, RenderJob
+    from app.jobs import render_video
+
+    with SessionMaker() as db:
+        job = db.get(RenderJob, job_id)
+        job.settings_snapshot = {
+            "resolution": "720p",
+            "fps": 30,
+            "speed_multiplier": 1.25,
+            "piano_sound": "bright_grand",
+            "volume": 0.85,
+            "reverb": "hall",
+        }
+        db.commit()
+
+    audio_renderer = FakeAudioRenderer()
+    encoder = FakeVideoEncoder()
+    monkeypatch.setattr(render_video, "get_audio_renderer", lambda: audio_renderer)
+    monkeypatch.setattr(render_video, "get_video_encoder", lambda: encoder)
+
+    render_video.handle_render_video({"job_id": str(job_id), "job_type": "render_video"})
+
+    assert len(audio_renderer.calls) == 1
+    call = audio_renderer.calls[0]
+    assert call["volume"] == 0.85
+    assert call["reverb"] == "hall"
+
+    # Verify MIDI payload contains program_change (1 for bright_grand) and end_of_track with tail
+    midi_bytes = call["midi_bytes"]
+    import mido
+    mf = mido.MidiFile(file=io.BytesIO(midi_bytes))
+    track = mf.tracks[0]
+    program_msgs = [m for m in track if m.type == "program_change"]
+    assert len(program_msgs) == 1
+    assert program_msgs[0].program == 1  # bright_grand
+
+    eot = [m for m in track if m.type == "end_of_track"]
+    assert len(eot) == 1
+    assert eot[0].time > 0  # tail margin preserved
+
+    with SessionMaker() as db:
+        job = db.get(RenderJob, job_id)
+        assert job.status == "completed"
+        wav_out = db.query(OutputFile).filter(OutputFile.job_id == job_id, OutputFile.kind == "audio_wav").one()
+        assert wav_out.output_metadata["piano_sound"] == "bright_grand"
+        assert wav_out.output_metadata["volume"] == 0.85
+        assert wav_out.output_metadata["reverb"] == "hall"
+        assert wav_out.output_metadata["tail_margin_sec"] == 1.5
+
+        mp3_out = db.query(OutputFile).filter(OutputFile.job_id == job_id, OutputFile.kind == "audio_mp3").one()
+        assert mp3_out.output_metadata["piano_sound"] == "bright_grand"
+        assert mp3_out.output_metadata["bitrate"] == "320k"

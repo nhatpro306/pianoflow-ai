@@ -15,14 +15,29 @@ from pianoflow_music.notes.model import NoteData
 _TICKS_PER_BEAT = 480
 _DEFAULT_BPM = 120.0
 
+PIANO_SOUND_PROGRAMS = {
+    "concert_grand": 0,
+    "bright_grand": 1,
+    "warm_grand": 0,
+    "upright": 0,
+    "felt": 0,
+    "electric": 4,
+}
 
-def note_data_to_midi_bytes(note_data: NoteData) -> bytes:
+
+def note_data_to_midi_bytes(
+    note_data: NoteData,
+    piano_sound: str = "concert_grand",
+    tail_margin_sec: float = 1.5,
+) -> bytes:
     # Carrier tempo: event times are already absolute seconds, so any tempo is
     # timing-exact — using the source bpm keeps round-trips reporting it.
     bpm = note_data.bpm if note_data.bpm > 0 else _DEFAULT_BPM
     midi = mido.MidiFile(ticks_per_beat=_TICKS_PER_BEAT)
     track = mido.MidiTrack()
     track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(bpm), time=0))
+    program = PIANO_SOUND_PROGRAMS.get(piano_sound, 0)
+    track.append(mido.Message("program_change", program=program, time=0))
     if note_data.time_signature and "/" in note_data.time_signature:
         try:
             num_str, den_str = note_data.time_signature.split("/")
@@ -67,6 +82,19 @@ def note_data_to_midi_bytes(note_data: NoteData) -> bytes:
             )
         )
 
+    # If sustain was active at the end, release pedal during the tail so resonance fades cleanly
+    tail_ticks = max(0, round(tail_margin_sec / seconds_per_tick)) if tail_margin_sec > 0 else 0
+    if tail_ticks > 0 and note_data.sustain:
+        last_sustain_val = int(note_data.sustain[-1]["value"])
+        if last_sustain_val > 0:
+            events.append(
+                (
+                    round((note_data.duration_sec + min(0.5, tail_margin_sec * 0.5)) / seconds_per_tick),
+                    1,
+                    mido.Message("control_change", control=64, value=0, time=0),
+                )
+            )
+
     events.sort(key=lambda item: (item[0], item[1]))
 
     last_tick = 0
@@ -74,7 +102,7 @@ def note_data_to_midi_bytes(note_data: NoteData) -> bytes:
         message.time = max(tick - last_tick, 0)
         track.append(message)
         last_tick = tick
-    track.append(mido.MetaMessage("end_of_track", time=0))
+    track.append(mido.MetaMessage("end_of_track", time=tail_ticks))
     midi.tracks.append(track)
 
     buffer = io.BytesIO()

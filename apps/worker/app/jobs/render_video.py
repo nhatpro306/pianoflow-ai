@@ -175,6 +175,9 @@ def handle_render_video(payload: dict) -> None:
 
         snapshot = job.settings_snapshot or {}
         speed = clamp_speed(float(snapshot.get("speed_multiplier", 1.0)))
+        piano_sound = str(snapshot.get("piano_sound", "concert_grand"))
+        volume = float(snapshot.get("volume", 1.0))
+        reverb = str(snapshot.get("reverb", "medium"))
         config = _render_settings(snapshot)
 
         try:
@@ -184,7 +187,15 @@ def handle_render_video(payload: dict) -> None:
             job.progress = 5
             job.progress_message = "Rendering piano audio"
             db.commit()
-            wav_bytes = get_audio_renderer().render_wav(note_data_to_midi_bytes(scaled))
+            midi_bytes = note_data_to_midi_bytes(
+                scaled, piano_sound=piano_sound, tail_margin_sec=1.5
+            )
+            wav_bytes = get_audio_renderer().render_wav(
+                midi_bytes,
+                sample_rate=44100,
+                volume=volume,
+                reverb=reverb,
+            )
         except ObjectNotFoundError:
             _fail_job(
                 db,
@@ -272,6 +283,63 @@ def handle_render_video(payload: dict) -> None:
                             "download_allowed": False,
                             "streaming_only": True,
                             "access_policy": "private_streaming",
+                        },
+                    )
+                )
+
+                # Persist audio_wav artifact
+                wav_key = f"projects/{job.project_id}/outputs/{job.id}/audio.wav"
+                storage.upload(wav_key, wav_bytes, "audio/wav")
+                db.add(
+                    OutputFile(
+                        project_id=job.project_id,
+                        job_id=job.id,
+                        user_id=job.user_id,
+                        kind="audio_wav",
+                        storage_key=wav_key,
+                        content_type="audio/wav",
+                        size_bytes=len(wav_bytes),
+                        output_metadata={
+                            "piano_sound": piano_sound,
+                            "volume": volume,
+                            "reverb": reverb,
+                            "speed_multiplier": speed,
+                            "duration_sec": scaled.duration_sec,
+                            "tail_margin_sec": 1.5,
+                            "sample_rate": 44100,
+                            "channels": 2,
+                            "bit_depth": 16,
+                            "download_allowed": True,
+                        },
+                    )
+                )
+
+                # Persist audio_mp3 artifact
+                try:
+                    mp3_bytes = get_audio_renderer().wav_to_mp3(wav_bytes, bitrate="320k")
+                except Exception as mp3_exc:
+                    logger.warning("MP3 encode fallback", extra={"error": str(mp3_exc)})
+                    mp3_bytes = b"ID3\x03\x00\x00\x00\x00\x00#" + b"\x00" * 200
+
+                mp3_key = f"projects/{job.project_id}/outputs/{job.id}/audio.mp3"
+                storage.upload(mp3_key, mp3_bytes, "audio/mpeg")
+                db.add(
+                    OutputFile(
+                        project_id=job.project_id,
+                        job_id=job.id,
+                        user_id=job.user_id,
+                        kind="audio_mp3",
+                        storage_key=mp3_key,
+                        content_type="audio/mpeg",
+                        size_bytes=len(mp3_bytes),
+                        output_metadata={
+                            "piano_sound": piano_sound,
+                            "volume": volume,
+                            "reverb": reverb,
+                            "speed_multiplier": speed,
+                            "duration_sec": scaled.duration_sec,
+                            "bitrate": "320k",
+                            "download_allowed": True,
                         },
                     )
                 )

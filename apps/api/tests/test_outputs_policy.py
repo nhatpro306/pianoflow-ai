@@ -80,6 +80,17 @@ class TestDownloadUrl:
         _, output_id = _seed_output(client, "transcribed_draft_midi", "audio/midi")
         assert client.post(f"/api/v1/outputs/{output_id}/download-url").status_code == 200
 
+    def test_audio_wav_and_mp3_downloadable(self, client: TestClient) -> None:
+        _, wav_id = _seed_output(client, "audio_wav", "audio/wav")
+        res_wav = client.post(f"/api/v1/outputs/{wav_id}/download-url")
+        assert res_wav.status_code == 200, res_wav.text
+        assert res_wav.json()["download_url"].startswith("http")
+
+        _, mp3_id = _seed_output(client, "audio_mp3", "audio/mpeg")
+        res_mp3 = client.post(f"/api/v1/outputs/{mp3_id}/download-url")
+        assert res_mp3.status_code == 200, res_mp3.text
+        assert res_mp3.json()["download_url"].startswith("http")
+
     def test_video_download_blocked(self, client: TestClient) -> None:
         _, output_id = _seed_output(client, "video_mp4", "video/mp4")
         response = client.post(f"/api/v1/outputs/{output_id}/download-url")

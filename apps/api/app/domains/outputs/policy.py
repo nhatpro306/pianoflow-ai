@@ -11,6 +11,8 @@ DOWNLOADABLE_KINDS = frozenset(
         "original_midi",
         "simplified_midi",
         "transcribed_draft_midi",
+        "audio_wav",
+        "audio_mp3",
     }
 )
 

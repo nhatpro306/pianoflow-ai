@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase";
 import { api, type Project, type OutputFile, type Job, type JobBrief } from "@/lib/api";
 import { PianoSynth } from "@/lib/pianoSynth";
 import { simplifyNoteData } from "@/lib/midi/simplifyEngine";
-import type { NoteData, RenderSettings } from "@pianoflow/shared-types";
+import type { NoteData, RenderSettings, PianoSoundId, ReverbLevel } from "@pianoflow/shared-types";
 
 export type ExportTab = "video" | "sheet" | "midi" | "audio";
 
@@ -235,6 +235,21 @@ export function ExportCenterModal({
     (settings?.difficulty as "original" | "easy") ?? "original"
   );
 
+  // Audio Export Settings (Phase S4)
+  const [audioPianoSound, setAudioPianoSound] = useState<PianoSoundId>(
+    (settings?.piano_sound as PianoSoundId) || "concert_grand"
+  );
+  const [audioVolume, setAudioVolume] = useState<number>(
+    settings?.volume !== undefined ? settings.volume : 1.0
+  );
+  const [audioReverb, setAudioReverb] = useState<ReverbLevel>(
+    (settings?.reverb as ReverbLevel) || "medium"
+  );
+  const [audioTempo, setAudioTempo] = useState<number>(
+    settings?.speed_multiplier !== undefined ? settings.speed_multiplier : 1.0
+  );
+  const [isBouncingAudio, setIsBouncingAudio] = useState(false);
+
   // Video Streaming State
   const [videoStreamUrl, setVideoStreamUrl] = useState<string | null>(null);
   const [isLoadingStream, setIsLoadingStream] = useState(false);
@@ -383,7 +398,13 @@ export function ExportCenterModal({
 
   const ensureProjectForCatalog = async (
     targetJob: "video" | "sheet" | "simplify",
-    videoOptions?: VideoExportOptions
+    videoOptions?: VideoExportOptions,
+    audioOptions?: {
+      piano_sound?: PianoSoundId;
+      volume?: number;
+      reverb?: ReverbLevel;
+      speed_multiplier?: number;
+    }
   ): Promise<string | null> => {
     setAuthError(null);
     const supabase = createClient();
@@ -445,7 +466,7 @@ export function ExportCenterModal({
         throw new Error("Timed out waiting for MIDI parsing to complete. Please try again.");
       }
 
-      if (settings || videoOptions) {
+      if (settings || videoOptions || audioOptions) {
         setImportProgress("Configuring rendering settings...");
         await api.patchSettings(targetId, {
           ...(settings || {}),
@@ -457,6 +478,7 @@ export function ExportCenterModal({
                 difficulty: videoOptions.difficulty,
               }
             : {}),
+          ...(audioOptions || {}),
         });
       }
 
@@ -516,6 +538,34 @@ export function ExportCenterModal({
         .catch(() => null);
       const job = await api.enqueueRenderVideo(activeProjectId);
       setLocalJobs((prev) => ({ ...prev, video: job }));
+    }
+  };
+
+  const handleTriggerBounceAudio = async () => {
+    setIsBouncingAudio(true);
+    setAuthError(null);
+    try {
+      const audioPatch = {
+        piano_sound: audioPianoSound,
+        volume: audioVolume,
+        reverb: audioReverb,
+        speed_multiplier: audioTempo,
+      };
+
+      if (isCatalogSong) {
+        await ensureProjectForCatalog("video", undefined, audioPatch);
+      } else {
+        await api.patchSettings(activeProjectId, audioPatch).catch(() => null);
+        const job = await api.enqueueRenderVideo(activeProjectId);
+        setLocalJobs((prev) => ({ ...prev, video: job }));
+      }
+    } catch (err: unknown) {
+      console.error("Failed to bounce audio:", err);
+      setAuthError(
+        err instanceof Error ? err.message : "Failed to trigger audio bounce."
+      );
+    } finally {
+      setIsBouncingAudio(false);
     }
   };
 
@@ -1275,9 +1325,133 @@ export function ExportCenterModal({
                 Acoustic Grand Piano Bounce
               </h3>
               <p className="text-xs text-zinc-400 mt-0.5">
-                Studio-grade stereo audio render powered by FluidSynth and FluidR3_GM SoundFont.
+                Studio-grade stereo audio render powered by FluidSynth, FluidR3_GM SoundFont, and 1.5s natural decay tail.
               </p>
             </div>
+
+            {/* Audio Settings Configuration Panel (Phase S4) */}
+            <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/60 space-y-4">
+              <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+                <span>🎛️</span> Sound Synthesis &amp; Acoustics Controls
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* 1. Piano Sound Preset */}
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    🎹 Piano Sound Model
+                  </label>
+                  <select
+                    value={audioPianoSound}
+                    onChange={(e) => setAudioPianoSound(e.target.value as PianoSoundId)}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-violet-500"
+                  >
+                    <option value="concert_grand">Steinway Concert Grand</option>
+                    <option value="bright_grand">Yamaha Bright Grand</option>
+                    <option value="warm_grand">Bösendorfer Warm Grand</option>
+                    <option value="upright">Studio Upright Piano</option>
+                    <option value="felt">Soft Felt Intimate Piano</option>
+                    <option value="electric">Vintage Electric Piano (Rhodes)</option>
+                  </select>
+                </div>
+
+                {/* 2. Reverb Environment */}
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    🏛️ Reverb &amp; Acoustic Space
+                  </label>
+                  <select
+                    value={audioReverb}
+                    onChange={(e) => setAudioReverb(e.target.value as ReverbLevel)}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-violet-500"
+                  >
+                    <option value="off">Off (Dry Studio)</option>
+                    <option value="light">Light (Living Room)</option>
+                    <option value="medium">Medium (Chamber Recital)</option>
+                    <option value="hall">Concert Hall (Cathedral)</option>
+                  </select>
+                </div>
+
+                {/* 3. Output Volume */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-zinc-300">
+                      🔊 Master Output Volume
+                    </label>
+                    <span className="text-xs font-mono text-zinc-400">
+                      {Math.round(audioVolume * 100)}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={audioVolume}
+                    onChange={(e) => setAudioVolume(parseFloat(e.target.value))}
+                    className="w-full accent-violet-500 cursor-pointer"
+                  />
+                </div>
+
+                {/* 4. Tempo & Speed Multiplier */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-zinc-300">
+                      ⏱️ Render Tempo Speed
+                    </label>
+                    <span className="text-xs font-mono text-zinc-400">
+                      {audioTempo}x
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[0.75, 1.0, 1.25, 1.5].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setAudioTempo(s)}
+                        className={`py-1 text-[11px] font-semibold rounded-md transition-all ${
+                          audioTempo === s
+                            ? "bg-violet-600 text-white shadow-sm"
+                            : "bg-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700"
+                        }`}
+                      >
+                        {s}x
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Trigger */}
+              <div className="pt-2 border-t border-zinc-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p className="text-[11px] text-zinc-400">
+                  Synthesized with FluidSynth 44.1 kHz 16-bit PCM &amp; 320 kbps MP3 with 1.5s natural decay tail.
+                </p>
+                <Button
+                  variant="primary"
+                  onClick={handleTriggerBounceAudio}
+                  disabled={isBouncingAudio || isVideoJobRunning}
+                  className="bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs py-2 px-4 shrink-0"
+                >
+                  {isBouncingAudio || isVideoJobRunning
+                    ? "Bouncing Audio... ⏳"
+                    : "🎹 Bounce Studio Audio"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Active Bounce Job Progress Indicator */}
+            {isVideoJobRunning && (
+              <div className="p-4 rounded-xl border border-violet-500/30 bg-violet-950/20 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-violet-200 flex items-center gap-2">
+                    <span className="inline-block h-2 w-2 rounded-full bg-violet-400 animate-ping" />
+                    {effectiveJobs.video?.progress_message || "Synthesizing studio piano audio & bouncing WAV/MP3..."}
+                  </span>
+                  <span className="font-mono text-zinc-400">{effectiveJobs.video?.progress ?? 5}%</span>
+                </div>
+                <Progress value={effectiveJobs.video?.progress ?? 5} className="h-1.5" />
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* WAV Bounce */}
@@ -1293,7 +1467,7 @@ export function ExportCenterModal({
                       </Badge>
                     ) : (
                       <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700 text-[10px]">
-                        Available via Render
+                        Available via Bounce
                       </Badge>
                     )}
                   </div>
@@ -1306,6 +1480,9 @@ export function ExportCenterModal({
                     </span>
                     <span className="bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">
                       16-bit Stereo
+                    </span>
+                    <span className="bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">
+                      1.5s Tail
                     </span>
                   </div>
                 </div>
@@ -1322,10 +1499,11 @@ export function ExportCenterModal({
                   ) : (
                     <Button
                       variant="outline"
-                      onClick={handleTriggerRenderVideo}
+                      onClick={handleTriggerBounceAudio}
+                      disabled={isBouncingAudio || isVideoJobRunning}
                       className="w-full text-xs py-2 border-zinc-700 text-zinc-300 hover:bg-zinc-800"
                     >
-                      Render Video Audio
+                      {isBouncingAudio || isVideoJobRunning ? "Bouncing Audio... ⏳" : "Bounce Studio WAV 🎹"}
                     </Button>
                   )}
                 </div>
@@ -1344,7 +1522,7 @@ export function ExportCenterModal({
                       </Badge>
                     ) : (
                       <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700 text-[10px]">
-                        Available via Render
+                        Available via Bounce
                       </Badge>
                     )}
                   </div>
@@ -1357,6 +1535,9 @@ export function ExportCenterModal({
                     </span>
                     <span className="bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">
                       Joint Stereo
+                    </span>
+                    <span className="bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">
+                      1.5s Tail
                     </span>
                   </div>
                 </div>
@@ -1373,10 +1554,11 @@ export function ExportCenterModal({
                   ) : (
                     <Button
                       variant="outline"
-                      onClick={handleTriggerRenderVideo}
+                      onClick={handleTriggerBounceAudio}
+                      disabled={isBouncingAudio || isVideoJobRunning}
                       className="w-full text-xs py-2 border-zinc-700 text-zinc-300 hover:bg-zinc-800"
                     >
-                      Render Video Audio
+                      {isBouncingAudio || isVideoJobRunning ? "Bouncing Audio... ⏳" : "Bounce Studio MP3 🎹"}
                     </Button>
                   )}
                 </div>
