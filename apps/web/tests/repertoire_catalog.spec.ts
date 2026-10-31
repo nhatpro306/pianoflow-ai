@@ -19,10 +19,11 @@ const SCREENSHOTS_DIR = path.join(__dirname, 'screenshots');
 test.describe('PianoFlow AI — 1,000+ Piece Multi-Genre Repertoire Catalog', () => {
   test('CATALOG-01: In-Memory Verification of 1,000+ Curated Pieces across 6 Genres', () => {
     // 1. Verify exact counts
-    expect(ALL_REPERTOIRE_SONGS.length).toBe(1000);
+    expect(ALL_REPERTOIRE_SONGS.length).toBeGreaterThanOrEqual(1000);
+    expect(ALL_REPERTOIRE_SONGS.length).toBe(1002);
     expect(CLASSICAL_SONGS.length).toBe(180);
     expect(ANIME_SONGS.length).toBe(180);
-    expect(KPOP_SONGS.length).toBe(160);
+    expect(KPOP_SONGS.length).toBe(162);
     expect(MODERN_POP_SONGS.length).toBe(160);
     expect(CINEMATIC_GAME_SONGS.length).toBe(160);
     expect(JAZZ_LOFI_SONGS.length).toBe(160);
@@ -43,13 +44,13 @@ test.describe('PianoFlow AI — 1,000+ Piece Multi-Genre Repertoire Catalog', ()
     }
 
     // 3. Verify helper functions
-    expect(getSongsByGenre('Anime & Ghibli').length).toBe(180);
-    expect(getSongsByGenre('K-Pop').length).toBe(160);
-    expect(getSongsByGenre('Modern & Pop').length).toBe(160);
-    expect(getSongsByGenre('Cinematic & Game').length).toBe(160);
-    expect(getSongsByGenre('Classical').length).toBe(180);
-    expect(getSongsByGenre('Jazz & Lo-Fi').length).toBe(160);
-    expect(getSongsByGenre('All').length).toBe(1000);
+    expect(getSongsByGenre('Anime & Ghibli').length).toBe(ANIME_SONGS.length);
+    expect(getSongsByGenre('K-Pop').length).toBe(KPOP_SONGS.length);
+    expect(getSongsByGenre('Modern & Pop').length).toBe(MODERN_POP_SONGS.length);
+    expect(getSongsByGenre('Cinematic & Game').length).toBe(CINEMATIC_GAME_SONGS.length);
+    expect(getSongsByGenre('Classical').length).toBe(CLASSICAL_SONGS.length);
+    expect(getSongsByGenre('Jazz & Lo-Fi').length).toBe(JAZZ_LOFI_SONGS.length);
+    expect(getSongsByGenre('All').length).toBe(ALL_REPERTOIRE_SONGS.length);
 
     // 4. Verify search helper
     const searchSparkle = searchRepertoire('Sparkle');

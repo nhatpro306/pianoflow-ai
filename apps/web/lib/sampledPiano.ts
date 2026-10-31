@@ -447,7 +447,7 @@ export class SampledPiano {
         note: note.pitch,
         velocity,
         time: scheduleTime,
-        duration: Math.max(0.04, rawDur),
+        duration: Math.max(0.01, rawDur),
       });
       this.nextIndex++;
     }

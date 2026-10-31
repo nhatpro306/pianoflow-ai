@@ -39,6 +39,7 @@ def apply_patch(db: Session, settings: RenderSettings, patch: SettingsPatch) -> 
 
     preset = fields.pop("theme_preset", None)
     colors = fields.pop("colors", None)
+    aspect_ratio = fields.pop("aspect_ratio", None)
 
     if preset is not None and preset != "custom":
         settings.theme_preset = preset
@@ -48,6 +49,10 @@ def apply_patch(db: Session, settings: RenderSettings, patch: SettingsPatch) -> 
         settings.theme_preset = preset if preset in PRESETS else "custom"
     if preset == "custom" and colors is None:
         settings.theme_preset = "custom"
+    if aspect_ratio is not None:
+        current_colors = dict(settings.colors or {})
+        current_colors["_aspect_ratio"] = aspect_ratio
+        settings.colors = current_colors
 
     for key, value in fields.items():
         setattr(settings, key, value)

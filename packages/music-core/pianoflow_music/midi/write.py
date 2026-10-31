@@ -23,6 +23,19 @@ def note_data_to_midi_bytes(note_data: NoteData) -> bytes:
     midi = mido.MidiFile(ticks_per_beat=_TICKS_PER_BEAT)
     track = mido.MidiTrack()
     track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(bpm), time=0))
+    if note_data.time_signature and "/" in note_data.time_signature:
+        try:
+            num_str, den_str = note_data.time_signature.split("/")
+            track.append(
+                mido.MetaMessage(
+                    "time_signature",
+                    numerator=int(num_str),
+                    denominator=int(den_str),
+                    time=0,
+                )
+            )
+        except Exception:
+            pass
 
     seconds_per_tick = 60.0 / (bpm * _TICKS_PER_BEAT)
 

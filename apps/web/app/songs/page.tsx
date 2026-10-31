@@ -1208,14 +1208,14 @@ export default function SongsPage() {
                   🎹 Practice Exercise
                 </Badge>
               ) : null}
-              {Boolean(activeSong.completeness === "complete" && activeSong.reviewStatus === "verified") && (
+              {Boolean(isSongFullLength(activeSong) || (activeSong.completeness === "complete" && activeSong.reviewStatus === "verified")) && (
                 <Badge
                   variant="success"
                   size="sm"
                   data-testid="full-song-active-badge"
                   className="ml-1.5 gap-1 text-[10px] font-semibold tracking-wide"
                 >
-                  ✨ Complete Piece
+                  ✨ Complete Piece (Full Song)
                 </Badge>
               )}
             </div>
@@ -1942,12 +1942,12 @@ export default function SongsPage() {
                   🎹 Practice Exercise
                 </span>
               ) : null}
-              {Boolean(activeSong.completeness === "complete" && activeSong.reviewStatus === "verified") && (
+              {Boolean(isSongFullLength(activeSong) || (activeSong.completeness === "complete" && activeSong.reviewStatus === "verified")) && (
                 <span
                   data-testid="repertoire-header-full-song-badge"
                   className="hidden md:inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
                 >
-                  ✨ Complete Piece
+                  ✨ Complete Piece (Full Song)
                 </span>
               )}
               <Badge variant="default" size="sm" className="font-mono text-xs text-cyan-300 border-cyan-500/30">
@@ -2192,14 +2192,14 @@ export default function SongsPage() {
                             🎹 Practice Exercise
                           </Badge>
                         ) : null}
-                        {Boolean(song.completeness === "complete" && song.reviewStatus === "verified") && (
+                        {Boolean(isSongFullLength(song) || (song.completeness === "complete" && song.reviewStatus === "verified")) && (
                           <Badge
                             variant="success"
                             size="sm"
                             data-testid={`badge-full-song-${song.id}`}
                             className="gap-1 text-[10px] font-semibold tracking-wide"
                           >
-                            ✨ Complete Piece
+                            ✨ Complete Piece (Full Song)
                           </Badge>
                         )}
                       </div>

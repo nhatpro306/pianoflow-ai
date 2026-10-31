@@ -104,6 +104,18 @@ class RenderSettings(Base):
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
     )
 
+    @property
+    def aspect_ratio(self) -> str:
+        if self.colors and isinstance(self.colors, dict):
+            return self.colors.get('_aspect_ratio', '16:9')
+        return '16:9'
+
+    @aspect_ratio.setter
+    def aspect_ratio(self, val: str) -> None:
+        current = dict(self.colors or {})
+        current['_aspect_ratio'] = val
+        self.colors = current
+
 
 class UploadedFile(Base):
     __tablename__ = "uploaded_files"

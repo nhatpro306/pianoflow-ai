@@ -48,6 +48,7 @@ REVERB_LEVELS = ("off", "light", "medium", "hall")
 
 
 class SettingsOut(BaseModel):
+    aspect_ratio: Literal["16:9", "9:16"] = "16:9"
     resolution: str
     fps: int
     speed_multiplier: float
@@ -70,6 +71,7 @@ class SettingsOut(BaseModel):
 class SettingsPatch(BaseModel):
     """All fields optional — partial update. Bounds per spec §3."""
 
+    aspect_ratio: Literal["16:9", "9:16"] | None = None
     resolution: Literal["720p", "1080p"] | None = None
     fps: Literal[30, 60] | None = None
     speed_multiplier: float | None = Field(default=None, ge=0.25, le=2.0)

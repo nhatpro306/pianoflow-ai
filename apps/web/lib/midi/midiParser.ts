@@ -90,6 +90,7 @@ export function parseMidiBytes(data: Uint8Array | ArrayBuffer): NoteData {
   // Tempo map & time signature
   const tempoMap: TempoEntry[] = [{ tick: 0, tempoUs: 500000 }]; // default 120 BPM
   let detectedTimeSig = "4/4";
+  const rawSustain: { tick: number; value: number }[] = [];
   const rawNotes: {
     pitch: number;
     velocity: number;
@@ -188,8 +189,15 @@ export function parseMidiBytes(data: Uint8Array | ArrayBuffer): NoteData {
             channel,
           });
         }
-      } else if (eventType === 0xa0 || eventType === 0xb0 || eventType === 0xe0) {
-        // 2-data-byte events (poly aftertouch, control change, pitch bend)
+      } else if (eventType === 0xb0) {
+        // Control Change
+        const controller = bytes[pos++];
+        const value = bytes[pos++];
+        if (controller === 64) {
+          rawSustain.push({ tick: currentTick, value });
+        }
+      } else if (eventType === 0xa0 || eventType === 0xe0) {
+        // 2-data-byte events (poly aftertouch, pitch bend)
         pos += 2;
       } else if (eventType === 0xc0 || eventType === 0xd0) {
         // 1-data-byte events (program change, channel pressure)
@@ -298,7 +306,7 @@ export function parseMidiBytes(data: Uint8Array | ArrayBuffer): NoteData {
   for (const rn of rawNotes) {
     const startSec = tickToSec(rn.startTick);
     const endSec = tickToSec(rn.endTick);
-    const duration = Math.max(0.05, endSec - startSec);
+    const duration = Math.max(0.01, endSec - startSec);
 
     let hand: Hand;
     let trackOut: number;
@@ -324,7 +332,7 @@ export function parseMidiBytes(data: Uint8Array | ArrayBuffer): NoteData {
       id: noteId++,
       pitch: rn.pitch,
       name: midiPitchToName(rn.pitch),
-      velocity: Math.max(20, Math.min(127, rn.velocity)),
+      velocity: Math.max(1, Math.min(127, rn.velocity)),
       start: Number(startSec.toFixed(3)),
       end: Number((startSec + duration).toFixed(3)),
       duration: Number(duration.toFixed(3)),
@@ -344,6 +352,12 @@ export function parseMidiBytes(data: Uint8Array | ArrayBuffer): NoteData {
   const lhCount = finalNotes.filter((n) => n.hand === "L").length;
   const rhCount = finalNotes.filter((n) => n.hand === "R").length;
 
+  rawSustain.sort((a, b) => a.tick - b.tick);
+  const sustainEvents = rawSustain.map((s) => ({
+    time: Number(tickToSec(s.tick).toFixed(3)),
+    value: s.value,
+  }));
+
   return {
     schema_version: 1,
     bpm: initialBpm > 0 ? initialBpm : 120,
@@ -354,5 +368,6 @@ export function parseMidiBytes(data: Uint8Array | ArrayBuffer): NoteData {
       { index: 1, name: "Right Hand (Lead & Melody)", note_count: rhCount },
     ],
     notes: finalNotes,
+    sustain: sustainEvents,
   };
 }

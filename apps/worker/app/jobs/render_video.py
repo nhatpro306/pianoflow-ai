@@ -100,8 +100,12 @@ def _retry_or_fail(
 def _render_settings(snapshot: dict | None) -> RenderConfig:
     snapshot = snapshot or {}
     fps = int(snapshot.get("fps", 30))
+    res = str(snapshot.get("resolution", "720p"))
+    aspect_ratio = str(snapshot.get("aspect_ratio", "16:9"))
+    if aspect_ratio == "9:16" and not res.endswith("_vertical"):
+        res = f"{res}_vertical"
     return RenderConfig(
-        resolution=str(snapshot.get("resolution", "720p")),
+        resolution=res,
         fps=fps if fps in (30, 60) else 30,
         colors=dict(snapshot.get("colors") or {}),
         glow_intensity=float(snapshot.get("glow_intensity", 0.6)),
@@ -248,17 +252,19 @@ def handle_render_video(payload: dict) -> None:
                 job.progress_message = "Finalizing MP4"
                 db.commit()
                 storage.upload_file(video_key, mp4_file, "video/mp4")
+                is_vertical = config.resolution.endswith("_vertical")
                 db.add(
                     OutputFile(
                         project_id=job.project_id,
                         job_id=job.id,
                         user_id=job.user_id,
-                        kind="video_mp4",
+                        kind="vertical_video_mp4" if is_vertical else "video_mp4",
                         storage_key=video_key,
                         content_type="video/mp4",
                         size_bytes=size_bytes,
                         output_metadata={
                             "resolution": config.resolution,
+                            "aspect_ratio": "9:16" if is_vertical else "16:9",
                             "fps": config.fps,
                             "speed_multiplier": speed,
                             "difficulty": difficulty,

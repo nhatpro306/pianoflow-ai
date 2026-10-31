@@ -11,6 +11,7 @@ export const THEME_PRESETS = themes.PRESETS;
 export const DEFAULT_PRESET = themes.DEFAULT_PRESET;
 
 export type Resolution = (typeof constants.RESOLUTIONS)[number];
+export type AspectRatio = "16:9" | "9:16";
 export type Difficulty = (typeof constants.DIFFICULTIES)[number];
 export type PresetName = keyof typeof themes.PRESETS | "custom";
 export type Hand = "L" | "R";
@@ -63,6 +64,7 @@ export type PianoSoundId = (typeof constants.PIANO_SOUNDS)[number]["id"];
 export type ReverbLevel = (typeof constants.REVERB_LEVELS)[number];
 
 export interface RenderSettings {
+  aspect_ratio?: AspectRatio;
   resolution: Resolution;
   fps: number;
   speed_multiplier: number;

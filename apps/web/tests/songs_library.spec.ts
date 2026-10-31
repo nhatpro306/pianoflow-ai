@@ -48,12 +48,12 @@ test.describe("PianoFlow AI — Song Library Canonical Route & Open MIDI Importe
     await importerBadge.click();
 
     // 2. Verify Modal Title & World-Class Benchmark callout
-    await expect(page.getByRole("heading", { name: "🌐 Song Library & Open MIDI Importer" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "🌐 Song Library & Multi-Platform MIDI Repertoire Ingestion" })).toBeVisible();
     await expect(page.getByText("World-Class Full Song Learning Benchmark")).toBeVisible();
     await expect(page.getByText("Flowkey • Synthesia • Simply Piano")).toBeVisible();
 
     // 3. Verify Repository Details
-    await expect(page.getByText("musescore.com")).toBeVisible();
+    await expect(page.getByText("kunstderfuge.com")).toBeVisible();
     await expect(page.getByText("bitmidi.com")).toBeVisible();
     await expect(page.getByText("mutopiaproject.org")).toBeVisible();
 
@@ -61,7 +61,7 @@ test.describe("PianoFlow AI — Song Library Canonical Route & Open MIDI Importe
     const closeBtn = page.getByRole("button", { name: "Bắt đầu luyện tập tác phẩm 🎹" });
     await expect(closeBtn).toBeVisible();
     await closeBtn.click();
-    await expect(page.getByRole("heading", { name: "🌐 Song Library & Open MIDI Importer" })).not.toBeVisible();
+    await expect(page.getByRole("heading", { name: "🌐 Song Library & Multi-Platform MIDI Repertoire Ingestion" })).not.toBeVisible();
   });
 
   test("SONGS-03: Backwards compatibility of /demo route and navbar active state", async ({

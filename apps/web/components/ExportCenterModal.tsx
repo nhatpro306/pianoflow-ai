@@ -413,6 +413,38 @@ export function ExportCenterModal({
       await api.putToSignedUrl(uploadInit, midiBlob);
       await api.confirmUpload(targetId, uploadInit.upload_id);
 
+      // Track the provisioned project immediately so subsequent retries do not duplicate
+      setActiveProjectId(targetId);
+
+      // Poll until project is ready (parsed) before patching settings or enqueuing renders (prevents NOTES_NOT_READY 409)
+      setImportProgress("Parsing MIDI and preparing note data...");
+      const startPollTime = Date.now();
+      const timeoutMs = 15000;
+      let isReady = false;
+
+      while (Date.now() - startPollTime < timeoutMs) {
+        try {
+          const proj = await api.getProject(targetId);
+          if (proj.status === "ready") {
+            isReady = true;
+            break;
+          }
+          if (proj.status === "failed") {
+            throw new Error("Project MIDI parsing failed on worker.");
+          }
+        } catch (e: unknown) {
+          if (e instanceof Error && e.message.includes("failed on worker")) {
+            throw e;
+          }
+          // transient polling issue, retry
+        }
+        await new Promise((resolve) => setTimeout(resolve, 450));
+      }
+
+      if (!isReady) {
+        throw new Error("Timed out waiting for MIDI parsing to complete. Please try again.");
+      }
+
       if (settings || videoOptions) {
         setImportProgress("Configuring rendering settings...");
         await api.patchSettings(targetId, {
@@ -446,7 +478,6 @@ export function ExportCenterModal({
         jobRes = await api.enqueueSimplifyMidi(targetId);
       }
 
-      setActiveProjectId(targetId);
       if (jobRes) {
         setLocalJobs((prev) => ({
           ...prev,
@@ -475,6 +506,14 @@ export function ExportCenterModal({
     if (isCatalogSong) {
       await ensureProjectForCatalog("video", { aspectRatio, resolution, fps, difficulty });
     } else {
+      await api
+        .patchSettings(activeProjectId, {
+          aspect_ratio: aspectRatio,
+          resolution,
+          fps,
+          difficulty,
+        })
+        .catch(() => null);
       const job = await api.enqueueRenderVideo(activeProjectId);
       setLocalJobs((prev) => ({ ...prev, video: job }));
     }
