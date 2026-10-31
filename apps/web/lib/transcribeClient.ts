@@ -7,17 +7,6 @@ import { getAudioMimeType } from "./mime";
  */
 import type { NoteData } from "@pianoflow/shared-types";
 
-const MODAL_RESULT_URL = process.env.NEXT_PUBLIC_MODAL_RESULT_URL;
-const DEMO_TOKEN = process.env.NEXT_PUBLIC_DEMO_TOKEN;
-
-// When the public Modal URLs are configured we call Modal directly (no Vercel
-// body-size ceiling); otherwise we fall back to the /api/transcribe proxy.
-const DIRECT = false;
-
-function tokenHeaders(): Record<string, string> {
-  return DEMO_TOKEN ? { "X-Demo-Token": DEMO_TOKEN } : {};
-}
-
 export type TranscribeStatus = "idle" | "uploading" | "processing" | "done" | "error";
 
 export interface TranscribeResult {
@@ -42,10 +31,8 @@ async function pollResult(
     
     await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 
-    const pollUrl = DIRECT
-      ? `${MODAL_RESULT_URL}/result?call_id=${encodeURIComponent(callId)}`
-      : `/api/transcribe?call_id=${encodeURIComponent(callId)}`;
-    const pollRes = await fetch(pollUrl, { headers: tokenHeaders() });
+    const pollUrl = `/api/transcribe?call_id=${encodeURIComponent(callId)}`;
+    const pollRes = await fetch(pollUrl);
     if (!pollRes.ok) continue;
 
     const payload = (await pollRes.json()) as {
@@ -90,7 +77,7 @@ export async function submitAudio(
   onStatus?.("processing");
   const submitRes = await fetch("/api/transcribe?action=submit_url", {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...tokenHeaders() },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url: init.download_url, rights_attested: true, options }),
   });
   if (!submitRes.ok) {
@@ -114,7 +101,7 @@ export async function submitUrl(
   onStatus?.("uploading");
   const submitRes = await fetch("/api/transcribe?action=submit_url", {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...tokenHeaders() },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url, rights_attested: rightsAttested, options }),
   });
   if (!submitRes.ok) {

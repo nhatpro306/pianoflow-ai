@@ -106,11 +106,26 @@ const KEY_TO_ROOT: Record<string, number> = {
 };
 
 export function getKeyRootPitch(keyStr: string): { rootPitch: number; isMinor: boolean } {
-  const parts = keyStr.trim().split(/\s+/);
+  const trimmed = keyStr.trim();
+  const parts = trimmed.split(/\s+/);
   const notePart = parts[0] || "C";
   const typePart = (parts[1] || "").toLowerCase();
-  const root = KEY_TO_ROOT[notePart] ?? 60;
-  const isMinor = typePart.startsWith("m") || typePart.includes("min");
+
+  let root = KEY_TO_ROOT[notePart] ?? 60;
+
+  let isMinor = false;
+  if (typePart.startsWith("maj")) {
+    isMinor = false;
+  } else if (typePart.startsWith("min") || typePart === "m") {
+    isMinor = true;
+  } else if (notePart.endsWith("m") && !KEY_TO_ROOT[notePart]) {
+    isMinor = true;
+    const baseNote = notePart.slice(0, -1);
+    if (KEY_TO_ROOT[baseNote] !== undefined) {
+      root = KEY_TO_ROOT[baseNote];
+    }
+  }
+
   return { rootPitch: root, isMinor };
 }
 

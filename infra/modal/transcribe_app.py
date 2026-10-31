@@ -662,7 +662,9 @@ def web():
 
     def _check_token(token: str | None) -> None:
         expected = os.environ.get("DEMO_TOKEN")
-        if expected and token != expected:
+        if not expected:
+            raise HTTPException(status_code=503, detail="DEMO_TOKEN is not configured")
+        if not token or token != expected:
             raise HTTPException(status_code=401, detail="invalid or missing demo token")
 
     @api.post("/submit")
