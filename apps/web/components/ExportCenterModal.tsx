@@ -5,6 +5,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Progress } from "@/components/ui/Progress";
+import { createClient } from "@/lib/supabase";
 import { api, type Project, type OutputFile, type Job, type JobBrief } from "@/lib/api";
 import { PianoSynth } from "@/lib/pianoSynth";
 import { simplifyNoteData } from "@/lib/midi/simplifyEngine";
@@ -55,7 +56,7 @@ function writeVlq(val: number): number[] {
 }
 
 /**
- * Builds a standard SMF Type 0 MIDI file in pure JavaScript
+ * Builds a standard SMF Type 0 MIDI file in pure JavaScript with dynamic meter, CC64 sustain, and clean event ordering.
  */
 function createMidiBlob(noteData: NoteData): Blob {
   const bpm = noteData.bpm > 0 ? noteData.bpm : 120;
@@ -74,10 +75,14 @@ function createMidiBlob(noteData: NoteData): Blob {
     usPerBeat & 0xff
   );
 
-  // Time signature Meta Event 4/4 (FF 58 04 04 02 18 08) at delta 0
-  trackEvents.push(...writeVlq(0), 0xff, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08);
+  // Dynamic Time Signature Meta Event (FF 58 04 nn dd cc bb) at delta 0
+  const ts = noteData.time_signature || "4/4";
+  const num = parseInt(ts.split("/")[0], 10) || 4;
+  const rawDenom = parseInt(ts.split("/")[1], 10) || 4;
+  const denomExp = Math.max(0, Math.round(Math.log2(rawDenom)));
+  trackEvents.push(...writeVlq(0), 0xff, 0x58, 0x04, num, denomExp, 0x18, 0x08);
 
-  // Build sorted list of NoteOn and NoteOff events
+  // Build sorted list of NoteOn, NoteOff, and CC64 Sustain events
   const events: Array<{ tick: number; type: number; pitch: number; vel: number }> = [];
   for (const n of noteData.notes) {
     const startTick = Math.max(0, Math.round(n.start * (bpm / 60) * ppq));
@@ -96,7 +101,50 @@ function createMidiBlob(noteData: NoteData): Blob {
     });
   }
 
-  events.sort((a, b) => a.tick - b.tick);
+  // CC64 Sustain Pedal Events
+  if (noteData.sustain && noteData.sustain.length > 0) {
+    for (const s of noteData.sustain) {
+      if ("time" in s && typeof (s as { time: number; value: number }).value === "number") {
+        const tick = Math.max(0, Math.round((s as { time: number; value: number }).time * (bpm / 60) * ppq));
+        events.push({
+          tick,
+          type: 0xb0,
+          pitch: 0x40, // CC64 Damper/Sustain
+          vel: Math.min(127, Math.max(0, (s as { time: number; value: number }).value)),
+        });
+      } else if ("start" in s && "end" in s) {
+        const startTick = Math.max(0, Math.round((s as { start: number; end: number }).start * (bpm / 60) * ppq));
+        const endTick = Math.max(startTick + 1, Math.round((s as { start: number; end: number }).end * (bpm / 60) * ppq));
+        events.push({
+          tick: startTick,
+          type: 0xb0,
+          pitch: 0x40,
+          vel: 0x7f,
+        });
+        events.push({
+          tick: endTick,
+          type: 0xb0,
+          pitch: 0x40,
+          vel: 0x00,
+        });
+      }
+    }
+  }
+
+  // Event Sorting:
+  // On simultaneous ticks, NoteOff (0x80) precedes NoteOn (0x90) for the same pitch so release is never swallowed.
+  events.sort((a, b) => {
+    if (a.tick !== b.tick) return a.tick - b.tick;
+    const priority = (type: number, vel: number) => {
+      if (type === 0x80 || (type === 0x90 && vel === 0)) return 1; // NoteOff first
+      if (type === 0xb0) return 2; // Control Change (pedal)
+      return 3; // NoteOn with vel > 0
+    };
+    const pA = priority(a.type, a.vel);
+    const pB = priority(b.type, b.vel);
+    if (pA !== pB) return pA - pB;
+    return a.pitch - b.pitch;
+  });
 
   let lastTick = 0;
   for (const ev of events) {
@@ -151,6 +199,30 @@ export function ExportCenterModal({
   const isModalOpen = isOpen !== undefined ? isOpen : (open ?? false);
   const [activeTab, setActiveTab] = useState<ExportTab>("video");
 
+  // Track active project ID (repertoire slug or user project UUID)
+  const [activeProjectId, setActiveProjectId] = useState<string>(projectId);
+  useEffect(() => {
+    setActiveProjectId(projectId);
+  }, [projectId]);
+
+  const isCatalogSong = useMemo(() => {
+    return !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(activeProjectId);
+  }, [activeProjectId]);
+
+  // Local outputs and jobs state for self-contained polling when activeProjectId is a UUID
+  const [localOutputs, setLocalOutputs] = useState<OutputFile[]>(outputs);
+  const [localJobs, setLocalJobs] = useState(jobs);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [importProgress, setImportProgress] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLocalOutputs(outputs);
+  }, [outputs]);
+
+  useEffect(() => {
+    setLocalJobs(jobs);
+  }, [jobs]);
+
   // Video Export Controls
   const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16">("16:9");
   const [resolution, setResolution] = useState<"720p" | "1080p">(
@@ -191,48 +263,98 @@ export function ExportCenterModal({
     };
   }, []);
 
+  // Poll outputs and jobs when activeProjectId is a valid UUID
+  useEffect(() => {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(activeProjectId);
+    if (!isModalOpen || !isUuid) return;
+
+    let isMounted = true;
+    const poll = async () => {
+      try {
+        const [outputsRes, projRes] = await Promise.all([
+          api.listOutputs(activeProjectId).catch(() => null),
+          api.getProject(activeProjectId).catch(() => null),
+        ]);
+        if (!isMounted) return;
+        if (outputsRes?.items) {
+          setLocalOutputs(outputsRes.items);
+        }
+        if (projRes?.active_jobs) {
+          const sheetJob = projRes.active_jobs.find((j) => j.job_type === "render_sheet");
+          const videoJob = projRes.active_jobs.find((j) => j.job_type === "render_video");
+          const simplifyJob = projRes.active_jobs.find((j) => j.job_type === "simplify_midi");
+          setLocalJobs({
+            sheet: sheetJob ?? null,
+            video: videoJob ?? null,
+            simplify: simplifyJob ?? null,
+          });
+        }
+      } catch {
+        // Polling network fallback
+      }
+    };
+
+    void poll();
+    const interval = setInterval(poll, 3000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [isModalOpen, activeProjectId]);
+
+  const effectiveOutputs = useMemo(() => {
+    return localOutputs.length > 0 ? localOutputs : outputs;
+  }, [localOutputs, outputs]);
+
+  const effectiveJobs = useMemo(() => {
+    return {
+      ...jobs,
+      ...localJobs,
+    };
+  }, [jobs, localJobs]);
+
   // Find relevant outputs
   const videoOutput = useMemo(() => {
     if (aspectRatio === "9:16") {
       return (
-        outputs.find((o) => o.kind === "vertical_video_mp4") ??
-        outputs.find((o) => o.kind === "video_mp4")
+        effectiveOutputs.find((o) => o.kind === "vertical_video_mp4") ??
+        effectiveOutputs.find((o) => o.kind === "video_mp4")
       );
     }
-    return outputs.find((o) => o.kind === "video_mp4");
-  }, [outputs, aspectRatio]);
+    return effectiveOutputs.find((o) => o.kind === "video_mp4");
+  }, [effectiveOutputs, aspectRatio]);
 
   const pdfOutput = useMemo(
-    () => outputs.find((o) => o.kind === "sheet_pdf"),
-    [outputs]
+    () => effectiveOutputs.find((o) => o.kind === "sheet_pdf"),
+    [effectiveOutputs]
   );
   const musicxmlOutput = useMemo(
-    () => outputs.find((o) => o.kind === "sheet_musicxml"),
-    [outputs]
+    () => effectiveOutputs.find((o) => o.kind === "sheet_musicxml"),
+    [effectiveOutputs]
   );
   const originalMidiOutput = useMemo(
-    () => outputs.find((o) => o.kind === "original_midi"),
-    [outputs]
+    () => effectiveOutputs.find((o) => o.kind === "original_midi"),
+    [effectiveOutputs]
   );
   const simplifiedMidiOutput = useMemo(
-    () => outputs.find((o) => o.kind === "simplified_midi"),
-    [outputs]
+    () => effectiveOutputs.find((o) => o.kind === "simplified_midi"),
+    [effectiveOutputs]
   );
   const wavAudioOutput = useMemo(
-    () => outputs.find((o) => o.kind === "audio_wav"),
-    [outputs]
+    () => effectiveOutputs.find((o) => o.kind === "audio_wav"),
+    [effectiveOutputs]
   );
   const mp3AudioOutput = useMemo(
-    () => outputs.find((o) => o.kind === "audio_mp3"),
-    [outputs]
+    () => effectiveOutputs.find((o) => o.kind === "audio_mp3"),
+    [effectiveOutputs]
   );
 
   const isVideoJobRunning =
-    jobs?.video?.status === "queued" || jobs?.video?.status === "processing";
+    effectiveJobs?.video?.status === "queued" || effectiveJobs?.video?.status === "processing";
   const isSheetJobRunning =
-    jobs?.sheet?.status === "queued" || jobs?.sheet?.status === "processing";
+    effectiveJobs?.sheet?.status === "queued" || effectiveJobs?.sheet?.status === "processing";
   const isSimplifyJobRunning =
-    jobs?.simplify?.status === "queued" || jobs?.simplify?.status === "processing";
+    effectiveJobs?.simplify?.status === "queued" || effectiveJobs?.simplify?.status === "processing";
 
   const handleDownload = async (outputId: string) => {
     try {
@@ -259,27 +381,128 @@ export function ExportCenterModal({
     }
   };
 
+  const ensureProjectForCatalog = async (
+    targetJob: "video" | "sheet" | "simplify",
+    videoOptions?: VideoExportOptions
+  ): Promise<string | null> => {
+    setAuthError(null);
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setAuthError("Sign in to generate full-fidelity video tutorials, engraved sheet music, and custom audio bounces.");
+      return null;
+    }
+
+    try {
+      setImportProgress("Creating cloud project from repertoire piece...");
+      const projName = projectName || "Catalog Piece";
+      const newProj = await api.createProject(projName);
+      const targetId = newProj.id;
+
+      setImportProgress("Packaging and uploading MIDI note arrangement...");
+      const midiNoteData: NoteData = filteredNoteData ?? {
+        schema_version: 1,
+        bpm: 120,
+        duration_sec: durationSec || 60,
+        notes: [],
+        time_signature: "4/4",
+      };
+      const midiBlob = createMidiBlob(midiNoteData);
+      const filename = `${projName.replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase()}.mid`;
+      const uploadInit = await api.initUpload(targetId, filename, midiBlob.size);
+      await api.putToSignedUrl(uploadInit, midiBlob);
+      await api.confirmUpload(targetId, uploadInit.upload_id);
+
+      if (settings || videoOptions) {
+        setImportProgress("Configuring rendering settings...");
+        await api.patchSettings(targetId, {
+          ...(settings || {}),
+          ...(videoOptions
+            ? {
+                aspect_ratio: videoOptions.aspectRatio,
+                resolution: videoOptions.resolution,
+                fps: videoOptions.fps,
+                difficulty: videoOptions.difficulty,
+              }
+            : {}),
+        });
+      }
+
+      setImportProgress(
+        `Enqueuing ${
+          targetJob === "video"
+            ? "video tutorial"
+            : targetJob === "sheet"
+            ? "sheet engraving"
+            : "beginner arrangement"
+        } job...`
+      );
+      let jobRes: Job | null = null;
+      if (targetJob === "video") {
+        jobRes = await api.enqueueRenderVideo(targetId);
+      } else if (targetJob === "sheet") {
+        jobRes = await api.enqueueRenderSheet(targetId);
+      } else if (targetJob === "simplify") {
+        jobRes = await api.enqueueSimplifyMidi(targetId);
+      }
+
+      setActiveProjectId(targetId);
+      if (jobRes) {
+        setLocalJobs((prev) => ({
+          ...prev,
+          [targetJob]: jobRes,
+        }));
+      }
+      setImportProgress(null);
+      return targetId;
+    } catch (err: unknown) {
+      console.error("Failed to provision catalog project:", err);
+      setAuthError(
+        err instanceof Error
+          ? err.message
+          : "Failed to provision cloud rendering for this catalog song."
+      );
+      setImportProgress(null);
+      return null;
+    }
+  };
+
   const handleTriggerRenderVideo = async () => {
     if (onRenderVideo) {
       await onRenderVideo({ aspectRatio, resolution, fps, difficulty });
+      return;
+    }
+    if (isCatalogSong) {
+      await ensureProjectForCatalog("video", { aspectRatio, resolution, fps, difficulty });
     } else {
-      await api.enqueueRenderVideo(projectId);
+      const job = await api.enqueueRenderVideo(activeProjectId);
+      setLocalJobs((prev) => ({ ...prev, video: job }));
     }
   };
 
   const handleTriggerRenderSheet = async () => {
     if (onRenderSheet) {
       await onRenderSheet();
+      return;
+    }
+    if (isCatalogSong) {
+      await ensureProjectForCatalog("sheet");
     } else {
-      await api.enqueueRenderSheet(projectId);
+      const job = await api.enqueueRenderSheet(activeProjectId);
+      setLocalJobs((prev) => ({ ...prev, sheet: job }));
     }
   };
 
   const handleTriggerSimplify = async () => {
     if (onSimplifyMidi) {
       await onSimplifyMidi();
+      return;
+    }
+    if (isCatalogSong) {
+      await ensureProjectForCatalog("simplify");
     } else {
-      await api.enqueueSimplifyMidi(projectId);
+      const job = await api.enqueueSimplifyMidi(activeProjectId);
+      setLocalJobs((prev) => ({ ...prev, simplify: job }));
     }
   };
 
@@ -341,8 +564,12 @@ export function ExportCenterModal({
   const handleCopyShareLink = async () => {
     const shareUrl =
       typeof window !== "undefined"
-        ? `${window.location.origin}/projects/${projectId}`
-        : `/projects/${projectId}`;
+        ? isCatalogSong
+          ? `${window.location.origin}/songs?song=${encodeURIComponent(projectId)}`
+          : `${window.location.origin}/projects/${activeProjectId}`
+        : isCatalogSong
+        ? `/songs?song=${encodeURIComponent(projectId)}`
+        : `/projects/${activeProjectId}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopiedLink(true);
@@ -428,6 +655,54 @@ export function ExportCenterModal({
 
       {/* Tab Panels */}
       <div className="p-6 max-h-[68vh] overflow-y-auto">
+        {/* Auth Error Banner */}
+        {authError && (
+          <div
+            data-testid="export-auth-error-banner"
+            className="mb-6 p-4 rounded-xl bg-amber-950/40 border border-amber-600/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-200"
+          >
+            <div className="flex items-start gap-2.5">
+              <span className="text-lg">🔒</span>
+              <div>
+                <h4 className="text-xs font-bold text-amber-300">Account Required for Cloud Rendering</h4>
+                <p className="text-xs text-amber-200/90 mt-0.5">{authError}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <a
+                href={`/login?redirect=${encodeURIComponent(`/songs?song=${projectId}`)}`}
+                className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition-colors shadow-sm"
+              >
+                Sign In / Sign Up
+              </a>
+              <button
+                type="button"
+                onClick={() => setAuthError(null)}
+                className="text-xs text-amber-400/80 hover:text-amber-200 p-1"
+                aria-label="Dismiss auth error"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Import & Provisioning Progress */}
+        {importProgress && (
+          <div
+            data-testid="export-import-progress-banner"
+            className="mb-6 p-3.5 rounded-xl bg-violet-950/40 border border-violet-700/50 flex items-center gap-3 text-violet-200 text-xs"
+          >
+            <span className="animate-spin text-base">⚙️</span>
+            <div className="flex-1">
+              <span className="font-semibold text-violet-100">{importProgress}</span>
+              <div className="h-1 w-full bg-violet-900/60 rounded-full overflow-hidden mt-1.5">
+                <div className="h-full bg-violet-400 animate-[pulse_1s_ease-in-out_infinite] w-2/3" />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── TAB 1: VIDEO ── */}
         {activeTab === "video" && (
           <div className="space-y-6">
@@ -549,11 +824,11 @@ export function ExportCenterModal({
                     <span className="animate-spin inline-block">⚙️</span>
                     Rendering Video...
                   </span>
-                  <span>{jobs?.video?.progress ?? 0}%</span>
+                  <span>{effectiveJobs?.video?.progress ?? 0}%</span>
                 </div>
-                <Progress value={jobs?.video?.progress ?? 0} />
+                <Progress value={effectiveJobs?.video?.progress ?? 0} />
                 <p className="text-[11px] text-zinc-400">
-                  {jobs?.video?.progress_message ?? "Drawing falling notes and keyboard frames..."}
+                  {effectiveJobs?.video?.progress_message ?? "Drawing falling notes and keyboard frames..."}
                 </p>
               </div>
             )}
@@ -662,11 +937,11 @@ export function ExportCenterModal({
                     <span className="animate-spin inline-block">⚙️</span>
                     Rendering Sheet Music...
                   </span>
-                  <span>{jobs?.sheet?.progress ?? 0}%</span>
+                  <span>{effectiveJobs?.sheet?.progress ?? 0}%</span>
                 </div>
-                <Progress value={jobs?.sheet?.progress ?? 0} />
+                <Progress value={effectiveJobs?.sheet?.progress ?? 0} />
                 <p className="text-[11px] text-zinc-400">
-                  {jobs?.sheet?.progress_message ?? "Formatting measures and staff lines..."}
+                  {effectiveJobs?.sheet?.progress_message ?? "Formatting measures and staff lines..."}
                 </p>
               </div>
             )}
@@ -772,7 +1047,11 @@ export function ExportCenterModal({
                 </p>
               </div>
               <a
-                href={`/projects/${projectId}/sheet`}
+                href={
+                  isCatalogSong
+                    ? `/songs?song=${encodeURIComponent(projectId)}`
+                    : `/projects/${activeProjectId}/sheet`
+                }
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30 font-medium text-xs transition-colors"
               >
                 Open Score Viewer 🎼
@@ -800,9 +1079,9 @@ export function ExportCenterModal({
                     <span className="animate-spin inline-block">⚙️</span>
                     Simplifying MIDI...
                   </span>
-                  <span>{jobs?.simplify?.progress ?? 0}%</span>
+                  <span>{effectiveJobs?.simplify?.progress ?? 0}%</span>
                 </div>
-                <Progress value={jobs?.simplify?.progress ?? 0} />
+                <Progress value={effectiveJobs?.simplify?.progress ?? 0} />
               </div>
             )}
 
@@ -1101,8 +1380,12 @@ export function ExportCenterModal({
           <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1 text-xs text-zinc-300 max-w-xs overflow-hidden">
             <span className="truncate">
               {typeof window !== "undefined"
-                ? `${window.location.origin}/projects/${projectId}`
-                : `/projects/${projectId}`}
+                ? isCatalogSong
+                  ? `${window.location.origin}/songs?song=${encodeURIComponent(projectId)}`
+                  : `${window.location.origin}/projects/${activeProjectId}`
+                : isCatalogSong
+                ? `/songs?song=${encodeURIComponent(projectId)}`
+                : `/projects/${activeProjectId}`}
             </span>
             <button
               onClick={handleCopyShareLink}

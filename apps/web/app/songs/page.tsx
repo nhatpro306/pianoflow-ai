@@ -65,6 +65,7 @@ import {
   type SongDifficulty,
   loadSongNoteData,
   isSongFullLength,
+  getSongById,
 } from "@/lib/demoSongs";
 import { DifficultySelector } from "@/components/practice/DifficultySelector";
 import {
@@ -172,8 +173,9 @@ function generateSimulatedReport(
   activeNoteData?: NoteData
 ): SessionAnalyticsReport {
   let eventsToUse = userTimingEvents;
+  const isSimulation = eventsToUse.length < 5;
 
-  if (eventsToUse.length < 5) {
+  if (isSimulation) {
     const sourceNotes = activeNoteData?.notes ?? song.noteData.notes;
     eventsToUse = sourceNotes.map((n, idx) => {
       const isRH = n.hand === "R";
@@ -206,13 +208,18 @@ function generateSimulatedReport(
     });
   }
 
-  return buildSessionAnalyticsReport({
+  const report = buildSessionAnalyticsReport({
     events: eventsToUse,
     expectedNotes,
     bpm: song.bpm,
     timeSignature: song.time_signature,
     totalDurationMs: Math.round(song.duration_sec * 1000),
   });
+
+  return {
+    ...report,
+    isSimulation,
+  };
 }
 
 function getSongDifficultyBadge(difficulty: string) {
@@ -745,9 +752,48 @@ export default function SongsPage() {
       if (deck) {
         deck.scrollIntoView({ behavior: "smooth" });
       }
+
+      // Synchronize browser URL permalink
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get("song") !== song.id) {
+          url.searchParams.set("song", song.id);
+          window.history.replaceState(null, "", url.toString());
+        }
+      }
     },
     []
   );
+
+  // Synchronize initial URL permalink ?song=<id> on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const songParam = params.get("song");
+    if (songParam) {
+      const matched = getSongById(songParam);
+      if (matched) {
+        handleSelectSong(matched, false);
+      }
+    }
+  }, [handleSelectSong]);
+
+  // Synchronize browser history navigation (popstate)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const songParam = params.get("song");
+      if (songParam) {
+        const matched = getSongById(songParam);
+        if (matched && matched.id !== activeSong.id) {
+          handleSelectSong(matched, false);
+        }
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [activeSong.id, handleSelectSong]);
 
   // Virtual key interaction
   const handleVirtualNoteOn = useCallback(
@@ -1677,6 +1723,27 @@ export default function SongsPage() {
               aria-labelledby="tab-coaching"
               className="space-y-6"
             >
+              {coachingReport.isSimulation && (
+                <div
+                  data-testid="coaching-simulation-banner"
+                  className="p-4 rounded-xl bg-amber-950/30 border border-amber-600/40 text-amber-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-base">💡</span>
+                    <span>
+                      <strong className="font-semibold text-amber-300">Interactive Demo Preview</strong> — Connect your MIDI keyboard or play along in Practice mode to see your real timing &amp; accuracy analytics.
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setActiveMode("practice")}
+                    className="border-amber-600/50 text-amber-200 hover:bg-amber-900/30 text-[11px] whitespace-nowrap"
+                  >
+                    Go to Practice 🎹
+                  </Button>
+                </div>
+              )}
               {/* Grade Banner */}
               <div className="flex flex-wrap items-center justify-between p-5 rounded-xl bg-gradient-to-r from-zinc-900 via-zinc-900 to-zinc-950 border border-zinc-800 gap-4 shadow-md">
                 <div className="flex items-center gap-4">

@@ -81,6 +81,7 @@ export interface SessionAnalyticsReport {
   measures: MeasureMetric[];
   drills: DrillRecommendation[];
   summaryMessage: string;
+  isSimulation?: boolean;
 }
 
 /**

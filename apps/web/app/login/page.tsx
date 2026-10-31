@@ -22,6 +22,8 @@ function LoginForm() {
   const [submitting, setSubmitting] = useState(false);
   const [signupSent, setSignupSent] = useState(false);
 
+  const redirectTarget = searchParams.get("redirect") || "/projects";
+
   if (loading) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center text-zinc-400">
@@ -34,7 +36,7 @@ function LoginForm() {
   }
 
   if (user) {
-    router.replace("/projects");
+    router.replace(redirectTarget);
     return null;
   }
 
@@ -45,11 +47,11 @@ function LoginForm() {
     try {
       if (mode === "login") {
         await signIn(email, password);
-        router.push("/projects");
+        router.push(redirectTarget);
       } else {
         const loggedIn = await signUp(email, password);
         if (loggedIn) {
-          router.push("/projects");
+          router.push(redirectTarget);
         } else {
           setSignupSent(true);
         }
@@ -68,7 +70,7 @@ function LoginForm() {
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: typeof window !== "undefined" ? `${window.location.origin}/projects` : undefined,
+          redirectTo: typeof window !== "undefined" ? `${window.location.origin}${redirectTarget}` : undefined,
         },
       });
       if (oauthError) throw oauthError;
